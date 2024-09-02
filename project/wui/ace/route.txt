@@ -1,0 +1,24 @@
+route uri=/ extensions=jpg handler=file
+route uri=/ extensions=png handler=file
+route uri=/ extensions=css handler=file
+route uri=/favicon.ico
+route uri=/api/
+route uri=/assets/
+route uri=/cfg/
+route uri=/lang/
+route uri=/pub/ handler=jst
+route uri=/login.html handler=jst
+route uri=/action/login methods=GET|POST handler=action redirect=200@/index.html redirect=401@/login.html?warn=loginfailed
+route uri=/action/logout methods=POST handler=action redirect=200@/login.html
+
+route uri=/ auth=form handler=continue redirect=401@/login.html
+
+route uri=/ extensions=jst,asp,html handler=jst
+route uri=/action/ handler=action
+route uri=/cgi/ handler=cgi
+route uri=/upload handler=upload
+route uri=/content/
+route uri=/prj/
+route uri=/
+
+
