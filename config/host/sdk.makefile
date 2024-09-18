@@ -58,9 +58,10 @@ app_install:
 	cd ${gosROOT_DIR};if [ -f needless.sh ]; then \
 		chmod a+rwx needless.sh;./needless.sh; \
 	fi
-	cd ${gBUILD_DIR} && fpk-indexed ${gSTORE_DIR} ${gSTORE_DIR}/${gHARDWARE}_${gCUSTOM}_${gSCOPE}.store;
-	cd ${gBUILD_DIR} && rm -fr ${gHARDWARE}_${gCUSTOM}_${gSCOPE}_${gVERSION}.tar.bz2
-	cd ${gosROOT_DIR} && tar jcvf ../${gHARDWARE}_${gCUSTOM}_${gSCOPE}_${gVERSION}.tar.bz2 *
+	cd ${gBUILD_DIR} && rm -fr ${gpFIRMWARE_FILE} ${gpSTORE_FILE} ${gpFIRMWARE_LOG}
+	cd ${gosROOT_DIR} && tar jcf ../${gpFIRMWARE_FILE} *
+	cd ${gSTORE_DIR} && fpk-indexed ../${gpSTORE_FILE} ${gSTORE_DIR}
+	cd ${gBUILD_DIR} && firmware-log ${gpFIRMWARE_LOG} ${gVERSION} ${gCUSTOM} ${gSCOPE} ${gpFIRMWARE_FILE} ${gTOP_DIR}/log.json ${gPLATFORM_DIR}/log.json ${gHARDWARE_DIR}/log.json ${gCUSTOM_DIR}/log.json ${gSCOPE_DIR}/log.json
 app_clean:
 	make -f ${gDIR_MAKEFILE} -C ${gPROJECT_DIR} clean
 	if [ -d ${gRICE_DIR} ]; then \
@@ -85,7 +86,7 @@ sdk_update:
 	# 更新fpk
 	if [ -e ${gPLATFORM_DIR} ]; then \
 		cd ${gPLATFORM_DIR}; rm -fr *.fpk*; \
-		cd ${gPLATFORM_DIR}; sdk-update host ${gHARDWARE} ${gCUSTOM} fpk; \
+		cd ${gPLATFORM_DIR}; repo-update host ${gHARDWARE} ${gCUSTOM} fpk; \
 	fi
 sdk_adjust:
 sdk_menu:
@@ -129,6 +130,6 @@ sdk_stop:
 sdk_ftp:
 sdk_repo:
 	if [ -d ${gSTORE_DIR} ]; then \
-		firmware-upload host ${gHARDWARE} ${gCUSTOM} ${gSCOPE} ${gSTORE_DIR} fpk; \
+		repo-upload host ${gHARDWARE} ${gCUSTOM} ${gSCOPE} ${gSTORE_DIR} fpk; \
 	fi
 .PHONY: sdk_ftp sdk_repo

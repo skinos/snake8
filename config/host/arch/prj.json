@@ -1,9 +1,9 @@
 {
     "name":"arch",
-    "intro":"pc platform layer for skin os",
+    "intro":"x86 host platform layer for skin os",
     "type":"root",
-    "version":"7.0.0",
-    "author":"dimmalex@gmai.com",
+    "version":"7.5.0",
+    "author":"dimmalex@gmail.com",
     "osc":
     {
     },
