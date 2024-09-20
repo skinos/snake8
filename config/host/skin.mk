@@ -54,6 +54,16 @@ define Build/Prepare/Default
 endef
 
 
+# 定义项目配置函数
+# $(call Build/Configure/Default, ConfigureArgs, ConfigureArgs, Subdir);
+#     确认要配置的目录中有configure文件
+#     ConfigureArgs可指定调用configure时给出参数
+#     Subdir可指定配置的子目录
+# $(call Build/Prepare/Farm, NeedBeConfigureSubdirList);
+#     确认要配置的目录中有configure文件
+#     NeedBeConfigureSubdirList指定要配置的子目录列表, 如未给出默认只配置${OSC_LIST}
+
+
 # 定义编译程序编译函数
 # $(call Build/Compile/FarmBin, NeedBeCompileSubdirList, MakefilePath, CompileTarget);
 #     NeedBeCompileSubdirList指定要编译的子目录列表
