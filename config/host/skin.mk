@@ -25,7 +25,7 @@ define Package/Define
 endef
 
 
-# 定义项目预处理函数
+# 定义项目预处理函数, 将源代码拷贝到PKG_BUILD_DIR
 # $(call Build/Prepare/Default, NeedBeCopySubdirList);
 #     确认有项目目录下prj.json文件, prj.json中要有VERSION_ID
 #     拷贝NeedBeCopySubdirList指定的子目录列表, 如未给出默认拷贝${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST}
@@ -125,7 +125,7 @@ endef
 
 
 
-# 定义项目安装目录生成函数
+# 定义收集项目所有编译后的文件到FPK_BUILD_DIR准备打包为FPK包
 # $(call Build/Install/Collect);
 define Build/Install/Collect
 	# make the fpk dir
@@ -205,7 +205,6 @@ define Build/Install/Collect
 	for i in ${MKD_LIST};do \
         if [ -e ./$$i ]; then \
             $(CP) $$i $(gCOMFACE_DIR)/$(PROJECT_ID); \
-            pandoc -f markdown -t html -o $(FPK_BUILD_DIR)/$$i -s ./$$i --metadata pagetitle=$$i; \
         fi; \
 	done
 	for i in ${PNG_LIST};do \

@@ -25,20 +25,19 @@ setup()
     fi
     # make the register value default
     RAND=`date +%s`
-    he land@register.set_int[land,rand,$RAND]
-    he land@register.set_int[land,config_ready,1]
-    he land@register.set_string[land,platform,$gPLATFORM]
-    he land@register.set_string[land,hardware,$gHARDWARE]
-    he land@register.set_string[land,custom,$gCUSTOM]
-    he land@register.set_string[land,scope,$gSCOPE]
-    he land@register.set_string[land,version,$gVERSION]
-    he land@register.set_string[land,local_ifname,ifname@lan]
+    he land@register.set_int[rand,$RAND]
+    he land@register.set_string[platform,$gPLATFORM]
+    he land@register.set_string[hardware,$gHARDWARE]
+    he land@register.set_string[custom,$gCUSTOM]
+    he land@register.set_string[scope,$gSCOPE]
+    he land@register.set_string[version,$gVERSION]
+    he land@register.set_string[local_ifname,ifname@lan]
     NETDEV=`he arch@data:local_netdev`
-    he land@register.set_string[land,local_netdev,$NETDEV]
+    he land@register.set_string[local_netdev,$NETDEV]
     MODEL=`he arch@data:model`
-    he land@register.set_string[land,model,$MODEL]
+    he land@register.set_string[model,$MODEL]
     MAC=`he arch@data:mac`
-    he land@register.set_string[land,mac,$MAC]
+    he land@register.set_string[mac,$MAC]
     # default the configure if order
     if [ -e $VROOT/mnt/config/.customv6 ]; then
     	echo "mount the configure"

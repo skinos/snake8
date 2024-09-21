@@ -6,7 +6,11 @@ custom the equipment character
 
 ```json
 {
-    "verify":"need network verify or not"                                        // [ enable, disable ]
+    "project":
+    {
+        "project name":"disable it or not"        // [ string ]: [ "enable", "disable ]
+        // ...more project
+    }
 }
 ```
 
