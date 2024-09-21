@@ -1,0 +1,43 @@
+#!/bin/bash
+TOPDIR=`pwd`
+
+git pull
+
+# core project and tiger
+if [ -d ${TOPDIR}/core ]; then
+    cd ${TOPDIR}/core
+    list=`ls`
+    for tmp in $list
+    do
+        if [ -d ${TOPDIR}/core/${tmp} ]; then
+            echo "################################################"
+            echo "############## update the ${tmp} ###############"
+            echo "################################################"
+            cd ${TOPDIR}/core/${tmp};git pull
+        fi
+    done
+fi
+cd ${TOPDIR}
+
+# Custom
+for tmp in rice doc
+do
+    if [ -d ${TOPDIR}/${tmp} ]; then
+        echo "################################################"
+        echo "############## update the ${tmp} ###############"
+        echo "################################################"
+        cd ${TOPDIR}/${tmp};git pull
+    fi
+done
+
+# MTK3 platform
+for tmp in config/smtk3/
+do
+    if [ -d ${TOPDIR}/${tmp} ]; then
+        echo "################################################"
+        echo "############## update the ${tmp} ###############"
+        echo "################################################"
+        cd ${TOPDIR}/${tmp};git pull
+    fi
+done
+
