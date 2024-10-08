@@ -30,4 +30,16 @@ update:
 	make -f target.makefile sdk_adjust
 	# Refresh the menu
 	make -f target.makefile sdk_menu
-.PHONY: update
+
+# SDK rebuild for HOST
+rebuild:
+	make sdk_stop;make sdk_uninstall;make;make sdk_install;make sdk_start
+# SDK help for smtk3
+menu:
+	make sdk_menu
+menuconfig:
+	make sdk_menuconfig
+sz:
+	make sdk_sz
+
+.PHONY: update rebuild menu menuconfig sz
