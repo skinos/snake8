@@ -1,5 +1,5 @@
-
-
+# 定义通用的编译函数, 参考openwrt/include/package-defaults.mk
+#
 # 定义项目头部通用定义函数
 define Package/Define
   LIB_LIST:=$(shell prj-read lib)
@@ -30,7 +30,7 @@ endef
 #     确认有项目目录下prj.json文件, prj.json中要有VERSION_ID
 #     拷贝NeedBeCopySubdirList指定的子目录列表, 如未给出默认拷贝${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST}
 define Build/Prepare/Default
-	@if [ "X" == "X${VERSION_ID}" ];then \
+	@if [ "X" == "X${VERSION_ID}" ]; then \
 		echo "project ${PROJECT_ID} version cannot find, maybe ${gPROJECT_INF} broken"; \
 		exit -1; \
 	fi
@@ -38,15 +38,15 @@ define Build/Prepare/Default
 	if [ -d ./lib ]; then \
 		$(CP) ./lib $(PKG_BUILD_DIR); \
 	fi
-	@if [ "X" == "X$(1)" ];then \
+	@if [ "X" == "X$(1)" ]; then \
 		for i in ${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST} ;do \
-			if [ -e $$i ];then \
+			if [ -e $$i ]; then \
 				$(CP) $$i $(PKG_BUILD_DIR); \
 			fi; \
 		done; \
 	else \
 		for i in $(1) ;do \
-			if [ -e $$i ];then \
+			if [ -e $$i ]; then \
 				$(CP) $$i $(PKG_BUILD_DIR); \
 			fi; \
 		done; \
@@ -72,7 +72,7 @@ endef
 define Build/Compile/FarmBin
 	+$(MAKE_VARS); \
 	for i in $(1) ;do \
-		if [ -f $(PKG_BUILD_DIR)/$$i/Makefile ];then \
+		if [ -f $(PKG_BUILD_DIR)/$$i/Makefile ]; then \
 			$(MAKE) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$$i $(MAKE_FLAGS) $(3) || exit -1; \
 		else \
 			$(MAKE) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) -f $(2) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$$i $(MAKE_FLAGS) $(3) || exit -1; \
@@ -101,10 +101,10 @@ define Build/Compile/Default
 	$(call Build/Compile/FarmBin,${CMD_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/FarmBin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/FarmKo,${KO_LIST})
-	if [ "X" == "X$(1)" ];then \
+	if [ "X" == "X$(1)" ]; then \
 		$(call Build/Compile/FarmBin,${OSC_LIST},$(2)); \
 	fi
-	if [ "X" != "X$(1)" ];then \
+	if [ "X" != "X$(1)" ]; then \
 		$(call Build/Compile/FarmBin,$(1),$(2)); \
 	fi
 endef
@@ -115,10 +115,10 @@ endef
 #     NeedBeCompileOSCList给出测安装此子目录列表, 如未给出测编译${OSC_LIST}
 #     安装$(OSC_LIST)时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Install/Default
-	@if [ "X" == "X$(1)" ];then \
+	@if [ "X" == "X$(1)" ]; then \
 		$(call Build/Compile/FarmBin,${OSC_LIST},$(2),install); \
 	fi
-	@if [ "X" != "X$(1)" ];then \
+	@if [ "X" != "X$(1)" ]; then \
 		$(call Build/Compile/FarmBin,$(1),$(2),install); \
 	fi
 endef
@@ -164,39 +164,39 @@ define Build/Install/Collect
 		done; \
 	fi
 	for i in ${COM_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
 			$(CP) $(PKG_BUILD_DIR)/$$i/$$i.com $(FPK_BUILD_DIR); \
 		fi; \
 	done
 	for i in ${OSC_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
-			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
+			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
 			fi; \
 		fi; \
 	done
 	for i in ${LIB_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
 			$(CP) $(PKG_BUILD_DIR)/$$i/lib$$i.so $(FPK_LIB_DIR); \
 			$(LN) lib$$i.so $(FPK_LIB_DIR)/lib$$i.so.0; \
 		fi; \
 	done
 	for i in ${CMD_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
-			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
+			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BIN_DIR); \
 			fi; \
 		fi; \
 	done
 	for i in ${EXE_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
-			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
+			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
 			fi; \
 		fi; \
 	done
 	for i in ${KO_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
 			$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/*.ko $(FPK_BUILD_DIR); \
 		fi; \
 	done
@@ -223,7 +223,7 @@ define Build/Install/Fpk
 	$(INSTALL_DIR) ${FPK_BUILD_DIR}/install
 	$(INSTALL_DIR) ${FPK_BUILD_DIR}/install/include
 	for i in ${LIB_LIST} ;do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ];then \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
 			$(INSTALL_DIR) ${FPK_BUILD_DIR}/install/include/$$i; \
 			$(CP) $(PKG_BUILD_DIR)/$$i/*.h ${FPK_BUILD_DIR}/install/include/$$i; \
 			$(INSTALL_DIR) ${FPK_BUILD_DIR}/install/lib; \
@@ -233,7 +233,7 @@ define Build/Install/Fpk
 	done
 	cd ${FPK_BUILD_DIR};tar zcf $(PKG_BUILD_DIR)/${PROJECT_ID}-${VERSION_ID}-${gHARDWARE}.fpk *
 	fpk-install $(1) ${gINSTALL_DIR} $(PKG_BUILD_DIR)/${PROJECT_ID}-${VERSION_ID}-${gHARDWARE}.fpk
-	if [ "X" != "X$(2)" ];then \
+	if [ "X" != "X$(2)" ]; then \
 		mv $(PKG_BUILD_DIR)/${PROJECT_ID}-${VERSION_ID}-${gHARDWARE}.fpk $(2); \
 	fi
 endef

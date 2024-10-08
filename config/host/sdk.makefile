@@ -82,17 +82,33 @@ app_distclean: app_clean
 
 
 
+OPENWRT_SDK_NAME:=openwrt-raw.tar.xz
+OPENWRT_DL_NAME:=dl-raw.tar.xz
+OPENWRT_FEED_NAME:=feeds-raw.tar.gz
 sdk_update:
+	# 下载或更新底层SDK
+	# 更新dl目录, 避免每次一个一个下载
+	# 更新并安装所有的菜单项
 	# 更新fpk
 	if [ -e ${gPLATFORM_DIR} ]; then \
 		cd ${gPLATFORM_DIR}; rm -fr *.fpk*; \
 		cd ${gPLATFORM_DIR}; repo-update host ${gHARDWARE} ${gCUSTOM} fpk; \
 	fi
 sdk_adjust:
+	# 对底层SDK打补丁
+	if [ -e ${gPLATFORM_DIR}/adjust/patch.sh ]; then \
+		${gPLATFORM_DIR}/adjust/patch.sh; \
+	fi
 sdk_menu:
-sdk_menuconfig:
+	# 更新并安装所有的菜单项
+	# 对底层SDK打补丁
+sdk_menuconfig: kernel_dep
+	# 显示菜单供用户配置
 sdk_clean:
-sdk_distclean:
+	# 清除所有菜单安装
+	# distclean整个SDK
+sdk_distclean: sdk_clean
+	# 清除所有download
 	cd ${gCUSTOM_DIR}; rm -fr *.fpk *.store
 .PHONY: sdk_update sdk_adjust sdk_menu sdk_menuconfig sdk_clean sdk_distclean
 
@@ -123,7 +139,12 @@ sdk_stop:
 		/usr/prj/shut.sh; \
 	fi
 	sudo rm -fr /tmp/skin
-.PHONY: sdk_install sdk_bootup sdk_start sdk_stop
+sdk_uninstall:
+	sudo rm -fr /tmp/skin
+	sudo rm -fr /var/skin
+	sudo rm -fr /usr/prj
+	sudo ldconfig
+.PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_uninstall
 
 
 

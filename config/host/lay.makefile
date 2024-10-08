@@ -7,12 +7,14 @@ all:
 	@if [ -f mkdev.sh ]; then \
 		./mkdev.sh ${gosROOT_DIR}; \
 	fi
+	# copy a fpk to build
 	@tmpls=`find ./ -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
 		cp *.fpk $(gBUILD_DIR); \
 	fi
 
 fpk_distinct:
+	# clear the exsit project fpk for core
 	cd ${gPROJECT_DIR}; \
 	list=`ls`; \
 	for i in $${list}; do \
@@ -29,6 +31,7 @@ fpk_distinct:
 			fi \
 		done; \
 	fi
+	# clear the exsit project fpk for platform
 	cd ${gPLATFORM_DIR}; \
 	list="arch pdriver"; \
 	for i in $${list}; do \
@@ -38,6 +41,7 @@ fpk_distinct:
 	done
 
 fpk_install:
+	# install the fpk to rootfs
 	@tmpls=`find $(gBUILD_DIR) -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
 		for c in $(gBUILD_DIR)/*.fpk; do \

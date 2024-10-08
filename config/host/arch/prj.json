@@ -1,24 +1,7 @@
 {
     "name":"arch",
-    "intro":"x86 host platform layer for skin os",
+    "intro":"host platform layer for skin os",
     "type":"root",
-    "version":"7.5.0",
-    "author":"dimmalex@gmail.com",
-    "osc":
-    {
-    },
-    "ko":
-    {
-    },
-    "com":
-    {
-    },
-    "obj":
-    {
-    },
-    "init":
-    {
-        "ethernet":"arch@ethernet.setup"
-    }
-    
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com"
 }

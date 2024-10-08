@@ -24,16 +24,18 @@ setup()
         insmod /usr/prj/pdriver/crackid.ko
     fi
     # make the register value default
-    RAND=`date +%s`
+    RAND=`date +%N`
     he land@register.set_int[rand,$RAND]
     he land@register.set_string[platform,$gPLATFORM]
     he land@register.set_string[hardware,$gHARDWARE]
     he land@register.set_string[custom,$gCUSTOM]
     he land@register.set_string[scope,$gSCOPE]
     he land@register.set_string[version,$gVERSION]
-    he land@register.set_string[local_ifname,ifname@lan]
     NETDEV=`he arch@data:local_netdev`
-    he land@register.set_string[local_netdev,$NETDEV]
+    if [ "X${NETDEV}" != "X" ]; then
+        he land@register.set_string[local_ifname,ifname@lan]
+        he land@register.set_string[local_netdev,$NETDEV]
+    fi
     MODEL=`he arch@data:model`
     he land@register.set_string[model,$MODEL]
     MAC=`he arch@data:mac`
