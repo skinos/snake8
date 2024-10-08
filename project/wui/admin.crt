@@ -1,0 +1,97 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=CN, ST=GD, L=ShenZhen, O=Ashyelf, OU=SkinOS, CN=Ashyelf CA/name=EasyRSA/emailAddress=dimmalex@gmail.com
+        Validity
+            Not Before: Apr 25 04:45:23 2024 GMT
+            Not After : Apr 23 04:45:23 2034 GMT
+        Subject: C=CN, ST=GD, L=ShenZhen, O=Ashyelf, OU=SkinOS, CN=server/name=EasyRSA/emailAddress=dimmalex@gmail.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:b9:db:17:77:ac:0f:cc:fb:22:a7:ce:98:32:6b:
+                    36:3e:ea:c8:3f:de:42:f2:8c:37:b6:07:5d:6e:e1:
+                    58:cc:c9:8c:e7:10:79:43:81:c4:b2:4c:bf:ae:48:
+                    f6:c7:69:c4:44:25:42:af:d2:1c:3d:f4:4e:6c:3f:
+                    32:55:41:c6:a3:f4:ea:dc:2f:89:ec:db:b8:e7:3d:
+                    4d:5f:f3:de:3d:cf:d7:35:c0:7c:bc:f7:9b:23:08:
+                    f2:53:19:ce:28:57:28:55:2c:05:49:05:25:0d:9c:
+                    45:8b:4d:c7:8b:4f:f2:6d:c8:2b:35:5b:b4:dc:07:
+                    d4:31:46:27:65:6c:8d:36:97:46:f2:95:20:04:5d:
+                    a3:55:ae:29:9d:e3:6c:f1:ac:48:b2:78:fb:34:f4:
+                    d0:2a:4f:9e:25:1b:69:8d:a4:86:98:7a:e1:67:ec:
+                    c2:39:c6:d8:4d:5d:b9:f9:b5:3a:dd:7c:de:01:b9:
+                    f9:3b:58:d3:1f:bf:cb:e4:de:b4:0f:59:2d:78:a6:
+                    5b:2b:af:68:43:b6:ce:c7:06:64:90:e3:8c:70:83:
+                    6c:17:6e:40:19:8d:1b:d7:a7:c3:f6:7f:08:e3:44:
+                    7b:c1:7b:8f:27:b3:56:be:53:a5:70:ab:06:80:a1:
+                    b8:1c:e5:a6:f8:ce:d5:f2:11:c2:18:0d:29:96:0e:
+                    aa:ed
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Cert Type: 
+                SSL Server
+            Netscape Comment: 
+                Easy-RSA Generated Server Certificate
+            X509v3 Subject Key Identifier: 
+                38:24:55:7F:AA:27:36:40:E5:CC:05:15:7F:AC:36:21:DC:A2:51:0B
+            X509v3 Authority Key Identifier: 
+                keyid:4F:7D:E4:97:82:72:83:DE:5A:CA:77:A9:64:EB:A1:44:48:13:CE:63
+                DirName:/C=CN/ST=GD/L=ShenZhen/O=Ashyelf/OU=SkinOS/CN=Ashyelf CA/name=EasyRSA/emailAddress=dimmalex@gmail.com
+                serial:F5:C4:8C:16:C9:33:4C:74
+
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment
+    Signature Algorithm: sha256WithRSAEncryption
+         32:2e:94:64:63:0d:0a:ab:b1:5b:c8:7f:d4:e2:18:50:05:c0:
+         57:ec:03:eb:90:37:d7:44:7e:e5:ef:ea:ef:75:cd:c8:94:1d:
+         b9:e4:13:55:a8:65:97:0b:2b:fb:31:3e:ba:ee:04:ee:40:16:
+         f3:d7:20:8f:56:b5:33:24:a1:3d:37:23:a9:12:d8:e1:b0:bd:
+         04:d5:6d:c3:18:95:d2:a9:c8:93:02:95:2c:f6:03:40:7b:02:
+         3b:92:1b:0e:f6:98:3c:52:0d:e1:1d:67:51:37:26:30:fe:27:
+         61:2a:82:77:c6:16:4e:1c:ae:67:e6:a8:a6:b8:27:66:6f:1b:
+         a4:7f:0a:3f:cf:89:3a:d1:c8:10:9e:d5:79:54:11:49:5b:30:
+         b3:e6:79:d4:5b:f4:8b:03:43:e0:87:78:a1:8e:0b:87:5e:b9:
+         16:01:72:01:91:64:49:41:ef:6d:e8:91:f2:94:9a:d2:35:69:
+         69:d0:2f:a4:66:4d:ba:60:8b:00:19:03:a5:cb:00:05:fb:8b:
+         45:7b:2e:a5:f6:4a:ad:96:71:e8:cd:8a:d1:75:4f:f2:0d:45:
+         13:ed:72:7b:9e:33:85:e5:a8:fc:6c:2d:3b:c5:3a:47:a1:58:
+         80:8c:70:64:16:a5:21:32:a4:68:11:9b:43:44:83:c8:d2:42:
+         0e:77:a2:57
+-----BEGIN CERTIFICATE-----
+MIIFGjCCBAKgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBmjELMAkGA1UEBhMCQ04x
+CzAJBgNVBAgTAkdEMREwDwYDVQQHEwhTaGVuWmhlbjEQMA4GA1UEChMHQXNoeWVs
+ZjEPMA0GA1UECxMGU2tpbk9TMRMwEQYDVQQDEwpBc2h5ZWxmIENBMRAwDgYDVQQp
+EwdFYXN5UlNBMSEwHwYJKoZIhvcNAQkBFhJkaW1tYWxleEBnbWFpbC5jb20wHhcN
+MjQwNDI1MDQ0NTIzWhcNMzQwNDIzMDQ0NTIzWjCBljELMAkGA1UEBhMCQ04xCzAJ
+BgNVBAgTAkdEMREwDwYDVQQHEwhTaGVuWmhlbjEQMA4GA1UEChMHQXNoeWVsZjEP
+MA0GA1UECxMGU2tpbk9TMQ8wDQYDVQQDEwZzZXJ2ZXIxEDAOBgNVBCkTB0Vhc3lS
+U0ExITAfBgkqhkiG9w0BCQEWEmRpbW1hbGV4QGdtYWlsLmNvbTCCASIwDQYJKoZI
+hvcNAQEBBQADggEPADCCAQoCggEBALnbF3esD8z7IqfOmDJrNj7qyD/eQvKMN7YH
+XW7hWMzJjOcQeUOBxLJMv65I9sdpxEQlQq/SHD30Tmw/MlVBxqP06twviezbuOc9
+TV/z3j3P1zXAfLz3myMI8lMZzihXKFUsBUkFJQ2cRYtNx4tP8m3IKzVbtNwH1DFG
+J2VsjTaXRvKVIARdo1WuKZ3jbPGsSLJ4+zT00CpPniUbaY2khph64WfswjnG2E1d
+ufm1Ot183gG5+TtY0x+/y+TetA9ZLXimWyuvaEO2zscGZJDjjHCDbBduQBmNG9en
+w/Z/CONEe8F7jyezVr5TpXCrBoChuBzlpvjO1fIRwhgNKZYOqu0CAwEAAaOCAWsw
+ggFnMAkGA1UdEwQCMAAwEQYJYIZIAYb4QgEBBAQDAgZAMDQGCWCGSAGG+EIBDQQn
+FiVFYXN5LVJTQSBHZW5lcmF0ZWQgU2VydmVyIENlcnRpZmljYXRlMB0GA1UdDgQW
+BBQ4JFV/qic2QOXMBRV/rDYh3KJRCzCBzwYDVR0jBIHHMIHEgBRPfeSXgnKD3lrK
+d6lk66FESBPOY6GBoKSBnTCBmjELMAkGA1UEBhMCQ04xCzAJBgNVBAgTAkdEMREw
+DwYDVQQHEwhTaGVuWmhlbjEQMA4GA1UEChMHQXNoeWVsZjEPMA0GA1UECxMGU2tp
+bk9TMRMwEQYDVQQDEwpBc2h5ZWxmIENBMRAwDgYDVQQpEwdFYXN5UlNBMSEwHwYJ
+KoZIhvcNAQkBFhJkaW1tYWxleEBnbWFpbC5jb22CCQD1xIwWyTNMdDATBgNVHSUE
+DDAKBggrBgEFBQcDATALBgNVHQ8EBAMCBaAwDQYJKoZIhvcNAQELBQADggEBADIu
+lGRjDQqrsVvIf9TiGFAFwFfsA+uQN9dEfuXv6u91zciUHbnkE1WoZZcLK/sxPrru
+BO5AFvPXII9WtTMkoT03I6kS2OGwvQTVbcMYldKpyJMClSz2A0B7AjuSGw72mDxS
+DeEdZ1E3JjD+J2EqgnfGFk4crmfmqKa4J2ZvG6R/Cj/PiTrRyBCe1XlUEUlbMLPm
+edRb9IsDQ+CHeKGOC4deuRYBcgGRZElB723okfKUmtI1aWnQL6RmTbpgiwAZA6XL
+AAX7i0V7LqX2Sq2WcejNitF1T/INRRPtcnueM4XlqPxsLTvFOkehWICMcGQWpSEy
+pGgRm0NEg8jSQg53olc=
+-----END CERTIFICATE-----

@@ -1,0 +1,157 @@
+{
+	
+	"Syslog":"系统日志",
+
+	"Location":"存储位置",
+	"Memory":"内存",
+	"Internal":"内部存储",
+	"Storage":"外部存储",
+
+	"Max Size(KB)":"存储限制(KB)",
+	"Level":"级别",
+	"Type(separated by ;)":"类型",
+	"Remote Log":"远程日志",
+	"Remote Server":"日志服务器",
+	"Remote Port":"端口",
+	"Local Log":"本地日志",
+	"Log File":"日志文件",
+	"Log List":"日志列表",
+	"Download":"下载",
+	"Operation":"操作",
+	"Error":"错误",
+	"Warn":"警告",
+	"Info":"信息",
+	"Debug":"调试",
+	"Verbose":"详细",
+
+
+
+
+
+	"Open HE Terminal":"HE终端",
+	"Close before leave":"离开前必须点此关闭",
+	"I'm sorry that this feature does not support the current browser. It is recommended that you update and install Chrome, Firefox or IE11+.":"当前浏览器不支持终端模式, 请将使用IE11以上的浏览器或谷歌火狐最新的浏览器",
+	"Opening...":"正在打开...",
+	"Closing...":"正在关闭...",
+	"Cannot open it":"未能正常打开, 请确认设备是否正常",
+	"Cannot close it":"未能正常关闭, 请重启设备",
+
+	"Ping Address":"Ping地址",
+	"Log Ping":"Ping存入文件",
+	"Termnial Ping":"终端Ping",
+	"Download results":"下载结果",
+	
+	"Traceroute Address":"路由跟踪地址",
+	"Log Traceroute":"Traceroute存入文件",
+	"Termnial Traceroute":"终端Traceroute",
+
+	"Iperf2 Address(TCP:5001)":"Iperf2测速地址(TCP:5001)",
+	"Log Iperf2":"Iperf2存入文件",
+	"Termnial Iperf2":"终端Iperf2",
+	
+	"Capture Expression":"抓包表达式",
+	"Log Capture":"抓包存入文件",
+	"Termnial Capture":"终端抓包",
+	
+	"Serial Terminal":"串口终端",
+	"Serial2 Terminal":"串口2终端",
+	"Serial3 Terminal":"串口3终端",
+	"Will shutdown serial application when open the serial terminal, Are you sure you want to open it":"打开串口终端将导致所有此串口上的应用被强制关闭, 确认是否打开",
+
+	"Open AT Command":"AT终端",
+	"Will shutdown LTE/NR application when open the LTE/NR terminal, Are you sure you want to open it":"打开4G/5G模块终端将导致所有此模块上的应用被强制关闭, 确认是否打开",
+
+
+
+
+
+
+	"Development Option":"开发者选项",
+
+	"a. How to download SDK and compile upgrade package":"一. 如何下载SDK及编译升级包",
+	"1. It is recommended to download this SDK after setting up the compilation environment in Ubuntu":"1. 建议在Ubuntu下搭建好编译环境后下载此SDK",
+	"2. Enter the following command line to download from the Ubuntu terminal command line":"2. 在Ubuntu的终端命令行输入以下命令行下载",
+	"git clone https://github.com/skinos7/tiger7.git":"git clone https://gitee.com/tiger7/tiger7.git",
+	"3. After waiting for the download, enter the tiger7 directory and input the following instructions to update the SDK to the latest state":"3. 等待下载完成后进入tiger7目录, 输入以下指令更新SDK到最新状态",
+	"4. After waiting for the update, you can input the following instructions to compile the corresponding products":"4. 等待更新完成后即可输入以后指令编译对应的产品",
+	"5. After waiting for the compilation, an upgrade package file ending with.zz will be generated in the./build directory, which can be upgraded through the upgrade interface of the router":"5. 等待编译完成后会在./build目录下生成一个.zz结尾的升级包文件， 通过路由器的升级界面将其升级即可",
+
+	"b. How to develop their own router program":"二. 如何开发自已的路由器程序",
+	"1. Readme.md in SDK directory is a basic introduction to the whole SDK and its development":"1. SDK目录下readme.md是对整个SDK的及开发的基本介绍",
+	"2. https://github.com/skinos7/doc.git, there are detailed step-by-step documents to guide the development of router components (under preparation).":"2. https://gitee.com/tiger7/doc.git有详细的一步一步指导开发路由器组件的文档(编写中)",
+	"3. These documents will be updated from time to time, please execute make update in the SDK directory to update":"3. 这些文档会不定期的更新，请在SDK目录下执行make update来更新",
+	"4. Visit www.ashyelf.com for more development help (under construction)":"4. 访问www.ashyelf.com可获取更多的开发帮助(建设中)",
+	
+	"Component API Number":"组件接口列表",
+	"Component API Name":"接口文档名称",
+	"PATH":"路径",
+	"Operation":"操作",
+	"View":"查看", 
+
+
+	"Cron Table":"定时任务",
+	"Name":"名称",
+	"Name(unique)":"名称(唯一)",
+	"Call":"调用接口",
+	"Min":"分",
+	"Hour":"时",
+	"Day":"日",
+	"Mon":"月",
+	"Week":"星期",
+	"Operation":"操作",
+	"Initialize Table":"开机启动列表",
+	"Shutdown Table":"关机执行列表",
+	"Joint Table":"事件处理列表",
+	"Call":"调用接口",
+	"Level":"级别",
+	"Joint":"事件名称",
+
+
+	"Service Live":"活动服务数",
+
+	"Service Name":"服务名称",
+	"arch@pci":"PCI管理",
+	"arch@gpio":"GPIO管理",
+	"io@agent":"IO代理",
+	"wui@admin":"网页服务",
+	"tui@telnet":"TELNET服务",
+	"tui@ssh":"SSH服务",
+	"local-broadcast":"本地监听",
+	"local-json":"本地JSON管理",
+	"agent@remote":"远程管理",
+	"uart@serial":"串口服务",
+	"uart@serial2":"串口2服务",
+	"uart@serial3":"串口3服务",
+	"arch@usb":"USB管理",
+	"modem@lte":"4G基带",
+	"ifname@lte":"4G网络",
+	"modem@lte2":"4G/5G基带",
+	"ifname@lte2":"4G/5G网络",
+	"ifname@wan":"有线宽带",
+	"ifname@wan-keeplive":"有线宽带保活",
+	"ifname@wan2":"有线宽带2连接",
+	"ifname@wan2-keeplive":"有线宽带2保活",
+	"ifname@wisp":"无线连网",
+	"ifname@wisp-keeplive":"无线连网保活",
+	"network@frame":"连接管理",
+	"dnsmasq":"DHCP服务器",
+	"clock@restart":"重启管理",
+	"clock@date":"时间管理",
+	"client@station":"客户端管理",
+
+	"PID":"进程ID",
+	"Component":"组件",
+	"Interface":"接口",
+	"Uptime":"启动时计数",
+	"start":"开始",
+	"off":"未控制",
+	"stop":"停止",
+	"reset":"重启",
+	"unregiser":"删除中",
+	"finish":"已完成",
+	"Operation":"操作",
+	"Reset":"重启服务",
+	"Reset succeed":"重启服务成功",
+	"Reset failed":"重启服务失败"
+
+}

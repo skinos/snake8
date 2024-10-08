@@ -1,0 +1,20 @@
+{
+    "name":"wui",
+    "intro":"web user interface page",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "obj":
+    {
+        "wui@admin":"webs@https"
+    },
+    "init":
+    {
+        "app":"wui@admin.setup"
+    },
+    "uninit":
+    {
+        "app":"wui@admin.shut"
+    }
+}
