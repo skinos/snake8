@@ -1,0 +1,11 @@
+{
+	"Initialize Table":"开机启动列表",
+	"Shutdown Table":"关机执行列表",
+	"Joint Table":"事件处理列表",
+
+	"Name(unique)":"名称(唯一)",
+	"Call":"调用接口",
+	"Level":"级别",
+	"Joint":"事件名称",
+	"Operation":"操作"
+}

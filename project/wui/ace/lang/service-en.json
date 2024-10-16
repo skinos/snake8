@@ -29,4 +29,14 @@
 	"clock@date":"Date Server",
 	"client@station":"Client Server",
 
+	"start":"Running",
+	"stop":"Stop",
+	"off":"Off",
+	"reset":"Reset",
+	"delete":"Delete",
+	"done":"Done",
+	"error":"Error",
+	"unkown":"Unkown"
+	
+
 }

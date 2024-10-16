@@ -1,19 +1,18 @@
 {
-
 	"Management":"管理后台",
 	"Login":"登录",
 	"Incorrect password":"密码错误",
 
 
 
+	"Are you sure you want to logout?":"确定要退出吗？",
+	"Cancel":"取消",
+	"Logout":"退出",
+
 	"Model":"型号",
 	"Version":"版本",
 	"See new FPK with details":"查看新FPK",
 	"See all messages":"查看所有消息",
-
-	"Are you sure you want to logout?":"确定要退出吗？",
-	"Cancel":"取消",
-	"Logout":"退出",
 
 	"recordtext":"{0} - {1}\u3000共 {2} 条",
 	"No records to view": "无数据显示",
@@ -63,6 +62,9 @@
 	"Confirm":"确定",
 	"Cancel":"取消",
 	"OK":"确定",
+	"No File":"未指定文件",
+	"Choose":"浏览",
+	"Change":"重选",
 	"Settings unchanged":"配置未修改, 不需要应用",
 	"Saving":"保存中",
 	"Loading":"加载中",
@@ -88,12 +90,9 @@
 	"Utilization":"效能",
 	"Interface":"接口",
 
-
-
 	"Network":"网络",
 	"Connection":"接入设置",
 	"Not Specified":"未指定",
-
 	"LTE Modem":"4G基带",
 	"LTE":"4G网络",
 	"LTE SMS":"4G短信",
@@ -114,10 +113,7 @@
 	"LAN4":"本地网络4",
 	"AP Client":"无线网卡",
 
-
-
 	"agent@g2g":"自组网",
-
 	"ifname@lte":"4G网络",
 	"ifname@lte2":"4G/5G网络",
 	"ifname@wisp":"无线连网(2.4G)",
@@ -136,7 +132,6 @@
 	"wifi@assid":"无线热点(5.8G)",
 	"wifi@nsta":"无线网卡(2.4G)",
 	"wifi@asta":"无线网卡(5.8G)",
-	
 	"vpn@l2tpc":"L2TP客户端",
 	"vpn@l2tpc2":"L2TP客户端2",
 	"vpn@l2tpc3":"L2TP客户端3",
@@ -147,7 +142,6 @@
 	"vpn@l2tpc8":"L2TP客户端8",
 	"vpn@l2tpc9":"L2TP客户端9",
 	"vpn@l2tpc10":"L2TP客户端10",
-
 	"vpn@pptpc":"PPTP客户端",
 	"vpn@pptpc2":"PPTP客户端2",
 	"vpn@pptpc3":"PPTP客户端3",
@@ -158,7 +152,6 @@
 	"vpn@pptpc8":"PPTP客户端8",
 	"vpn@pptpc9":"PPTP客户端9",
 	"vpn@pptpc10":"PPTP客户端10",
-
 	"vpn@gre":"GRE隧道",
 	"vpn@gre2":"GRE隧道2",
 	"vpn@gre3":"GRE隧道3",
@@ -169,7 +162,6 @@
 	"vpn@gre8":"GRE隧道8",
 	"vpn@gre9":"GRE隧道9",
 	"vpn@gre10":"GRE隧道10",
-
 	"ovpn@client":"OPENVPN客户端",
 	"ovpn@client2":"OPENVPN客户端2",
 	"ovpn@client3":"OPENVPN客户端3",
@@ -180,7 +172,6 @@
 	"ovpn@client8":"OPENVPN客户端8",
 	"ovpn@client9":"OPENVPN客户端9",
 	"ovpn@client10":"OPENVPN客户端10",
-
 	"ipsec@tunnel":"IPSEC隧道",
 	"ipsec@tunnel2":"IPSEC隧道2",
 	"ipsec@tunnel3":"IPSEC隧道3",
@@ -191,7 +182,6 @@
 	"ipsec@tunnel8":"IPSEC隧道8",
 	"ipsec@tunnel9":"IPSEC隧道9",
 	"ipsec@tunnel10":"IPSEC隧道10",
-
 	"sdwan@wg":"WireGuard",
 	"sdwan@wg2":"WireGuard2",
 	"sdwan@wg3":"WireGuard3",
@@ -202,7 +192,6 @@
 	"sdwan@wg8":"WireGuard8",
 	"sdwan@wg9":"WireGuard9",
 	"sdwan@wg10":"WireGuard10",
-
     "sdwan@zt":"ZeroTier",
     "sdwan@zt2":"ZeroTier2",
     "sdwan@zt3":"ZeroTier3",
@@ -213,7 +202,6 @@
     "sdwan@zt8":"ZeroTier8",
     "sdwan@zt9":"ZeroTier9",
     "sdwan@zt10":"ZeroTier10",
-	
 	"vpns@l2tp":"PPTP服务器",
 	"vpns@pptp":"PPTP服务器",
 	"ovpns@server":"OPENVPN服务器",
@@ -227,22 +215,14 @@
 	"ALG":"应用层网关",
 	"Hosts":"Hosts映射",
 
-
-
 	"Wireless":"无线",
 
-
-
 	"Station":"终端",
-
-
 
 	"Application":"应用",
 	"Sensor":"传感",
 	"Indicator":"指示",
 	"Cloud":"集群",
-
-
 
 	"System":"系统",
 	"Device":"设备管理",
@@ -250,8 +230,6 @@
 	"Configure":"配置管理",
 	"Password":"密码管理",
 	"Auto Reboot":"自动重启",
-
-
 
 	"Debug":"调试",
 	"Syslog":"系统日志",
@@ -262,8 +240,6 @@
 	"AT command(LTE)":"AT命令(4G基带)",
 	"AT command(LTE/NR)":"AT命令(4G/5G基带)",
 
-
-
 	"Development":"定制开发",
 	"SDK":"SDK下载",
 	"Crontab":"定时任务",
@@ -271,7 +247,6 @@
 	"Uninittab":"关机执行",
 	"Jointtab":"事件处理",
 	"Service":"后台服务",
-
 
 
 	"Need to restart the system":"需要立即重启系统",
@@ -291,5 +266,4 @@
 	"must be a valid IP address":"必须为合法的IP地址",
 	"must be a valid number":"必须为数值",
 	"must be a valid port":"必须为合法的端口号(1-65535)"
-
 }

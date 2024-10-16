@@ -5,8 +5,6 @@
     <div class="form-horizontal" role="form">
 
 
-        <h3 data-i18n="Firmware"></h3>
-
         <!-- 软件版本 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Firmware Version"></label>
@@ -163,7 +161,7 @@
 
 
     /* init */
-    $.i18n().load( page.lang('device') ).then( function () {
+    $.i18n().load( page.lang('software') ).then( function () {
 
       /* init the langauage */
       $.i18n().locale = lang; $('body').i18n();
@@ -195,7 +193,7 @@
       $('#upgrade').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
       // bind the upgrade
       $('#upgrade').fileupload({
-        url:'/cgi/upgrade', paramName:'filename', dataType:'text',
+        url:'/upload?call=arch@firmware.upgrade', paramName:'filename', dataType:'text',
         add: function( e, data )
         { // 选择文件之后，执行升级之前
           page.confirm( { message: $.i18n('The device may need to be restarted, confirm whether to continue'),

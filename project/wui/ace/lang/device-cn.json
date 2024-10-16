@@ -1,15 +1,15 @@
 {
-	"Online":"上线状态",
 	"Device Name":"设备名称",
 	"Modify":"修改",
 	"Input new device name":"输入新的设备名称",
-	"Custom Model":"客户型号",
+
 	"Model":"硬件型号",
-	"Features":"功能后缀",
 	"Date Code":"生产日期",
 	"Serial Number":"产品序号",
 	"MAC Address":"MAC地址",
+
 	"Current Time":"当前时间",
+	"Copy from computer":"与电脑对时",
 	"Time Source":"时间来源",
 	"ntp":"NTP对时",
 	"rtc":"RTC",
@@ -17,8 +17,8 @@
 	"gps":"GPS对时",
 	"set":"手动设置",
 	"sourcenull":"无有效来源",
-	"Copy from computer":"与电脑对时",
 	"Run Time":"运行时长",
+
 	"System Reboot":"系统重启",
 	"Are you sure you want to restart":"确定重启系统",
 	"Restarting...":"重启中...",
@@ -45,10 +45,9 @@
 	"Language Settings":"语言",
 	"cn":"中文",
 	"en":"English",
-	"th":"ภาษาไทย",
 	"Restore to factory will not change its setting":"恢复出厂设置不会更改其设置",
 	"Make sure to change the system language":"确定改变系统语言",
-	
+
 	"Time Zone":"时区",
 	"UTC-12(IDL- International Date Line)": "UTC-12(IDL-国际换日线)",
 	"UTC-11(MIT - Midway Island Standard Time)": "UTC-11(MIT - 中途岛标准时间)",
@@ -96,155 +95,5 @@
 	"NTP Server3":"NTP服务器3",
 	"Sync successfully":"对时成功",
 	"Sync Failure":"对时失败",
-	"NTP Service":"本地NTP授时",
-
-
-
-
-
-
-
-
-	"Firmware":"固件管理",
-	"Firmware Version":"固件版本",
-	"Firmware SDK":"固件SDK",
-	"Firmware Identifier":"固件标识",
-	"Upgrade":"软件更新",
-	"No File":"未指定文件",
-	"Choose":"浏览",
-	"Change":"重选",
-	"Success":"成功",
-	"Hardware type mismatch":"芯片类型不匹配",
-	"Custom type mismatch":"产品型号不匹配",
-	"Function locked":"升级功能被锁定",
-	"Unspecified file":"未指定更新文件",
-	"Empty file or no exsit":"更新的文件不能为空",
-	"File format wrong":"更新文件格式错误",
-	"Update busy":"有其它进程正在更新",
-	"Execute shell failed":"Shell脚本执行出错",
-	"Write flash wrong":"写入Flash失败",
-	"The device may need to be restarted, confirm whether to continue":"设备可能需要重启, 确定是否继续",
-	"Restart the system or not":"是否重启系统",
-	"Update successfully, now restarting...":"更新成功, 正在重启",
-	"Make sure that the device is reconnected":"确定已重新连接上设备",
-
-	"Upgrade Online":"在线更新",
-	"Check new version":"检查新版本",
-	"New version available":"发现新版本",
-	"All version change log":"所有版本日志",
-	"Change Log":"版本更新说明",
-	"Checking...":"检查中...",
-	"No new version":"无新版本固件",
-	"It's the latest version":"当前已经是最新版本",
-	"Are you sure you want to upgrade the newst version online, it will take long time":"确定在线升级到最新的版本, 这将需要等待比较长的时间, 升级过程中不能断电",
-	"Upgrading...":"升级中...",
-	"Upgrade online successfully, Restart the system or not":"在线升级成功, 确定是否重启",
-	"Upgrade online successfully, now restarting...":"在线升级成功, 正在重启...",
-	"Upgrade online Failure, Please try again":"在线升级失败, 请重试",
-
-	"Current FPK List":"当前FPK列表",
-	"FPK Number":"FPK数",
-	"Name":"名称",
-	"Size":"大小",
-	"Version":"版本",
-	"Path":"路径",
-	"Introduction":"简介",
-	"Author":"作者",
-	"Operation":"操作",
-	"Cannot delete the software buildin firmware":"无法删除固件中的软件包",
-	"Delete successfully":"删除成功",
-	"Enter FPK Repositories":"进入FPK仓库",
-	"Default FPK&Configure":"恢复出厂FPK&配置",
-	"Are you sure you want to clear all install FPK and default the system configure":"确定删除所有安装的FPK并恢复出厂设置",
-
-	"Repositories FPK List":"仓库FPK列表",
-	"Updating...":"更新中...",
-	"Install":"安装",
-	"Installing...":"安装中...",
-	"Install succeed, The new install FPK will be under the application menu":"安装成功, 新安装的软件将会在<应用>菜单项下",
-	"Install failed":"安装失败",
-
-
-
-
-
-
-	"Configure Version":"配置版本",
-	"Default":"默认配置",
-	"Backup Configure":"备份配置",
-	"Default Configure":"恢复默认设置",
-	"Restore Configure":"导入配置",
-	"Backup EEPROM":"备份EEPROM",
-
-	"Restore...":"导入配置...",
-	"Restore Failure":"导入配置失败",
-	"Are you sure you want to default the system configure":"确定恢复默认设置",
-	"Are you sure you want to save current configure to default configure":"确定将当前设置保存为默认设置",
-	"Save configure to default succeed":"保存当前设置为默认设置成功",
-	"Save configure to default failed":"保存当前设置为默认设置失败",
-	"Are you sure you want to default the system configure to factory state":"确定恢复出厂设置",
-	"Restore the configuration is successful, now restarting...":"导入配置成功, 重启中...",
-	
-
-
-
-
-	"Logo Color":"Logo颜色",
-	"Logo Title":"Logo标题",
-	"Logo Width":"Logo宽度",
-	"Logo Height":"Logo高度",
-	"Logo Align":"Logo对齐",
-	"Center":"居中",
-	"Right":"靠右",
-	"Show Logo Model":"Logo栏中显示型号",
-	"Show Model Bar":"显示型号栏",
-	"Show Copyright":"显示版权",
-	"Show Fireware Identify":"显示固件标识",
-	"Show Upgrade Online":"显示在线升级",
-	"Show Repo Online":"显示在线安装包",
-	"Show Development Menu":"显示开发者菜单",
-	"Upload Login HTML":"上传Login文件",
-	"Upload Index HTML":"上传Index文件",
-	"Upload Logo File":"上传Logo文件",
-	"Upload CSS File":"上传CSS文件",
-	"Apply Above Configure":"应用以上配置",
-
-	"Save Default Configure":"保存默认配置",
-	"Factory Configure":"恢复出厂配置",
-	"Restore Default Configure":"导入默认配置",
-
-	"Lock Upgrade":"锁定更新",
-	"Lock Configure":"锁定配置",
-	"Lock Restart":"锁定重启",
-	"Lock Default":"锁定恢复默认设置",
-	"Lock Factory":"锁定恢复出厂配置",
-
-
-
-	"Ethernet":"以太网",
-	"Link":"状态",
-	"Receive":"接收",
-	"Port0":"端口0",
-	"Port1":"端口1",
-	"Port2":"端口2",
-	"Port3":"端口3",
-	"Port4":"端口4",
-
-	"UART":"串口",
-	"Serial1":"串口1",
-	"Serial2":"串口2",
-	"Serial3":"串口3",
-	"Serial4":"串口4",
-
-
-
-	"Username":"用户名",
-	"Original Password":"原密码",
-	"New Password":"新密码",
-	"Repeat New Password":"重输新密码",
-	"Username cannot be empty":"用户名不能为空",
-	"Password cannot be empty":"新密码不能为空",
-	"The two password input is inconsistent":"新密码不一致"
-
-
+	"NTP Service":"本地NTP授时"
 }

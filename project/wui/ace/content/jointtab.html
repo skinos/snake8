@@ -29,16 +29,35 @@
     var rule_table = '#rule-grid-table';
     var rule_pager = '#rule-grid-pager';
     var list = { 
-                "network/online":"",
-                "network/on":"",
-                "network/off":"",
-                "network/offline":"",
+                "network/on":"",              // IPV4 local ifname connected
+                "network/onvpn":"",           // IPV4 vpn ifname connected
+                "network/onextern":"",        // IPV4 extern ifname connected
+                "network/online":"",          // IPV4 default route ifname connected
+
+                "network/off":"",             // IPV4 local ifname diconnect
+                "network/offvpn":"",          // IPV4 vpn ifname diconnect
+                "network/offextern":"",       // IPV4 extern ifname diconnect
+                "network/offline":"",         // IPV4 default ifname diconnect
+
+                "network/up":"",              // IPV6 local ifname connected
+                "network/upvpn":"",           // IPV6 vpn ifname connected
+                "network/upextern":"",        // IPV6 extern ifname connected
+                "network/upline":"",          // IPV6 default route ifname connected
+
+                "network/down":"",            // IPV6 local ifname diconnect
+                "network/downvpn":"",         // IPV6 vpn ifname diconnect
+                "network/downextern":"",      // IPV6 extern ifname diconnect
+                "network/downline":"",        // IPV6 default ifname diconnect
+
                 "station/join":"",
                 "station/leave":"",
+
                 "firmware/upgrading":"",
                 "firmware/upgraded":"",
+
                 "date/modify":"",
                 "auth/modify":""
+
                };
 
     /* load the configure on the input */
@@ -133,7 +152,7 @@
     }
 
 
-    $.i18n().load( page.lang('debug') ).then( function () {
+    $.i18n().load( page.lang('inittab') ).then( function () {
         /* init the langauage */
         $.i18n().locale = lang; $('body').i18n();
 

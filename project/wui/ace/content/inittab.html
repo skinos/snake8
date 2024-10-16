@@ -32,14 +32,10 @@
                 "general":"",
                 "app2":"",
                 "app":"",
+                "extern":"",
+                "local":"",
                 "manage2":"",
                 "manage":"",
-                "extern":"",
-                "aradio":"",
-                "nradio":"",
-                "ethernet":"",
-                "modem":"",
-                "network":"",
                 "core2":"",
                 "core":""
                };
@@ -136,7 +132,7 @@
     }
 
 
-    $.i18n().load( page.lang('debug') ).then( function () {
+    $.i18n().load( page.lang('inittab') ).then( function () {
         /* init the langauage */
         $.i18n().locale = lang; $('body').i18n();
 
