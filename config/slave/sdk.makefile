@@ -82,9 +82,9 @@ app_distclean: app_clean
 
 
 
-OPENWRT_SDK_NAME:=openwrt-raw.tar.xz
 OPENWRT_DL_NAME:=dl-raw.tar.xz
 OPENWRT_FEED_NAME:=feeds-raw.tar.gz
+OPENWRT_SDK_NAME:=openwrt-raw.tar.xz
 sdk_update:
 	# 下载或更新底层SDK
 	# 更新dl目录, 避免每次一个一个下载
@@ -92,7 +92,7 @@ sdk_update:
 	# 更新fpk
 	if [ -e ${gPLATFORM_DIR} ]; then \
 		cd ${gPLATFORM_DIR}; rm -fr *.fpk*; \
-		cd ${gPLATFORM_DIR}; repo-update host ${gHARDWARE} ${gCUSTOM} fpk; \
+		cd ${gPLATFORM_DIR}; repo-update slave ${gHARDWARE} ${gCUSTOM} fpk; \
 	fi
 sdk_adjust:
 	# 对底层SDK打补丁
@@ -151,7 +151,9 @@ sdk_uninstall:
 sdk_ftp:
 sdk_repo:
 	if [ -d ${gSTORE_DIR} ]; then \
-		repo-upload host ${gHARDWARE} ${gCUSTOM} ${gSCOPE} ${gSTORE_DIR} fpk; \
+		repo-upload slave ${gHARDWARE} ${gCUSTOM} ${gSCOPE} ${gSTORE_DIR} fpk; \
 	fi
 .PHONY: sdk_ftp sdk_repo
+
+
 
