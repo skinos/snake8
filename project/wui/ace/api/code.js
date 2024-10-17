@@ -131,16 +131,7 @@ var base64 =
             }
         }
         return string;
-    },
-	
-    // add the encode for pass
-    en5: function ( p, u, r )
-    {
-    	var k = p+":"+u+":"+r;
-    	var m = md5( k );
-    	return  base64.encode( m )
     }
-	
 }
 
 /**

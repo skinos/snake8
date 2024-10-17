@@ -61,12 +61,15 @@ jQuery(function($) {
 		})
 		
 	});
+	
+
+
 	// login
 	function login_system(  )
 	{
 		var paramter = {};
 		paramter["username"] = $("#username").val();
-		paramter["password"] = base64.en5( $("#password").val(), $("#username").val(), window.machines.rand );
+		paramter["password"] = base64.encode( md5( $("#password").val()+":"+$("#username").val()+":"+window.machines.rand ) );
 	    $.ajax({
 	        'url':"/auth", 'type':'POST', 'timeout':0, 'async':true, 'contentType':'application/x-www-form-urlencoded', 'data':JSON.stringify(paramter),
 	        'complete': function ( x, s )
