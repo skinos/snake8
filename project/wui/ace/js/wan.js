@@ -1,4 +1,3 @@
-(function () {
 
 /* get the object */
 var wan;
@@ -9,6 +8,7 @@ if ( index )
 {
     object = index;
 }
+
 /* load the status */
 function status_load()
 {
@@ -52,8 +52,6 @@ function status_load()
       $(id+"_livetime").text( info.livetime||' ' );
   })
 }
-
-
 
 /* load the configure on the input */
 function config_load()
@@ -262,8 +260,6 @@ function config_load()
 
   })
 }
-
-
 
 /* save the configure */
 function config_save()
@@ -547,7 +543,6 @@ function config_save()
 }
 
 
-
 /* init */
 page.password('password', 'password-icon' );
 $.i18n().load( page.lang('wan') ).then( function () {
@@ -588,4 +583,3 @@ $.i18n().load( page.lang('wan') ).then( function () {
     });
 });
 
-})();
