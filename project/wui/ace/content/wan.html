@@ -1,0 +1,420 @@
+
+<!-- ajax layout which only needs content area -->
+<div class="row" id="page-modes">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+        <!-- 连接状态 -->
+        <table class="table table-bordered table-striped">
+        <tbody>
+            <tr>
+                <th data-i18n="Status"></th>
+                <td>
+                    <span id="wan_status"></span>&nbsp; &nbsp;
+                    <a class="btn btn-mini btn-warning" id="wan_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
+                </td>
+                <th data-i18n="IPv4 Address"></th><td id="wan_ip"></td>
+            </tr>
+            <tr>
+                <th data-i18n="MAC Address"></th><td id="wan_mac"></td> <th data-i18n="Gateway"></th><td id="wan_gateway"></td> 
+            </tr>
+            <tr>
+                <th data-i18n="Online Time"></th><td id="wan_livetime"></td> <th data-i18n="DNS"></th><td id="wan_dns"></td>
+            </tr>
+            <tr>
+                <th data-i18n="Rx/Tx"></th><td id="wan_rxtx"></td> <th data-i18n="DNS2"></th><td id="wan_dns2"></td>
+            </tr>
+        </tbody>
+        </table>            
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <!-- 网络功能 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="status" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+        <div id="status_config" style="display: none;" >
+
+            <!-- IPV4拨号模式 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Mode"></label>
+              <div class="col-sm-9">
+                <select class="col-xs-10 col-sm-5" id="mode">
+                  <option value="pppoec" data-i18n="PPPOE"></option>
+                  <option value="dhcpc" data-i18n="DHCP"></option>
+                  <option value="static" data-i18n="Static IP"></option>
+                </select>
+              </div>
+            </div>
+
+            <!-- dhcpc设置-->
+            <div id="dhcpc_cfg" style="display: none;" >
+                <!-- 开启route选项支持 -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Route Options"></label>
+                  <div class="col-sm-9">
+                    <label>
+                      <input id="routeopt" class="ace ace-switch ace-switch-6" type="checkbox" />
+                      <span class="lbl"></span>
+                    </label>
+                  </div>
+                </div>
+            </div>
+
+            <!-- Static设置-->
+            <div id="static_cfg" style="display: none;" >
+                <!-- IP地址 -->
+                <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
+                    <div class="col-sm-9">
+                      <div class="clearfix">
+                        <input type="text" id="ip" class="col-xs-10 col-sm-5" maxlength="128" />
+                      </div>
+                    </div>
+                </div>
+                <!-- 掩码 -->
+                <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
+                    <div class="col-sm-9">
+                      <div class="clearfix">
+                        <input type="text" id="mask" class="col-xs-10 col-sm-5" maxlength="128" />
+                      </div>
+                    </div>
+                </div>
+                <!-- 网关 -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Gateway"></label>
+                  <div class="col-sm-9">
+                    <div class="clearfix">
+                      <input type="text" id="gw" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                </div>
+                <!-- DNS -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS"></label>
+                  <div class="col-sm-9">
+                    <div class="clearfix">
+                      <input type="text" id="dns" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                </div>
+                <!-- DNS2 -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS2"></label>
+                  <div class="col-sm-9">
+                    <div class="clearfix">
+                      <input type="text" id="dns2" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                </div>
+            </div> <!-- static_cfg -->
+
+            <!-- PPPOE设置-->
+            <div id="pppoe_cfg" style="display: none;" >
+
+                <!-- 拨号用户名 -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+                  <div class="col-sm-9">
+                    <input type="text" id="username" class="col-xs-10 col-sm-5" maxlength="128" />
+                  </div>
+                </div>
+                <!-- 拨号密码 -->
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+                  <div class="col-sm-9">
+                    <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+                      <input type="password" id="password" maxlength="128" autocomplete="new-password" />
+                      <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
+                    </span>
+                  </div>
+                </div>
+            
+                <!-- lcp 间隔 -->
+                <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="LCP Echo Interval"></label>
+                    <div class="col-sm-9">
+                      <input type="text" id="lcp_echo_interval" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                </div>
+                <!-- lcp 失败次数 -->
+                <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="LCP Echo Times"></label>
+                    <div class="col-sm-9">
+                      <input type="text" id="lcp_echo_failure" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                </div>
+            </div> <!-- pppoe_cfg -->
+
+            <!-- 自定义DNS -->
+            <div id="customdns_cfg" style="display: none;">
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Custom DNS"></label>
+                  <div class="col-sm-9">
+                    <label>
+                      <input id="custom_dns" class="ace ace-switch ace-switch-6" type="checkbox" />
+                      <span class="lbl"></span>
+                    </label>
+                  </div>
+                </div>
+                <div id="customdns_config" style="display: none;">
+                  <!-- DNS -->
+                  <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS"></label>
+                    <div class="col-sm-9">
+                      <input type="text" id="cdns" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                  <!-- DNS2 -->
+                  <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS2"></label>
+                    <div class="col-sm-9">
+                      <input type="text" id="cdns2" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                </div>
+            </div><!-- customdns_cfg -->
+              
+            <!-- IP伪装 -->
+            <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Masquerade(NAT)"></label>
+                <div class="col-sm-9">
+                    <label>
+                        <input id="masq" class="ace ace-switch ace-switch-6" type="checkbox" />
+                        <span class="lbl"></span>
+                    </label>
+                </div>
+            </div>
+            <!-- mtu -->
+            <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="MTU"></label>
+                <div class="col-sm-9">
+                    <input type="text" id="mtu" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+            </div>
+
+
+
+
+
+
+
+          <div id="ipv6_cfg" style="display: none;" >
+      
+              <div class="hr hr32 hr-dotted"></div>
+              <!-- IPV6拨号模式 -->
+              <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv6 Mode"></label>
+                <div class="col-sm-9">
+                  <select class="col-xs-10 col-sm-5" id="method">
+                    <option value="disable" data-i18n="Disable"></option>
+                    <!-- <option value="slaac" data-i18n="SLAAC"></option> -->
+                    <option value="automatic" data-i18n="Automatic"></option>
+                    <option value="manual" data-i18n="Manual"></option>
+                  </select>
+                </div>
+              </div>
+      
+              <!-- Manual设置-->
+              <div id="manual_cfg" style="display: none;" >
+                  <!-- IPV6地址 -->
+                  <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv6 Address"></label>
+                      <div class="col-sm-9">
+                        <div class="clearfix">
+                          <input type="text" id="addr" class="col-xs-10 col-sm-5" maxlength="128" />
+                        </div>
+                      </div>
+                  </div>
+            
+                  <!-- 掩码 -->
+                  <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Prefix"></label>
+                      <div class="col-sm-9">
+                        <div class="clearfix">
+                          <input type="text" id="prefix" class="col-xs-10 col-sm-5" maxlength="128" />
+                        </div>
+                      </div>
+                  </div>
+                  <!-- 网关 -->
+                  <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Next Hop"></label>
+                    <div class="col-sm-9">
+                      <div class="clearfix">
+                        <input type="text" id="hop" class="col-xs-10 col-sm-5" maxlength="128" />
+                      </div>
+                    </div>
+                  </div>
+            
+                  <!-- DNS -->
+                  <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS"></label>
+                    <div class="col-sm-9">
+                      <div class="clearfix">
+                        <input type="text" id="resolve" class="col-xs-10 col-sm-5" maxlength="128" />
+                      </div>
+                    </div>
+                  </div>
+            
+                  <!-- DNS2 -->
+                  <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS2"></label>
+                    <div class="col-sm-9">
+                      <div class="clearfix">
+                        <input type="text" id="resolve2" class="col-xs-10 col-sm-5" maxlength="128" />
+                      </div>
+                    </div>
+                  </div>
+              </div> <!-- manual_cfg -->
+          </div> <!-- ipv6_cfg -->
+
+
+
+
+
+
+
+          <div class="hr hr32 hr-dotted"></div>
+          <!-- 保活模式 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Availability Check"></label>
+            <div class="col-sm-9">
+              <select class="col-xs-10 col-sm-5" id="keeplive">
+                <option value="disable" data-i18n="Disable"></option>
+                <option value="icmp" data-i18n="ICMP"></option>
+                <option value="dns" data-i18n="UDP&TCP"></option>
+                <option value="recv" data-i18n="Receive Count"></option>
+                <option value="auto" data-i18n="Auto"></option>
+              </select>
+            </div>
+          </div>
+          <!-- icmp配置 -->
+          <div id="icmp_cfg" style="display: none;">
+            <!-- 地址 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Test Address"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="icmp_test" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+            <!-- 地址2 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Test Address 2"></label>
+              <div class="col-sm-9">
+                <input type="text" id="icmp_test2" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 地址3 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Test Address 3"></label>
+              <div class="col-sm-9">
+                <input type="text" id="icmp_test3" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 超时 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Each Query Timeout(sec)"></label>
+              <div class="col-sm-9">
+                <input type="text" id="icmp_timeout" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 次数 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Test Times"></label>
+              <div class="col-sm-9">
+                <input type="text" id="icmp_failed" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 间隔 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Test Interval(sec)"></label>
+              <div class="col-sm-9">
+                <input type="text" id="icmp_interval" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+          </div><!-- icmp_cfg -->
+          <div id="dns_cfg" style="display: none;">
+            <!-- 超时 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Each Query Timeout(sec)"></label>
+              <div class="col-sm-9">
+                <input type="text" id="dns_timeout" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 次数 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Query Times"></label>
+              <div class="col-sm-9">
+                <input type="text" id="dns_failed" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 间隔 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Query Interval(sec)"></label>
+              <div class="col-sm-9">
+                <input type="text" id="dns_interval" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+          </div>
+          <!-- Receive配置 -->
+          <div id="recv_cfg" style="display: none;">
+            <!-- 超时 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Count Duration(sec)"></label>
+              <div class="col-sm-9">
+                <input type="text" id="recv_timeout" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 次数 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Count Times"></label>
+              <div class="col-sm-9">
+                <input type="text" id="recv_failed" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+            <!-- 包数 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Received packets"></label>
+              <div class="col-sm-9">
+                <input type="text" id="recv_packets" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+          </div>
+
+
+
+      </div>
+
+
+
+      
+
+      <div class="clearfix form-actions">
+        <div class="col-md-offset-3 col-md-9">
+          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+          &nbsp; &nbsp; &nbsp;
+          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+        </div>
+      </div>
+
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script src="/js/wan.js"></script>
+
+
+
