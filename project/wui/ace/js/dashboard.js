@@ -138,9 +138,9 @@ function lte_show( ifname, value )
     $("[id='"+ifname+"_ip']").html( value.ip||"" );
     if ( value.delay )
     {
-        if ( value.delay == "failed" )
+        if ( value.delay == "failed" || value.delay == "block" )
         {
-            $("[id='"+ifname+"_delay']").text( $.i18n("failed") );
+            $("[id='"+ifname+"_delay']").text( $.i18n(value.delay) );
         }
         else
         {
@@ -246,9 +246,9 @@ function wan_show( ifname, value )
     $("[id='"+ifname+"_ip']").html( value.ip||"" );
     if ( value.delay )
     {
-        if ( value.delay == "failed" )
+        if ( value.delay == "failed" || value.delay == "block" )
         {
-            $("[id='"+ifname+"_delay']").text( $.i18n("failed") );
+            $("[id='"+ifname+"_delay']").text( $.i18n(value.delay) );
         }
         else
         {
@@ -357,11 +357,11 @@ function wisp_show( ifname, value )
     $("[id='"+ifname+"_ip']").html( value.ip||"" );
     if ( value.delay )
     {
-        if ( value.delay == "failed" )
+        if ( value.delay == "failed" || value.delay == "block" )
         {
-            $("[id='"+ifname+"_delay']").text( $.i18n("failed") );
+            $("[id='"+ifname+"_delay']").text( $.i18n(value.delay) );
         }
-        else
+		else
         {
             $("[id='"+ifname+"_delay']").text( $.i18n("Delay")+":"+value.delay );
         }

@@ -42,7 +42,7 @@ boole_t _setup( obj_t this, param_t param )
 		reg_set_int( this, "tid", tid );
 	}
 
-    /* get the ifdev */
+    /* get the ifdev, register by network@frame.register when network@frame.setup */
 	ifdev = reg_string( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
@@ -64,6 +64,7 @@ boole_t _setup( obj_t this, param_t param )
 }
 boole_t _shut( obj_t this, param_t param )
 {
+    int i;
     const char *obj;
 	const char *ifdev;
     const char *object;
@@ -79,6 +80,9 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( "%s-automatic", object );
     /* stop the service */
     sdelete( object );
+	/* clear the reconnect count */
+	i = 0;
+	reg_set_int( this, "connect_failed", i );
 
     /* delete online file */
     project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ol", object );
@@ -296,9 +300,13 @@ talk_t _state( obj_t this, param_t param )
 				{
                     json_set_number( ret, "delay", delay );
 				}
-				else
+				else if ( delay < 0 )
 				{
                     json_set_string( ret, "delay", "failed" );
+				}
+				else
+				{
+                    json_set_string( ret, "delay", "block" );
 				}
             }
             /* get the livetime */
@@ -517,7 +525,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/********** get the infomation ***********/
 	/*****************************************/
-	/* get the ifdev */
+    /* get the ifdev */
 	ifdev = register_pointer( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
@@ -576,6 +584,7 @@ boole_t _service( obj_t this, param_t param )
 	{
 		method = "disable";
 	}
+	/* set the mode */
 	reg_set_string( this, "mode", mode );
 	reg_set_string( this, "method", method );
 	/* get the count */
@@ -889,23 +898,26 @@ boole_t _online( obj_t this, param_t param )
 	v = param_talk( param, 1 );
 	obj = obj_com( this );
 	object = obj_name( this );
-	/* get ifdev */
+	/* get ifdev netdev */
 	ifdev = json_string( v, "ifdev" );
-	/* get netdev */
 	netdev = json_string( v, "netdev" );
+	if ( netdev == NULL )
+	{
+		return tfalse;
+	}
 	/* get the configure */
 	cfg = config_get( this, NULL ); 
 	if ( cfg == NULL )
 	{
 		return tfalse;
 	}
-	/* set the keeplive */
-	ptr = json_string( json_value( cfg, "keeplive"), "type" );
-	reg_set_string( this, "keeplive", ptr );
 	/* set the metric */
 	metric = json_string( cfg, "metric" );
 	reg_set_string( this, "metric", metric );
 	json_set_string( v, "metric", metric );
+	/* set the keeplive */
+	ptr = json_string( json_value( cfg, "keeplive"), "type" );
+	reg_set_string( this, "keeplive", ptr );
 	/* get mode */
 	mode = reg_string( this, "mode" );
 	/* get gateway */
@@ -919,8 +931,7 @@ boole_t _online( obj_t this, param_t param )
 	{
 		dns = json_string( value, "dns" );
 		dns2 = json_string( value, "dns2" );
-		i = 1;
-		reg_set_int( this, "custom_dns", i );
+		reg_set_string( this, "custom_dns", "enable" );
 	}
 	else
 	{
@@ -931,8 +942,7 @@ boole_t _online( obj_t this, param_t param )
 		{
 			string3file( path, "search %s\n", ptr );
 		}
-		i = 0;
-		reg_set_int( this, "custom_dns", i );
+		reg_set_string( this, "custom_dns", "disable" );
 	}
 	if ( dns != NULL && *dns != '\0' )
 	{
@@ -982,23 +992,18 @@ boole_t _online( obj_t this, param_t param )
 	}
 	/* set mtu */
 	mtu = json_number( cfg, "mtu" );
-	if ( strncmp( LAN_COM, object, strlen(LAN_COM) ) == 0 )
+	if ( mtu > 0 )
 	{
-		if ( mtu > 0 )
-		{
-			shell( "ifconfig %s mtu %s", netdev, mtu );
-			reg_set_int( this, "mtu", mtu );
-			pmtu_adjust_ifname( object, netdev, mtu );
-		}
+		shell( "ifconfig %s mtu %d", netdev, mtu );
+		reg_set_int( this, "mtu", mtu );
+		pmtu_adjust_ifname( object, netdev, mtu );
 	}
 	else
 	{
-		if ( mtu > 0 )
+		if ( 0 != strncmp( object, LAN_COM, strlen(LAN_COM) ) )
 		{
-			shell( "ifconfig %s mtu %s", netdev, mtu );
-			reg_set_int( this, "mtu", mtu );
+			pmtu_adjust_ifname( object, netdev, 0 );
 		}
-		pmtu_adjust_ifname( object, netdev, mtu );
 	}
 	/* set ppp tx queue */
 	if ( 0 == strncmp( netdev, "ppp", 3 ) )
@@ -1162,11 +1167,56 @@ boole_t _upline( obj_t this, param_t param )
 
 boole_t _keepon( obj_t this, param_t param )
 {
-	return tfalse;
+	int i;
+
+	i = 0;
+	reg_set_int( this, "connect_failed", i );
+	return ttrue;
 }
 boole_t _keepoff( obj_t this, param_t param )
 {
-	return tfalse;
+	talk_t cfg;
+	unsigned long i;
+	const char *ptr;
+	const char *ifdev;
+	const char *object;
+
+	object = obj_name( this );
+    cfg = config_sgets( object, "keeplive" );
+	if ( cfg == NULL )
+	{
+		return tfalse;
+	}
+	ptr = json_string( cfg, "action" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "reboot" ) )
+	{
+		i = uptime_int();
+		if ( i < 180 )
+		{
+		    keeplive_warn( "%s keeplive check failed, reset connectionn instead of reboot system when uptime(%d) to small", object, i );
+			sreset( NULL, NULL, NULL, object );
+		}
+		else
+		{
+		    keeplive_warn( "%s keeplive check failed, must reboot the system", object );
+			machine_restart( 1, "keeplive failed" );
+		}
+	}
+	else if ( ptr != NULL && 0 == strcmp( ptr, "reset" ) )
+	{
+		ifdev = reg_string( this, "ifdev" );
+		if ( ifdev != NULL && *ifdev != '\0' )
+		{
+		    keeplive_warn( "%s keeplive check failed, must reset the %s", object, ifdev );
+			scall( ifdev, "reset", NULL );
+		}
+	}
+	else
+	{
+	    keeplive_warn( "%s keeplive check failed, must reset connection", object );
+		sreset( NULL, NULL, NULL, object );
+	}
+	return ttrue;
 }
 
 

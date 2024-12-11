@@ -42,6 +42,7 @@
 
 	"Delay":"延迟",
 	"failed":"访问失败",
+	"block":"暂未通信",
 	"Mode":"模式",
 	"dhcpc":"自动获取",
 	"pppoec":"PPPOE宽带拨号",
@@ -124,6 +125,7 @@
 	"lan2":"LAN2",
 	"lan3":"LAN3",
 	"lan4":"LAN4",
+	"lan5":"LAN5",
 	"wan":"WAN",
 	"wan2":"WAN2",
 	"wan3":"WAN3",

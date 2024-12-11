@@ -460,7 +460,7 @@ function lte_show( info, id )
     }
     if ( info.delay )
     {
-        if ( info.delay == "failed" )
+        if ( info.delay == "failed" || info.delay == "block" )
         {
             $(id+"_delay").text( $.i18n(info.delay) );
         }
@@ -667,7 +667,7 @@ function wan_show( info, id    )
     $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
     if ( info.delay )
     {
-        if ( info.delay == "failed" )
+        if ( info.delay == "failed" || info.delay == "block" )
         {
             $(id+"_ack").text( $.i18n(info.delay) );
         }
@@ -898,7 +898,7 @@ function wisp_show( info, id )
     $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
     if ( info.delay )
     {
-        if ( info.delay == "failed" )
+        if ( info.delay == "failed" || info.delay == "block" )
         {
             $(id+"_ack").text( $.i18n(info.delay) );
         }

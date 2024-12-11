@@ -1,6 +1,6 @@
 window.hepath = "/he";
-window.key = localStorage.getItem( "key" );
 window.lang = localStorage.getItem( "lang" );
+window.talkkey = localStorage.getItem( "talkkey" );
 window.username = localStorage.getItem( "username" );
 // disable load the subpage, loading when after i18n loaded
 ace.demo.functions.enableDemoAjax= function () {};
@@ -722,6 +722,8 @@ function index_load()
 
 		menu.add( false, menus, $.i18n( 'Application' ), '', 'menu-icon fa fa-building' );
 
+		menu.add( false, menus, $.i18n( 'Service' ), '', 'menu-icon fa fa-building' );
+
 		menu.add( false, menus, $.i18n( 'Sensor' ), '', 'menu-icon fa fa-exchange' );
 
 		menu.add( false, menus, $.i18n( 'Indicator' ), '', 'menu-icon fa fa-eye' );
@@ -770,8 +772,9 @@ function index_load()
 				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Inittab' ), 'inittab' );
 				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Uninittab' ), 'uninittab' );
 				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Service' ), 'service' );
+				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
 				//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
+				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
 			}
 		}
 

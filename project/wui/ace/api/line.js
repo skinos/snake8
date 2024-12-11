@@ -78,8 +78,9 @@ var he =
         {
             return null;
         }
+		//console.log( "POST:"+window.talkkey );
+        paramter["key"] = window.talkkey;
 		paramter["username"] = window.username;
-        paramter["key"] = window.key;
         /* get the uri */
         uri = window.hepath+"?rand=" + Math.random();
         /* show the loading */
@@ -105,11 +106,13 @@ var he =
                         console.log( "Server Async Response String: "+x.responseText );
 						if ( x.responseText == "Auth Error" )
 						{
+							console.log( "Auth Error" );
 							window.location.href = 'login.html';
 							return;
 						}
 						else if ( x.responseText == "Data Error"  )
 						{
+							console.log( "Data Error" );
 						}
 						func( x.responseText );
                     }
@@ -122,6 +125,11 @@ var he =
                             return;
                         }
                         var value = new Object();
+						if ( callbak["key"] )
+						{
+							window.talkkey = callbak["key"];
+							//console.log( "UPDATE:"+window.talkkey );
+						}
                         for ( i in heindex )
                         {
                             if ( typeof callbak[i] == "string" )
@@ -174,11 +182,13 @@ var he =
                 console.log( "Server Response String: "+htmlobj.responseText );
 				if ( htmlobj.responseText == "Auth Error" )
 				{
+					console.log( "Auth Error" );
 					window.location.href = 'login.html';
 					return;
 				}
 				else if ( htmlobj.responseText == "Data Error"  )
 				{
+					console.log( "Data Error" );
 				}
 				ret = htmlobj.responseText;
             }
@@ -193,6 +203,11 @@ var he =
                 else
                 {
                     var value = new Object();
+					if ( callbak["key"] )
+					{
+						window.talkkey = callbak["key"];
+						//console.log( "UPDATE:"+window.talkkey );
+					}
                     for ( i in heindex )
                     {
                         if ( typeof callbak[ i ] == "string" )

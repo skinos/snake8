@@ -220,6 +220,7 @@
 	"Station":"终端",
 
 	"Application":"应用",
+	"Service":"服务",
 	"Sensor":"传感",
 	"Indicator":"指示",
 	"Cloud":"集群",
@@ -246,7 +247,8 @@
 	"Inittab":"开机启动",
 	"Uninittab":"关机执行",
 	"Jointtab":"事件处理",
-	"Service":"后台服务",
+	"Daemon":"后台服务",
+    "Network Frame":"网络结构",
 
 
 	"Need to restart the system":"需要立即重启系统",

@@ -148,8 +148,6 @@ function utilization_reload()
     var id;
     var value;
     he.bkload( [ 'land@machine.cpuinfo', 'land@machine.meminfo', 'land@machine.sginfo' ] ).then( function(v){
-
-
         cpumem_show( v[0], v[1] );
 
         i = 1;
@@ -159,7 +157,6 @@ function utilization_reload()
             sg_show( "#sg"+i, id, value );
             i++;
         }
-
     })
 }
 

@@ -10,7 +10,15 @@ $.i18n().load( page.lang('configure') ).then( function () {
     var d = new Date();
 	var year= d.getFullYear();
 	var month= d.getMonth()+1;
+	if ( month < 10 )
+	{
+		month = '0' + month;
+	}
 	var date= d.getDate();
+	if ( date < 10 )
+	{
+		date = '0' + date;
+	}
 	var dtitle = ""+year+month+date;
 	var backfile = "backup-"+dtitle+".tar";
     $('#backup').on(ace.click_event, function () {
@@ -19,7 +27,7 @@ $.i18n().load( page.lang('configure') ).then( function () {
         document.body.appendChild(sform);
 		sform.hidden = true;
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "username"; opt.value = window.username; sform.appendChild( opt );
-		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = window.key; sform.appendChild( opt );
+		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "object"; opt.value = "arch@data"; sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "api"; opt.value = "backup"; sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "p"; opt.value = dtitle; sform.appendChild( opt );
@@ -45,7 +53,7 @@ $.i18n().load( page.lang('configure') ).then( function () {
     // 导入配置
     $('#restore').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
     $('#restore').fileupload({
-        url:'/upload?username='+window.username+'&key='+window.key+'&object=arch@data&api=restore',
+        url:'/upload?username='+window.username+'&key='+window.talkkey+'&object=arch@data&api=restore',
         paramName: 'filename',
         dataType: 'text',
         add: function (e, data)

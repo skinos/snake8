@@ -42,8 +42,7 @@
 
 <!-- page specific plugin scripts -->
 <script type="text/javascript">
-  (function () {
-
+(function () {
     $.i18n().load( page.lang('sdk') ).then( function () {
       /* init the langauage */
       $.i18n().locale = lang; $('body').i18n();
@@ -74,6 +73,5 @@
           $('#gBOARDID').text(gBOARDID);
       });
     });
-
-  })();
+})();
 </script>

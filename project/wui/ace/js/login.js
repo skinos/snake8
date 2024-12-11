@@ -1,21 +1,19 @@
-
 window.hepath = "/public";
-window.key = "";
+window.talkkey = "";
 window.username = "";
-localStorage.setItem( "key", "" );
-localStorage.setItem( "username", "" );
+localStorage.setItem( "talkkey", window.talkkey );
+localStorage.setItem( "username", window.username );
 
 jQuery(function($) {
 
 	// load
-	he.load( [ 'wui@admin', 'land@machine', 'land@machine.status', 'arch@custom' ] ).then( function(v){
+	he.load( [ 'wui@admin', 'arch@custom', 'land@machine', 'land@machine.status' ] ).then( function(v){
 		window.wui = v[0];
-		window.machine = v[1];
-		window.machines = v[2];
-		window.custom = v[3];
+		window.custom = v[1];
+		window.machine = v[2];
+		window.machines = v[3];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
-
 		// prompt
 		$('#prompt').html( document.title );
 		// logo
@@ -41,7 +39,6 @@ jQuery(function($) {
 		        $("#copyright").show();
 		    }
 		}
-
 		// get the machine config and setup the language
 		page.password('password', 'password-icon' );
 		$.i18n().load( page.lang('index') ).then( function () { 
@@ -61,8 +58,6 @@ jQuery(function($) {
 		})
 		
 	});
-	
-
 
 	// login
 	function login_system(  )
@@ -71,7 +66,12 @@ jQuery(function($) {
 		paramter["username"] = $("#username").val();
 		paramter["password"] = base64.encode( md5( $("#password").val()+":"+$("#username").val()+":"+window.machines.rand ) );
 	    $.ajax({
-	        'url':"/auth", 'type':'POST', 'timeout':0, 'async':true, 'contentType':'application/x-www-form-urlencoded', 'data':JSON.stringify(paramter),
+	        'url':"/auth",
+			'type':'POST',
+			'timeout':0,
+			'async':true,
+			'contentType':'application/x-www-form-urlencoded',
+			'data':JSON.stringify(paramter),
 	        'complete': function ( x, s )
 	        {
 				console.log( "Server Async Response String: "+x.responseText );
@@ -91,7 +91,7 @@ jQuery(function($) {
 					if ( value["return"] == "true" )
 					{
 						localStorage.setItem( "lang", window.lang );
-						localStorage.setItem( "key", value["key"] );
+						localStorage.setItem( "talkkey", value["key"] );
 						localStorage.setItem( "username", value["username"] );
 						window.location.href = 'index.html';
 						return;
@@ -111,7 +111,6 @@ jQuery(function($) {
 		$('.widget-box.visible').removeClass('visible');//hide others
 		$(target).addClass('visible');//show target
 	});
-
 
 });
 

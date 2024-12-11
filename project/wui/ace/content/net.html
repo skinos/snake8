@@ -1,0 +1,67 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+
+
+    <!-- 方式 -->
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Ethernet(ethernet@lan) Mode"></label>
+      <div class="col-sm-9">
+        <select class="col-xs-10 col-sm-5" id="mode">
+          <option value="switch" data-i18n="Bridge"></option>
+          <option value="vlan" data-i18n="VLAN"></option>
+        </select>
+      </div>
+    </div>
+
+    <div id="list-sets"  style="display: none;">
+        <table id="list-grid-table"></table>
+        <div id="list-grid-pager"></div>
+    </div>
+    <span class="grey" data-i18n="Switch network interface device: ethernet@lan"></span>
+
+
+    <div class="hr hr32 hr-dotted"></div>
+    <span class="grey" data-i18n="Main 2.4G SSID network interface device: wifi@nssid"></span><br>
+    <span class="grey" data-i18n="Second 2.4G SSID network interface device: wifi@nssid2"></span><br>
+    <span class="grey" data-i18n="Third 2.4G SSID network interface device: wifi@nssid3"></span><br>
+    <span class="grey" data-i18n="Main 5.8G SSID network interface device: wifi@assid"></span><br>
+    <span class="grey" data-i18n="Second 5.8G SSID network interface device: wifi@assid2"></span><br>
+    <span class="grey" data-i18n="Third 5.8G SSID network interface device: wifi@assid3"></span><br>
+    <table id="vlan-grid-table"></table>
+    <div id="vlan-grid-pager"></div>
+
+    <table id="bridge-grid-table"></table>
+    <div id="bridge-grid-pager"></div>
+
+
+    <div class="hr hr32 hr-dotted"></div>
+    <table id="local-grid-table"></table>
+    <div id="local-grid-pager"></div>
+
+    <table id="extern-grid-table"></table>
+    <div id="extern-grid-pager"></div>
+
+
+
+
+    <div class="clearfix form-actions">
+      <div class="col-md-offset-3 col-md-9">
+        <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+        &nbsp; &nbsp; &nbsp;
+        <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+      </div>
+    </div>
+
+
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script src="/js/net.js"></script>
+

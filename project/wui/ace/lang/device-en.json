@@ -2,7 +2,7 @@
 	"ntp":"NTP Server",
 	"rtc":"RTC",
 	"lte":"LTE",
-	"gps":"GPS",
+	"gps":"GNSS",
 	"set":"Manual",
 	"sourcenull":"Invalid",
 
@@ -23,8 +23,5 @@
 	"repeater":"Repeater",
 	"mix":"Mix",
 	"parasite":"Parasite",
-	"test":"Factory Test",
-
-	"cn":"中文",
-	"en":"English"
+	"test":"Factory Test"
 }

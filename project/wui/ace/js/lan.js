@@ -1,6 +1,6 @@
 /* get the object */
 var lan;
-object = "ifname@lan";
+var object = "ifname@lan";
 var index = page.param( 'object', location.hash );
 if ( index )
 {
@@ -349,7 +349,7 @@ function config_save()
     page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
         if ( result )
         {
-            he.save( [ object+"="+JSON.stringify(lan)] ).then( function(){
+            he.save( [ object+"="+JSON.stringify(lan) ] ).then( function(){
                 page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
                     if ( result )
                     {
@@ -368,20 +368,20 @@ function config_save()
 
 /* init */
 $.i18n().load( page.lang('lan') ).then( function () {
-  /* init the langauage */
-  $.i18n().locale = lang; $('body').i18n();
+	/* init the langauage */
+	$.i18n().locale = lang; $('body').i18n();
 
-  /* load the configure */
-  config_load();
+	/* load the configure */
+	config_load();
 
-  /* bind the refresh */
-  $('#refresh').on(ace.click_event, function () {
-    location.reload();
-  });
-  /* bind the apply */
-  $('#apply').on(ace.click_event, function () {
-    config_save();
-  });
+	/* bind the refresh */
+	$('#refresh').on(ace.click_event, function () {
+		location.reload();
+	});
+	/* bind the apply */
+	$('#apply').on(ace.click_event, function () {
+		config_save();
+	});
 });
 
 
