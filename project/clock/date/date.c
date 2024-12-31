@@ -4,7 +4,7 @@
  *      Company:  ASHYELF
  */
 
-#include "land/skin.h"
+#include "skin/skin.h"
 
 
 
@@ -135,6 +135,10 @@ boole_t _setup( obj_t this, param_t param )
 
 	/* get the component configure */
     cfg = config_sget( COM_IDPATH, NULL );
+	if ( cfg == NULL )
+	{
+		return ttrue;
+	}
 	/* get the attribute value of "timezone" */
     ptr = json_string( cfg, "timezone" );
     if ( ptr == NULL || *ptr == '\0' )

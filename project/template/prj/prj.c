@@ -3,7 +3,7 @@
  * 		Author:  dimmalex (dim), dimmalex@gmail.com
  * 	   Company:  ASHYELF
  */
-#include "land/skin.h"
+#include "skin/skin.h"
 #define TEMPLATE_PATH "/prj/template"
 
 

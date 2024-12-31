@@ -1,19 +1,11 @@
 #!/bin/bash
 
-# delete lan
-rm -fr ./usr/prj/ifname/lan.cfg
-rm -fr ./usr/prj/ifname/lan2.cfg
-rm -fr ./usr/prj/ifname/lan3.cfg
-rm -fr ./usr/prj/ifname/lan4.cfg
-# delete hosts
-rm -fr ./usr/prj/network/hosts.cfg
+# delete ifname
+rm -fr ./usr/share/skinos/ifname
+# delete network
+rm -fr ./usr/share/skinos/network
 # delete clock
-rm -fr ./usr/prj/clock/date.cfg
-rm -fr ./usr/prj/clock/restart.cfg
-# delete tui
-rm -fr ./etc/dropbear
-rm -fr ./usr/prj/tui/ssh.cfg
-rm -fr ./usr/prj/tui/telnet.cfg
+rm -fr ./usr/share/skinos/clock
 
 # delete self
 rm -fr ./needless.sh

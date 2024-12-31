@@ -4,7 +4,7 @@
  *        Company:  ashyelf
  */
 
-#include "land/skin.h"
+#include "skin/skin.h"
 
 /* Usable macro 
 gPLATFORM             String, the platform on which it is compiled, such as MTK platform is "MTK" (this macro is defined in the top Makefile of the SDK)

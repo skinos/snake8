@@ -20,15 +20,15 @@ fi
 cd ${TOPDIR}
 
 # Custom
-for tmp in rice doc
-do
-    if [ -d ${TOPDIR}/${tmp} ]; then
-        echo "################################################"
-        echo "############## status the ${tmp} ###############"
-        echo "################################################"
-        cd ${TOPDIR}/${tmp};git status
-    fi
-done
+#for tmp in rice doc
+#do
+#    if [ -d ${TOPDIR}/${tmp} ]; then
+#        echo "################################################"
+#        echo "############## status the ${tmp} ###############"
+#        echo "################################################"
+#        cd ${TOPDIR}/${tmp};git status
+#    fi
+#done
 
 # MTK3 platform
 for tmp in config/smtk3/

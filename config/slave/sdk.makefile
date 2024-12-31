@@ -115,34 +115,25 @@ sdk_distclean: sdk_clean
 
 
 sdk_install:
-	sudo rm -fr /tmp/skin
-	sudo rm -fr /usr/prj
+	sudo rm -fr /tmp/skinos
+	sudo rm -fr /usr/share/skinos
+	sudo cp -ar ${gosROOT_DIR}/usr/share/skinos /usr/share
 	sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin
 	sudo cp -ar ${gosROOT_DIR}/usr/local/lib/* /usr/local/lib
-	sudo cp -ar ${gosROOT_DIR}/usr/prj /usr
 	sudo ldconfig
-sdk_bootup:
-	if [ -f /etc/rc.local ]; then \
-		alreadybootup=`cat /etc/rc.local|grep /usr/prj/setup.sh`; \
-		if [ "X${alreadybootup} = "X" ]; then \
-			sudo "runuser -u ${LOGNAME} /usr/prj/setup.sh"; \
-		fi \
-	else \
-		sudo cp ${gPLATFORM_DIR}/rc.local /etc/; \
-	fi
 sdk_start:
-	if [ -f /usr/prj/setup.sh ]; then \
-		/usr/prj/setup.sh; \
+	if [ -f /usr/share/skinos/setup.sh ]; then \
+		/usr/share/skinos/setup.sh; \
 	fi
 sdk_stop:
-	if [ -f /usr/prj/shut.sh ]; then \
-		/usr/prj/shut.sh; \
+	if [ -f /usr/share/skinos/shut.sh ]; then \
+		/usr/share/skinos/shut.sh; \
 	fi
-	sudo rm -fr /tmp/skin
+	sudo rm -fr /tmp/skinos
 sdk_uninstall:
-	sudo rm -fr /tmp/skin
-	sudo rm -fr /var/skin
-	sudo rm -fr /usr/prj
+	sudo rm -fr /tmp/skinos
+	sudo rm -fr /var/skinos
+	sudo rm -fr /usr/share/skinos
 	sudo ldconfig
 .PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_uninstall
 

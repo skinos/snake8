@@ -372,6 +372,7 @@ function index_load()
 			'network@frame.list[local]',
 			'network@frame.list[extern]',
 			'network@frame.list[outer]',
+			'network@hosts',
 			'land@fpk.wui_menu',
 			'.wifi@n',
 			'.wifi@a',
@@ -401,25 +402,26 @@ function index_load()
 		window.local_list = v[8];
 		window.extern_list = v[9];
 		window.outer_list = v[10];
-		window.fpk_menu = v[11];
+		window.hosts = v[11];
+		window.fpk_menu = v[12];
 		window.ifdev = {};
-		window.ifdev["wifi@n"] = v[12];
-		window.ifdev["wifi@a"] = v[13];
-		window.ifdev["modem@lte"] = v[14];
+		window.ifdev["wifi@n"] = v[13];
+		window.ifdev["wifi@a"] = v[14];
 		window.ifdev["modem@lte"] = v[15];
+		window.ifdev["modem@lte"] = v[16];
 		window.ifname = {};
-		window.ifname["ifname@lan"] = v[16];
-		window.ifname["ifname@lan2"] = v[17];
-		window.ifname["ifname@lan3"] = v[18];
-		window.ifname["ifname@lan4"] = v[19];
-		window.ifname["ifname@wan"] = v[20];
-		window.ifname["ifname@wan2"] = v[21];
-		window.ifname["ifname@wan3"] = v[22];
-		window.ifname["ifname@wan4"] = v[23];
-		window.ifname["ifname@lte"] = v[24];
-		window.ifname["ifname@lte2"] = v[25];
-		window.ifname["ifname@wisp"] = v[26];
-		window.ifname["ifname@wisp2"] = v[27];
+		window.ifname["ifname@lan"] = v[17];
+		window.ifname["ifname@lan2"] = v[18];
+		window.ifname["ifname@lan3"] = v[19];
+		window.ifname["ifname@lan4"] = v[20];
+		window.ifname["ifname@wan"] = v[21];
+		window.ifname["ifname@wan2"] = v[22];
+		window.ifname["ifname@wan3"] = v[23];
+		window.ifname["ifname@wan4"] = v[24];
+		window.ifname["ifname@lte"] = v[25];
+		window.ifname["ifname@lte2"] = v[26];
+		window.ifname["ifname@wisp"] = v[27];
+		window.ifname["ifname@wisp2"] = v[28];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
 		var logoshow = false;
@@ -712,7 +714,10 @@ function index_load()
 				menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN4' ), 'lan?object=ifname@lan4' );
 			}
 		}
-		menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
+        if ( window.hosts )
+        {
+            menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
+        }
 
 		menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
 
@@ -774,58 +779,49 @@ function index_load()
 				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
 				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
 				//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
+                if ( window.network_frame )
+                {
+                    menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
+                }
 			}
 		}
-
-
 
 		// Load the FPK html
 		var almark = false;
 		for( var index in window.fpk_menu )
 		{
 			var app = window.fpk_menu[index];
+			var app_menu = app['menu'];
 			var app_mode = app['mode'];
-			if ( app_mode )
-			{
-				if ( app_mode[window.machine.mode] != "enable" )
-				{
-					continue;
-				}
-			}
-			if ( window.wui.menu )
-			{
-				if ( window.wui.menu[index] == "disable" )
-				{
-					continue;
-				}
-			}
 			var app_page = app['page'];
+			var app_lang = app['lang'][window.lang];
+			var app_hash = 'app?page='+base64.encode(app_page);
+			var app_title = app[window.lang];
+			var app_object = app['object'];
+			if ( app_mode && app_mode[window.machine.mode] != "enable" )
+			{
+				continue;
+			}
+			if ( window.wui.menu && window.wui.menu[index] == "disable" )
+			{
+				continue;
+			}
 			if ( !app_page )
 			{
 				continue;
 			}
-			var app_hash = 'app?page='+base64.encode(app_page);
-			var app_object = app['object'];
 			if ( app_object )
 			{
 				app_hash += '&object='+app_object;
 			}
-			var app_lang = app['lang'][window.lang];
 			if ( app_lang )
 			{
 				app_hash += '&lang='+base64.encode(app_lang);
 			}
-			var app_title = app[window.lang];
 			if ( !app_title )
 			{
 				app_title = app["en"];
 			}
-			if ( !app_title )
-			{
-				continue;
-			}
-			var app_menu = app['menu'];
 			if ( !app_menu )
 			{
 				app_menu = 'Application';
@@ -842,9 +838,6 @@ function index_load()
 				menu.addlink( menus, $.i18n( app_menu ), app_title, app_hash );
 			}
 		}
-
-
-
 		if ( homepage == "" )
 		{
 			homepage = "sdk";

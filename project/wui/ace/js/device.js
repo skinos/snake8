@@ -57,11 +57,11 @@ function date_load()
     }
     // 添加到时区上, 并翻译
     $('#timezone').append(options).i18n();
+	// Load the configure
     he.load( [ 'clock@date', 'clock@date.status', 'clock@ntps' ] ).then( function(v){
         date = v[0];
         dates = v[1];
         ntps = v[2];
-
         if ( dates )
         {
             $('#current').text(date2string(dates.current));
@@ -75,7 +75,6 @@ function date_load()
             }
             $('#livetime').text(time2string(dates.livetime));
         }
-        
         if ( date )
         {
             $('#time_panel').show();
@@ -210,12 +209,7 @@ $.i18n().load( page.lang('device') ).then( function () {
   /* init the langauage */
   $.i18n().locale = lang; $('body').i18n();
 
-  /* compatibility to 7.3 */
-  if ( window.machine_status )
-  {
-      window.machines = window.machine_status;
-  }
-  /* load the info */
+  // load hostname
   $('#name_string').text(window.machine.name);
   if ( window.machines.cmodel )
   {
@@ -225,23 +219,18 @@ $.i18n().load( page.lang('device') ).then( function () {
   {
     $('#model_string').text(window.machines.model);
   }
-  if ( !wuimenu || wuimenu.model != "disable" )
-  {
-      $("#model_string").closest('.form-group').show();
-  }
+  // load datecode
   if ( window.machines.datecode )
   {
       $('#datecode').text(window.machines.datecode);
-      $("#datecode").closest('.form-group').show();
   }
+  // load the mac
   $('#mac').text(window.machine.mac);
-
-  // 修改设备名
+  // bind the hostname modify
   $('#name_modify').on(ace.click_event, function () {
       page.prompt( { message: $.i18n('Input new device name'), value:window.machine.name, callback:function(result){
           if ( result )
           { 
-              // 执行修改
               he.exec( [ "land@machine:name="+result ] ).then( function(v){
                   var ret = v[0];
                   if ( ret == true )
@@ -252,8 +241,7 @@ $.i18n().load( page.lang('device') ).then( function () {
           }
       } } );
   });
-
-  // 系统重启
+  // bind reboot
   $('#reboot').on(ace.click_event, function () {
       page.confirm( { message: $.i18n('Are you sure you want to restart') } ).then( function(result){
           if ( result )
@@ -263,7 +251,7 @@ $.i18n().load( page.lang('device') ).then( function () {
       });
   });
 
-  /* load the mode */
+  // mode
   if ( window.custom && window.custom.mode )
   {
     var m;
@@ -299,6 +287,7 @@ $.i18n().load( page.lang('device') ).then( function () {
     $("#mode").append("<option value='wisp'>"+$.i18n('wisp')+"</option>");
   }
   $("#mode").val( window.machine.mode );
+  // bind mode modify
   $("#mode").change(function(){
     var nmode = $("#mode").val();
     if ( nmode != window.machine.mode )
@@ -322,12 +311,22 @@ $.i18n().load( page.lang('device') ).then( function () {
         });
     }
   });
+
+  // hide or show
   if ( !wuimenu || wuimenu.opmode != "disable" )
   {
 	$("#mode").closest('.form-group').show();
   }
+  if ( !wuimenu || wuimenu.model != "disable" )
+  {
+	$("#model_string").closest('.form-group').show();
+  }
+  if ( window.machines.datecode )
+  {
+	$("#datecode").closest('.form-group').show();
+  }
 
-  /* load date */
+  // load date
   date_load();
 
   /* bind the refresh */

@@ -3,7 +3,7 @@
  * 		Author:  dimmalex (dim), dimmalex@gmail.com
  * 	   Company:  ASHYELF
  */
-#include "land/skin.h"
+#include "skin/skin.h"
 #include <readline/readline.h>
 #include <readline/history.h>
 

@@ -4,8 +4,8 @@
  *      Company:  HP
  */
 
-#include "land/skin.h"
-#include "landnet/landnet.h"
+#include "skin/skin.h"
+#include "skinnet/skinnet.h"
 #include <ifaddrs.h>
 #define LTE_STATE_RESET 6
 

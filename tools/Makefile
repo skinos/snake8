@@ -1,8 +1,9 @@
-#exclude_dirs:= . template
-exclude_dirs:= . template
-subdirs:=$(shell find . -maxdepth 1 -type d)
+exclude_dirs:= .
+dirs:=$(shell find . -maxdepth 1 -type d)
+links:=$(shell find . -maxdepth 1 -type l)
+subdirs:= $(dirs) $(links)
 subdirs:=$(patsubst ./%,%,$(subdirs))
-subdirs:=$(filter-out $(exclude_dirs),$(subdirs)) fpktools
+subdirs:=$(filter-out $(exclude_dirs),$(subdirs))
 all:
 	@for i in ${subdirs} ;do \
 		if [ ! -f $$i/Makefile ];then \

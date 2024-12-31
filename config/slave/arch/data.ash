@@ -6,8 +6,9 @@
 setup()
 {
     # mkdir basic directory
-    VROOT=/var/skin
-    TROOT=/tmp/skin
+    VROOT=/var/skinos
+    TROOT=/tmp/skinos
+    LANDDIR=/usr/share/skinos/land
     sudo mkdir -p $TROOT
     sudo mkdir -p $VROOT
     sudo chmod a+rwx $TROOT
@@ -25,21 +26,21 @@ setup()
     fi
     # make the register value default
     RAND=`date +%N`
-    he land@register.set_int[rand,$RAND]
-    he land@register.set_string[platform,$gPLATFORM]
-    he land@register.set_string[hardware,$gHARDWARE]
-    he land@register.set_string[custom,$gCUSTOM]
-    he land@register.set_string[scope,$gSCOPE]
-    he land@register.set_string[version,$gVERSION]
-    NETDEV=`he arch@data:local_netdev`
+    $LANDDIR/bin/he land@register.set_int[rand,$RAND]
+    $LANDDIR/bin/he land@register.set_string[platform,$gPLATFORM]
+    $LANDDIR/bin/he land@register.set_string[hardware,$gHARDWARE]
+    $LANDDIR/bin/he land@register.set_string[custom,$gCUSTOM]
+    $LANDDIR/bin/he land@register.set_string[scope,$gSCOPE]
+    $LANDDIR/bin/he land@register.set_string[version,$gVERSION]
+    NETDEV=`$LANDDIR/bin/he arch@data:local_netdev`
     if [ "X${NETDEV}" != "X" ]; then
-        he land@register.set_string[local_ifname,ifname@lan]
-        he land@register.set_string[local_netdev,$NETDEV]
+        $LANDDIR/bin/he land@register.set_string[local_ifname,ifname@lan]
+        $LANDDIR/bin/he land@register.set_string[local_netdev,$NETDEV]
     fi
-    MODEL=`he arch@data:model`
-    he land@register.set_string[model,$MODEL]
-    MAC=`he arch@data:mac`
-    he land@register.set_string[mac,$MAC]
+    MODEL=`$LANDDIR/bin/he arch@data:model`
+    $LANDDIR/bin/he land@register.set_string[model,$MODEL]
+    MAC=`$LANDDIR/bin/he arch@data:mac`
+    $LANDDIR/bin/he land@register.set_string[mac,$MAC]
     # default the configure if order
     if [ -e $VROOT/mnt/config/.customv6 ]; then
     	echo "mount the configure"
@@ -57,7 +58,7 @@ setup()
     fi
 
     NAME=`hostname`
-    he land@machine:name=$NAME
+    $LANDDIR/bin/he land@machine:name=$NAME
     
     creturn ttrue
 }

@@ -4,7 +4,7 @@
  *      Company:  ASHYELF
  */
 
-#include "land/skin.h"
+#include "skin/skin.h"
 #define NTPSERVER_CONFIG_FILE PROJECT_CONF_DIR"/ntps.conf"
 
 

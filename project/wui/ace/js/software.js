@@ -1,3 +1,4 @@
+
 var projects;
 var project_table = '#project-grid-table';
 var newst_url = null;
@@ -69,11 +70,6 @@ $.i18n().load( page.lang('software') ).then( function () {
   /* init the langauage */
   $.i18n().locale = lang; $('body').i18n();
 
-  /* compatibility to 7.3 */
-  if ( window.machine_status )
-  {
-    window.machines = window.machine_status;
-  }
   /* load the firmware info */
   if ( window.wui.bigversion && window.wui.bigversion == "enable" )
   {
