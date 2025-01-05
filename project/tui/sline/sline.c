@@ -84,11 +84,11 @@ int main( int argc, const char **argv )
 					{
 						if ( sset( object, cfg, NULL ) == true )
 						{
-							printf( "ttrue\n" );
+							printf( ttrue_string"\n" );
 						}
 						else
 						{
-							printf( "tfalse\n" );
+							printf( tfalse_string"\n" );
 						}
 						talk_free( cfg );
 						break;
