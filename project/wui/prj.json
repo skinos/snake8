@@ -16,5 +16,23 @@
     "uninit":
     {
         "app":"wui@admin.shut"
+    },
+
+    "wui":
+    {
+        "webs":
+        {
+            "menu":"System",
+            "cn":"WEB服务器",
+            "en":"Web Server",
+            "page":"admin.html",
+            "config":"wui@admin",
+            "lang":
+            {
+                "cn":"cn.json",
+                "en":"en.json"
+            }
+        }
     }
+    
 }

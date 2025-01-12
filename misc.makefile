@@ -35,12 +35,18 @@ update:
 # SDK rebuild for HOST
 rebuild:
 	make sdk_stop;make sdk_uninstall;make;make sdk_install;make sdk_start
-# SDK help for smtk2/smtk3
+# SDK help for smtk2/smtk3/slave
 menu:
 	make sdk_menu
 menuconfig:
 	make sdk_menuconfig
 sz:
 	make sdk_sz
+stop:
+	make sdk_stop
+start:
+	make sdk_start
+install:
+	make sdk_install
 
-.PHONY: update rebuild menu menuconfig sz
+.PHONY: update rebuild menu menuconfig sz stop start install
