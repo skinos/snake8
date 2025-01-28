@@ -13,10 +13,11 @@ setup()
     sudo mkdir -p $VROOT
     sudo chmod a+rwx $TROOT
     sudo chmod a+rwx $VROOT
-    mkdir -p $VROOT/.reg
-    mkdir -p $VROOT/.ser
-    mkdir -p $VROOT/.com
-    mkdir -p $VROOT/.conf
+    mkdir -p $TROOT/.conf
+    mkdir -p $TROOT/.reg
+    mkdir -p $TROOT/.ser
+    mkdir -p $TROOT/.com
+    mkdir -p $TROOT/.cah
     mkdir -p $VROOT/mnt
     mkdir -p $VROOT/mnt/config
     mkdir -p $VROOT/mnt/internal

@@ -1020,7 +1020,7 @@ boole_t _online( obj_t this, param_t param )
 	tid = reg_int( this, "tid" );
 	if ( tid != 0 )
 	{
-		routes_create_ifname( tid, v );
+		routes_ifname( tid, v );
 	}
 	/* tell the ifdev */
 	if ( ifdev != NULL )
