@@ -159,7 +159,7 @@ pid:
 	@echo "Switch the Board Identify to ${gBOARDID}"
 pidinfo:
 	echo 'gBOARDID=${gBOARDID}'
-
+dep:
 lay:
 	./mkdel
 	rm -rf ${gINSTALL_DIR} ${gBUILD_DIR}
@@ -193,7 +193,7 @@ clean:
 		rm -rf ${gINSTALL_DIR} ${gBUILD_DIR}; \
 	fi
 
-.PHONY: all pid pidinfo lay lay_install clean
+.PHONY: all pid pidinfo dep lay lay_install clean
 
 #####################################
 ######### Tools target ##############
