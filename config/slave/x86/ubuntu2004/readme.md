@@ -1,58 +1,51 @@
 ---
 title: "Readme for Ubuntu to be Server"
 author: dimmalex@gmail.com
-date: March 22, 2023
+date: February 3, 2024
 output:
     word_document:
         path: D:/tmp/Readme.docx
 ---
 
 
-# SkinOS Server SDK download and compile
+# Skinos Server download and install
 
-#### 1. Development environment download   
-Under Ubuntu ( 20.04 or 18.04 recommended ) run the following command to download the development environment ( please install git and make first )   
-> #### 开发环境下载
-> 在Ubuntu下（ 建议使用20.04或18.04 ）执行以下命令下载开发环境( 请先安装git及make )
+#### 1. SDK download   
+Under Ubuntu ( 20.04 or 18.04 recommended ) run the following command to download the SDK ( please install git and make first )   
 
 ```shell
-git clone https://github.com/skinos7/tiger7.git
+git clone https://github.com/skinos8/snake8.git
 ```
 
 *Or download it from gitee*
-> *或者从gitee上下载*
 
 ```shell
-git clone https://gitee.com/tiger7/tiger7.git
+git clone https://gitee.com/snake8/snake8.git
 ```
 
 #### 2. Install the necessary development tools   
-> #### 安装开发工具
 
 ```shell
-cd tiger7
-make ubuntu_preset
+cd snake8
+make preset
 ```
 
-#### 3. Specify the product model to be developed   
-> #### 指定产品型号
+#### 3. Specify the model to be installed   
 
 ```shell
-make pid gBOARDID=<Product complete model>
+make pid gBOARDID=<server model>
 
 # For products such as Ubuntu enter the following instructions:
-make pid gBOARDID=host-x86-ubuntu
+make pid gBOARDID=slave-x86-ubuntu2004
 ```
 
-#### 4. Download the SDK corresponding to the product model   
-> #### 下载产品型号对应的SDK
+#### 4. Download the SDK corresponding   
 
 ```shell
 make update
 ```
 
-#### 5. Compile Ubuntu Server   
-> #### 编译服务器
+#### 5. Compile   
 
 ```shell
 make dep
@@ -60,16 +53,14 @@ make
 ```
 
 
-#### 5. Install Ubuntu Server   
-> #### 安装服务器
+#### 6. Install   
 
 ```shell
-make local
+make install
 ```
 
 
-#### 5. Run Ubuntu Server   
-> #### 运行服务器
+#### 7. Run   
 
 ```shell
 make start

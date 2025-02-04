@@ -1,0 +1,199 @@
+
+
+
+" I am a Eamcser, but Eamcs is so bad now, 
+" so I try make vim like the Eamcs
+
+
+
+" ******************************************************************************
+
+" Use Vim settings, rather then Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+" Get out of VI's compatible mode..
+set nocompatible
+
+" Enable filetype plugin
+filetype on
+filetype plugin on
+filetype indent on
+
+" Enable syntax hl
+syntax enable
+
+" allow backspacing over everything in insert mode
+set backspace=eol,start,indent
+
+" Text options
+set expandtab
+set shiftwidth=4
+set tabstop=4
+set smarttab
+set lbr
+
+" Highlight search things
+set hlsearch
+
+"Wrap line
+"set wrap
+set nowrap
+
+" Sets how many lines of history VIM har to remember
+set history=400
+
+" Set to auto read when a file is changed from the outside
+set autoread
+
+" Turn on WiLd menu
+"set wildmenu
+
+" Always show current position
+"set ruler
+
+" The commandbar is 2 high
+"set cmdheight=2
+
+" Show line number
+"set nu
+
+" Do not redraw, when running macros.. lazyredraw
+"set lz
+
+" Set magic on
+"set magic
+
+" show matching bracets
+"set showmatch
+
+" Remap VI 0
+"map 0 ^
+
+" Turn backup on
+"set backup
+
+" Enable folding, I find it very useful
+"set fen
+"set fdl=0
+
+" Auto indent
+"set ai
+" Smart indet
+"set si
+
+"C-style indenting
+"set cindent
+
+"Size of foding marks
+"set foldcolumn=2
+
+" Disable IM in insert mode and search mode
+"set imsearch=0
+"set iminsert=0
+
+" Show C space errors
+"let c_space_errors=1
+
+" Folding mode
+"set fdm=syntax
+ 
+" display incomplete commands
+"set showcmd
+
+"Change buffer - without saving
+"set hid
+
+"Tag List Setting
+nnoremap <silent> <F3> :WMToggle<CR>
+map <F2> <c-w><c-w>
+"nnoremap <silent> <F4> :TlistToggle<CR>
+let Tlist_Use_Right_Window = 1
+let Tlist_Show_Menu = 1
+let g:winManagerWindowLayout = 'BufExplorer,FileExplorer|TagList'
+
+"Win Explorer
+map <c-w><c-t> :WMToggle<cr>
+map <c-w><c-f> :FirstExplorerWindow<cr>
+map <c-w><c-b> :BottomExplorerWindow<cr>
+
+"cvim Setting
+let g:C_AuthorName      = 'dimmalex'
+let g:C_AuthorRef       = 'dim'           
+let g:C_Email           = 'dimmalex@gmail.com' 
+let g:C_Company         = 'HP'
+
+"IComplete Setting
+autocmd Filetype cpp,c,java,cs set omnifunc=cppcomplete#Complete
+
+" Set cscope update
+map <F4> :!cscope-indexer -r<CR> :cs reset<CR>
+imap <F4> <ESC>:!cscope-indexer -r<CR> :cs reset<CR>
+
+
+" quit quick
+map <C-x><C-c> :quit<CR>
+imap <C-x><C-c> <ESC>:quit<CR>
+" quit save
+map <C-x><C-s> :write<CR>
+imap <C-x><C-s> <ESC>:write<CR>
+
+"switch mode
+imap <C-o> <ESC><Right>
+map <C-o> <ESC>
+imap <C-i> <ESC>i<Right>
+map <C-i> <ESC><ESC>i
+imap <C-@> <ESC><Right>v
+map <C-@> <ESC><ESC>v
+imap <C-v> <ESC><Right>v
+map <C-v> <ESC><ESC>v
+
+
+"switch windows
+imap <F2> <ESC><C-w><C-w>
+map <<F2> <ESC><C-w><C-w>
+"line move
+imap <C-e> <End>
+map <C-e> <End>
+imap <C-a> <Home>
+map <C-a> <Home>
+imap <C-b> <Left>
+map <C-b> <Left>
+imap <C-n> <Down>
+map <C-n> <Down>
+imap <C-p> <Up>
+map <C-p> <Up>
+imap <C-f> <Right>
+map <C-f> <Right>
+imap <C-l> <PageDown>
+map <C-l> <PageDown>
+imap <C-j> <PageUp>
+map <C-j> <PageUp>
+"
+"undo
+imap <C-u> <ESC><Right>u
+map <C-u> u
+"redo
+imap <C-r> <ESC><Right><C-r>
+
+"delete
+imap <C-d> <Delete>
+nmap <C-d> x
+vmap <C-d> d
+imap <C-k> <ESC>dd
+nmap <C-k> dd
+vmap <C-k> <ESC>dd
+
+"copy paste
+vmap <C-c> y
+imap <C-y> <ESC>P
+map <C-y> P
+map! <C-z> <ESC><C-z>
+
+
+
+set fileencodings=utf-8,ucs-bom,gb18030,default
+set fileencoding=utf-8
+set encoding=utf-8
+set termencoding=utf-8
+
+"set .cfg json
+au BufRead,BufNewFile *.cfg            set filetype=json
