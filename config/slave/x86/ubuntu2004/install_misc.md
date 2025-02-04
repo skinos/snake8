@@ -14,7 +14,7 @@ output:
 
 ```shell
 sudo apt-get update
-sudo apt-get upgrade
+sudo apt-get -y upgrade
 sudo apt-get install -y make git
 ssh-keygen
 
@@ -62,8 +62,8 @@ sudo service smbd restart
 ```shell
 sudo apt-get install -y vsftpd
 cat ~/snake8/config/slave/x86/ubuntu2004/vsftpd.conf | sudo tee -a /etc/vsftpd.conf
-cat cp ~/snake8/config/slave/x86/ubuntu2004/vsftpd.chroot_list /etc
-cat cp ~/snake8/config/slave/x86/ubuntu2004/vsftpd.userlist /etc
+sudo cp ~/snake8/config/slave/x86/ubuntu2004/vsftpd.chroot_list /etc
+sudo cp ~/snake8/config/slave/x86/ubuntu2004/vsftpd.userlist /etc
 cat ~/snake8/config/slave/x86/ubuntu2004/shells | sudo tee -a /etc/shells
 ```
 
