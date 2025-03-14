@@ -90,7 +90,6 @@ jQuery(function($) {
 	                }
 					if ( value["return"] == "true" )
 					{
-						localStorage.setItem( "lang", window.lang );
 						localStorage.setItem( "talkkey", value["key"] );
 						localStorage.setItem( "username", value["username"] );
 						window.location.href = 'index.html';

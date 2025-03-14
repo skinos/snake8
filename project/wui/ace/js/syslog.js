@@ -161,7 +161,7 @@ function syslog_down( rowId )
 	document.body.appendChild(sform);
 	sform.hidden = true;
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "username"; opt.value = window.username; sform.appendChild( opt );
-	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
+	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = encodeURIComponent(window.talkkey); sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "object"; opt.value = "land@syslog"; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "api"; opt.value = "list"; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "a"; opt.value = name; sform.appendChild( opt );

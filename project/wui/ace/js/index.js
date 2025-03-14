@@ -1,5 +1,4 @@
 window.hepath = "/he";
-window.lang = localStorage.getItem( "lang" );
 window.talkkey = localStorage.getItem( "talkkey" );
 window.username = localStorage.getItem( "username" );
 // disable load the subpage, loading when after i18n loaded
@@ -357,10 +356,11 @@ function frame_url( hash )
 	return 'content/' + name + '.html';
 }
 
-// load the confgiure 
-function index_load()
-{
-	// load
+
+
+jQuery(function($) {
+
+	// Configure load
 	he.load( [ 'wui@admin',
 			'land@machine',
 			'land@machine.status',
@@ -424,462 +424,458 @@ function index_load()
 		window.ifname["ifname@wisp2"] = v[28];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
-		var logoshow = false;
-		var wuimenu = wui.menu;
-		if ( window.wui )
-		{
-			if (  window.wui.logo_file )
+
+		/* get the machine config and setup the language */
+		$.i18n().load( page.lang('index') ).then( function () { 
+			$.i18n().locale = window.lang; $('body').i18n();
+			var logoshow = false;
+			var wuimenu = wui.menu;
+			if ( window.wui )
 			{
-				logoshow = true;
-				var stamp = '<img src="' + window.wui.logo_file + '" width="' + (window.wui.logo_width || '180px') + '" height="' + (window.wui.logo_height || '100px') + '" /></div>';
-				$('#logo_img').append(stamp);
-			}
-			if ( window.wui.logo_title )
-			{
-				logoshow = true;
-				if ( window.wui.logo_title == "#NAME" )
+				if (  window.wui.logo_file )
 				{
-					$('#logo_context').append( document.title );
+					logoshow = true;
+					var stamp = '<img src="' + window.wui.logo_file + '" width="' + (window.wui.logo_width || '180px') + '" height="' + (window.wui.logo_height || '100px') + '" /></div>';
+					$('#logo_img').append(stamp);
 				}
-				else if ( window.wui.logo_title == "#MODEL" )
+				if ( window.wui.logo_title )
 				{
-					if ( window.machines.cmodel )
+					logoshow = true;
+					if ( window.wui.logo_title == "#NAME" )
 					{
-						$('#logo_context').text( window.machines.cmodel );
+						$('#logo_context').append( document.title );
+					}
+					else if ( window.wui.logo_title == "#MODEL" )
+					{
+						if ( window.machines.cmodel )
+						{
+							$('#logo_context').text( window.machines.cmodel );
+						}
+						else
+						{
+							$('#logo_context').text( window.machines.model );
+						}
 					}
 					else
 					{
-						$('#logo_context').text( window.machines.model );
+						$('#logo_context').append( window.wui.logo_title );
 					}
 				}
-				else
+				if ( window.wui.logo_model == "disable" )
 				{
-					$('#logo_context').append( window.wui.logo_title );
-				}
-			}
-			if ( window.wui.logo_model == "disable" )
-			{
-				$('#logo_table').hide();
-				$('#logo_logout').show();
-			}
-			else
-			{
-				if ( window.machines.cmodel )
-				{
-					$('#cmodel').text( window.machines.cmodel );
+					$('#logo_table').hide();
+					$('#logo_logout').show();
 				}
 				else
 				{
-					$('#cmodel').text( window.machines.model );
+					if ( window.machines.cmodel )
+					{
+						$('#cmodel').text( window.machines.cmodel );
+					}
+					else
+					{
+						$('#cmodel').text( window.machines.model );
+					}
+					$('#version').text( window.machines.version );
+					$('#logo_table').show();
 				}
-				$('#version').text( window.machines.version );
-				$('#logo_table').show();
-			}
-			
-			if ( window.wui.nav_bar == "disable" )
-			{
-				nbarshow = false;
-			}
-			else
-			{
-				nbarshow = true;
-			}
-		}
-		if ( logoshow == true )
-		{
-			$('#logo').show();
-			$("#copyright").hide();
-			$('#sidebar-shortcuts').hide();
-		}
-		else
-		{
-			$('#sidebar-shortcuts').show();
-			if ( window.wui.copyright && window.wui.copyright == "disable" )
-			{
-				$("#copyright").hide();
-			}
-			else
-			{
-				$("#copyright").show();
-			}
-		}
-		if ( nbarshow == true )
-		{
-			$('#navbar').show();
-			$('#prompt').html( document.title );
-		}
-		else
-		{
-			$('#navbar').hide();
-		}
-
-		/* setup the menus */
-		var menus = [];
-		var router = true;
-		var homepage = "dashboard";
-		if ( window.machine.mode == "default" || window.machine.mode == "parasite" || window.machine.mode.indexOf("bridge") >= 0 )
-		{
-			router = false;
-			$('#extern_nav').attr('href','#');
-			$('#extern_nav_mini').attr('href','#');
-		}
-		else if ( window.machine.mode == "gateway" || window.machine.mode == "dgateway" )
-		{
-			if ( !wuimenu || wuimenu.wan != "disable" )
-			{
-				$('#extern_nav').attr('href','#wan?object=ifname@wan');
-				$('#extern_nav_mini').attr('href','#wan?object=ifname@wan');
-			}
-		}
-		else if ( window.machine.mode == "wisp" || window.machine.mode == "dwisp" )
-		{
-			if ( !wuimenu || wuimenu.wisp != "disable" )
-			{
-				$('#extern_nav').attr('href','#wisp?object=ifname@wisp');
-				$('#extern_nav_mini').attr('href','#wisp?object=ifname@wisp');
-			}
-		}
-		else if ( window.machine.mode == "nwisp" )
-		{
-			if ( !wuimenu || wuimenu.wisp2 != "disable" )
-			{
-				$('#extern_nav').attr('href','#wisp?object=ifname@wisp2');
-				$('#extern_nav_mini').attr('href','#wisp?object=ifname@wisp2');
-			}
-		}
-		else if ( window.machine.mode == "nmisp" )
-		{
-			if ( !wuimenu || wuimenu.lte2 != "disable" )
-			{
-				$('#extern_nav').attr('href','#lte?object=ifname@lte2' );
-				$('#extern_nav_mini').attr('href','#lte?object=ifname@lte2' );
-			}
-		}
-		else
-		{
-			if ( !wuimenu || wuimenu.lte != "disable" )
-			{
 				
-				$('#extern_nav').attr('href','#lte?object=ifname@lte');
-				$('#extern_nav_mini').attr('href','#lte?object=ifname@lte' );
+				if ( window.wui.nav_bar == "disable" )
+				{
+					nbarshow = false;
+				}
+				else
+				{
+					nbarshow = true;
+				}
 			}
-		}
+			if ( logoshow == true )
+			{
+				$('#logo').show();
+				$("#copyright").hide();
+				$('#sidebar-shortcuts').hide();
+			}
+			else
+			{
+				$('#sidebar-shortcuts').show();
+				if ( window.wui.copyright && window.wui.copyright == "disable" )
+				{
+					$("#copyright").hide();
+				}
+				else
+				{
+					$("#copyright").show();
+				}
+			}
+			if ( nbarshow == true )
+			{
+				$('#navbar').show();
+				$('#prompt').html( document.title );
+			}
+			else
+			{
+				$('#navbar').hide();
+			}
 
-		if ( !wuimenu || wuimenu.dashboard != "disable" )
-		{
-			menu.add( true, menus, $.i18n( 'Dashboard' ), 'dashboard', 'menu-icon fa fa-bookmark'  );
-		}
-		else if ( homepage == "dashboard" )
-		{
-			homepage = "";
-		}
-		if ( !wuimenu || wuimenu.utilization != "disable" )
-		{
-			menu.add( true, menus, $.i18n( 'Utilization' ), 'utilization', 'menu-icon fa fa-area-chart'  );
-		}
-		else if ( homepage == "utilization" )
-		{
-			homepage = "";
-		}
-		if ( !wuimenu || wuimenu.interface != "disable" )
-		{
-			menu.add( true, menus, $.i18n( 'Interface' ), 'interface', 'menu-icon fa fa-list' );
-		}
-		else if ( homepage == "interface" )
-		{
-			homepage = "";
-		}
-
-		menu.add( false, menus, $.i18n( 'Network' ), 'network', 'menu-icon fa fa-sitemap' );
-		if ( router == true )
-		{
-			if ( network_frame.connect )
+			/* setup the menus */
+			var menus = [];
+			var router = true;
+			var homepage = "dashboard";
+			if ( window.machine.mode == "default" || window.machine.mode == "parasite" || window.machine.mode.indexOf("bridge") >= 0 )
 			{
-				if ( !wuimenu || wuimenu.connection != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Connection' ), window.machines.mode );
-				}
+				router = false;
+				$('#extern_nav').attr('href','#');
+				$('#extern_nav_mini').attr('href','#');
 			}
-			if ( window.ifname["ifname@lte"]  )
-			{
-				if ( !wuimenu || wuimenu.lte != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE' ), 'lte?object=ifname@lte' );
-					if ( window.smsd )
-					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE SMS' ), 'ltesms?object=modem@lte' );
-					}
-					var bsim = window.gpio["modem@lte_sim"];
-					if ( bsim && bsim != "" )
-					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE Backup SIM' ), 'bsim?object=modem@lte' );
-					}
-				}
-			}
-			if ( window.ifname["ifname@lte2"] )
-			{
-				if ( !wuimenu || wuimenu.lte2 != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR' ), 'lte?object=ifname@lte2' );
-					if ( window.smsd )
-					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR SMS' ), 'ltesms?object=modem@lte2' );
-					}
-					var bsim = window.gpio["modem@lte2_sim"];
-					if ( bsim && bsim != "" )
-					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR Backup SIM' ), 'bsim?object=modem@lte2' );
-					}
-				}
-			}
-			if ( window.ifname["ifname@wan"] )
+			else if ( window.machine.mode == "gateway" || window.machine.mode == "dgateway" )
 			{
 				if ( !wuimenu || wuimenu.wan != "disable" )
 				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN' ), 'wan?object=ifname@wan' );
+					$('#extern_nav').attr('href','#wan?object=ifname@wan');
+					$('#extern_nav_mini').attr('href','#wan?object=ifname@wan');
 				}
 			}
-			if ( window.ifname["ifname@wan2"] )
-			{
-				if ( !wuimenu || wuimenu.wan2 != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN2' ), 'wan?object=ifname@wan2' );
-				}
-			}
-			if ( window.ifname["ifname@wan3"] )
-			{
-				if ( !wuimenu || wuimenu.wan3 != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN3' ), 'wan?object=ifname@wan3' );
-				}
-			}
-			if ( window.ifname["ifname@wan4"] )
-			{
-				if ( !wuimenu || wuimenu.wan4 != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN4' ), 'wan?object=ifname@wan4' );
-				}
-			}
-			if ( window.ifdev["wifi@n"] == true && window.ifname["ifname@wisp"] )
+			else if ( window.machine.mode == "wisp" || window.machine.mode == "dwisp" )
 			{
 				if ( !wuimenu || wuimenu.wisp != "disable" )
 				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(2.4G)' ), 'wisp?object=ifname@wisp' );
+					$('#extern_nav').attr('href','#wisp?object=ifname@wisp');
+					$('#extern_nav_mini').attr('href','#wisp?object=ifname@wisp');
 				}
 			}
-			if ( window.ifdev["wifi@a"] == true && window.ifname["ifname@wisp2"] )
+			else if ( window.machine.mode == "nwisp" )
 			{
 				if ( !wuimenu || wuimenu.wisp2 != "disable" )
 				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(5.8G)' ), 'wisp?object=ifname@wisp2' );
+					$('#extern_nav').attr('href','#wisp?object=ifname@wisp2');
+					$('#extern_nav_mini').attr('href','#wisp?object=ifname@wisp2');
 				}
 			}
-			if ( window.ifname["ifname@lan"] )
-			{
-				if ( !wuimenu || wuimenu.lwan != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN' ), 'lan?object=ifname@lan' );
-				}
-			}				 
-		}
-		else
-		{
-			if ( window.ifname["ifname@lan"] )
-			{
-				if ( !wuimenu || wuimenu.lwan != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN' ), 'lwan?object=ifname@lan' );
-				}
-			}
-		}
-
-		if ( window.ifname["ifname@lan2"] )
-		{
-			if ( !wuimenu || wuimenu.lan2 != "disable" )
-			{
-				menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN2' ), 'lan?object=ifname@lan2' );
-			}
-		}
-		if ( window.ifname["ifname@lan3"] )
-		{
-			if ( !wuimenu || wuimenu.lan3 != "disable" )
-			{
-				menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN3' ), 'lan?object=ifname@lan3' );
-			}
-		}
-		if ( window.ifname["ifname@lan4"] )
-		{
-			if ( !wuimenu || wuimenu.lan4 != "disable" )
-			{
-				menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN4' ), 'lan?object=ifname@lan4' );
-			}
-		}
-        if ( window.hosts )
-        {
-            menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
-        }
-
-		menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
-
-		menu.add( false, menus, $.i18n( 'Wireless' ), 'ssid', 'menu-icon fa fa-wifi' );
-
-		menu.add( false, menus, $.i18n( 'Station' ), 'station', 'menu-icon fa fa-mobile' );
-
-		menu.add( false, menus, $.i18n( 'Application' ), '', 'menu-icon fa fa-building' );
-
-		menu.add( false, menus, $.i18n( 'Service' ), '', 'menu-icon fa fa-building' );
-
-		menu.add( false, menus, $.i18n( 'Sensor' ), '', 'menu-icon fa fa-exchange' );
-
-		menu.add( false, menus, $.i18n( 'Indicator' ), '', 'menu-icon fa fa-eye' );
-
-		menu.add( false, menus, $.i18n( 'Cloud' ), '', 'menu-icon fa fa-eye' );
-
-		menu.add( false, menus, $.i18n( 'System' ), 'device', 'menu-icon fa fa-cogs' );
-		menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Device' ), 'device' );
-		if ( !wuimenu || wuimenu.configure != "disable" )
-		{
-			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Configure' ), 'configure' );
-		}
-		if ( !wuimenu || wuimenu.software != "disable" )
-		{
-			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Software' ), 'software' );
-		}
-		menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Password' ), 'password' );
-
-		menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
-		menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
-		menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Diagnostic' ), 'diagnostic' );
-		if ( window.wuiterm && ( !wuimenu || wuimenu.terminal != "disable" ) )
-		{
-			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
-			if ( window.ifdev["modem@lte"] )
-			{
-				if ( !wuimenu || wuimenu.lte != "disable" )
-				{
-					menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE)' ), 'atcommand?object=modem@lte' );
-				}
-			}
-			if ( window.ifdev["modem@lte2"] )
+			else if ( window.machine.mode == "nmisp" )
 			{
 				if ( !wuimenu || wuimenu.lte2 != "disable" )
 				{
-					menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE/NR)' ), 'atcommand?object=modem@lte2' );
+					$('#extern_nav').attr('href','#lte?object=ifname@lte2' );
+					$('#extern_nav_mini').attr('href','#lte?object=ifname@lte2' );
 				}
-			}
-		}
-		if ( window.machines.scope == "std" )
-		{
-			if ( !wuimenu || wuimenu.development != "disable" )
-			{
-				menu.add( false, menus, $.i18n( 'Development' ), 'sdk', 'menu-icon fa fa-gavel' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'SDK' ), 'sdk' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Inittab' ), 'inittab' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Uninittab' ), 'uninittab' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
-				menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
-				//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
-                if ( window.network_frame )
-                {
-                    menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
-                }
-			}
-		}
-
-		// Load the FPK html
-		var almark = false;
-		for( var index in window.fpk_menu )
-		{
-			var app = window.fpk_menu[index];
-			var app_menu = app['menu'];
-			var app_mode = app['mode'];
-			var app_page = app['page'];
-			var app_lang = app['lang'][window.lang];
-			var app_hash = 'app?page='+base64.encode(app_page);
-			var app_title = app[window.lang];
-			var app_object = app['object'];
-			if ( app_mode && app_mode[window.machine.mode] != "enable" )
-			{
-				continue;
-			}
-			if ( window.wui.menu && window.wui.menu[index] == "disable" )
-			{
-				continue;
-			}
-			if ( !app_page )
-			{
-				continue;
-			}
-			if ( app_object )
-			{
-				app_hash += '&object='+app_object;
-			}
-			if ( app_lang )
-			{
-				app_hash += '&lang='+base64.encode(app_lang);
-			}
-			if ( !app_title )
-			{
-				app_title = app["en"];
-			}
-			if ( !app_menu )
-			{
-				app_menu = 'Application';
-			}
-			if ( app_menu == "Quick" || app_menu == "Wizard" || app_menu == "Home" )
-			{
-				menu.insert( true, menus, $.i18n( app_menu ), app_hash, 'menu-icon fa fa-bolt' );
-				menu.mark( menus, $.i18n( app_menu ) );
-				homepage = app_hash;
-				almark = true;
 			}
 			else
 			{
-				menu.addlink( menus, $.i18n( app_menu ), app_title, app_hash );
+				if ( !wuimenu || wuimenu.lte != "disable" )
+				{
+					
+					$('#extern_nav').attr('href','#lte?object=ifname@lte');
+					$('#extern_nav_mini').attr('href','#lte?object=ifname@lte' );
+				}
 			}
-		}
-		if ( homepage == "" )
-		{
-			homepage = "sdk";
-			menu.mark( menus, $.i18n( 'SDK' ) );
-		}
-		menu.display( "#nav-list", menus );
-		// ace Ajax setup
-		$('.page-content-area').ace_ajax({
-			//default url
-			default_url: homepage,
-			//close the right menu when moblie
-			close_active: true,
-			close_mobile_menu: '#sidebar',
-			close_dropdowns: true,
-			// subpage path
-			content_url: frame_url
-		});
 
-	});
-}
+			if ( !wuimenu || wuimenu.dashboard != "disable" )
+			{
+				menu.add( true, menus, $.i18n( 'Dashboard' ), 'dashboard', 'menu-icon fa fa-bookmark'  );
+			}
+			else if ( homepage == "dashboard" )
+			{
+				homepage = "";
+			}
+			if ( !wuimenu || wuimenu.utilization != "disable" )
+			{
+				menu.add( true, menus, $.i18n( 'Utilization' ), 'utilization', 'menu-icon fa fa-area-chart'  );
+			}
+			else if ( homepage == "utilization" )
+			{
+				homepage = "";
+			}
+			if ( !wuimenu || wuimenu.interface != "disable" )
+			{
+				menu.add( true, menus, $.i18n( 'Interface' ), 'interface', 'menu-icon fa fa-list' );
+			}
+			else if ( homepage == "interface" )
+			{
+				homepage = "";
+			}
 
+			menu.add( false, menus, $.i18n( 'Network' ), 'network', 'menu-icon fa fa-sitemap' );
+			if ( router == true )
+			{
+				if ( network_frame.connect )
+				{
+					if ( !wuimenu || wuimenu.connection != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Connection' ), window.machines.mode );
+					}
+				}
+				if ( window.ifname["ifname@lte"]  )
+				{
+					if ( !wuimenu || wuimenu.lte != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE' ), 'lte?object=ifname@lte' );
+						if ( window.smsd )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE SMS' ), 'ltesms?object=modem@lte' );
+						}
+						var bsim = window.gpio["modem@lte_sim"];
+						if ( bsim && bsim != "" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE Backup SIM' ), 'bsim?object=modem@lte' );
+						}
+					}
+				}
+				if ( window.ifname["ifname@lte2"] )
+				{
+					if ( !wuimenu || wuimenu.lte2 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR' ), 'lte?object=ifname@lte2' );
+						if ( window.smsd )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR SMS' ), 'ltesms?object=modem@lte2' );
+						}
+						var bsim = window.gpio["modem@lte2_sim"];
+						if ( bsim && bsim != "" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR Backup SIM' ), 'bsim?object=modem@lte2' );
+						}
+					}
+				}
+				if ( window.ifname["ifname@wan"] )
+				{
+					if ( !wuimenu || wuimenu.wan != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN' ), 'wan?object=ifname@wan' );
+					}
+				}
+				if ( window.ifname["ifname@wan2"] )
+				{
+					if ( !wuimenu || wuimenu.wan2 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN2' ), 'wan?object=ifname@wan2' );
+					}
+				}
+				if ( window.ifname["ifname@wan3"] )
+				{
+					if ( !wuimenu || wuimenu.wan3 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN3' ), 'wan?object=ifname@wan3' );
+					}
+				}
+				if ( window.ifname["ifname@wan4"] )
+				{
+					if ( !wuimenu || wuimenu.wan4 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WAN4' ), 'wan?object=ifname@wan4' );
+					}
+				}
+				if ( window.ifdev["wifi@n"] == true && window.ifname["ifname@wisp"] )
+				{
+					if ( !wuimenu || wuimenu.wisp != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(2.4G)' ), 'wisp?object=ifname@wisp' );
+					}
+				}
+				if ( window.ifdev["wifi@a"] == true && window.ifname["ifname@wisp2"] )
+				{
+					if ( !wuimenu || wuimenu.wisp2 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(5.8G)' ), 'wisp?object=ifname@wisp2' );
+					}
+				}
+				if ( window.ifname["ifname@lan"] )
+				{
+					if ( !wuimenu || wuimenu.lwan != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN' ), 'lan?object=ifname@lan' );
+					}
+				}				 
+			}
+			else
+			{
+				if ( window.ifname["ifname@lan"] )
+				{
+					if ( !wuimenu || wuimenu.lwan != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN' ), 'lwan?object=ifname@lan' );
+					}
+				}
+			}
 
+			if ( window.ifname["ifname@lan2"] )
+			{
+				if ( !wuimenu || wuimenu.lan2 != "disable" )
+				{
+					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN2' ), 'lan?object=ifname@lan2' );
+				}
+			}
+			if ( window.ifname["ifname@lan3"] )
+			{
+				if ( !wuimenu || wuimenu.lan3 != "disable" )
+				{
+					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN3' ), 'lan?object=ifname@lan3' );
+				}
+			}
+			if ( window.ifname["ifname@lan4"] )
+			{
+				if ( !wuimenu || wuimenu.lan4 != "disable" )
+				{
+					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN4' ), 'lan?object=ifname@lan4' );
+				}
+			}
+	        if ( window.hosts )
+	        {
+	            menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
+	        }
 
-jQuery(function($) {
+			menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
 
-	/* get the machine config and setup the language */
-	$.i18n().load( page.lang('index') ).then( function () { 
-		$.i18n().locale = window.lang; $('body').i18n();
-		// Jquery setup
-		jquery_setup();
-		// 监听子页面加载完成
-		$('.page-content-area').on('ajaxloadcomplete', function (e, params) {
-			// 翻译子网页
-			$('#main-container').i18n();
-		});
-		// Configure load
-		index_load();
-		// Logout event
-		$('#logout').on( ace.click_event, logout_system );
-		// Logout2 event
-		$('#logout2').on( ace.click_event, logout_system );
-	}) // $.i18n.load()
+			menu.add( false, menus, $.i18n( 'Wireless' ), 'ssid', 'menu-icon fa fa-wifi' );
 
+			menu.add( false, menus, $.i18n( 'Station' ), 'station', 'menu-icon fa fa-mobile' );
+
+			menu.add( false, menus, $.i18n( 'Application' ), '', 'menu-icon fa fa-building' );
+
+			menu.add( false, menus, $.i18n( 'Service' ), '', 'menu-icon fa fa-building' );
+
+			menu.add( false, menus, $.i18n( 'Sensor' ), '', 'menu-icon fa fa-exchange' );
+
+			menu.add( false, menus, $.i18n( 'Indicator' ), '', 'menu-icon fa fa-eye' );
+
+			menu.add( false, menus, $.i18n( 'Cloud' ), '', 'menu-icon fa fa-eye' );
+
+			menu.add( false, menus, $.i18n( 'System' ), 'device', 'menu-icon fa fa-cogs' );
+			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Device' ), 'device' );
+			if ( !wuimenu || wuimenu.configure != "disable" )
+			{
+				menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Configure' ), 'configure' );
+			}
+			if ( !wuimenu || wuimenu.software != "disable" )
+			{
+				menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Software' ), 'software' );
+			}
+			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Password' ), 'password' );
+
+			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
+			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
+			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Diagnostic' ), 'diagnostic' );
+			if ( window.wuiterm && ( !wuimenu || wuimenu.terminal != "disable" ) )
+			{
+				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
+				if ( window.ifdev["modem@lte"] )
+				{
+					if ( !wuimenu || wuimenu.lte != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE)' ), 'atcommand?object=modem@lte' );
+					}
+				}
+				if ( window.ifdev["modem@lte2"] )
+				{
+					if ( !wuimenu || wuimenu.lte2 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE/NR)' ), 'atcommand?object=modem@lte2' );
+					}
+				}
+			}
+			if ( window.machines.scope == "std" )
+			{
+				if ( !wuimenu || wuimenu.development != "disable" )
+				{
+					menu.add( false, menus, $.i18n( 'Development' ), 'sdk', 'menu-icon fa fa-gavel' );
+					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'SDK' ), 'sdk' );
+					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Inittab' ), 'inittab' );
+					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Uninittab' ), 'uninittab' );
+					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
+					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
+					//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
+	                if ( window.network_frame )
+	                {
+	                    menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
+	                }
+				}
+			}
+
+			// Load the FPK html
+			var almark = false;
+			for( var index in window.fpk_menu )
+			{
+				var app = window.fpk_menu[index];
+				var app_menu = app['menu'];
+				var app_mode = app['mode'];
+				var app_page = app['page'];
+				var app_lang = app['lang'][window.lang];
+				var app_hash = 'app?page='+base64.encode(app_page);
+				var app_title = app[window.lang];
+				var app_object = app['object'];
+				if ( app_mode && app_mode[window.machine.mode] != "enable" )
+				{
+					continue;
+				}
+				if ( window.wui.menu && window.wui.menu[index] == "disable" )
+				{
+					continue;
+				}
+				if ( !app_page )
+				{
+					continue;
+				}
+				if ( app_object )
+				{
+					app_hash += '&object='+app_object;
+				}
+				if ( app_lang )
+				{
+					app_hash += '&lang='+base64.encode(app_lang);
+				}
+				if ( !app_title )
+				{
+					app_title = app["en"];
+				}
+				if ( !app_menu )
+				{
+					app_menu = 'Application';
+				}
+				if ( app_menu == "Quick" || app_menu == "Wizard" || app_menu == "Home" )
+				{
+					menu.insert( true, menus, $.i18n( app_menu ), app_hash, 'menu-icon fa fa-bolt' );
+					menu.mark( menus, $.i18n( app_menu ) );
+					homepage = app_hash;
+					almark = true;
+				}
+				else
+				{
+					menu.addlink( menus, $.i18n( app_menu ), app_title, app_hash );
+				}
+			}
+			if ( homepage == "" )
+			{
+				homepage = "sdk";
+				menu.mark( menus, $.i18n( 'SDK' ) );
+			}
+			menu.display( "#nav-list", menus );
+			// ace Ajax setup
+			$('.page-content-area').ace_ajax({
+				//default url
+				default_url: homepage,
+				//close the right menu when moblie
+				close_active: true,
+				close_mobile_menu: '#sidebar',
+				close_dropdowns: true,
+				// subpage path
+				content_url: frame_url
+			});
+
+			// Jquery setup
+			jquery_setup();
+			// 监听子页面加载完成
+			$('.page-content-area').on('ajaxloadcomplete', function (e, params) {
+				// 翻译子网页
+				$('#main-container').i18n();
+			});
+
+		}) // $.i18n.load()
+
+	}); // he.load()
+
+	// Logout event
+	$('#logout').on( ace.click_event, logout_system );
+
+	// Logout2 event
+	$('#logout2').on( ace.click_event, logout_system );
 
 });

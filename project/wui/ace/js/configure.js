@@ -27,7 +27,7 @@ $.i18n().load( page.lang('configure') ).then( function () {
         document.body.appendChild(sform);
 		sform.hidden = true;
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "username"; opt.value = window.username; sform.appendChild( opt );
-		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
+		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = encodeURIComponent(window.talkkey); sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "object"; opt.value = "arch@data"; sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "api"; opt.value = "backup"; sform.appendChild( opt );
 		opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "p"; opt.value = dtitle; sform.appendChild( opt );
