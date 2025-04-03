@@ -2,7 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 # 定义项目基本信息
-PKG_NAME:=wui
+PROJECT_ID:=wui
+PKG_NAME:=skinos_$(PROJECT_ID)
 PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
 DESC_STR:=$(shell prj-read desc)
@@ -19,7 +20,7 @@ $(eval $(call Package/Define))
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_arch:arch +PACKAGE_land:land +PACKAGE_network:network +PACKAGE_webs:webs +libevent2
+  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +PACKAGE_skinos_webs:skinos_webs +libevent2
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description

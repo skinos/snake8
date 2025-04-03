@@ -1,7 +1,7 @@
 {
     "name":"ifname",
-    "intro":"common network connection",
-    "desc":"ip connect and wifi connect component",
+    "intro":"skinos common network connection",
+    "desc":"skinos ip connect and wifi connect component",
     "type":"root",
     "version":"8.0.0",
     "author":"dimmalex@gmail.com",

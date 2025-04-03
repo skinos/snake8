@@ -2,7 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 # 定义项目基本信息
-PKG_NAME:=clock
+PROJECT_ID:=clock
+PKG_NAME:=skinos_$(PROJECT_ID)
 PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
 DESC_STR:=$(shell prj-read desc)
@@ -17,9 +18,9 @@ $(eval $(call Package/Define))
 
 # menuconfig的选项的位置及说明
 define Package/$(PKG_NAME)
-  CATEGORY:=Skin system
+  CATEGORY:=Skin Application
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_arch:arch +PACKAGE_land:land
+  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description

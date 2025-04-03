@@ -57,7 +57,7 @@ boole_t _setup( obj_t this, param_t param )
 	}
 
     /* run the app connection */
-    ifname_info( obj, "%s startup", object );
+    ifname_info( obj, "%s setup", object );
 	sstart( object, "service", NULL, object );
     talk_free( cfg );
     return ttrue;

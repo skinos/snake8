@@ -2,7 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 # 定义项目基本信息
-PROJECT_ID:=tui
+PROJECT_ID:=wifi
+PROJECT_ID:=wifi
 PKG_NAME:=skinos_$(PROJECT_ID)
 PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
@@ -19,7 +20,7 @@ $(eval $(call Package/Define))
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +libevent2 +libreadline
+  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
@@ -30,15 +31,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(call Build/Install/Collect,$(1))
 	# ########## 在此可添加额外的安装指示: 开始 ########### # 
-	# add this for hetui
-	$(INSTALL_DIR) $(1)/bin
-	$(LN) sline ${1}/bin/hetui
-	$(INSTALL_DIR) ${FPK_ROOTFS_DIR}/bin
-	$(LN) sline ${FPK_ROOTFS_DIR}/bin/hetui
-	$(INSTALL_DIR) $(FPK_ROOTFS_DIR)
-	$(INSTALL_DIR) $(FPK_ROOTFS_DIR)/etc/dropbear
-	$(INSTALL_BIN) ./files/dropbear_dss_host_key $(FPK_ROOTFS_DIR)/etc/dropbear
-	$(INSTALL_BIN) ./files/dropbear_rsa_host_key $(FPK_ROOTFS_DIR)/etc/dropbear
 	# ########## 在此可添加额外的安装指示: 结束 ########### # 
 	$(call Build/Install/Fpk,$(1))
 endef
