@@ -3,7 +3,7 @@
     "intro":"Assist template/development tools",
     "desc":"Assist with template/development projects, including many examples and templates, and some debugging tools",
     "type":"root",
-    "version":"7.5.0",
+    "version":"8.0.0",
     "author":"dimmalex@gmail.com",
 
     "cmd":

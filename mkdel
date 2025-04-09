@@ -16,14 +16,6 @@ do
         for dir in $DIR_LIST
         do
             rm -fr ${DIR_ROOT}/${dir}/skinos_*
-            for prj in $PRJ_LIST arch pdriver
-            do
-                if [ -d ${DIR_ROOT}/${dir}/${prj} ]; then
-                    echo "delete the ${DIR_ROOT}/${dir}/${prj}"
-                    rm -fr ${DIR_ROOT}/${dir}/${prj}
-                fi
-            done
-
         done
     fi
 done

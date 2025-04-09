@@ -13,10 +13,12 @@ boole_t _setup( obj_t this, param_t param )
     talk_t v;
 	talk_t axp;
     talk_t cfg;
+	boole overlay;
 	struct stat st;
     const char *ptr;
     const char *port;
 	boole manager_init;
+	char path[PATH_MAX];
 	struct in_addr iptest;
     const char *test_dropbear = "/tmp/.dropbear_exsit";
 
@@ -29,6 +31,46 @@ boole_t _setup( obj_t this, param_t param )
         return tfalse;
     }
     shell( "rm %s", test_dropbear );
+
+	/************************ overlay **************************/
+	overlay = reg_boole( NULL, "overlay" );
+	if ( overlay == true )
+	{
+		boole reset;
+		struct stat st;
+		if ( stat( "/etc/init.d/dropbear", &st ) == 0 )
+		{
+			shell( "/etc/init.d/dropbear stop" );
+			unlink( "/etc/init.d/dropbear" );
+			shell( "mkdir -p /etc/dropbear" );
+			if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
+			{
+				shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
+			}
+			if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
+			{
+				shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
+			}
+		}
+		else
+		{
+			reset = reg_boole( NULL, "reset" );
+			if ( reset == true )
+			{
+				shell( "mkdir -p /etc/dropbear" );
+				if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
+				{
+					shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
+				}
+				if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
+				{
+					shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
+				}
+			}
+		}
+	}
+	/************************ overlay **************************/
+
     /* get the configure */
     cfg = config_sget( COM_IDPATH, NULL );
     /* get the status */
@@ -38,6 +80,19 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
         return ttrue;
     }
+	/* key preset */
+	if ( overlay == false )
+	{
+		shell( "mkdir -p /etc/dropbear" );
+		if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
+		{
+			shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
+		}
+		if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
+		{
+			shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
+		}
+	}
 	/* execute preset */
 	ptr = exe2path( NULL, 0, "dropbearkey.sh" );
 	if ( stat( ptr, &st ) == 0 )

@@ -17,6 +17,7 @@
     },
     "init":
     {
+        "arch":"clock@date.setup",
         "app":"clock@restart.setup",
         "general":"clock@ntps.setup"
     },

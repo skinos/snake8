@@ -20,22 +20,23 @@ $(eval $(call Package/Define))
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +PACKAGE_skinos_webs:skinos_webs +libevent2
+  DEPENDS:=+PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_webs:skinos_webs
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
   $(INTRO_STR):$(DESC_STR)
 endef
 
-# 安装到系统运行目录中( 注意必须要有这个函数才会执行Build/Compile )
+# 安装到系统运行目录$(1)中( 注意必须要有这个函数才会执行Build/Compile )
 define Package/$(PKG_NAME)/install
-	$(call Build/Install/Collect,$(1))
+	$(call Build/Install/doc)
 	# ########## 在此可添加额外的安装指示: 开始 ########### # 
 	$(CP) ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
 	$(INSTALL_DIR) $(FPK_BUILD_DIR)/admin
 	$(CP) ./ace/* $(FPK_BUILD_DIR)/admin
 	# ########## 在此可添加额外的安装指示: 结束 ########### # 
-	$(call Build/Install/Fpk,$(1))
+	$(call Build/Install/fpk,$(gSTORE_DIR))
+	$(call Build/Install/fpk2rootfs,$(1))
 endef
 
 # 调用编译安装
