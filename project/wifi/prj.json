@@ -6,6 +6,11 @@
     "version":"8.0.0",
     "author":"dimmalex@gmail.com",
 
+    "com":
+    {
+        "ap":"wireless ssid management"
+    },
+
     "wui":
     {
         "nradio":

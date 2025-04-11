@@ -2,7 +2,7 @@
 # Ubuntu compile tools install
 preset:
 	sudo apt-get update
-	sudo apt-get install -y vim git subversion pandoc aptitude tftp-hpa
+	sudo apt-get install -y vim git subversion pandoc aptitude
 	sudo apt-get install -y gcc g++ binutils patch bzip2 flex bison make autoconf gettext texinfo unzip sharutils gawk
 	sudo apt-get install -y python2 libtool shtool curl lrzsz zlib1g-dev automake automake1.11
 	sudo apt-get install -y lib32z1 libssl-dev device-tree-compiler libevent-dev libreadline-dev
@@ -35,7 +35,7 @@ update:
 # SDK rebuild for HOST
 rebuild:
 	make sdk_stop;make;make sdk_install;make sdk_start
-# SDK help for smtk2/smtk3/slave
+# SDK help for smtk2/smtk3
 menu:
 	make sdk_menu
 menuconfig:

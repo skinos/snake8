@@ -7,10 +7,11 @@ Manage 2.4G Radio
 ```json
 // Attribute introduction
 {
-    "mode":"radio mode",                 // [ "n", "b", "bg" ]
+    "mode":"radio mode",                 // [ "n", "b", "bg", "x" ]
                                                 // "n" for 11N
                                                 // "b" for 11B
                                                 // "bg" for 11BG
+                                                // "x" for 11AX
     
     "bandwidth":"radio bandwidth",       // [ "20", "2040", "40" ]
                                                 // "20" for 20M

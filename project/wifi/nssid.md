@@ -14,7 +14,7 @@ Usually wifi@nssid is the first 2.4G SSID. If there are multiple 2.4G SSID in th
     "ssid":"SSID name",                     // [ string ]
     "isolated":"isolated clients",          // [ "enable", "disable" ]
     "broadcast":"broadcast SSID",           // [ "enable", "disable" ]
-    "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
+    "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk", "wpa3psk", "wpa3sae" , "wpa3pskwpa3sae" ]
                                                 // disable for disable the secure
                                                 // wpapsk for WPAPSK
                                                 // wpa2psk for WPA2PSK
@@ -37,12 +37,7 @@ Usually wifi@nssid is the first 2.4G SSID. If there are multiple 2.4G SSID in th
     },
     "maxsta":"maximum number of clients",   // [ nubmer ], space for no limit
 
-    "wmm":"WMM state",                      // [ "enable", "disable" ]
-    "options":                              // custom attribute list for radio chip
-    {
-        "custom attribute":"value of custom attribute",
-        //... more custom attribute
-    }
+    "wmm":"WMM state"                       // [ "enable", "disable" ]
 }
 ```
 
