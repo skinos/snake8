@@ -4,7 +4,7 @@
  *      Company:  ASHYELF
  */
 
-#include "land/skin.h"
+#include "skin/skin.h"
 #define DISABLE_HOSTAPD_TO_MODIFY_CHANNEL 1
 
 

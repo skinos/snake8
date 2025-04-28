@@ -1,29 +1,33 @@
+
 /* get the object */
-var lan;
+var config;
 var object = "ifname@lan";
 var index = page.param( 'object', location.hash );
 if ( index )
 {
     object = index;
 }
+
+
+
 /* load the configure on the input */
 function config_load()
 {
   he.load( [ object ] ).then( function(v){
-    lan = v[0];
-    if ( !lan )
+    config = v[0];
+    if ( !config )
     {
         return;
     }
     /* ipv4 */
-    if ( lan.static )
+    if ( config.static )
     {
-        $('#ip').val(lan.static.ip || '');
-        $('#mask').val(lan.static.mask || '');
-        if ( lan.static.ip2 && lan.static.mask2 )
+        $('#ip').val(config.static.ip || '');
+        $('#mask').val(config.static.mask || '');
+        if ( config.static.ip2 && config.static.mask2 )
         {
-            $('#ip2').val(lan.static.ip2 || '');
-            $('#mask2').val(lan.static.mask2 || '');
+            $('#ip2').val(config.static.ip2 || '');
+            $('#mask2').val(config.static.mask2 || '');
             $('#ipmask2').prop('checked', true );
         }
         else
@@ -40,10 +44,10 @@ function config_load()
                 $('#ipmask2_cfg').hide();
             }
         }).trigger('change');
-        if ( lan.static.ip3 && lan.static.mask3 )
+        if ( config.static.ip3 && config.static.mask3 )
         {
-            $('#ip3').val(lan.static.ip3 || '');
-            $('#mask3').val(lan.static.mask3 || '');
+            $('#ip3').val(config.static.ip3 || '');
+            $('#mask3').val(config.static.mask3 || '');
             $('#ipmask3').prop('checked', true );
         }
         else
@@ -62,9 +66,9 @@ function config_load()
         }).trigger('change');
     }
     /* dhcpsv4 */
-    if ( lan.dhcps )
+    if ( config.dhcps )
     {
-        var dhcps = lan.dhcps;
+        var dhcps = config.dhcps;
         $('#dhcps').prop('checked', able2boole(dhcps.status) );
         $('#startip').val(dhcps.startip || '');
         $('#endip').val(dhcps.endip || '');
@@ -86,15 +90,15 @@ function config_load()
         $('#options').val(dhcps.options||"");
     }
     /* ipv6 */
-    if ( lan.manual && lan.manual.addr )
+    if ( config.manual && config.manual.addr )
     {
-        $('#addr').val(lan.manual.addr || '');
-        $('#prefix').val(lan.manual.prefix || '');
+        $('#addr').val(config.manual.addr || '');
+        $('#prefix').val(config.manual.prefix || '');
     }
-    if ( lan.method )
+    if ( config.method )
     {
         $('#ipv6_cfg').show();
-        $('#method').val( lan.method||"disable" );
+        $('#method').val( config.method||"disable" );
         $('#method').unbind('change').change(function (e) {
           var type = e.target.value;
           switch (type)
@@ -113,9 +117,9 @@ function config_load()
           }
         }).trigger('change');
           /* dhcpsv6 */
-        if ( lan.dhcpsv6 )
+        if ( config.dhcpsv6 )
         {
-            var dhcps = lan.dhcpsv6;
+            var dhcps = config.dhcpsv6;
             $('#dhcpsv6').prop('checked', able2boole(dhcps.status) );
             $('#startaddr').val(dhcps.startaddr || '');
             $('#endaddr').val(dhcps.endaddr || '');
@@ -141,40 +145,40 @@ function config_load()
 /* save the configure */
 function config_save()
 {
-    if ( lan == null )
+    if ( config == null )
     {
         return;
     }
-    var lancopy = JSON.parse(JSON.stringify(lan));
+    var copy = JSON.parse(JSON.stringify(config));
 
     /* IPV4 addr */
-    if ( !lan.static )
+    if ( !config.static )
     {
-        lan.static = {};
+        config.static = {};
     }
-    lan.mode = "static";
-    lan.static.ip = $('#ip').val();
-    if ( check.ip(lan.static.ip) == false )
+    config.mode = "static";
+    config.static.ip = $('#ip').val();
+    if ( check.ip(config.static.ip) == false )
     {
         page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
         return;
     }
-    lan.static.mask = $('#mask').val();
-    if ( check.ip(lan.static.mask) == false )
+    config.static.mask = $('#mask').val();
+    if ( check.ip(config.static.mask) == false )
     {
         page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
         return;
     }
     if ( $('#ipmask2').prop('checked') == true )
     {
-        lan.static.ip2 = $('#ip2').val();
-        if ( check.ip(lan.static.ip2) == false )
+        config.static.ip2 = $('#ip2').val();
+        if ( check.ip(config.static.ip2) == false )
         {
             page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
             return;
         }
-        lan.static.mask2 = $('#mask2').val();
-        if ( check.ip(lan.static.mask2) == false )
+        config.static.mask2 = $('#mask2').val();
+        if ( check.ip(config.static.mask2) == false )
         {
             page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
             return;
@@ -182,19 +186,19 @@ function config_save()
     }
     else
     {
-        lan.static.ip2 = "";
-        lan.static.mask2 = "";
+        config.static.ip2 = "";
+        config.static.mask2 = "";
     }
     if ( $('#ipmask3').prop('checked') == true )
     {
-        lan.static.ip3 = $('#ip3').val();
-        if ( check.ip(lan.static.ip3) == false )
+        config.static.ip3 = $('#ip3').val();
+        if ( check.ip(config.static.ip3) == false )
         {
             page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
             return;
         }
-        lan.static.mask3 = $('#mask3').val();
-        if ( check.ip(lan.static.mask3) == false )
+        config.static.mask3 = $('#mask3').val();
+        if ( check.ip(config.static.mask3) == false )
         {
             page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
             return;
@@ -202,15 +206,15 @@ function config_save()
     }
     else
     {
-        lan.static.ip3 = "";
-        lan.static.mask3 = "";
+        config.static.ip3 = "";
+        config.static.mask3 = "";
     }
     /* IPV4 dhcps */
-    if ( !lan.dhcps )
+    if ( !config.dhcps )
     {
-        lan.dhcps = {};
+        config.dhcps = {};
     }
-    var dhcps = lan.dhcps;
+    var dhcps = config.dhcps;
     dhcps.status = boole2able( $('#dhcps').prop('checked') );
     if ( dhcps.status == "enable" )
     {
@@ -254,33 +258,33 @@ function config_save()
         dhcps.options = $('#options').val();
     }
     /* IPV6 addr */
-    if ( lan.method )
+    if ( config.method )
     {
-        lan.method = $('#method').val();
-        if ( lan.method == "manual" )
+        config.method = $('#method').val();
+        if ( config.method == "manual" )
         {
-            if ( !lan.manual )
+            if ( !config.manual )
             {
-                lan.manual = {};
+                config.manual = {};
             }
-            lan.manual.addr = $('#addr').val();
-            if ( check.ipv6(lan.manual.addr) == false )
+            config.manual.addr = $('#addr').val();
+            if ( check.ipv6(config.manual.addr) == false )
             {
                 page.alert( { message: $.i18n('IPv6 Address')+" "+$.i18n('must be a valid IPv6 address') } );
                 return;
             }
-            lan.manual.prefix = $('#prefix').val();
-            if ( lan.manual.prefix && ( lan.manual.prefix < 0 || lan.manual.prefix > 128 ) )
+            config.manual.prefix = $('#prefix').val();
+            if ( config.manual.prefix && ( config.manual.prefix < 0 || config.manual.prefix > 128 ) )
             {
                 page.alert( { message: $.i18n('Subnet Prefix')+" "+$.i18n('must be a number(0-128)') } );
                 return;
             }
             /* IPV6 dhcps */
-            if ( !lan.dhcpsv6 )
+            if ( !config.dhcpsv6 )
             {
-                lan.dhcpsv6 = {};
+                config.dhcpsv6 = {};
             }
-            var dhcps = lan.dhcpsv6;
+            var dhcps = config.dhcpsv6;
             dhcps.status = boole2able( $('#dhcpsv6').prop('checked') );
             if ( dhcps.status == "enable" )
             {
@@ -325,31 +329,30 @@ function config_save()
         }
     }
     
-    
-    if ( ocompare( lan, lancopy ) )
+    if ( ocompare( config, copy ) )
     {
         page.alert( { message: $.i18n('Settings unchanged') } );
         return;
     }
 
     // 校正DHCP池地址
-    if ( lan.static.ip != lancopy.static.ip 
-        && lan.dhcps.startip == lancopy.dhcps.startip
-        && lan.dhcps.endip == lancopy.dhcps.endip )
+    if ( config.static.ip != copy.static.ip 
+        && config.dhcps.startip == copy.dhcps.startip
+        && config.dhcps.endip == copy.dhcps.endip )
     {
-        var arr = ipadd2array( lan.static.ip, lan.static.mask );
+        var arr = ipadd2array( config.static.ip, config.static.mask );
         // 起始IP
         arr[3] = 2;
-        lan.dhcps.startip = arr.join('.');
+        config.dhcps.startip = arr.join('.');
         // 结束IP
         arr[3] = 250;
-        lan.dhcps.endip = arr.join('.');
+        config.dhcps.endip = arr.join('.');
     }
-    
+
     page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
         if ( result )
         {
-            he.save( [ object+"="+JSON.stringify(lan) ] ).then( function(){
+            he.save( [ object+"="+JSON.stringify(config) ] ).then( function(){
                 page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
                     if ( result )
                     {
@@ -364,6 +367,7 @@ function config_save()
         }
     });
 }
+
 
 
 /* init */
@@ -383,5 +387,6 @@ $.i18n().load( page.lang('lan') ).then( function () {
 		config_save();
 	});
 });
+
 
 

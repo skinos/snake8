@@ -11,9 +11,11 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
 // Attribute introduction
 {
     "status":"start at system startup",    // [ "enable", "disable" ]
-    "mac":"custom the MAC address",        // [ mac address ]
 
-    // wireless connect
+    // MAC
+    "mac":"set MAC address for interface", // [ mac address ]
+
+    // Wireless connect
     "peer":"SSID to connect",              // [ string ]
     "peermac":"BSSID to connect",          // [ mac address ]
     "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
@@ -32,42 +34,43 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
 
     // IPv4
     "tid":"table identify number",         // [ number ] exclusive route table ID, only for multiple WAN
-    "mode":"IPV4 address mode",            // [ "dhcpc", "static", "pppoe" ], "dhcpc" for DHCP, "static" for manual setting, "pppoe" for PPPOE dial
-    "static":                                       // detial configure for "mode" is [ static ]
+    "metric":"default route metric",       // [ number  ]
+    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+    "static":                                 // detial configure for "mode" is "static"
     {
-        "ip":"IPv4 address",                        // < IPv4 address >
-        "mask":"IPv4 netmask",                      // < IPv4 netmask >
-        "gw":"IPv4 gateway",                        // [ IPv4 address ]
-        "dns":"IPv4 DNS",                           // [ IPv4 address ]
-        "dns2":"IPv4 DNS"                           // [ IPv4 address ]
+        "ip":"IPv4 address",                        // < ipv4 address >
+        "mask":"IPv4 netmask",                      // < ipv4 netmask >
+        "gw":"IPv4 gateway",                        // [ ipv4 address ]
+        "dns":"IPv4 DNS",                           // [ ipv4 address ]
+        "dns2":"IPv4 DNS"                           // [ ipv4 address ]
     },
-    "dhcpc":                                                       // detial configure for mode is [ dhcpc ]
+    "dhcpc":                                  // detial configure for "mode" is "dhcpc"
     {
-        "static":"Set an IP address before obtaining IP via DHCP", // [ "enable", "disable" ]
-        "routeopt":"dhcp option static route",                     // [ "enable", "disable" ]
-        "custom_dns":"Custom DNS",                                 // [ "enable", "disable" ]
-        "dns":"Custom DNS1",                                       // [ IP address ], This is valid when custom_dns is [ enable ]
-        "dns2":"Custom DNS2"                                       // [ IP address ], This is valid when custom_dns is [ enable ]
+        "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ]
+        "routeopt":"dhcp option static route",                     // [ "disable", "enable" ]
+        "custom_dns":"Custom DNS",                                 // [ "disable", "enable" ]
+        "dns":"Custom DNS1",                                       // [ ip address ], This is valid when "custom_dns" is "enable"
+        "dns2":"Custom DNS2"                                       // [ ip address ], This is valid when "custom_dns" is "enable"
     },
-    "pppoe":                                             // detial configure for "mode" is [ pppoe ]
+    "pppoe":                                    // detial configure for "mode" is "pppoe"
     {
         "username":"PPPOE username",                     // [ string ]
         "password":"PPPOE password",                     // [ string ]
         "service":"service name",                        // [ string ], default accept all service
-        "txqueuelen":"tx queue szie",                    // [ number ]
         "mss":"TCP Maximum Segment Size",                // [ number ], The unit is in bytes
         "lcp_echo_interval":"LCP echo interval",         // [ number ], The unit is in seconds
         "lcp_echo_failure":"LCP echo failure times",     // [ number ]
         "pppopt":"PPP options",                          // [ string ], Multiple options are separated by colons
-        "custom_dns":"Custom DNS",                       // [ disable, enable ]
-        "dns":"Custom DNS1",                             // [ IP address ], This is valid when custom_dns is [ enable ]
-        "dns2":"Custom DNS2"                             // [ IP address ], This is valid when custom_dns is [ enable ]
+        "custom_dns":"Custom DNS",                       // [ "disable", "enable" ]
+        "dns":"Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
+        "dns2":"Custom DNS2",                            // [ ip address ], This is valid when "custom_dns" is "enable"
+        "txqueuelen":"tx queue size"                     // [ number ]
     },
     "masq":"out stream share the interface IPv4 address to access the Internet",  // [ "disable", "enable" ]
     "mtu":"Maximum transmission unit",                                            // [ number ], The unit is in bytes
 
     // IPv6
-    "method":"IPv6 address mode",         [ "disable", "manual", "automatic", "slaac" ]
+    "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "slaac" ]
                                                     // "disable" is not use ipv6
                                                     // "manual" for manual setting
                                                     // "automatic" for DHCPv6
@@ -82,16 +85,26 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
     },
     "automatic":                             // detial configure for "method" is "automatic"
     {
-        "custom_dns":"Custom DNS",                   // [ "disable", "enable" ]
-        "dns":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
-        "dns2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
+        "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
+        "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
+        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
     },
     "masquerade":"out stream share the interface IPv6 address to access the Internet",   // [ "disable", "enable" ]
 
     // Configure for link detection mechanism, or call it keeplive mechanism
     "keeplive":
     {
-        "type":"keeplive mode",   // [ "disable" ] for disable the keeplive, [ "icmp" ] for ping keeplive, [ "recv" ] for count receive packet to keeplive
+        "type":"keeplive mode",   // [ "disable" ] for disable the keeplive
+                                  // [ "icmp" ] for ping keeplive
+                                  // [ "dns" ] for test the dns response
+                                  // [ "recv" ] for count receive packet to keeplive
+                                  // [ "auto" ] for count receive packet to keeplive when test the dns response failed
+
+        "action":"failed to do",  // [ "reboot" ] reboot the system
+                                  // [ "reset" ] reset the band
+                                  // [ ] other redial the connetion
         "icmp":                                                   // detial configure for "type" is "icmp"
         {
             "dest":                                                         // destination address for ICMP keeplive
@@ -101,47 +114,44 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
             },
             "timeout":"Maximum time to wait for the return of a PING echo packet",     // [ number ], The unit is in seconds
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
-            "interval":"Interval of each Successful detection",                        // [ number ], The unit is in seconds
-
-            // Line shake calculation  
-            "ill_range":"Total number of counts",                                      // [ number], Total number of counts
-            "ill_delay":"Delay threshold",                                             // [ number], The unit is in millisecond
-            "ill_time":"Maximum time to warnning",                                     // [ number]
+            "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "recv":                                                   // detial configure for "type" is "recv"
+        "dns":                                                   // detial configure for "type" is "icmp"
+        {
+            "timeout":"Maximum time to wait for the return of a dns resolve packet",   // [ number ], The unit is in seconds
+            "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
+            "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
+        },
+        "recv":                                                  // detial configure for "type" is "recv"
         {
             "timeout":"How many seconds did not receive a packet considered a failure",// [ number ], The unit is in seconds
             "packets":"How many packets",                                              // [ number ]
             "failed":"failed times"                                                    // [ number ]
         }
     },
-    // configure connect failed to action
-    "failed_timeout":"connect timeout",                                                // [ number ], the unit is second
+
+    // Configure connect failed to action
     "failed_threshold":"first failed to reset time",                                   // [ number ]
     "failed_threshold2":"second failed to reset time",                                 // [ number ]
+    "failed_threshold3":"third failed to reset time",                                  // [ number ]
     "failed_everytime":"every failed to reset time"                                    // [ number ]
 }
-```
+```   
 
 Example, show first WISP(2.4G) all configure
 ```shell
+ifname@wisp
 {
-    "tid":"3",                                       # exclusive route table ID is 2
-
-    # WIFI peer
     "peer":"V520-D21D20",    # connect V520-D21D20
     "secure":"wpapsk",       # security is WPAPSK
     "wpa_encrypt":"aes",     # encrypt use AES
     "wpa_key":"87654321",    # password 87654321
 
-    "mode":"pppoe",                                  # mode is PPPOE
-    "pppoe":
-    {
-        "username":"1923221@gd.com",                # IPv4 address is 192.168.1.1
-        "password":"FDAED13E"                       # IPv4 netmask is 255.255.255.0
-    },
-    "method":"slaac",                                # IPv6 address mode is slaac
+    "mode":"dhcpc",                                  # mode is DHCP client
     "masq":"enable",                                 # out stream share the interface IPv4 address to access the Internet
+
+    "method":"slaac",                                # IPv6 address mode is slaac
+
     "keeplive":                                      # keeplive mechanism configure save here
     {
         "type":"icmp",                               # use ICMP to keeplive
@@ -158,7 +168,32 @@ Example, show first WISP(2.4G) all configure
         }
     }
 }
-```
+```   
+
+Example, modify the keeplive to icmp for WISP(2.4G) network  
+```shell
+ifname@wisp:keeplive/type=icmp
+ttrue
+```   
+
+Example, modify the WISP(2.4G) network dial mode to DHCP
+```shell
+ifname@wisp:mode=dhcpc
+ttrue
+```   
+
+Example, modify the icmp keeplive destination address for first WISP(2.4G) network  
+```shell
+ifname@wisp:keeplive/icmp/dest/test=8.8.8.8            # modify the icmp keeplive first destination address to 8.8.8.8
+ttrue
+ifname@wisp:keeplive/icmp/dest/test2=8.8.4.4           # modify the icmp keeplive second destination address to 8.8.4.4 
+ttrue
+ifname@wisp:keeplive/icmp/dest/test3=114.114.114.114   # modify the icmp keeplive third destination address to 114.114.114.114
+ttrue
+# You can also use one command to complete the operation of the above three command
+ifname@wisp:keeplive/icmp/dest|{"test":"8.8.8.8", "test2":"8.8.4.4", "test3":"114.114.114.114"}
+ttrue
+```   
 
 Example, modify the SSID for first WISP(2.4G) connect
 ```shell
@@ -168,28 +203,30 @@ ifname@wisp:secure=wpapsk
 ttrue
 ifname@wisp:wpa_key=88888888
 ttrue
+```   
 # You can also use one command to complete the operation of the above three command
+```shell
 ifname@wisp|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
 ttrue
-```
+```   
 
 Example, disable the first WISP(2.4G) keeplive function
 ```shell
 ifname@wisp:keeplive=disable
 ttrue
-```
+```   
 
 Example, disable the first WISP(2.4G)
 ```shell
 ifname@wisp:status=disable
 ttrue
-```
+```   
 
 Example, enable the first WISP(2.4G)
 ```shell
 ifname@wisp:status=enable
 ttrue
-```
+```     
 
 Example, enable the second WISP(5.8G)
 ```shell
@@ -207,17 +244,11 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "down", "up" ]
+        "status":"Current state",        // [ "uping", "scanning" "down", "up" ]
                                              // "uping" for connecting
-                                             // "down" for the network is down
+                                             // "scanning" for scanning the AP
+                                             // "down" for the ifname is down
                                              // "up" for the network is connect succeed
-
-        "peer":"Peer SSID",              // [ string ]
-        "peermac":"Peer BSSID",          // [ MAC address ]
-        "channel":"Peer channel",        // [ 1- 165 ]
-        "rate":"connect rate",           // [ number ], the unit is M
-        "rssi":"Peer RSSI",              // [ number ], the unit is dBm
-        "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
         "netdev":"netdev name",         // [ string ]
@@ -233,57 +264,69 @@ ttrue
         "tx_bytes":"receive bytes",     // [ number ]
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
-        "method":"IPv6 address mode",   // [ "disable" ] is not use ipv6, [ "manual" ] for manual setting, [ "automatic" ] for DHCPv6, [ "slaac" ] for Stateless address autoconfiguration
+
+        "method":"IPv6 address mode",   // [ "disable", "manual", "automatic", "slaac" ]
+                                            // "disable" is not use ipv6
+                                            // "manual" for manual setting
+                                            // "automatic" for DHCPv6
+                                            // "slaac" for Stateless address autoconfiguration
         "addr":"IPv6 address",          // [ ipv6 address ]
         "addr2":"IPv6 address2",        // [ ipv6 address ]
-        "addr3":"IPv6 address3"         // [ ipv6 address ]
-    }
-    ```
+        "addr3":"IPv6 address3",        // [ ipv6 address ]
 
+        "peer":"Peer SSID",              // [ string ]
+        "peermac":"Peer BSSID",          // [ MAC address ]
+        "channel":"Peer channel",        // [ 1- 165 ]
+        "rate":"connect rate",           // [ number ], the unit is M
+        "rssi":"Peer RSSI",              // [ number ], the unit is dBm
+        "signal":"signal level"          // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+    }
+    ```   
+    Example, get the first WISP network infomation
     ```shell
-    # examples, get the first WISP network infomation
     ifname@wisp.status
     {
-
         "status":"up",                     # connect is succeed
 
-        "peer":"TP-link-2231",            # peer is TP-link-2231
-        "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
-        "channel":"10",                   # channel is 10
-        "rate":"270",                     # rate is 270M
-        "rssi":"-41",                     # rssi is -41dBm
-        "signal":"3",                     # signal level is 3
-
         "mode":"dhcpc",                    # IPv4 connect mode is DHCP
-        "netdev":"ath11",                   # netdev is ath11
-        "ip":"192.168.10.1",               # ip address is 192.168.1.1
-        "mask":"255.255.255.0",            # network mask is 255.255.255.0
+        "netdev":"ath11",                  # netdev is ath11
         "gw":"192.168.10.254",             # gateway is 192.168.10.254
         "dns":"114.114.114.114",           # dns is 114.114.114.114
+        "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
+        "ip":"192.168.10.1",               # ip address is 192.168.1.1
+        "mask":"255.255.255.0",            # network mask is 255.255.255.0
         "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
         "rx_bytes":"1256",                 # receive 1256 bytes
         "rx_packets":"4",                  # receive 4 packets
         "tx_bytes":"1320",                 # send 1320 bytes
         "tx_packets":"4",                  # send 4 packets
         "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
+
         "method":"slaac",                  # IPv6 address mode is slaac
-        "addr":"fe80::50:f4ff:fe00:0"      # local IPv6 address is fe80::50:f4ff:fe00:0
+        "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
+
+        "peer":"TP-link-2231",            # peer is TP-link-2231
+        "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
+        "channel":"10",                   # channel is 10
+        "rate":"270",                     # rate is 270M
+        "rssi":"-41",                     # rssi is -41dBm
+        "signal":"3"                      # signal level is 3
     }
-    ```
+    ```   
 
 + `netdev[]` **get the WISP netdev**, *succeed return netdev, failed return NULL, error return terror*   
+    Example, get the first WISP netdev
     ```shell
-    # examples, get the first WISP netdev
     ifname@wisp.netdev
     ath11
-    ```
+    ```   
 
 + `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
+    Example, get the first WISP network ifdev
     ```shell
-    # examples, get the first WISP network ifdev
     ifname@wan.ifdev
     wifi@nsta
-    ```
+    ```   
 
 + `chlist[]` **get the WISP channal list**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
     ```json
@@ -293,9 +336,8 @@ ttrue
         // ... more channel
     }
     ```
-
+    Example, get the first WISP channel list
     ```shell
-    # examples, get the first WISP channel list
     ifname@wisp.chlist
     {
         "1":{},        # channel 1
@@ -336,10 +378,9 @@ ttrue
         }
         // ... more AP
     }
-    ```
-
+    ```   
+    Example, get the surrounding AP from first WISP scan
     ```shell
-    # examples, get the surrounding AP from first WISP scan
     ifname@wisp.aplist
     {
         "80:EA:07:15:0E:E6":                    # first AP by scanning
@@ -376,25 +417,31 @@ ttrue
             "mode":"11b/g/n"
         }
     }
-    ```
+    ```   
 
 + `shut[]` **shutdown the WISP network**, *succeed return ttrue, failed return tfalse, error return terror*   
+    Example, shutdown the frist WISP network
     ```shell
-    # examples, shutdown the frist WISP network
     ifname@wisp.shut
     ttrue
-    # examples, shutdown the second WISP network
+    ```   
+    Example, shutdown the second WISP network
+    ```shell
     ifname@wisp2.shut
     ttrue
-    ```
+    ```   
 
 + `setup[]` **setup the WISP network**, *succeed return ttrue, failed return tfalse, error return terror*   
+    Example, setup the frist WISP network
     ```shell
-    # examples, setup the frist WISP network
     ifname@wisp.setup
     ttrue
-    # examples, setup the second WISP network
+    ```   
+    Example, setup the second WISP network
+    ```shell
     ifname@wisp2.setup
     ttrue
-    ```
+    ```   
+
+
 

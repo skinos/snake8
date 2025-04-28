@@ -6,40 +6,78 @@
 
 
 
-        <!-- 拨号模式 -->
+    <!-- 拨号模式 -->
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Mode"></label>
+      <div class="col-sm-9">
+        <select class="col-xs-10 col-sm-5" id="mode">
+          <option value="dhcpc" data-i18n="DHCP"></option>
+          <option value="static" data-i18n="Static IP"></option>
+        </select>
+      </div>
+    </div>
+
+
+
+    <!-- dhcpc设置-->
+    <div id="dhcpc_cfg" style="display: none;" >
+        <!-- 开启备用IP -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Mode"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Alternate IP Address"></label>
           <div class="col-sm-9">
-            <select class="col-xs-10 col-sm-5" id="mode">
-              <option value="dhcpc" data-i18n="DHCP"></option>
-              <option value="static" data-i18n="Static IP"></option>
-            </select>
+            <label>
+              <input id="static" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
           </div>
         </div>
+    </div>
 
-        <!-- dhcpc设置-->
-        <div id="dhcpc_cfg" style="display: none;" >
-            <!-- 开启备用IP -->
-            <div class="form-group">
-              <label class="col-sm-3 control-label no-padding-right" data-i18n="Alternate IP Address"></label>
-              <div class="col-sm-9">
-                <label>
-                  <input id="static" class="ace ace-switch ace-switch-6" type="checkbox" />
-                  <span class="lbl"></span>
-                </label>
+
+
+    <!-- Static设置-->
+    <div id="static_cfg" style="display: none;" >
+        <div class="hr hr32 hr-dotted"></div>
+
+        <!-- IP地址 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="ip" class="col-xs-10 col-sm-5" maxlength="128" />
               </div>
             </div>
         </div>
 
-        <!-- Static设置-->
-        <div id="static_cfg" style="display: none;" >
-            <div class="hr hr32 hr-dotted"></div>
+        <!-- 掩码 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="mask" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+            </div>
+        </div>
+
+        <div class="hr hr32 hr-dotted"></div>
+        <!-- IP地址2 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Address 2"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="ipmask2" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+  
+        <div id="ipmask2_cfg" style="display: none;">
             <!-- IP地址 -->
             <div class="form-group">
                 <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
                 <div class="col-sm-9">
                   <div class="clearfix">
-                    <input type="text" id="ip" class="col-xs-10 col-sm-5" maxlength="128" />
+                    <input type="text" id="ip2" class="col-xs-10 col-sm-5" maxlength="128" />
                   </div>
                 </div>
             </div>
@@ -48,186 +86,160 @@
                 <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
                 <div class="col-sm-9">
                   <div class="clearfix">
-                    <input type="text" id="mask" class="col-xs-10 col-sm-5" maxlength="128" />
+                    <input type="text" id="mask2" class="col-xs-10 col-sm-5" maxlength="128" />
                   </div>
                 </div>
             </div>
+        </div>
 
-            <div class="hr hr32 hr-dotted"></div>
-            <!-- IP地址2 -->
+        <div class="hr hr32 hr-dotted"></div>
+        <!-- IP地址3 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Address 3"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="ipmask3" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <div id="ipmask3_cfg" style="display: none;">
+            <!-- IP地址 -->
             <div class="form-group">
-              <label class="col-sm-3 control-label no-padding-right" data-i18n="Address 2"></label>
-              <div class="col-sm-9">
-                <label>
-                  <input id="ipmask2" class="ace ace-switch ace-switch-6" type="checkbox" />
-                  <span class="lbl"></span>
-                </label>
-              </div>
-            </div>
-            <div id="ipmask2_cfg" style="display: none;">
-                <!-- IP地址 -->
-                <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="ip2" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                </div>
-                <!-- 掩码 -->
-                <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="mask2" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
+                <div class="col-sm-9">
+                  <div class="clearfix">
+                    <input type="text" id="ip3" class="col-xs-10 col-sm-5" maxlength="128" />
+                  </div>
                 </div>
             </div>
-
-            <div class="hr hr32 hr-dotted"></div>
-            <!-- IP地址3 -->
+            <!-- 掩码 -->
             <div class="form-group">
-              <label class="col-sm-3 control-label no-padding-right" data-i18n="Address 3"></label>
-              <div class="col-sm-9">
-                <label>
-                  <input id="ipmask3" class="ace ace-switch ace-switch-6" type="checkbox" />
-                  <span class="lbl"></span>
-                </label>
-              </div>
-            </div>
-            
-            <div id="ipmask3_cfg" style="display: none;">
-                <!-- IP地址 -->
-                <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Address"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="ip3" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                </div>
-                <!-- 掩码 -->
-                <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="mask3" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Subnet Mask"></label>
+                <div class="col-sm-9">
+                  <div class="clearfix">
+                    <input type="text" id="mask3" class="col-xs-10 col-sm-5" maxlength="128" />
+                  </div>
                 </div>
             </div>
+        </div>
 
 
-            <div id="gateway_cfg" style="display: none;" >
-                <div class="hr hr32 hr-dotted"></div>
-                <!-- 网关 -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Gateway"></label>
-                  <div class="col-sm-9">
-                    <div class="clearfix">
-                      <input type="text" id="gw" class="col-xs-10 col-sm-5" maxlength="128" />
-                    </div>
-                  </div>
-                </div>
-                <!-- DNS -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS"></label>
-                  <div class="col-sm-9">
-                    <div class="clearfix">
-                      <input type="text" id="dns" class="col-xs-10 col-sm-5" maxlength="128" />
-                    </div>
-                  </div>
-                </div>
-                <!-- DNS2 -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS2"></label>
-                  <div class="col-sm-9">
-                    <div class="clearfix">
-                      <input type="text" id="dns2" class="col-xs-10 col-sm-5" maxlength="128" />
-                    </div>
-                  </div>
-                </div>
-            </div> <!-- gateway_cfg -->
+        <div id="gateway_cfg" style="display: none;" >
 
-            <div id="dhcps_cfg"  style="display: none;">
-                <div class="hr hr32 hr-dotted"></div>
-                <!-- DHCP服务器状态 -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="DHCP Server"></label>
-                  <div class="col-sm-9">
-                    <label>
-                      <input id="dhcps" class="ace ace-switch ace-switch-6" type="checkbox" />
-                      <span class="lbl"></span>
-                    </label>
-                  </div>
-                </div>
-                
-                <div id="pool_cfg" style="display: none;">
-                  <!-- 起始IP -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Start IP Address"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="startip" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- 结束IP -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="End IP Address"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="endip" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- 租期 -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Lease(Sec)"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="lease" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- 网关 -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign Gateway"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="assign_gw" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- DNS -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign DNS"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="assign_dns" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                
-                  <!-- DNS2 -->
-                  <div class="form-group">
-                    <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign DNS2"></label>
-                    <div class="col-sm-9">
-                      <div class="clearfix">
-                        <input type="text" id="assign_dns2" class="col-xs-10 col-sm-5" maxlength="128" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-            </div> <!-- dhcps_cfg -->
-            
-        </div> <!-- static_cfg -->
+			<div class="hr hr32 hr-dotted"></div>
+			<!-- 网关 -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Gateway"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="gw" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- DNS -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="dns" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- DNS2 -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="DNS2"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="dns2" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+
+        </div> <!-- gateway_cfg -->
+
+		<div id="dhcps_cfg"  style="display: none;">
+
+		<div class="hr hr32 hr-dotted"></div>
+		<!-- DHCP服务器状态 -->
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" data-i18n="DHCP Server"></label>
+			<div class="col-sm-9">
+			  <label>
+			    <input id="dhcps" class="ace ace-switch ace-switch-6" type="checkbox" />
+			    <span class="lbl"></span>
+			  </label>
+			</div>
+		</div>
+
+		<div id="pool_cfg" style="display: none;">
+			<!-- 起始IP -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Start IP Address"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="startip" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- 结束IP -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="End IP Address"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="endip" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- 租期 -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Lease(Sec)"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="lease" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- 网关 -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign Gateway"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="assign_gw" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- DNS -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign DNS"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="assign_dns" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- DNS2 -->
+			<div class="form-group">
+			  <label class="col-sm-3 control-label no-padding-right" data-i18n="Assign DNS2"></label>
+			  <div class="col-sm-9">
+			    <div class="clearfix">
+			      <input type="text" id="assign_dns2" class="col-xs-10 col-sm-5" maxlength="128" />
+			    </div>
+			  </div>
+			</div>
+			<!-- DHCP选项 -->
+			<div class="form-group">
+			    <label class="col-sm-3 control-label no-padding-right" data-i18n="DHCP Server Options(separated by semicolons)"></label>
+			    <div class="col-sm-9">
+			      <textarea type="text" id="options" class="col-xs-10 col-sm-5" maxlength="1024" />
+			    </div>
+			</div>
+		</div><!-- pool_cfg -->
+
+		</div> <!-- dhcps_cfg -->
+        
+    </div> <!-- static_cfg -->
   
 
 
@@ -259,9 +271,9 @@
           </div>
         </div>
     </div><!-- customdns_cfg -->
-      
 
-      
+
+
 
       <div class="clearfix form-actions">
         <div class="col-md-offset-3 col-md-9">
@@ -278,5 +290,6 @@
 </div><!-- /.row -->
 
 <script src="/js/lwan.js"></script>
+
 
 

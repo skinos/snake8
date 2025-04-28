@@ -348,8 +348,10 @@
     /* get the object */
     var ssid;
     var radio;
-    var radioopt;
+    var acs;
     var chlist;
+    var modelist;
+    var powerlist;
     var object = "wifi@x";
     var index = page.param( 'object', location.hash );
     if ( index )
@@ -369,9 +371,8 @@
         he.bkload( [ robj+".chlist["+mode+","+country+"]" ] ).then( function(v){
             if ( v[0] )
             {
-            
                 $("#channel").empty();
-                if ( !acs || acs != "disable" )
+                if ( acs == true )
                 {
                     $("#channel").append("<option value='0'>" + $.i18n("Auto") + "</option>");
                 }
@@ -388,10 +389,12 @@
     }
     function cfg_load()
     {
-      he.load( [ robj, robj+".options", sobj ] ).then( function(v){
+      he.load( [ robj, robj+".modelist", robj+".powerlist", robj+".acs", sobj ] ).then( function(v){
         radio = v[0];
-        radioopt = v[1];
-        ssid = v[2];
+        modelist = v[1];
+        powerlist = v[2];
+        acs = v[3];
+        ssid = v[4];
 
         /* ssid */
         $('#status').prop( 'checked', able2boole(ssid.status) );
@@ -430,13 +433,13 @@
         $('#country').val( radio.country );
         $('#country').unbind('change').change(function (e) {
             var country = e.target.value;
-            flash_channel( $('#mode').val(), country, radio.channel, radioopt.acs );
+            flash_channel( $('#mode').val(), country, radio.channel, acs );
         }).trigger('change');
-        flash_channel( "", "", radio.channel, radioopt.acs );
-        if ( radioopt && radioopt.mode )
+        flash_channel( "", "", radio.channel, acs );
+        if ( modelist )
         {
             $("#mode").empty();            
-            for( m in radioopt.mode )
+            for( m in modelist )
             {
                 $("#mode").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
@@ -444,10 +447,10 @@
             $("#mode_set").show();
             $('#mode').unbind('change').change(function (e) {
               var mode = e.target.value;
-              if ( radioopt && radioopt.mode && radioopt.mode[mode] )
+              if ( modelist[mode] )
               {
                   $("#bandwidth").empty();            
-                  for( b in radioopt.mode[mode] )
+                  for( b in modelist[mode] )
                   {
                       $("#bandwidth").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
                   }
@@ -458,17 +461,17 @@
               {
                   $("#bandwidth_set").hide();
               }
-              flash_channel( mode, $('#country').val(), radio.channel, radioopt.acs );
+              flash_channel( mode, $('#country').val(), radio.channel, acs );
             }).trigger('change');
         }
         else
         {
             $("#mode_set").hide();
         }
-        if ( radioopt && radioopt.txpower )
+        if ( powerlist )
         {
             $("#txpower").append("<option value=''>" + $.i18n("Default") + "</option>");
-            for( t in radioopt.txpower )
+            for( t in powerlist )
             {
                 $("#txpower").append("<option value='"+t+"'>" + $.i18n(t) + "</option>");
             }

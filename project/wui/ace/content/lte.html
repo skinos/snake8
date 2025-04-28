@@ -11,19 +11,30 @@
             <tr>
                 <th data-i18n="Status"></th>
                 <td>
-                    <span id="wan_status"></span>&nbsp; &nbsp;
-                    <a class="btn btn-mini btn-warning" id="wan_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
+                    <span id="lte_status"></span>&nbsp; &nbsp;
+                    <a class="btn btn-mini btn-warning" id="lte_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
                 </td>
-                <th data-i18n="IPv4 Address"></th><td><span id="wan_ip"></span>&nbsp;<span id="wan_delay"></span></td>
+                <th data-i18n="IPv4 Address"></th><td id="lte_ip"></td>
             </tr>
             <tr>
-                <th data-i18n="MAC Address"></th><td id="wan_mac"></td> <th data-i18n="Gateway"></th><td id="wan_gateway"></td> 
+                <th data-i18n="Network"></th>
+                <td>
+                    <span id="lte_operator"></span>&nbsp;
+                    <span id="lte_nettype"></span>&nbsp;
+                    <span><img src="/assets/css/images/signal_0.png" id="lte_rssiimg" class="line-signal"></img></span>
+                    <span id="lte_csq"></span>
+                </td>
+                <th data-i18n="RSSI"></th>
+                <td>
+                    <span id="lte_rssi"></span>&nbsp;
+                    <span id="lte_rsrp"></span>
+                </td>
             </tr>
             <tr>
-                <th data-i18n="Online Time"></th><td id="wan_livetime"></td> <th data-i18n="DNS"></th><td id="wan_dns"></td>
+                <th data-i18n="ICCID"></th><td id="lte_iccid"></td><th data-i18n="IMEI"></th><td id="lte_imei"></td>
             </tr>
             <tr>
-                <th data-i18n="Rx/Tx"></th><td id="wan_rxtx"></td> <th data-i18n="DNS2"></th><td id="wan_dns2"></td>
+                <th data-i18n="Online Time"></th><td id="lte_livetime"></td> <th data-i18n="Rx/Tx"></th><td id="lte_rxtx"></td>
             </tr>
         </tbody>
         </table>            
@@ -31,9 +42,91 @@
 
 
         <div class="hr hr32 hr-dotted"></div>
+        <!-- APN自定义 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="APN Custom"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="profile" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+        <div id="profile_cfg" style="display: none;">
+          <!-- APN -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="APN"></label>
+            <div class="col-sm-9">
+              <input type="text" id="apn" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+          <!-- 用户名 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+            <div class="col-sm-9">
+              <input type="text" id="user" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+          <!-- 密码 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+            <div class="col-sm-9">
+              <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+                <input type="password" id="passwd" maxlength="128" autocomplete="new-password" />
+                <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
+              </span>
+            </div>
+          </div>
+          <!-- IP方式 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="IP Type"></label>
+            <div class="col-sm-9">
+              <select class="col-xs-10 col-sm-5" id="type">
+                <option value="ipv4" data-i18n="IP"></option>
+                <option value="ipv4v6" data-i18n="IPv4v6"></option>
+                <option value="ipv6" data-i18n="IPv6"></option>
+              </select>
+            </div>
+          </div>
+          <!-- 鉴权方式 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Authentication"></label>
+            <div class="col-sm-9">
+              <select class="col-xs-10 col-sm-5" id="auth">
+                <option value="" data-i18n="Auto"></option>
+                <option value="disable" data-i18n="None"></option>
+                <option value="pap" data-i18n="PAP"></option>
+                <option value="chap" data-i18n="CHAP"></option>
+                <option value="papchap" data-i18n="PAP&CHAP"></option>
+              </select>
+            </div>
+          </div>
+          <!-- 拨号号码 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Dial Number"></label>
+            <div class="col-sm-9">
+              <input type="text" id="dial" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 模块设置 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right"></label>
+            <div class="col-sm-9">
+              <div class="btn-group">
+                <div class="btn-group">
+                  <a class="btn btn-warning" data-i18n="Modem Settings" id="modem_set" href="#"></a>
+                </div>
+              </div>
+            </div>
+        </div>
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
         <!-- 网络功能 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Network Status"></label>
           <div class="col-sm-9">
             <label>
               <input id="status" class="ace ace-switch ace-switch-6" type="checkbox" />
@@ -48,9 +141,6 @@
               <label class="col-sm-3 control-label no-padding-right" data-i18n="IPv4 Mode"></label>
               <div class="col-sm-9">
                 <select class="col-xs-10 col-sm-5" id="mode">
-                  <option value="pppoec" data-i18n="PPPOE"></option>
-                  <option value="dhcpc" data-i18n="DHCP"></option>
-                  <option value="static" data-i18n="Static IP"></option>
                 </select>
               </div>
             </div>
@@ -118,25 +208,8 @@
                 </div>
             </div> <!-- static_cfg -->
 
-            <!-- PPPOE设置-->
-            <div id="pppoe_cfg" style="display: none;" >
-                <!-- 拨号用户名 -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
-                  <div class="col-sm-9">
-                    <input type="text" id="username" class="col-xs-10 col-sm-5" maxlength="128" />
-                  </div>
-                </div>
-                <!-- 拨号密码 -->
-                <div class="form-group">
-                  <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
-                  <div class="col-sm-9">
-                    <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
-                      <input type="password" id="password" maxlength="128" autocomplete="new-password" />
-                      <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
-                    </span>
-                  </div>
-                </div>
+            <!-- PPP设置-->
+            <div id="ppp_cfg" style="display: none;" >
                 <!-- lcp 间隔 -->
                 <div class="form-group">
                     <label class="col-sm-3 control-label no-padding-right" data-i18n="LCP Echo Interval"></label>
@@ -151,7 +224,14 @@
                       <input type="text" id="lcp_echo_failure" class="col-xs-10 col-sm-5" maxlength="128" />
                     </div>
                 </div>
-            </div> <!-- pppoe_cfg -->
+                <!-- PPP选项 -->
+                <div class="form-group">
+                    <label class="col-sm-3 control-label no-padding-right" data-i18n="PPP Option"></label>
+                    <div class="col-sm-9">
+                      <textarea type="text" id="pppopt" class="col-xs-10 col-sm-5" maxlength="1024" />
+                    </div>
+                </div>
+            </div> <!-- ppp_cfg -->
 
             <!-- 自定义DNS -->
             <div id="customdns_cfg" style="display: none;">
@@ -381,6 +461,19 @@
               </div>
             </div>
           </div>
+          <!-- 失败操作 -->
+          <div id="action_cfg" style="display: none;">
+	          <div class="form-group">
+	            <label class="col-sm-3 control-label no-padding-right" data-i18n="Failed TODO"></label>
+	            <div class="col-sm-9">
+	              <select class="col-xs-10 col-sm-5" id="action">
+	                <option value="" data-i18n="Reconnection"></option>
+	                <option value="reset" data-i18n="Reset Modem"></option>
+	                <option value="reboot" data-i18n="Reboot System"></option>
+	              </select>
+	            </div>
+	          </div>
+          </div>
 
         </div> <!-- status_config -->
 
@@ -401,7 +494,7 @@
   </div><!-- /.col -->
 </div><!-- /.row -->
 
-<script src="/js/wan.js"></script>
+<script src="/js/lte.js"></script>
 
 
 

@@ -11,22 +11,131 @@
             <tr>
                 <th data-i18n="Status"></th>
                 <td>
-                    <span id="wan_status"></span>&nbsp; &nbsp;
-                    <a class="btn btn-mini btn-warning" id="wan_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
+                    <span id="wisp_status"></span>&nbsp; &nbsp;
+                    <a class="btn btn-mini btn-warning" id="wisp_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
                 </td>
-                <th data-i18n="IPv4 Address"></th><td><span id="wan_ip"></span>&nbsp;<span id="wan_delay"></span></td>
+                <th data-i18n="IPv4 Address"></th><td id="wisp_ip"></td>
             </tr>
             <tr>
-                <th data-i18n="MAC Address"></th><td id="wan_mac"></td> <th data-i18n="Gateway"></th><td id="wan_gateway"></td> 
+                <th data-i18n="Peer SSID"></th><td id="wisp_peer"></td> 
+                <th data-i18n="Peer BSSID"></th><td id="wisp_peermac"></td>
             </tr>
             <tr>
-                <th data-i18n="Online Time"></th><td id="wan_livetime"></td> <th data-i18n="DNS"></th><td id="wan_dns"></td>
+                <th data-i18n="RSSI"></th>
+                <td>
+                    <span><img src="/assets/css/images/signal_0.png" id="wisp_rssiimg" class="line-signal"></img></span>
+                    <span id="wisp_rssi"></span>
+                </td>
+                <th data-i18n="Channel"></th><td id="wisp_channel"></td>
             </tr>
             <tr>
-                <th data-i18n="Rx/Tx"></th><td id="wan_rxtx"></td> <th data-i18n="DNS2"></th><td id="wan_dns2"></td>
+                <th data-i18n="Online Time"></th><td id="wisp_livetime"></td>
+                <th data-i18n="Rate"></th><td id="wisp_rate"></td>
+            </tr>
+            <tr>
+                <th data-i18n="Rx/Tx"></th><td id="wisp_rxtx"></td>
+                <th data-i18n="MAC Address"></th><td id="wisp_mac"></td>
             </tr>
         </tbody>
         </table>            
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <!-- 扫描 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Scan"></label>
+            <div class="col-sm-9 form-right-text"><button class="btn btn-main btn-mini" id="apscan" data-i18n="Scan"></button></div>
+        </div>
+        <!-- 对端 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID"></label>
+            <div class="col-sm-9"><input type="text" id="peer" class="col-xs-10 col-sm-5" maxlength="128" /></div>
+        </div>
+        <!-- 对端2 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID2"></label>
+            <div class="col-sm-9"><input type="text" id="peer2" class="col-xs-10 col-sm-5" maxlength="128" /></div>
+        </div>
+        <!-- 对端3 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID3"></label>
+            <div class="col-sm-9"><input type="text" id="peer3" class="col-xs-10 col-sm-5" maxlength="128" /></div>
+        </div>
+
+        <!-- 锁定MAC -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock BSSID"></label>
+            <div class="col-sm-9"><label><input id="lock" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
+        </div>
+        <div id="lock_cfg">
+            <!-- 对端MAC -->
+            <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer BSSID"></label>
+                <div class="col-sm-9"><input type="text" id="peermac" class="col-xs-10 col-sm-5" maxlength="128" /></div>
+            </div>
+        </div>
+
+        <!-- 安全模式 -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Security Mode"></label>
+            <div class="col-sm-9">
+                <select class="col-xs-10 col-sm-5" id="secure">
+                    <option value="disable" data-i18n="Disable(None)"></option>
+                    <option value="wpapsk" data-i18n="WPA(Private)"></option>
+                    <option value="wpa2psk" data-i18n="WPA2(Private)"></option>
+                    <option value="wpapskwpa2psk" data-i18n="WPA-Mixed(Private)"></option>
+                </select>
+            </div>
+        </div>
+
+        <div id="secure_cfg">
+            <!-- WPA 模式 -->
+            <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="WPA Mode"></label>
+                <div class="col-sm-9">
+                    <select class="col-xs-10 col-sm-5" id="wpa_encrypt">
+                        <option value="tkip" data-i18n="TKIP"></option>
+                        <option value="aes" data-i18n="AES"></option>
+                        <option value="tkipaes" data-i18n="Auto"></option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 密码 -->
+            <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+                <div class="col-sm-9">
+                    <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+                        <input type="password" id="wpa_key" maxlength="128" autocomplete="new-password" />
+                        <i class="ace-icon fa fa-eye-slash" id="wpa_key-icon"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden SSID -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Hidden SSID"></label>
+            <div class="col-sm-9"><label><input id="hidden" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
+        </div>
+
+        <div id="hidden_cfg">
+            <!-- 信道 -->
+            <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Channel"></label>
+                <div class="col-sm-9">
+                    <select class="col-xs-10 col-sm-5" id="channel">
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disable local SSID -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Disable Local SSID"></label>
+            <div class="col-sm-9"><label><input id="ssid_disable" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
+        </div>
 
 
 
@@ -396,12 +505,34 @@
 
 
 
+      <div id="aplist-modal" class="modal" tabindex="-1">
+          <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 data-i18n="Choose"></h4></div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <table id="aplist-grid-table"></table>
+                            <div id="aplist-grid-pager"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-sm btn-main" id="rescan" data-i18n="Rescan"></button>
+                    <button class="btn btn-sm btn-second" data-dismiss="modal" data-i18n="Cancel"></button>
+                </div>
+              </div>
+          </div>
+      </div>
+
+
+
     </div>
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
 </div><!-- /.row -->
 
-<script src="/js/wan.js"></script>
+<script src="/js/wisp.js"></script>
 
 
 

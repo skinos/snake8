@@ -2,7 +2,7 @@
 /* get the object */
 var state;
 var config;
-var object = "ifname@wan";
+var object = "ifname@lte";
 var index = page.param( 'object', location.hash );
 if ( index )
 {
@@ -17,7 +17,7 @@ function status_load()
   he.bkload( [ object+".status" ] ).then( function(v){
       state = v[0];
       var info = state;
-      var id = "#wan";
+      var id = "#lte";
       /* status end btn */
       if ( info.status )
       {
@@ -36,35 +36,91 @@ function status_load()
           $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           $(id+"_status").text( $.i18n("down") );
       }
-      if ( !info.gw || info.gw == "0.0.0.0" )
+      /* network */
+      if ( info.operator )
       {
-          $(id+"_gateway").text( info.dstip||' ' );
+          $(id+"_operator").text( $.i18n(info.operator) );
+      }
+      else if ( info.plmn )
+      {
+          $(id+"_operator").text( $.i18n(info.plmn) );
       }
       else
       {
-          $(id+"_gateway").text( info.gw||' ' );
+          $(id+"_operator").text( "" );
       }
-      $(id+"_dns").text( info.dns||' ' );
-      $(id+"_dns2").text( info.dns2||' ' );
-      $(id+"_mac").text( info.mac||' ' );
-      /* network */
-      $(id+"_ip").text( info.ip||' ' );
-	  if ( info.delay )
-	  {
-		  if ( info.delay == "failed" || info.delay == "block" )
-		  {
-			  $(id+"_delay").text( $.i18n(info.delay) );
-		  }
-		  else
-		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
-		  }
-	  }
-	  else
-	  {
-		  $(id+"_delay").text( "" );
-	  }
+      if ( info.nettype )
+      {
+          $(id+"_nettype").text( info.nettype );
+      }
+      else
+      {
+          $(id+"_nettype").text( "" );
+      }
+      if ( info.signal )
+      {
+          $(id+"_rssiimg").attr( "src", "/assets/css/images/signal_"+info.signal+".png" );
+      }
+      else
+      {
+          $(id+"_rssiimg").attr( "src", "/assets/css/images/signal_0.png" );
+      }
+      if ( info.csq )
+      {
+          $(id+"_csq").text( info.csq );
+      }
+      else
+      {
+          $(id+"_csq").text( "" );
+      }
+      /* signal */
+      if ( info.rssi )
+      {
+          $(id+"_rssi").text( info.rssi+"dBm" );
+      }
+      else
+      {
+          $(id+"_rssi").text( "" );
+      }
+      if ( info.rsrp )
+      {
+          $(id+"_rsrp").text( "RSRP:"+info.rsrp+"dBm" );
+      }
+      else
+      {
+          $(id+"_rsrp").text( "" );
+      }
+      if ( !info.rssi && !info.rsrp )
+      {
+          $(id+"_rssi").text( $.i18n("nosignal") );
+      }
+      /* device info */
+      if ( info.imei == "noimei" )
+      {
+          $(id+"_imei").text( $.i18n("noimei") );
+      }
+      else
+      {
+        $(id+"_imei").text( info.imei||' ' );
+      }
+      if ( info.imei == "noimsi" )
+      {
+          $(id+"_imei").text( $.i18n("noimsi") );
+      }
+      else
+      {
+          $(id+"_imsi").text( info.imsi||' ' );
+      }
+      if ( info.iccid )
+      {
+          $(id+"_iccid").text( $.i18n(info.iccid) );
+      }
+      else
+      {
+          $(id+"_iccid").text( "" );
+      }
 	  /* txrx */
+	  $(id+"_ip").text( info.ip||' ' );
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
   })
@@ -73,8 +129,68 @@ function status_load()
 /* load the configure on the input */
 function config_load()
 {
-  he.load( [ object ] ).then( function(v){
+  he.load( [ object, object+".ifdev", object+".operator" ] ).then( function(v){
     config = v[0];
+
+    /* init the network mode select */
+    $("#mode").empty();
+    $("#mode").append("<option value=''>"+$.i18n('Advise')+"</option>");
+    $("#mode").append("<option value='ppp'>"+$.i18n('PPP')+"</option>");
+    $("#mode").append("<option value='dhcpc'>"+$.i18n('DHCP')+"</option>");
+    $("#mode").append("<option value='static'>"+$.i18n('Static IP')+"</option>");
+    /* profile */
+    if ( config.profile == "enable" )
+    {
+        $('#profile').prop('checked', true );
+    }
+    else
+    {
+        $('#profile').prop('checked', false );
+    }
+    if ( config.profile_cfg )
+    {
+		$('#dial').val(config.profile_cfg.dial);
+		$('#apn').val(config.profile_cfg.apn);
+		$('#user').val(config.profile_cfg.user);
+		$('#passwd').val(config.profile_cfg.passwd);
+		$('#type').val(config.profile_cfg.type);
+		$('#auth').val(config.profile_cfg.auth);
+    }
+    else
+    {
+		var operator = v[2];
+		if ( operator )
+		{
+			$('#dial').val(operator.dial);
+			$('#apn').val(operator.apn);
+			$('#user').val(operator.user);
+			$('#password').val(operator.passwd);
+			$('#type').val(operator.type);
+			$('#auth').val(operator.auth);
+		}
+    }
+    $('#profile').unbind('change').change(function () {
+      if ($(this).prop('checked'))
+      {
+        $('#profile_cfg').show();
+		if ( state && state.hwnat != "enable" )
+        {
+			$('#mode').val( "ppp" );
+        }
+      } 
+      else
+      {
+        $('#profile_cfg').hide();
+		if ( state && state.hwnat != "enable" )
+		{
+			$('#mode').val( "" );
+		}
+      }
+    }).trigger('change');
+	/* bind the button */
+	$('#modem_set').attr( "href", "#ltemodem?object="+object );
+	$('#sms_set').attr( "href", "#ltesms?object="+v[1] );
+
     /* status */
     if ( config.status && config.status == "disable" )
     {
@@ -95,17 +211,12 @@ function config_load()
       }
     }).trigger('change');
     /* IPV4 */
-    $('#mode').val( config.mode || 'dhcpc' );
-    if ( config.pppoec )
+    $('#mode').val( config.mode||"" );
+    if ( config.ppp )
     {
-      $('#username').val(config.pppoec.username);
-      $('#password').val(config.pppoec.password);
-      $('#lcp_echo_interval').val(config.pppoec.lcp_echo_interval);
-      $('#lcp_echo_failure').val(config.pppoec.lcp_echo_failure);
-    }
-    if ( config.dhcpc )
-    {
-        $('#routeopt').prop('checked', able2boole(config.dhcpc.routeopt) );
+      $('#lcp_echo_interval').val(config.ppp.lcp_echo_interval);
+      $('#lcp_echo_failure').val(config.ppp.lcp_echo_failure);
+      $('#pppopt').val(config.ppp.pppopt);
     }
     if ( config.static )
     {
@@ -121,16 +232,28 @@ function config_load()
       var type = e.target.value;
       switch (type)
       {
+        case '':
+          $('#dhcpc_cfg').hide();
+          $('#static_cfg').hide();
+          $('#ppp_cfg').hide();
+          $('#customdns_cfg').hide();
+          $('#keeplive').val( "recv" );
+          $('#icmp_cfg').hide();
+          $('#recv_cfg').show();
+          break;
         case 'static':
           $('#dhcpc_cfg').hide();
           $('#static_cfg').show();
-          $('#pppoe_cfg').hide();
+          $('#ppp_cfg').hide();
           $('#customdns_cfg').hide();
+          $('#keeplive').val( "recv" );
+          $('#icmp_cfg').hide();
+          $('#recv_cfg').show();
           break;
         case 'dhcpc':
           $('#dhcpc_cfg').show();
           $('#static_cfg').hide();
-          $('#pppoe_cfg').hide();
+          $('#ppp_cfg').hide();
           $('#customdns_cfg').show();
           if ( config.dhcpc )
           {
@@ -146,17 +269,20 @@ function config_load()
           {
             $('#customdns_config').hide();
           }
+          $('#keeplive').val( "recv" );
+          $('#icmp_cfg').hide();
+          $('#recv_cfg').show();
           break;
-        case 'pppoec':
+        case 'ppp':
           $('#dhcpc_cfg').hide();
           $('#static_cfg').hide();
-          $('#pppoe_cfg').show();
+          $('#ppp_cfg').show();
           $('#customdns_cfg').show();
-          if ( config.pppoec )
+          if ( config.ppp )
           {
-            $('#custom_dns').prop('checked', able2boole(config.pppoec.custom_dns));
-            $('#cdns').val( config.pppoec.dns );
-            $('#cdns2').val( config.pppoec.dns2 );
+            $('#custom_dns').prop('checked', able2boole(config.ppp.custom_dns));
+            $('#cdns').val( config.ppp.dns );
+            $('#cdns2').val( config.ppp.dns2 );
           }
           if ($('#custom_dns').prop('checked'))
           {
@@ -166,6 +292,9 @@ function config_load()
           {
             $('#customdns_config').hide();
           }
+          $('#keeplive').val( "disable" );
+          $('#icmp_cfg').hide();
+          $('#recv_cfg').hide();
           break;
       }
     }).trigger('change');
@@ -251,26 +380,31 @@ function config_load()
             $('#icmp_cfg').hide();
             $('#dns_cfg').hide();
             $('#recv_cfg').hide();
+            $('#action_cfg').hide();
             break;
           case 'icmp':
             $('#icmp_cfg').show();
             $('#dns_cfg').hide();
             $('#recv_cfg').hide();
+            $('#action_cfg').show();
             break;
           case 'dns':
             $('#icmp_cfg').hide();
             $('#dns_cfg').show();
             $('#recv_cfg').hide();
+            $('#action_cfg').show();
             break;
           case 'recv':
             $('#icmp_cfg').hide();
             $('#dns_cfg').hide();
             $('#recv_cfg').show();
+            $('#action_cfg').show();
             break;
           case 'auto':
             $('#icmp_cfg').hide();
             $('#dns_cfg').show();
             $('#recv_cfg').show();
+            $('#action_cfg').show();
             break;
       }
     }).trigger('change');
@@ -287,6 +421,22 @@ function config_save()
   }
   var copy = JSON.parse(JSON.stringify(config));;
 
+  /* profile */
+  config.profile = boole2able( $('#profile').prop('checked') );
+  if ( config.profile == "enable" )
+  {
+    if ( !config.profile_cfg )
+    {
+      config.profile_cfg = {};
+    }
+    config.profile_cfg.dial = $('#dial').val();
+    config.profile_cfg.apn = $('#apn').val();
+    config.profile_cfg.user = $('#user').val();
+    config.profile_cfg.passwd = $('#passwd').val();
+    config.profile_cfg.type = $('#type').val();
+    config.profile_cfg.auth = $('#auth').val();
+  }
+
   /* status */
   if ( $('#status').prop('checked') == false )
   {
@@ -300,42 +450,41 @@ function config_save()
       }
       /* IPV4 */
       config.mode = $('#mode').val();
-      if ( config.mode == "pppoec" )
+      if ( config.mode == "ppp" )
       {
-        if ( !config.pppoec )
+        if ( !config.ppp )
         {
-          config.pppoec = {};
+          config.ppp = {};
         }
-        config.pppoec.custom_dns = boole2able( $('#custom_dns').prop('checked') );
-        if ( config.pppoec.custom_dns == "enable" )
+        config.ppp.custom_dns = boole2able( $('#custom_dns').prop('checked') );
+        if ( config.ppp.custom_dns == "enable" )
         {
-          config.pppoec.dns = $('#cdns').val();
-          if ( config.pppoec.dns && check.ip(config.pppoec.dns) == false )
+          config.ppp.dns = $('#cdns').val();
+          if ( config.ppp.dns && check.ip(config.ppp.dns) == false )
           {
               page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
               return;
           }
-          config.pppoec.dns2 = $('#cdns2').val();
-          if ( config.pppoec.dns2 && check.ip(config.pppoec.dns2) == false )
+          config.ppp.dns2 = $('#cdns2').val();
+          if ( config.ppp.dns2 && check.ip(config.ppp.dns) == false )
           {
-              page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
+              page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
               return;
           }
         }
-        config.pppoec.username = $('#username').val();
-        config.pppoec.password = $('#password').val();
-        config.pppoec.lcp_echo_interval = $('#lcp_echo_interval').val();
-        if ( config.pppoec.lcp_echo_interval && check.number(config.pppoec.lcp_echo_interval) == false )
+        config.ppp.lcp_echo_interval = $('#lcp_echo_interval').val();
+        if ( config.ppp.lcp_echo_interval && check.number(config.ppp.lcp_echo_interval) == false )
         {
             page.alert( { message: $.i18n('LCP Echo Interval')+" "+$.i18n('must be a valid number') } );
             return;
         }
-        config.pppoec.lcp_echo_failure = $('#lcp_echo_failure').val();
-        if ( config.pppoec.lcp_echo_failure && check.number(config.pppoec.lcp_echo_failure) == false )
+        config.ppp.lcp_echo_failure = $('#lcp_echo_failure').val();
+        if ( config.ppp.lcp_echo_failure && check.number(config.ppp.lcp_echo_failure) == false )
         {
             page.alert( { message: $.i18n('LCP Echo Times')+" "+$.i18n('must be a valid number') } );
             return;
         }
+        config.ppp.pppopt = $('#pppopt').val();
       }
       else if ( config.mode == "dhcpc" )
       {
@@ -368,13 +517,13 @@ function config_save()
             config.static = {};
         }
         config.static.ip = $('#ip').val();
-        if ( check.ip(config.static.ip) == false )
+        if ( config.static.ip && check.ip(config.static.ip) == false )
         {
             page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
             return;
         }
         config.static.mask = $('#mask').val();
-        if ( check.ip(config.static.mask) == false )
+        if ( config.static.mask && check.ip(config.static.mask) == false )
         {
             page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
             return;
@@ -446,6 +595,12 @@ function config_save()
                 return;
             }
           }
+          else if ( config.method == "slaac" )
+          {
+          }
+          else if ( config.method == "automatic" )
+          {
+          }
       }
       /* Keeplive */
       if ( !config.keeplive )
@@ -489,6 +644,7 @@ function config_save()
             page.alert( { message: $.i18n('Test Interval(sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
+        config.keeplive.action = $('#action').val();
       }
       if ( config.keeplive.type == "dns" || config.keeplive.type == "auto" )
       {
@@ -514,6 +670,7 @@ function config_save()
             page.alert( { message: $.i18n('Query Interval(sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
+        config.keeplive.action = $('#action').val();
       }
       if ( config.keeplive.type == "recv" || config.keeplive.type == "auto" )
       {
@@ -539,6 +696,7 @@ function config_save()
             page.alert( { message: $.i18n('Received Packets')+" "+$.i18n('must be a valid number') } );
             return;
         }
+        config.keeplive.action = $('#action').val();
       }
   }
 
@@ -547,7 +705,7 @@ function config_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The WAN connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
     if ( result )
     {
       he.save( [ object+"="+JSON.stringify(config)] ).then( function(){
@@ -561,8 +719,8 @@ function config_save()
 
 
 /* init */
-page.password('password', 'password-icon' );
-$.i18n().load( page.lang('wan') ).then( function () {
+page.password('passwd', 'password-icon' );
+$.i18n().load( page.lang('lte') ).then( function () {
     /* init the langauage */
     $.i18n().locale = lang; $('body').i18n();
 
@@ -571,14 +729,14 @@ $.i18n().load( page.lang('wan') ).then( function () {
     config_load();
 
     /* bind the button */
-    $('#wan_btn').on(ace.click_event, function () {
-        if ( state.status == "down" )
+    $('#lte_btn').on(ace.click_event, function () {
+        if ( state.status == "up" || state.status == "uping" )
         {
-            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
         }
         else
         {
-            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
         }
     });
 

@@ -2,7 +2,7 @@
 /* get the object */
 var state;
 var config;
-var object = "ifname@wan";
+var object = "ifname@wisp";
 var index = page.param( 'object', location.hash );
 if ( index )
 {
@@ -17,7 +17,7 @@ function status_load()
   he.bkload( [ object+".status" ] ).then( function(v){
       state = v[0];
       var info = state;
-      var id = "#wan";
+      var id = "#wisp";
       /* status end btn */
       if ( info.status )
       {
@@ -36,35 +36,29 @@ function status_load()
           $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           $(id+"_status").text( $.i18n("down") );
       }
-      if ( !info.gw || info.gw == "0.0.0.0" )
+      /* station */
+      if ( info.rate )
       {
-          $(id+"_gateway").text( info.dstip||' ' );
+          $(id+"_rate").text( info.rate+'Mbps' );
       }
-      else
+      $(id+"_peer").text( info.peer||' ' );
+      $(id+"_peermac").text( info.peermac||' ' );
+      $(id+"_channel").text( info.channel||' ' );
+      if ( info.sig )
       {
-          $(id+"_gateway").text( info.gw||' ' );
+          $(id+"_rssi").text( info.sig+"%" );
       }
-      $(id+"_dns").text( info.dns||' ' );
-      $(id+"_dns2").text( info.dns2||' ' );
+      else if ( info.rssi )
+      {
+          $(id+"_rssi").text( info.rssi+"dBm" );
+      }
+      if ( info.signal )
+      {
+          $(id+"_rssiimg").attr( "src", "/assets/css/images/signal_"+info.signal+".png" );            
+      }
       $(id+"_mac").text( info.mac||' ' );
-      /* network */
-      $(id+"_ip").text( info.ip||' ' );
-	  if ( info.delay )
-	  {
-		  if ( info.delay == "failed" || info.delay == "block" )
-		  {
-			  $(id+"_delay").text( $.i18n(info.delay) );
-		  }
-		  else
-		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
-		  }
-	  }
-	  else
-	  {
-		  $(id+"_delay").text( "" );
-	  }
 	  /* txrx */
+	  $(id+"_ip").text( info.ip||' ' );
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
   })
@@ -73,7 +67,7 @@ function status_load()
 /* load the configure on the input */
 function config_load()
 {
-  he.load( [ object ] ).then( function(v){
+  he.load( [ object, object+".chlist" ] ).then( function(v){
     config = v[0];
     /* status */
     if ( config.status && config.status == "disable" )
@@ -275,6 +269,59 @@ function config_load()
       }
     }).trigger('change');
 
+    /* WIFI STA */
+    $('#peer').val( config.peer || '' );
+    $('#peer2').val( config.peer2 || '' );
+    $('#peer3').val( config.peer3 || '' );
+    $('#peermac').val( config.peermac || '' );
+    $('#secure').val( config.secure || 'disable' );
+    $('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
+    $('#wpa_key').val( config.wpa_key || '' );
+    $('#ssid_disable').prop( 'checked', config.ssid_disable=="enable" );
+    $('#secure').unbind('change').change(function (e) {
+        var secure = e.target.value;
+        if ( secure === 'disable' )
+        {
+            $('#secure_cfg').hide();
+        }
+        else
+        {
+            $('#secure_cfg').show();
+        }
+    }).trigger('change');
+    $('#lock').prop( 'checked', config.peermac );
+    $('#lock').unbind('change').change(function (e) {
+        if ($(this).prop('checked'))
+        {
+            $('#strong').prop( 'checked', false );
+            $('#lock_cfg').show();
+        }
+        else
+        {
+            $('#lock_cfg').hide();
+        }
+    }).trigger('change');
+    $('#hidden').prop( 'checked', config.peermode=="hidden" );
+    $('#hidden').unbind('change').change(function (e) {
+        if ($(this).prop('checked'))
+        {
+            $('#hidden_cfg').show();
+        }
+        else
+        {
+            $('#hidden_cfg').hide();
+        }
+    }).trigger('change');
+    /* 初始化信道select */
+    var chlist = v[1];
+    var selects = "";
+    for ( var ch in chlist )
+    {
+        selects += ('<option value="' + ch + '">' + $.i18n( ch ) + '</option>');
+    }
+    $("#channel").html( selects );
+    $('#channel').val( config.channel || '1' );
+
   })
 }
 
@@ -446,6 +493,12 @@ function config_save()
                 return;
             }
           }
+          else if ( config.method == "slaac" )
+          {
+          }
+          else if ( config.method == "automatic" )
+          {
+          }
       }
       /* Keeplive */
       if ( !config.keeplive )
@@ -542,12 +595,57 @@ function config_save()
       }
   }
 
+  /* here add the sta */
+  config.peer = $('#peer').val();
+  config.peer2 = $('#peer2').val();
+  config.peer3 = $('#peer3').val();
+  config.peermac = '';
+  if ( $('#lock').prop('checked') )
+  {
+    config.peermac = $('#peermac').val();
+    if ( check.mac( config.peermac, true ) == false )
+    {
+        page.alert( {
+            message: $.i18n('Peer BSSID')+" "+$.i18n('must be a valid MAC address'),
+            callback: function()
+            {
+                $('#peermac').select();
+            }
+        } );
+        return;
+    }
+  }
+  config.secure = $('#secure').val();
+  if ( config.secure != 'disable' )
+  {
+      config.wpa_encrypt = $('#wpa_encrypt').val();
+      config.wpa_key = $('#wpa_key').val();
+      if ( !config.wpa_key )
+      {
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
+          return;
+      }
+  }
+  config.ssid_disable = boole2able( $('#ssid_disable').prop('checked') );
+  delete config.peermode;
+  delete config.channel;
+  if ( $('#hidden').prop('checked') )
+  {
+      config.peermode = "hidden";
+      config.channel = $('#channel').val();
+      if ( !config.channel )
+      {
+          page.alert( { message: $.i18n('Channel')+" "+$.i18n('Can not be empty') } );
+          return;
+      }
+  }
+
   if ( ocompare( config, copy ) )
   {
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The WAN connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('The WISP connecttion will be disconneted because of the change of configuration') } ).then( function(result){
     if ( result )
     {
       he.save( [ object+"="+JSON.stringify(config)] ).then( function(){
@@ -562,16 +660,80 @@ function config_save()
 
 /* init */
 page.password('password', 'password-icon' );
+page.password('wpa_key', 'wpa_key-icon' );
 $.i18n().load( page.lang('wan') ).then( function () {
     /* init the langauage */
     $.i18n().locale = lang; $('body').i18n();
+
+    // jqgrid
+    jqtable.create( '#aplist-grid-table', '#aplist-grid-pager',
+        {
+            multiselect: false,
+            caption: $.i18n('AP List'),
+            colNames: [ $.i18n('Choose'), $.i18n('SSID'), $.i18n('Channel'), $.i18n('Signal'), $.i18n('MAC'), $.i18n('Security Mode'), $.i18n('WPA Mode') ],
+            colModel:
+            [
+                {
+                    name: 'choose', width: 80,
+                    fixed: true, sortable: false,
+                    formatter: function ( cellvalue, options, rowObject )
+                    {
+                        return '<button class="btn btn-main btn-xs btn-choose" onclick="ap_select(' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Choose') + '</button>'
+                    }
+                },
+                { name: 'ssid', width: 180 },
+                { name: 'channel', width: 50 },
+                {
+                    name: 'signal', width: 50,
+                    formatter: function ( cellvalue, options, rowObject )
+                    {
+                        if ( cellvalue > 0 )
+                        {
+                            return "<img src='/assets/css/images/signal_"+cellvalue+".png' class='line-signal'></img>";
+                        }
+                        else
+                        {
+                            return "<img src='/assets/css/images/signal_0.png' class='line-signal'></img>";
+                        }
+                    }
+                },
+                { name: 'mac', width: 130 },
+                {
+                    name: 'secure', width: 130,
+                    formatter: function ( cellvalue )
+                    {
+                        return '<span data-secure="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
+                    },
+                    unformat: function (cellvalue, options, cell)
+                    {
+                        return $(cell).children('span').data('secure');
+                    }
+                },
+                {
+                    name: 'wpa_encrypt', width: 80,
+                    formatter: function (cellvalue)
+                    {
+                        return '<span data-wpa_encrypt="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
+                    },
+                    unformat: function (cellvalue, options, cell)
+                    {
+                        return $(cell).children('span').data('wpa_encrypt');
+                    }
+                }
+            ]
+        }
+    ).jqGrid( 
+          'navGrid', '#aplist-grid-pager',
+          $.extend(true, {}, jqtable.navOptions, { add: false, edit: false, search: false, refresh: false, del: false, view: false } ),
+          {},{},{},{},{},
+    );
 
     /* load the configure */
     status_load();
     config_load();
 
     /* bind the button */
-    $('#wan_btn').on(ace.click_event, function () {
+    $('#wisp_btn').on(ace.click_event, function () {
         if ( state.status == "down" )
         {
             he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
@@ -591,6 +753,31 @@ $.i18n().load( page.lang('wan') ).then( function () {
       interval: 1000
     });
 
+    // scanning
+    $('#apscan').unbind(ace.click_event).on(ace.click_event, function () {
+        he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
+            var list = v[0];
+            var rows = json2array( list, {}, "mac" );
+            // 给表格赋值
+            $('#aplist-grid-table').jqGrid('clearGridData').jqGrid('setGridParam', {
+                data: rows
+            }).trigger('reloadGrid');
+            $('#aplist-modal').modal('show');
+        });
+    });
+    $('#rescan').unbind(ace.click_event).on(ace.click_event, function () {
+        he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
+            var list = v[0];
+            var rows = json2array( list, {}, "mac" );
+            // 给表格赋值
+            $('#aplist-grid-table').jqGrid('clearGridData').jqGrid('setGridParam', {
+                data: rows
+            }).trigger('reloadGrid');
+            // 显示对话框
+            $('#aplist-modal').modal('show');
+        });
+    });
+
     /* bind the refresh */
     $('#refresh').on(ace.click_event, function () {
         location.reload();
@@ -603,3 +790,36 @@ $.i18n().load( page.lang('wan') ).then( function () {
 
 
 
+/* 必须在全局中才可以被调用到 */
+function ap_select( rowId )
+{
+    // 隐藏表格
+    $('#aplist-modal').modal('hide');
+    // 某个选中行的数据
+    var ap = $('#aplist-grid-table').jqGrid( 'getRowData', rowId );
+    // 将选中的数据填到对应的输入框中
+    $('#peer').val( ap.ssid );
+    $('#peermac').val( ap.mac );
+    $('#lock').prop( 'checked', false );
+    $('#lock').trigger('change');
+    $('#secure').val( ap.secure || 'disable');
+    // wpa_encrypt 为auto 时设置为tkipaes
+    if ( ap.wpa_encrypt === 'auto' )
+    {
+        $('#wpa_encrypt').val('tkipaes');
+    }
+    else
+    {
+        $('#wpa_encrypt').val(ap.wpa_encrypt || 'tkipaes');
+    }
+    // 手动触发change，以便显示隐藏密码输入框
+    $('#secure').trigger('change');
+    // $('#wpa_key').val('');
+    $('#hidden').prop( 'checked', false );
+    $('#hidden').trigger('change');
+    $('#radio').val('');
+    $('#channel').val('');
+}
+
+
+  

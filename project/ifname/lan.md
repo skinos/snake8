@@ -13,23 +13,20 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
     "status":"start at system startup",    // [ "enable", "disable" ]
 
     // IPv4
-    "mode":"IPV4 address mode",            // [ "dhcpc", "static" ] "dhcpc" for DHCP, "static" for manual setting
-    "static":                                       // detial configure for "mode" is "static"
+    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
+    "static":                                 // detial configure for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
         "mask":"IPv4 netmask",                      // < ipv4 netmask >
-
         "ip2":"IPv4 address 2",                     // < ipv4 address >
         "mask2":"IPv4 netmask 2",                   // < ipv4 netmask >
-
         "ip3":"IPv4 address 3",                     // < ipv4 address >
         "mask3":"IPv4 netmask 3",                   // < ipv4 netmask >
-        
         "gw":"IPv4 gateway",                        // [ ipv4 address ]
         "dns":"IPv4 DNS",                           // [ ipv4 address ]
         "dns2":"IPv4 DNS"                           // [ ipv4 address ]
     },
-    "dhcpc":                                               // detial configure for "mode" is "dhcpc"
+    "dhcpc":                                  // detial configure for "mode" is "dhcpc"
     {
         "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ]
         "routeopt":"dhcp option static route",                     // [ "disable", "enable" ]
@@ -66,9 +63,9 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
     },
     "automatic":                             // detial configure for "method" is "automatic"
     {
-        "custom_dns":"Custom DNS",                   // [ "disable", "enable" ]
-        "dns":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
-        "dns2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
+        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
     },
     "addrpool":
     {
@@ -83,7 +80,7 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
     }
 
 }
-```
+```   
 
 Example, show all first local network configure
 ```shell
@@ -108,19 +105,19 @@ ifname@lan
         "dns":""                     # not configure the dns, default assigns 192.168.1.1
     }    
 }
-```
+```   
 
 Example, modify the first local network ip address, Take effect after restart
 ```shell
 ifname@lan:static/ip=192.168.2.1
 ttrue
-```
+```   
 
 Example, disable the first local network dhcp server, Take effect after restart
 ```shell
 ifname@lan:dhcps/status=disable
 ttrue
-```
+```     
 
 Example, modify the first local network dhcp pool, start ip 192.168.2.100, end ip 192.168.2.200
 ```shell
@@ -129,7 +126,8 @@ ttrue
 ```
 
 
-#### **Methods**
+
+#### **Methods**   
 **ifname@lan** is first local network   
 **ifname@lan2** is second local network   
 
@@ -137,10 +135,11 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current status",        // [ "uping", "down", "up" ]
+        "status":"Current state",        // [ "uping", "down", "up" ]
                                              // "uping" for connecting
                                              // "down" for the ifname is down
                                              // "up" for the network is connect succeed
+
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
         "netdev":"netdev name",         // [ string ]
         "gw":"gateway ip address",      // [ ip address ]
@@ -154,20 +153,26 @@ ttrue
         "tx_bytes":"receive bytes",     // [ number ]
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
-        "method":"IPv6 address mode",   // [ "disable" ] is not use ipv6, [ "manual" ] for manual setting, [ "automatic" ] for DHCPv6, [ "slaac" ] for Stateless address autoconfiguration
+
+        "method":"IPv6 address mode",   // [ "disable", "manual", "automatic", "slaac" ]
+                                            // "disable" is not use ipv6
+                                            // "manual" for manual setting
+                                            // "automatic" for DHCPv6
+                                            // "slaac" for Stateless address autoconfiguration
         "addr":"IPv6 address",          // [ ipv6 address ]
         "addr2":"IPv6 address2",        // [ ipv6 address ]
         "addr3":"IPv6 address3"         // [ ipv6 address ]
-    }
-    ```
 
+    }
+    ```   
+    Example, get the first local network infomation
     ```shell
-    # examples, get the first local network infomation
     ifname@lan.status
     {
+        "status":"up",                     # connect is succeed
+
         "mode":"static",                   # IPv4 connect mode is static
         "netdev":"lan",                    # netdev is lan
-        "status":"up",                     # connect is succeed
         "ip":"192.168.1.1",                # ip address is 192.168.1.1
         "mask":"255.255.255.0",            # network mask is 255.255.255.0
         "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
@@ -176,36 +181,49 @@ ttrue
         "tx_bytes":"1320",                 # send 1320 bytes
         "tx_packets":"4",                  # send 4 packets
         "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
+
         "method":"slaac",                  # IPv6 address mode is slaac
         "addr":"fe80::50:f4ff:fe00:0"      # local IPv6 address is fe80::50:f4ff:fe00:0
     }
-    ```
+    ```   
 
 + `netdev[]` **get the netdev**, *succeed return netdev, failed return NULL, error return terror*   
+    Example, get the first local network netdev
     ```shell
-    # examples, get the first local network netdev
     ifname@lan.netdev
     lan
-    ```
+    ```   
+
++ `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
+    Example, get the first local network ifdev
+    ```shell
+    ifname@lan.ifdev
+    vlan@lan
+    ```   
 
 + `shut[]` **shutdown the local network**, *succeed return ttrue, failed return tfalse, error return terror*   
+    Example, shutdown the first local network
     ```shell
-    # examples, shutdown the first local network
     ifname@lan.shut
     ttrue
-    # examples, shutdown the second local network
+    ```   
+    Example, shutdown the second local network
+    ```shell
     ifname@lan2.shut
     ttrue
-    ```
+    ```   
 
 + `setup[]` **setup the local network**, *succeed return ttrue, failed return tfalse, error return terror*   
+    Example, setup the frist local network
     ```shell
-    # examples, setup the frist local network
     ifname@lan.setup
     ttrue
-    # examples, setup the second local network
+    ```   
+    Example, setup the second local network
+    ```shell
     ifname@lan2.setup
     ttrue
-    ```
+    ```   
+
 
 

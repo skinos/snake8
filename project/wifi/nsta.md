@@ -12,6 +12,8 @@ Manage 2.4G Station
 
     // wireless connect
     "peer":"SSID to connect",              // [ string ]
+    "peer2":"SSID2 to connect",            // [ string ]
+    "peer3":"SSID3 to connect",            // [ string ]
     "peermac":"BSSID to connect",          // [ mac address ]
     "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
     "channel":"wireless channel",          // [ number ], 0-14, 0 for auto
@@ -128,7 +130,6 @@ ttrue
                                                                  // "aes" for AES
                                                                  // "tkip" for TKIP
                                                                  // "tkipaes" for auto
-            "sig":"signal level(%)",                      // [ number ]
             "signal":"signal level[0-4]",                 // [ "0", "1", "2", "3", "4" ]
             "chext":"extern channel",                     // [ "none", "below", "above" ]
             "mode":"wireless system"                      // [ string ]
@@ -147,7 +148,7 @@ ttrue
             "channel":"6",                                 # first AP channel
             "secure":"wpapskwpa2psk",                      # secure mode is WPA mix
             "wpa_encrypt":"aes",                           # encrypt type is AES
-            "sig":"70",                                    # signal is 70%
+            "qual":"70",                                   # signal is 70%
             "signal":"3",                                  # signal level is 3, range is 0-4
             "chext":"below",                               # extern channel is below
             "mode":"11b/g/n"
@@ -158,7 +159,7 @@ ttrue
             "channel":"11",
             "secure":"wpapskwpa2psk",
             "wpa_encrypt":"aes",
-            "sig":"52",
+            "qual":"52",
             "signal":"3",
             "chext":"none",
             "mode":"11b/g/n"
@@ -169,7 +170,7 @@ ttrue
             "channel":"11",
             "secure":"wpapskwpa2psk",
             "wpa_encrypt":"aes",
-            "sig":"0",
+            "qual":"0",
             "signal":"0",
             "chext":"none",
             "mode":"11b/g/n"

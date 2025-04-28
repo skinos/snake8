@@ -1,53 +1,57 @@
+
 /* get the object */
-var wan;
+var config;
 var object = "ifname@lan";
 var index = page.param( 'object', location.hash );
 if ( index )
 {
     object = index;
 }
+
+
+
 /* load the configure on the input */
 function config_load()
 {
   he.load( [ object ] ).then( function(v){
-    wan = v[0];
-    if ( !wan )
+    config = v[0];
+    if ( !config )
     {
         return;
     }
     /* ipv4 */
-    $('#mode').val( wan.mode || 'dhcpc' );
-    if ( wan.dhcpc )
+    $('#mode').val( config.mode || 'dhcpc' );
+    if ( config.dhcpc )
     {
-        $('#static').prop('checked', able2boole(wan.dhcpc.static) );
+        $('#static').prop('checked', able2boole(config.dhcpc.static) );
     }
-    if ( wan.static )
+    if ( config.static )
     {
-      $('#ip').val(wan.static.ip);
-      $('#mask').val(wan.static.mask);
-      if ( wan.static.ip2 && wan.static.mask2 )
+      $('#ip').val(config.static.ip || '');
+      $('#mask').val(config.static.mask || '');
+      if ( config.static.ip2 && config.static.mask2 )
       {
-          $('#ip2').val(wan.static.ip2 || '');
-          $('#mask2').val(wan.static.mask2 || '');
+          $('#ip2').val(config.static.ip2 || '');
+          $('#mask2').val(config.static.mask2 || '');
           $('#ipmask2').prop('checked', true );
       }
       else
       {
           $('#ipmask2').prop('checked', false );
       }
-      if ( wan.static.ip3 && wan.static.mask3 )
+      if ( config.static.ip3 && config.static.mask3 )
       {
-          $('#ip3').val(wan.static.ip3 || '');
-          $('#mask3').val(wan.static.mask3 || '');
+          $('#ip3').val(config.static.ip3 || '');
+          $('#mask3').val(config.static.mask3 || '');
           $('#ipmask3').prop('checked', true );
       }
       else
       {
           $('#ipmask3').prop('checked', false );
       }
-      $('#gw').val(wan.static.gw);
-      $('#dns').val(wan.static.dns);
-      $('#dns2').val(wan.static.dns2);
+      $('#gw').val(config.static.gw);
+      $('#dns').val(config.static.dns);
+      $('#dns2').val(config.static.dns2);
     }
     $('#ipmask2').unbind('change').change(function (){
         if ($(this).prop('checked'))
@@ -87,12 +91,12 @@ function config_load()
           $('#dhcps_cfg').hide();
           $('#gateway_cfg').hide();
           $('#customdns_cfg').show();
-          if ( wan.dhcpc )
+          if ( config.dhcpc )
           {
-            $('#static').prop('checked', able2boole(wan.dhcpc.static) );
-            $('#custom_dns').prop('checked', able2boole(wan.dhcpc.custom_dns));
-            $('#cdns').val( wan.dhcpc.dns );
-            $('#cdns2').val( wan.dhcpc.dns2 );
+            $('#static').prop('checked', able2boole(config.dhcpc.static) );
+            $('#custom_dns').prop('checked', able2boole(config.dhcpc.custom_dns));
+            $('#cdns').val( config.dhcpc.dns );
+            $('#cdns2').val( config.dhcpc.dns2 );
           }
           if ($('#static').prop('checked'))
           {
@@ -133,10 +137,10 @@ function config_load()
         $('#customdns_config').hide();
       }
     }).trigger('change');
-    /* dhcps */
-    if ( wan.dhcps )
+    /* dhcpsv4 */
+    if ( config.dhcps )
     {
-        var dhcps = wan.dhcps;
+        var dhcps = config.dhcps;
         $('#dhcps').prop('checked', able2boole(dhcps.status) );
         $('#startip').val(dhcps.startip || '');
         $('#endip').val(dhcps.endip || '');
@@ -162,222 +166,229 @@ function config_load()
 /* save the configure */
 function config_save()
 {
-  if ( wan == null )
-  {
-    return;
-  }
-  var wancopy = JSON.parse(JSON.stringify(wan));;
+    if ( config == null )
+    {
+        return;
+    }
+    var copy = JSON.parse(JSON.stringify(config));
 
-  /* IPV4 addr */
-  wan.mode = $('#mode').val();
-  if ( wan.mode == "dhcpc" )
-  {
-    if ( !wan.dhcpc )
-    {
-      wan.dhcpc = {};
-    }
-    wan.dhcpc.static = boole2able( $('#static').prop('checked') );
-    wan.dhcpc.custom_dns = boole2able( $('#custom_dns').prop('checked') );
-    if ( wan.dhcpc.custom_dns == "enable" )
-    {
-      wan.dhcpc.dns = $('#cdns').val();
-      if ( check.ip(wan.dhcpc.dns) == false )
-      {
-          page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-          return;
-      }
-      wan.dhcpc.dns2 = $('#cdns2').val();
-      if ( wan.dhcpc.dns2 && check.ip(wan.dhcpc.dns2) == false )
-      {
-          page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
-          return;
-      }
-    }
-  }
-  if ( wan.mode == "static" || ( wan.mode == "dhcpc" && wan.dhcpc.static == "enable" ) )
-  {
-    /* IPV4 addr */
-    if ( !wan.static )
-    {
-        wan.static = {};
-    }
-    wan.static.ip = $('#ip').val();
-    if ( check.ip(wan.static.ip) == false )
-    {
-        page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
-        return;
-    }
-    wan.static.mask = $('#mask').val();
-    if ( check.ip(wan.static.mask) == false )
-    {
-        page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
-        return;
-    }
-    wan.static.gw = $('#gw').val();
-    if ( wan.static.gw && check.ip(wan.static.gw) == false )
-    {
-        page.alert( { message: $.i18n('Gateway')+" "+$.i18n('must be a valid IP address') } );
-        return;
-    }
-    wan.static.dns = $('#dns').val();
-    if ( wan.static.dns && check.ip(wan.static.dns) == false )
-    {
-        page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-        return;
-    }
-    wan.static.dns2 = $('#dns2').val();
-    if ( wan.static.dns2 && check.ip(wan.static.dns2) == false )
-    {
-        page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
-        return;
-    }
-    if ( $('#ipmask2').prop('checked') == true )
-    {
-        wan.static.ip2 = $('#ip2').val();
-        if ( check.ip(wan.static.ip2) == false )
-        {
-            page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        wan.static.mask2 = $('#mask2').val();
-        if ( check.ip(wan.static.mask2) == false )
-        {
-            page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-    }
-    else
-    {
-        wan.static.ip2 = "";
-        wan.static.mask2 = "";
-    }
-    if ( $('#ipmask3').prop('checked') == true )
-    {
-        wan.static.ip3 = $('#ip3').val();
-        if ( check.ip(wan.static.ip3) == false )
-        {
-            page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        wan.static.mask3 = $('#mask3').val();
-        if ( check.ip(wan.static.mask3) == false )
-        {
-            page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-    }
-    else
-    {
-        wan.static.ip3 = "";
-        wan.static.mask3 = "";
-    }
-    /* DHCPS */
-    if ( !wan.dhcps )
-    {
-        wan.dhcps = {};
-    }
-    if ( wan.mode == "dhcpc" )
-    {
-        wan.dhcps.status = "disable";
-    }
-    else
-    {
-        var dhcps = wan.dhcps;
-        dhcps.status = boole2able( $('#dhcps').prop('checked') );
-        if ( dhcps.status == "enable" )
-        {
-            dhcps.startip = $('#startip').val();
-            if ( check.ip(dhcps.startip) == false )
-            {
-                page.alert( { message: $.i18n('Start IP Address')+" "+$.i18n('must be a valid IP address') } );
-                return;
-            }
-            dhcps.endip = $('#endip').val();
-            if ( check.ip(dhcps.endip) == false )
-            {
-                page.alert( { message: $.i18n('End IP Address')+" "+$.i18n('must be a valid IP address') } );
-                return;
-            }
-            dhcps.mask = $('#mask').val();
-            dhcps.lease = $('#lease').val();
-            if ( dhcps.lease && check.number(dhcps.lease) == false )
-            {
-                page.alert( { message: $.i18n('Lease(Sec)')+" "+$.i18n('must be a valid number') } );
-                return;
-            }
-            dhcps.gw = $('#gw').val();
-            if ( dhcps.gw && check.ip(dhcps.gw) == false )
-            {
-                page.alert( { message: $.i18n('Assign Gateway')+" "+$.i18n('must be a valid IP address') } );
-                return;
-            }
-            dhcps.dns = $('#dns').val();
-            if ( dhcps.dns && check.ip(dhcps.dns) == false )
-            {
-                page.alert( { message: $.i18n('Assign DNS')+" "+$.i18n('must be a valid IP address') } );
-                return;
-            }
-            dhcps.dns2 = $('#dns2').val();
-            if ( dhcps.dns2 && check.ip(dhcps.dns2) == false )
-            {
-                page.alert( { message: $.i18n('Assign DNS2')+" "+$.i18n('must be a valid IP address') } );
-                return;
-            }
-        }
-    }
-  }
+	/* IPV4 addr */
+	config.mode = $('#mode').val();
+	if ( config.mode == "dhcpc" )
+	{
+		if ( !config.dhcpc )
+		{
+			config.dhcpc = {};
+		}
+		config.dhcpc.static = boole2able( $('#static').prop('checked') );
+		config.dhcpc.custom_dns = boole2able( $('#custom_dns').prop('checked') );
+		if ( config.dhcpc.custom_dns == "enable" )
+		{
+			config.dhcpc.dns = $('#cdns').val();
+			if ( check.ip(config.dhcpc.dns) == false )
+			{
+			  page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
+			  return;
+			}
+			config.dhcpc.dns2 = $('#cdns2').val();
+			if ( config.dhcpc.dns2 && check.ip(config.dhcpc.dns2) == false )
+			{
+			  page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
+			  return;
+			}
+		}
+	}
+	if ( config.mode == "static" || ( config.mode == "dhcpc" && config.dhcpc.static == "enable" ) )
+	{
+		/* IPV4 addr */
+		if ( !config.static )
+		{
+		    config.static = {};
+		}
+		config.static.ip = $('#ip').val();
+		if ( check.ip(config.static.ip) == false )
+		{
+		    page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
+		    return;
+		}
+		config.static.mask = $('#mask').val();
+		if ( check.ip(config.static.mask) == false )
+		{
+		    page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
+		    return;
+		}
+		config.static.gw = $('#gw').val();
+		if ( config.static.gw && check.ip(config.static.gw) == false )
+		{
+		    page.alert( { message: $.i18n('Gateway')+" "+$.i18n('must be a valid IP address') } );
+		    return;
+		}
+		config.static.dns = $('#dns').val();
+		if ( config.static.dns && check.ip(config.static.dns) == false )
+		{
+		    page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
+		    return;
+		}
+		config.static.dns2 = $('#dns2').val();
+		if ( config.static.dns2 && check.ip(config.static.dns2) == false )
+		{
+		    page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
+		    return;
+		}
+		if ( $('#ipmask2').prop('checked') == true )
+		{
+		    config.static.ip2 = $('#ip2').val();
+		    if ( check.ip(config.static.ip2) == false )
+		    {
+		        page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
+		        return;
+		    }
+		    config.static.mask2 = $('#mask2').val();
+		    if ( check.ip(config.static.mask2) == false )
+		    {
+		        page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
+		        return;
+		    }
+		}
+		else
+		{
+		    config.static.ip2 = "";
+		    config.static.mask2 = "";
+		}
+		if ( $('#ipmask3').prop('checked') == true )
+		{
+		    config.static.ip3 = $('#ip3').val();
+		    if ( check.ip(config.static.ip3) == false )
+		    {
+		        page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
+		        return;
+		    }
+		    config.static.mask3 = $('#mask3').val();
+		    if ( check.ip(config.static.mask3) == false )
+		    {
+		        page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
+		        return;
+		    }
+		}
+		else
+		{
+		    config.static.ip3 = "";
+		    config.static.mask3 = "";
+		}
+		/* IPV4 dhcps */
+		if ( !config.dhcps )
+		{
+		    config.dhcps = {};
+		}
+		if ( config.mode == "dhcpc" )
+		{
+		    config.dhcps.status = "disable";
+		}
+		else
+		{
+		    var dhcps = config.dhcps;
+		    dhcps.status = boole2able( $('#dhcps').prop('checked') );
+		    if ( dhcps.status == "enable" )
+		    {
+		        dhcps.startip = $('#startip').val();
+		        if ( check.ip(dhcps.startip) == false )
+		        {
+		            page.alert( { message: $.i18n('Start IP Address')+" "+$.i18n('must be a valid IP address') } );
+		            return;
+		        }
+		        dhcps.endip = $('#endip').val();
+		        if ( check.ip(dhcps.endip) == false )
+		        {
+		            page.alert( { message: $.i18n('End IP Address')+" "+$.i18n('must be a valid IP address') } );
+		            return;
+		        }
+		        dhcps.mask = $('#mask').val();
+		        dhcps.lease = $('#lease').val();
+		        if ( dhcps.lease && check.number(dhcps.lease) == false )
+		        {
+		            page.alert( { message: $.i18n('Lease(Sec)')+" "+$.i18n('must be a valid number') } );
+		            return;
+		        }
+		        dhcps.gw = $('#gw').val();
+		        if ( dhcps.gw && check.ip(dhcps.gw) == false )
+		        {
+		            page.alert( { message: $.i18n('Assign Gateway')+" "+$.i18n('must be a valid IP address') } );
+		            return;
+		        }
+		        dhcps.dns = $('#dns').val();
+		        if ( dhcps.dns && check.ip(dhcps.dns) == false )
+		        {
+		            page.alert( { message: $.i18n('Assign DNS')+" "+$.i18n('must be a valid IP address') } );
+		            return;
+		        }
+		        dhcps.dns2 = $('#dns2').val();
+		        if ( dhcps.dns2 && check.ip(dhcps.dns2) == false )
+		        {
+		            page.alert( { message: $.i18n('Assign DNS2')+" "+$.i18n('must be a valid IP address') } );
+		            return;
+		        }
+		    }
+		}
+	}
 
-  // 校正DHCP池地址
-  if ( wan.static.ip != wancopy.static.ip 
-      && wan.dhcps.startip == wancopy.dhcps.startip
-      && wan.dhcps.endip == wancopy.dhcps.endip )
-  {
-      var arr = ipadd2array( wan.static.ip, wan.static.mask );
-      // 起始IP
-      arr[3] = 2;
-      wan.dhcps.startip = arr.join('.');
-      // 结束IP
-      arr[3] = 250;
-      wan.dhcps.endip = arr.join('.');
-  }
-  
-  page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
-      if ( result )
-      {
-          he.save( [ object+"="+JSON.stringify(wan)] ).then( function(){
-              page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
-                  if ( result )
-                  {
-                      he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
-                  }
-                  else
-                  {
-                      lan_load();
-                  }
-              });
-          });
-      }
-  });
-  
+	if ( ocompare( config, copy ) )
+	{
+	  page.alert( { message: $.i18n('Settings unchanged') } );
+	  return;
+	}
+
+    // 校正DHCP池地址
+    if ( config.static.ip != copy.static.ip 
+        && config.dhcps.startip == copy.dhcps.startip
+        && config.dhcps.endip == copy.dhcps.endip )
+    {
+        var arr = ipadd2array( config.static.ip, config.static.mask );
+        // 起始IP
+        arr[3] = 2;
+        config.dhcps.startip = arr.join('.');
+        // 结束IP
+        arr[3] = 250;
+        config.dhcps.endip = arr.join('.');
+    }
+
+    page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
+        if ( result )
+        {
+            he.save( [ object+"="+JSON.stringify(config) ] ).then( function(){
+                page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
+                    if ( result )
+                    {
+                        he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                    }
+                    else
+                    {
+                        config_load();
+                    }
+                });
+            });
+        }
+    });
 }
 
 
 
 /* init */
 $.i18n().load( page.lang('lan') ).then( function () {
-    /* init the langauage */
-    $.i18n().locale = lang; $('body').i18n();
+	/* init the langauage */
+	$.i18n().locale = lang; $('body').i18n();
 
-    /* load the configure */
-    config_load();
+	/* load the configure */
+	config_load();
 
-    /* bind the refresh */
-    $('#refresh').on(ace.click_event, function () {
-        location.reload();
-    });
-    /* bind the apply */
-    $('#apply').on(ace.click_event, function () {
-        config_save();
-    });
+	/* bind the refresh */
+	$('#refresh').on(ace.click_event, function () {
+		location.reload();
+	});
+	/* bind the apply */
+	$('#apply').on(ace.click_event, function () {
+		config_save();
+	});
 });
+
+
 

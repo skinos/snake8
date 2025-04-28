@@ -4,7 +4,7 @@
  *      Company:  ASHYELF
  */
 
-#include "land/skin.h"
+#include "skin/skin.h"
 
 
 
@@ -20,9 +20,9 @@ boole_t _setup( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
+	object = obj_name( this );
 	ret = tfalse;
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_info( "%s(%s) add to network frame", object, netdev );
@@ -42,8 +42,8 @@ boole_t _shut( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_info( "%s delete from network frame", object );
@@ -87,7 +87,6 @@ talk_t _get( obj_t this, attr_t path )
 talk_t _netdev( obj_t this, param_t param )
 {
     const char *obj;
-	const char *object;
 	const char *netdev;
 
 	obj = obj_com( this );
@@ -95,8 +94,7 @@ talk_t _netdev( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -120,13 +118,13 @@ boole_t _up( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
-	radio = register_value( object, "radio" );
+	object = obj_name( this );
+	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return tfalse;
 	}
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return tfalse;
@@ -197,8 +195,8 @@ boole_t _down( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return tfalse;
@@ -233,7 +231,6 @@ talk_t _status( obj_t this, param_t param )
 	talk_t ret;
 	talk_t cfg;
     const char *obj;
-	const char *object;
 	const char *netdev;
     char mac[NAME_MAX];
     char path[PATH_MAX];
@@ -245,8 +242,7 @@ talk_t _status( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -334,7 +330,7 @@ talk_t _status( obj_t this, param_t param )
 			if ( end != NULL )
 			{
 				*end = '\0';
-				lowtoupp( value );
+				low2upp( value );
 				json_set_string( ret, "bssid", value );
 			}
 		}
@@ -372,7 +368,6 @@ talk_t _stalist( obj_t this, param_t param )
 	talk_t x;
 	talk_t ret;
     const char *obj;
-	const char *object;
 	const char *netdev;
     char path[1024];
     char readbuf[1024];
@@ -384,8 +379,7 @@ talk_t _stalist( obj_t this, param_t param )
 	{
 		return NULL;
 	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -408,7 +402,7 @@ talk_t _stalist( obj_t this, param_t param )
         {
             ptr = readbuf+8;
             *(ptr+17) = '\0';
-            lowtoupp( ptr );
+            low2upp( ptr );
 			x = json_create( NULL );
 			json_set_value( ret, ptr, x );
         }
