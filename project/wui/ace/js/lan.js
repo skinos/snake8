@@ -352,7 +352,7 @@ function config_save()
     page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
         if ( result )
         {
-            he.save( [ object+"="+JSON.stringify(config) ] ).then( function(){
+            he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
                 page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
                     if ( result )
                     {

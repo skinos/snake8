@@ -48,7 +48,7 @@ function hosts_save()
         page.alert( { message: $.i18n('Settings unchanged') } );
         return;
     }
-    he.save( [ obj+"="+JSON.stringify(hosts) ] ).then( function(){
+    he.exec( [ obj+"="+JSON.stringify(hosts) ] ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         hosts_load();
     });

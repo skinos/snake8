@@ -131,7 +131,7 @@
             return;
         }
         // 向系统保存并应用组件配置的调用
-        he.save( [ comname+"="+JSON.stringify(comcfg) ] ).then( function(){
+        he.exec( [ comname+"="+JSON.stringify(comcfg) ] ).then( function(){
             // 提示应用成功
             page.hint2succeed( $.i18n('Modify successfully') );
             // 刷新界面内容

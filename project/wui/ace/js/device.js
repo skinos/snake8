@@ -196,7 +196,7 @@ function date_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
     }
-    he.save( cmds ).then( function(){
+    he.exec( cmds ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         date_load();
     });
@@ -231,7 +231,8 @@ $.i18n().load( page.lang('device') ).then( function () {
       page.prompt( { message: $.i18n('Input new device name'), value:window.machine.name, callback:function(result){
           if ( result )
           { 
-              he.exec( [ "land@machine:name="+result ] ).then( function(v){
+          	  var name = result.replace(/"/g, '\\"');
+              he.exec( [ "land@machine:name="+name ] ).then( function(v){
                   var ret = v[0];
                   if ( ret == true )
                   {
@@ -295,7 +296,7 @@ $.i18n().load( page.lang('device') ).then( function () {
         page.confirm( { message: $.i18n('The system will restart because of the change of settings') } ).then( function(result){
             if ( result )
             {
-                he.save( [ "land@machine:mode="+nmode ] ).then( function(){
+                he.exec( [ "land@machine:mode="+nmode ] ).then( function(){
                     page.confirm( { message: $.i18n('Restart the system to apply') } ).then( function(result){
                         if ( result )
                         {

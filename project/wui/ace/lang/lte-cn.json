@@ -30,20 +30,13 @@
 	"ready":"基带正常",
 	"reset":"重启基带",
 	"Network":"网络",
+	"unspecified":"未指定",
 	"RSSI":"信号强度",
 	"Online Time":"在线时长",
 	"Rx/Tx":"收/发(字节)",
 
 
 
-	"Attach Mode":"驻网模式",
-	"Auto":"自动",
-	"5G NSA":"5G非独立组网",
-	"5G SA":"5G独立组网",
-	"3G":"3G",
-	"2G":"2G",
-	"GNSS":"定位功能",
-	"AT Port":"AT串口",
 	"Modem Settings":"模块设置",
 
 
@@ -133,7 +126,7 @@
 	"Availability Check":"可用性检测(保活)",
 	"Disable":"禁用",
 	"Receive Count":"接收包计数",
-	"UDP&TCP":"UDP&TCP",
+	"Domain":"检测域名服务器",
 	"Auto":"自动",
 	"Test Address":"检测地址",
 	"Test Address 2":"检测地址2",
@@ -152,14 +145,14 @@
 	"Reboot System":"重启系统",
 
 
-	"Advanced Settings":"高级设置",
 
+	"GNSS":"定位功能",
+	"AT Port(TCP)":"AT服务(TCP)",
+	"Attach Mode":"驻网模式",
+	"Auto":"自动",
+	"PIN Code":"PIN码",
 	"Lock IMEI":"锁定IMEI",
 	"Lock IMSI":"锁定IMSI",
-	"Lock PIN":"SIM卡PIN码",
-	"PIN Code":"PIN码",
-	"Lock Band":"锁定频段",
-	"Lock Cell":"锁定小区",
     "Lock":"锁定",
     "Unlocked":"未锁定",
     "Locked":"已锁定",
@@ -170,7 +163,9 @@
 	"Command Name":"名称",
 	"AT Command":"AT指令",
 	"Return":"返回信息",
-	
+
+	"Watch Interval":"查询间隔",
+
 	"Need SIM Card":"检查SIM卡",
 	"Frist number of simcard failures reset modem":"查卡失败次数重置模块",
 	"Second number of simcard failures reset modem":"查卡失败次数重置模块2",
@@ -184,13 +179,17 @@
 	"Third number of signal failures reset modem":"查信号失败次数重置模块3",
 	"Interval number of signal failures reset modem":"间隔查信号失败次数重置模块",
 
-	"Watch Interval":"查询间隔",
-	
-	"Dial timeout":"拨号超时",
+	"Need Attach":"需要驻网成功",
+	"Frist number of attach failures reset modem":"驻网失败次数重置模块",
+	"Second number of attach failures reset modem":"驻网失败次数重置模块2",
+	"Third number of attach failures reset modem":"驻网失败次数重置模块3",
+	"Interval number of attach failures reset modem":"间隔驻网失败次数重置模块",
+
 	"Frist number of dial failures reset modem":"拨号失败次数重置模块",
 	"Second number of dial failures reset modem":"拨号失败次数重置模块2",
+	"Third number of dial failures reset modem":"拨号失败次数重置模块3",
 	"Interval number of dial failures reset modem":"间隔拨号失败次数重置模块",
-	
+
 
 	"The LTE connecttion will be disconneted because of the change of configuration":"设备LTE配置将导致网络断开重连"
 

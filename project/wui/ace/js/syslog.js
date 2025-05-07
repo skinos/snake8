@@ -119,7 +119,7 @@ function save_syslog()
         page.alert( { message: $.i18n('Settings unchanged') } );
         return;
     }
-    he.save( [ "land@syslog="+JSON.stringify(syslog) ] ).then( function(){
+    he.exec( [ "land@syslog="+JSON.stringify(syslog) ] ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         load_syslog();
     });

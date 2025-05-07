@@ -480,7 +480,7 @@ function save_net_config()
     page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
         if ( result )
         {
-            he.save( cmds ).then( function(){
+            he.exec( cmds ).then( function(){
                 page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
                     if ( result )
                     {

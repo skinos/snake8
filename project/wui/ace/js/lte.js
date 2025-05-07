@@ -153,7 +153,7 @@ function config_load()
 		$('#apn').val(config.profile_cfg.apn);
 		$('#user').val(config.profile_cfg.user);
 		$('#passwd').val(config.profile_cfg.passwd);
-		$('#type').val(config.profile_cfg.type);
+		$('#type').val(config.profile_cfg.type||"ipv4");
 		$('#auth').val(config.profile_cfg.auth);
     }
     else
@@ -165,7 +165,7 @@ function config_load()
 			$('#apn').val(operator.apn);
 			$('#user').val(operator.user);
 			$('#password').val(operator.passwd);
-			$('#type').val(operator.type);
+			$('#type').val(operator.type||"ipv4");
 			$('#auth').val(operator.auth);
 		}
     }
@@ -173,7 +173,7 @@ function config_load()
       if ($(this).prop('checked'))
       {
         $('#profile_cfg').show();
-		if ( state && state.hwnat != "enable" )
+		if ( state && state.na != "enable" )
         {
 			$('#mode').val( "ppp" );
         }
@@ -181,15 +181,17 @@ function config_load()
       else
       {
         $('#profile_cfg').hide();
-		if ( state && state.hwnat != "enable" )
+		if ( state && state.na != "enable" )
 		{
 			$('#mode').val( "" );
 		}
       }
     }).trigger('change');
 	/* bind the button */
-	$('#modem_set').attr( "href", "#ltemodem?object="+object );
-	$('#sms_set').attr( "href", "#ltesms?object="+v[1] );
+	var modem = v[1];
+	$('#simcard_set').attr( "href", "#ltesim?object="+modem+"&ifname="+object );
+	$('#sms_set').attr( "href", "#ltesms?object="+modem+"&ifname="+object );
+	$('#modem_set').attr( "href", "#ltemodem?object="+modem+"&ifname="+object );
 
     /* status */
     if ( config.status && config.status == "disable" )
@@ -708,7 +710,7 @@ function config_save()
   page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
     if ( result )
     {
-      he.save( [ object+"="+JSON.stringify(config)] ).then( function(){
+      he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         config_load();
       });

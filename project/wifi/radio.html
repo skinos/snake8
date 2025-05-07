@@ -567,7 +567,7 @@
       page.confirm( { message: $.i18n('The wireless client will be disconneted because of the change of configuration') } ).then( function(result){
         if ( result )
         {
-          he.save( cmds ).then( function(){
+          he.exec( cmds ).then( function(){
             page.alert( {message:$.i18n('Make sure that the device is reconnected')} );
             location.reload();
           });

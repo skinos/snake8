@@ -24,6 +24,31 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
         "user":"user name",                       // [ string ]
         "passwd":"user password"                  // [ string ]
     },
+    // backup simcard configure
+    "bsim":"backup simcard function",                         // [ "disable", "enable" ]
+    "bsim_cfg":                                               // settings of backup simcard save here, the json be used when "bsim" value is enable
+    {
+        "mode":"Specify the simcard",                               // [ "auto", "bsim", "msim", "detect" ]
+                                                                        // "bsim" for backup simcard
+                                                                        // "msim" for main simcard
+                                                                        // "detect" the IO for auto that need detect IO support
+        "signal_failed":"Check the signal failed how many times to switch the simcard",  // [ number ]
+        "attach_failed":"attach to internet failed how many times to switch the simcard", // [ number ]
+        "failed":"connect to internet failed how many times to switch the simcard", // [ number ]
+        "failover":"backup simcard usage duration",                                      // [ number ], the unit is second
+        "keeplive_switch":"keeplive faeild to switch",                                   // [ "disable", "enable" ]
+        // backup profile attributes
+        "profile":"custom the profile",            // [ "disable", "enable" ]
+        "profile_cfg":                             // custom profile save here, the json be used when "profile" value is enable
+        {
+            "dial":"dial number",                     // [ number ]
+            "cid":"dial CID",                         // [ number ], default is 1
+            "type":"ip address type",                 // [ "ipv4", "ipv6", "ipv4v6" ]
+            "apn":"APN name",                         // [ string ]
+            "user":"user name",                       // [ string ]
+            "passwd":"user password"                  // [ string ]
+        }
+    },
     // simcard dial attributes
     "need_simcard":"SIMcard must be detected",                                                 // [ "enable", "disable" ]
     "simcard_failed_threshold":"first failed to reset time",                                   // [ number ]
@@ -38,7 +63,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
     "signal_failed_threshold3":"third failed to reset time",                                   // [ number ]
     "signal_failed_everytime":"every failed to reset time",                                    // [ number ]
     // attach dial attributes
-    "need_attach":"must register to plmn",                                                     // [ "enable", "disable" ]
+    "need_attach":"must attach succeed",                                                       // [ "enable", "disable" ]
     "attach_failed_threshold":"first failed to reset time",                                    // [ number ]
     "attach_failed_threshold2":"second failed to reset time",                                  // [ number ]
     "attach_failed_threshold3":"third failed to reset time",                                   // [ number ]

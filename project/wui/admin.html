@@ -231,7 +231,7 @@
         page.confirm( { message: $.i18n('The system will restart because of the change of settings') } ).then( function(result){
             if ( result )
             {
-                he.save( [ object+"="+JSON.stringify(config) ] ).then( function(){
+                he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
                     page.confirm( { message: $.i18n('Restart the system to apply') } ).then( function(result){
                         if ( result )
                         {

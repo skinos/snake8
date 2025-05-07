@@ -418,7 +418,7 @@
           page.alert( { message: $.i18n('Settings unchanged') } );
           return;
       }
-      he.save( cmds ).then( function(){
+      he.exec( cmds ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         cfg_load();
       });

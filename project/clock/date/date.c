@@ -79,7 +79,7 @@ static boole time_setting( const char *tt, const char *zone )
 			/* tell the hardware clock */
 			shell( "hwclock -w >/dev/null 2>&1" );
 			/* record time source */
-			h = register_open( REGISTER_DEFAULT_OBJECT, O_RDWR, 0644, 0, 0 );
+			h = register_open( NULL, O_RDWR, 0644, 0, 0 );
 			if ( h != NULL )
 			{
 				register_value_set( h, "date_src", "set", sizeof("set"), 20 );
@@ -155,7 +155,7 @@ boole_t _setup( obj_t this, param_t param )
     ptr = json_string( cfg, "ntpclient" );
     if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
     {
-        sstart( COM_IDPATH, "ntploop", NULL, COM_IDPATH );
+        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
     }
 
 	/* free the component configure */
@@ -189,7 +189,7 @@ talk_t _get( obj_t this, attr_t path )
 
 
 
-boole_t _ntploop( obj_t this, param_t param )
+boole_t _service( obj_t this, param_t param )
 {
     int t;
     boole ret;

@@ -109,6 +109,29 @@
             </div>
           </div>
         </div>
+        <!-- SIM卡设置 -->
+        <div class="form-group" style="display: none;" >
+          <label class="col-sm-3 control-label no-padding-right"></label>
+            <div class="col-sm-9">
+              <div class="btn-group">
+                <div class="btn-group">
+                  <a class="btn btn-warning" data-i18n="SIM card Settings" id="simcard_set" href="#"></a>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <!-- 模块短信 -->
+        <div class="form-group" style="display: none;" >
+          <label class="col-sm-3 control-label no-padding-right"></label>
+            <div class="col-sm-9">
+              <div class="btn-group">
+                <div class="btn-group">
+                  <a class="btn btn-warning" data-i18n="SMS Settings" id="sms_set" href="#"></a>
+                </div>
+              </div>
+            </div>
+        </div>
         <!-- 模块设置 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right"></label>
@@ -361,7 +384,7 @@
               <select class="col-xs-10 col-sm-5" id="keeplive">
                 <option value="disable" data-i18n="Disable"></option>
                 <option value="icmp" data-i18n="ICMP"></option>
-                <option value="dns" data-i18n="DNS"></option>
+                <option value="dns" data-i18n="Domain"></option>
                 <option value="recv" data-i18n="Receive Count"></option>
                 <option value="auto" data-i18n="Auto"></option>
               </select>
@@ -455,7 +478,7 @@
             </div>
             <!-- 包数 -->
             <div class="form-group">
-              <label class="col-sm-3 control-label no-padding-right" data-i18n="Received packets"></label>
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Received Packets"></label>
               <div class="col-sm-9">
                 <input type="text" id="recv_packets" class="col-xs-10 col-sm-5" maxlength="128" />
               </div>

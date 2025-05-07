@@ -130,7 +130,7 @@
             page.alert( { message: $.i18n('Settings unchanged') } );
             return;
         }
-        he.save( [ object+"="+JSON.stringify(config) ] ).then( function(){
+        he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
             page.hint2succeed( $.i18n('Modify successfully') );
             load_config();
         });

@@ -856,7 +856,7 @@ boole_t _service( obj_t this, param_t param )
 			failed_timeout = 10;
 			for( check=0; check<failed_timeout; check++ )
 			{
-				if ( scall( ifdev, "connected", profile ) == ttrue )
+				if ( scallt( ifdev, "connected", profile ) == ttrue )
 				{
 					break;
 				}
@@ -888,7 +888,7 @@ boole_t _service( obj_t this, param_t param )
 			}
 			for( check=0; check<failed_timeout; check++ )
 			{
-				if ( scall( ifdev, "connected", profile ) == ttrue )
+				if ( scallt( ifdev, "connected", profile ) == ttrue )
 				{
 					break;
 				}

@@ -1,0 +1,251 @@
+<!-- ajax layout which only needs content area -->
+<div class="row" id="page-modes">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+
+        <!-- GNSS -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="GNSS"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="gnss" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+        <!-- AT Port -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="AT Port(TCP)"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="tcpport" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 网络模式 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Attach Mode"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="lock_nettype">
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="PIN Code"></label>
+          <div class="col-sm-9">
+            <input type="text" id="lock_pin" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+        <!-- IMEI -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock IMEI"></label>
+            <div class="col-sm-9">
+              <div id="lock_imei" class="col-xs-7 col-sm-3 form-right-text"></div>
+              <button class="btn btn-main btn-mini" id="imei_lock" data-i18n="Lock"></button>
+            </div>
+        </div>
+        <!-- IMSI -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock IMSI"></label>
+            <div class="col-sm-9">
+              <div id="lock_imsi" class="col-xs-7 col-sm-3 form-right-text"></div>
+              <button class="btn btn-main btn-mini" id="imsi_lock" data-i18n="Lock"></button>
+            </div>
+        </div>
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <table id="set-grid-table"></table>
+        <div id="set-grid-pager"></div>
+        <table id="watch-grid-table"></table>
+        <div id="watch-grid-pager"></div>
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Watch Interval"></label>
+          <div class="col-sm-9">
+            <input type="text" id="watch_interval" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Need SIM Card"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="need_simcard" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Frist number of simcard failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_threshold" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Second number of simcard failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_threshold2" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Third number of simcard failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_threshold3" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval number of simcard failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_everytime" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        
+
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Need PLMN"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="need_plmn" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Need Signal"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="need_signal" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Frist number of signal failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Second number of signal failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold2" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Third number of signal failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold3" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval number of signal failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_everytime" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Need Attach"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="need_attach" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Frist number of attach failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Second number of attach failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold2" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Third number of attach failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold3" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval number of attach failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_everytime" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Frist number of dial failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Second number of dial failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold2" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Third number of dial failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold3" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval number of dial failures reset modem"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_everytime" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+
+
+
+      <div class="clearfix form-actions">
+        <div class="col-md-offset-3 col-md-9">
+          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+          &nbsp; &nbsp; &nbsp;
+          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+        </div>
+      </div>
+
+
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script src="/js/ltemodem.js"></script>
+

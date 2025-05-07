@@ -648,7 +648,7 @@ function config_save()
   page.confirm( { message: $.i18n('The WISP connecttion will be disconneted because of the change of configuration') } ).then( function(result){
     if ( result )
     {
-      he.save( [ object+"="+JSON.stringify(config)] ).then( function(){
+      he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){
         page.hint2succeed( $.i18n('Modify successfully') );
         config_load();
       });

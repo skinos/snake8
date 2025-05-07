@@ -279,38 +279,7 @@ var he =
         })
         return dfd.promise();
     },
-    save:function( a, loading )
-    {
-        var dfd = $.Deferred();
-        page.overlay( loading||$.i18n('Saving') );
-        this.cmd( a, null, function (v) {
-            page.overlay2hide();
-            if ( typeof v == "string" )
-            {
-                page.alert( { message: $.i18n( v ) } );
-            }
-            else if ( typeof v == "object" )
-            {
-                dfd.resolve(v);
-            }
-        })
-        return dfd.promise();
-    },
-    bkexec:function( a )
-    {
-        var dfd = $.Deferred();
-        this.cmd( a, null, function (v) {
-            if ( typeof v == "string" )
-            {
-                page.alert( { message: $.i18n( v ) } );
-            }
-            else if ( typeof v == "object" )
-            {
-                dfd.resolve(v);
-            }
-        })
-        return dfd.promise();
-    },
+
     exec:function( a, loading )
     {
         var dfd = $.Deferred();
@@ -328,7 +297,29 @@ var he =
         })
         return dfd.promise();
     },
-    
+	bkexec:function( a )
+	{
+		var dfd = $.Deferred();
+		this.cmd( a, null, function (v) {
+			if ( typeof v == "string" )
+			{
+				page.alert( { message: $.i18n( v ) } );
+			}
+			else if ( typeof v == "object" )
+			{
+				dfd.resolve(v);
+			}
+		})
+		return dfd.promise();
+	},
+
+    save:function( a, loading )
+    {
+    },
+	bksave:function( a, loading )
+	{
+	},
+
     /*
      * 重启路由器，屏显示进度条
      * @param {any} args 
