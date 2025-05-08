@@ -33,13 +33,13 @@ function config_load()
             state = {};
         }
 		// GNSS
-        if ( config.gnss == "disable" )
+        if ( config.gnss == "enable" )
         {
-            $('#gnss').prop('checked', false );
+			$('#gnss').prop('checked', true );
         }
 		else
 		{
-			$('#gnss').prop('checked', true );
+            $('#gnss').prop('checked', false );
 		}
 		// TCP Port
 		$('#tcpport').text( config.tcpport );

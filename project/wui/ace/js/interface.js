@@ -180,8 +180,14 @@ function ltedev_show( info, id )
 	{
         $(id+"_vidpid").text( info.name );
     }
-    $(id+"_imei").text( info.imei||"" );
-    $(id+"_imsi").text( info.imsi||"" );
+	if ( info.imei )
+	{
+    	$(id+"_imei").text( $.i18n(info.imei) );
+	}
+	if ( info.imsi )
+	{
+    	$(id+"_imsi").text( $.i18n(info.imsi) );
+	}
     if ( info.iccid )
     {
         $(id+"_iccid").text( $.i18n(info.iccid) );
@@ -394,8 +400,14 @@ function lte_show( info, id )
 	{
         $(id+"_vidpid").text( info.name );
     }
-    $(id+"_imei").text( info.imei||"" );
-    $(id+"_imsi").text( info.imsi||"" );
+	if ( info.imei )
+	{
+    	$(id+"_imei").text( $.i18n(info.imei) );
+	}
+	if ( info.imsi )
+	{
+    	$(id+"_imsi").text( $.i18n(info.imsi) );
+	}
     if ( info.iccid )
     {
         $(id+"_iccid").text( $.i18n(info.iccid) );

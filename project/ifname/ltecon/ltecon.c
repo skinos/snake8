@@ -458,6 +458,10 @@ talk_t _status( obj_t this, param_t param )
             talk_free( v );
         }
     }
+	else
+	{
+		json_set_string( ret, "status", "nodevice" );
+	}
     return ret;
 }
 
@@ -538,11 +542,12 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 5 );
         return tfalse;
 	}
-	if ( scall( ifdev, "cfun", NULL ) == tfalse )
+	ret = scall( ifdev, "live", NULL );
+	if ( ret != ttrue )
 	{
-		ifname_debug( obj, "%s ifdev %s not working yet", object, ifdev );
+		ifname_debug( obj, "%s ifdev %s not live", object, ifdev );
 		sleep( 5 );
-        return tfalse;
+        return ret;
 	}
     /* get the configure */
     cfg = config_get( this, NULL ); 

@@ -369,6 +369,7 @@ function config_load()
           $('#recv_failed').val(config.keeplive.recv.failed);
           $('#recv_packets').val(config.keeplive.recv.packets);
         }
+        $('#action').val( config.keeplive.action || '');
     }
     else
     {

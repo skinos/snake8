@@ -18,6 +18,8 @@
 	"puk":"PIN码错误",
 	"nosim":"无SIM卡",
 	"sim":"发现SIM卡",
+	"switch":"正在切换",
+	"idle":"停止工作",
 	"noreg":"未注册",
 	"unreg":"未注册",
 	"dereg":"拒绝注册",
@@ -29,6 +31,7 @@
 	"reset":"重启基带",
 
 	"Network":"网络",
+	"unspecified":"未指定",
 	"Signal":"信号",
 	"RSSI":"信号强度",
 	"Band":"频段",

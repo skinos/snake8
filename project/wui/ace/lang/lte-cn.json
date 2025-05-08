@@ -1,5 +1,4 @@
 {
-
 	"Status":"状态",
 	"disable":"未启用",
 	"down":"未连接",
@@ -20,6 +19,7 @@
 	"sim":"发现SIM卡",
 	"nosim":"无SIM卡",
 	"switch":"正在切换",
+	"idle":"停止工作",
 	"noreg":"未注册",
 	"unreg":"未注册",
 	"dereg":"拒绝注册",
@@ -29,6 +29,7 @@
 	"register":"正在注册",
 	"ready":"基带正常",
 	"reset":"重启基带",
+
 	"Network":"网络",
 	"unspecified":"未指定",
 	"RSSI":"信号强度",
