@@ -13,13 +13,14 @@ $(eval $(call Package/Define))
 export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FPK_LIB_DIR FPK_BIN_DIR FPK_ETC_DIR FPK_INT_DIR FPK_ROOTFS_DIR
 #
 all:
+	$(call Build/Prepare/Default)
 	$(call Build/Compile/Default)
-	$(call Build/Install/Collect)
 	mkdir $(FPK_BUILD_DIR)/admin
 	cp -fr ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
 	cp -fr ./ace/* $(FPK_BUILD_DIR)/admin
+	$(call Build/Install/fpk,$(gSTORE_DIR))
 install:
-	$(call Build/Install/Fpk,$(gosROOT_DIR),$(gSTORE_DIR))
+	$(call Build/Install/fpk2rootfs,$(1))
 dep:
 clean distclean:
 
