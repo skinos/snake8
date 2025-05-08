@@ -54,7 +54,7 @@ app_install:
 		make -f ${gDIR_MAKEFILE} -C ${gRICE_DIR} install; \
 	fi
 	make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch install
-	make -C ${gTOP_DIR} lay_install
+	make -C ${gTOP_DIR} rootfs_install
 	cd ${gosROOT_DIR};if [ -f needless.sh ]; then \
 		chmod a+rwx needless.sh;./needless.sh; \
 	fi
@@ -141,6 +141,7 @@ sdk_uninstall:
 
 sdk_ftp:
 sdk_repo:
+	# 上传到FTP库
 	if [ -d ${gSTORE_DIR} ]; then \
 		repo-upload slave ${gHARDWARE} ${gCUSTOM} ${gSCOPE} ${gSTORE_DIR} fpk; \
 	fi

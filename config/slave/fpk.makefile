@@ -14,9 +14,9 @@ export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FP
 #
 all:
 	$(call Build/Compile/Default)
-	$(call Build/Install/Collect)
+	$(call Build/Install/fpk,$(gSTORE_DIR))
 install:
-	$(call Build/Install/Fpk,$(gosROOT_DIR),$(gSTORE_DIR))
+	$(call Build/Install/fpk2rootfs,$(gosROOT_DIR))
 dep:
 clean distclean:
 
