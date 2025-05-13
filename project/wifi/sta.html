@@ -306,11 +306,11 @@
         var info = v[0];
         if ( info )
         {
-            if ( info.state )
+            if ( info.status )
             {
                 $("#status_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
-                $("#status_status").text( $.i18n(info.state) );
-                if ( info.state == "down" )
+                $("#status_status").text( $.i18n(info.status) );
+                if ( info.status == "down" )
                 {
                     $("#status_btn").html( '<i class="ace-icon fa fa-play"></i>' );
                 }

@@ -76,7 +76,7 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "down", "up" ]
+        "status":"Current status",        // [ "uping", "down", "up" ]
                                              // "uping" for connecting
                                              // "down" for the network is down
                                              // "up" for the network is connect succeed

@@ -1,3 +1,4 @@
+window.object = "wui@admin";
 window.hepath = "/public";
 window.talkkey = "";
 window.username = "";
@@ -7,7 +8,7 @@ localStorage.setItem( "username", window.username );
 jQuery(function($) {
 
 	// load
-	he.load( [ 'wui@admin', 'arch@custom', 'land@machine', 'land@machine.status' ] ).then( function(v){
+	he.load( [ window.object, 'arch@custom', 'land@machine', 'land@machine.status' ] ).then( function(v){
 		window.wui = v[0];
 		window.custom = v[1];
 		window.machine = v[2];

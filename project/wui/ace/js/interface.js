@@ -22,9 +22,9 @@ function ltedev_show( info, id )
         $(id).hide();
         return;
     }
-    if ( info.state )
+    if ( info.status )
     {
-        $(id+"_status").text( $.i18n(info.state) );
+        $(id+"_status").text( $.i18n(info.status) );
     }
     else
     {
@@ -982,10 +982,16 @@ function interface_load()
 	lan_show( lan3, "#lan3" );
 	lan4 = v[11];
 	lan_show( lan4, "#lan4" );
-	wisp = v[12];
-	wisp_show( wisp, "#wisp" );
-	wisp2 = v[13];
-	wisp_show( wisp2, "#wisp2" );
+	if ( window.ifdev["wifi@n"] == true )
+	{
+		wisp = v[12];
+		wisp_show( wisp, "#wisp" );
+	}
+	if ( window.ifdev["wifi@a"] == true )
+	{
+		wisp2 = v[13];
+		wisp_show( wisp2, "#wisp2" );
+	}
 	sw = v[14];
 	switch_show( sw );
   })

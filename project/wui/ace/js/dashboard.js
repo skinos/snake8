@@ -80,6 +80,11 @@ buff["wifi@assid_rxdata"] = [];
 buff["wifi@assid_txdata"] = [];
 function lte_show( ifname, value )
 {
+	if ( value.status == "down" )
+	{
+		$("[id='"+ifname+"']").hide();
+		return;
+	}
     $("[id='"+ifname+"']").show();
     $("[id='"+ifname+"_status']").html( $.i18n(value.status) );
     $("[id='"+ifname+"_imei']").html(  $.i18n(value.imei) );
@@ -241,6 +246,11 @@ function lte_show( ifname, value )
 
 function wan_show( ifname, value )
 {
+	if ( value.status == "down" )
+	{
+		$("[id='"+ifname+"']").hide();
+		return;
+	}
     $("[id='"+ifname+"']").show();
     $("[id='"+ifname+"_status']").html( $.i18n(value.status) );
     $("[id='"+ifname+"_ip']").html( value.ip||"" );
@@ -352,6 +362,11 @@ function wan_show( ifname, value )
 
 function wisp_show( ifname, value )
 {
+	if ( value.status == "down" )
+	{
+		$("[id='"+ifname+"']").hide();
+		return;
+	}
     $("[id='"+ifname+"']").show();
     $("[id='"+ifname+"_status']").html( $.i18n(value.status) );
     $("[id='"+ifname+"_ip']").html( value.ip||"" );
@@ -577,7 +592,7 @@ function lan_show( ifname, value )
 }
 function ssid_show( ifname, value )
 {
-    if ( value == null || value.state != "up" )
+    if ( value == null || value.status != "up" )
     {
         $("[id='"+ifname+"_ssid_div']").hide();
         $("[id='"+ifname+"_bssid_div']").hide();

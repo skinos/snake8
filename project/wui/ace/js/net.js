@@ -1,14 +1,14 @@
 
-var cfg;
-var net;
-var frame;
 var vlan;
 var bridge;
 var local;
 var extern;
-var status;
+var ethercfg;
+var etherstat;
+var netcfg;
+var framecfg;
 var netobj = "arch@net";
-var object = "arch@ethernet";
+var etherobj = "arch@ethernet";
 var frameobj = "network@frame";
 var list_table = '#list-grid-table';
 var list_pager = '#list-grid-pager';
@@ -121,24 +121,23 @@ function edit_extern_submit( params, postdata )
 /* load the table infomation */
 function load_net_config()
 {
-    he.bkload( [ object, object+".status", netobj, frameobj ] ).then( function(v){
-        cfg = v[0];
-        status = v[1];
-        net = v[2];
-        vlan = net["vlan"];
-        bridge = net["bridge"];
-        frame = v[3];
-        local = frame["local"];
-        extern = frame["extern"];
+    he.bkload( [ etherobj, etherobj+".status", netobj, frameobj ] ).then( function(v){
+        ethercfg = v[0];
+        etherstat = v[1];
+        netcfg = v[2];
+        vlan = netcfg["vlan"];
+        bridge = netcfg["bridge"];
+        framecfg = v[3];
+        local = framecfg["local"];
+        extern = framecfg["extern"];
 
-        $('#mode').val(cfg.mode||"switch");
-        var list = cfg.phy;
+        $('#mode').val(ethercfg.mode||"switch");
         // 保存所有的行
         var count = 0;
         var rows = [];
-        for ( var i in list )
+        for ( var i in ethercfg.phy )
         {
-            var value = list[i];
+            var value = ethercfg.phy[i];
             var row = {};
             if ( !value["pid"] )
             {
@@ -147,7 +146,7 @@ function load_net_config()
             row[ 'key'] = i;
             row[ 'name'] =  $.i18n(i);
             row[ 'pid'] = value["pid"];
-            if ( status[i].status == "up" )
+            if ( etherstat[i].status == "up" )
             {
                 row[ 'status'] = '<i class="ace-icon fa fa-check green"></i>';
             }
@@ -198,13 +197,12 @@ function load_net_config()
 
 
 
-        list = vlan;
         // 保存所有的行
         count = 0;
         rows = [];
-        for ( var i in list )
+        for ( var i in vlan )
         {
-            var value = list[i];
+            var value = vlan[i];
             var row = {};
 
             row[ 'name'] =  "vlan@"+i;
@@ -225,13 +223,12 @@ function load_net_config()
 
 
 
-        list = bridge;
         // 保存所有的行
         count = 0;
         rows = [];
-        for ( var i in list )
+        for ( var i in bridge )
         {
-            var value = list[i];
+            var value = bridge[i];
             var row = {};
 
             row[ 'name'] = "bridge@"+i;
@@ -272,13 +269,12 @@ function load_net_config()
 
 
 
-        list = local;
         // 保存所有的行
         count = 0;
         rows = [];
-        for ( var i in list )
+        for ( var i in local )
         {
-            var value = list[i];
+            var value = local[i];
             var row = {};
 
             row[ 'name'] =  i;
@@ -300,13 +296,12 @@ function load_net_config()
 
 
 
-        list = extern;
         // 保存所有的行
         count = 0;
         rows = [];
-        for ( var i in list )
+        for ( var i in extern )
         {
-            var value = list[i];
+            var value = extern[i];
             var row = {};
 
             row[ 'name'] =  i;
@@ -336,9 +331,9 @@ function save_net_config()
 
 
     // 交换机清除所有旧规则
-    var ncfg = JSON.parse(JSON.stringify(cfg));
-    ncfg.mode = $('#mode').val();
-    if ( ncfg.mode == "vlan" )
+    var nethercfg = JSON.parse(JSON.stringify(ethercfg));
+    ethercfg.mode = $('#mode').val();
+    if ( ethercfg.mode == "vlan" )
     {
         var phy = {};
         // 根据表格数据生成hosts规则
@@ -363,16 +358,16 @@ function save_net_config()
             phy[row.key] = port;
         }
         $(list_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态
-        ncfg.phy = phy;
+        ethercfg.phy = phy;
     }
-    if ( !ocompare( cfg, ncfg ) )
+    if ( !ocompare( ethercfg, nethercfg ) )
     {
-        cmds.push( object+"="+JSON.stringify(ncfg) );
+        cmds.push( etherobj+"="+JSON.stringify(ethercfg) );
     }
 
 
 
-    var netcopy = JSON.parse(JSON.stringify(net));
+    var nnetcfg = JSON.parse(JSON.stringify(netcfg));
 
     // VLAN清除所有旧规则
     var nvlan = {};
@@ -390,7 +385,7 @@ function save_net_config()
         nvlan[row.identify] = vl;
     }
     $(vlan_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态
-    net["vlan"] = nvlan;
+    netcfg["vlan"] = nvlan;
 
     // BRIDGE清除所有旧规则
     var nbridge = {};
@@ -418,16 +413,16 @@ function save_net_config()
         nbridge[row.identify] = br;
     }
     $(bridge_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态
-    net["bridge"] = nbridge;
+    netcfg["bridge"] = nbridge;
 
-    if ( !ocompare( net, netcopy ) )
+    if ( !ocompare( netcfg, nnetcfg ) )
     {
-        cmds.push( netobj+"="+JSON.stringify(net) );
+        cmds.push( netobj+"="+JSON.stringify(netcfg) );
     }
 
 
 
-    var framecopy = JSON.parse(JSON.stringify(frame));;
+    var nframecfg = JSON.parse(JSON.stringify(framecfg));;
 
     // local清除所有旧规则
     var nlocal = {};
@@ -445,7 +440,7 @@ function save_net_config()
         nlocal[row.name] = la;
     }
     $(local_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态
-    frame["local"] = nlocal;
+    framecfg["local"] = nlocal;
 
     // extern清除所有旧规则
     var nextern = {};
@@ -463,11 +458,11 @@ function save_net_config()
         nextern[row.name] = la;
     }
     $(extern_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态
-    frame["extern"] = nextern;
+    framecfg["extern"] = nextern;
 
-    if ( !ocompare( frame, framecopy ) )
+    if ( !ocompare( framecfg, nframecfg ) )
     {
-        cmds.push( frameobj+"="+JSON.stringify(frame) );
+        cmds.push( frameobj+"="+JSON.stringify(framecfg) );
     }
 
 

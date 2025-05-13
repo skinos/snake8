@@ -1,0 +1,44 @@
+{
+	"Connection Scheme":"连接方案",
+
+	"Use First Online":"最快上线链路",
+	"Backup(Cold) on Main/Alternate":"冷备份(主/备用)",
+
+	"Backup(Hot) on Main/Alternate":"热备份(主/备用)",
+	"Backup(Hot) on Main/Alternate/King":"热备份(主/备用/导流)",
+	"Backup(Hot) on Main/Alternate/King/Reserve":"热备份(主/备用/导流/保留)",
+
+	"Backup(Lazy) on Main/Alternate":"热备份不回切(主/备用)",
+	"Backup(Lazy) on Main/Alternate/King":"热备份不回切(主/备用/导流)",
+	"Backup(Lazy) on Main/Alternate/King/Reserve":"热备份不回切(主/备用/导流/保留)",
+
+	"Balancing on Main/Alternate":"负载均衡(主/备用)",
+	"Balancing on Main/Alternate/King":"负载均衡(主/备用/导流)",
+	"Balancing on Main/Alternate/King/Reserve":"负载均衡(主/备用/导流/保留)",
+
+	"Main Connection":"主链接",
+	"Alternate Connection":"备用链接",
+	"Alternate Connection2":"备用链接2",
+	"King Connection":"导流链接",
+	"Reserve Connection":"保留链接",
+	"NONE":"无",
+	"Online":"在线",
+	"Offline":"离线",
+	"In Use":"正在使用",
+	"Unused":"未使用",
+	"valid":"可用",
+	"invalid":"不可用",
+
+	"Custom DNS":"自定义DNS",
+	"Disable":"禁用",
+	"Enable":"启用",
+	"DNS":"域名服务器",
+	"DNS2":"域名服务器2",
+	
+
+	"Delay Statistics":"延迟统计次数",
+	"Delay Boundary(ms)":"延迟分界(毫秒)",
+	"Delay Difference(ms)":"延迟差值(毫秒)",
+	"Statistics <Delay Statistics> times, in the link average delay are located in <Delay Boundary(ms)> different sides and the average delay between links is greater than <Delay Difference(ms)> disables the link with high average delay":"统计<延迟统计次数>次, 在链路平均延迟分别位于<延迟分界(毫秒)>不同侧并且链路之间的平均延迟大于<延迟差值(毫秒)>禁用平均延迟大的链路"
+	
+}

@@ -1,3 +1,4 @@
+window.object = "wui@admin";
 window.hepath = "/he";
 window.talkkey = localStorage.getItem( "talkkey" );
 window.username = localStorage.getItem( "username" );
@@ -361,7 +362,7 @@ function frame_url( hash )
 jQuery(function($) {
 
 	// Configure load
-	he.load( [ 'wui@admin',
+	he.load( [ window.object,
 			'land@machine',
 			'land@machine.status',
 			'arch@custom',

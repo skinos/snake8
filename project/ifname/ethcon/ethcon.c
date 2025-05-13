@@ -157,6 +157,476 @@ talk_t _netdev( obj_t this, param_t param )
     /* get the ifdev netdev */
 	return scall( ifdev, "ifdev", NULL );
 }
+boole_t _service( obj_t this, param_t param )
+{
+    int check;
+    talk_t v;
+	talk_t ret;
+    talk_t cfg;
+    const char *ptr;
+	const char *obj;
+	const char *mode;
+	const char *ifdev;
+    const char *object;
+	const char *netdev;
+	const char *method;
+	int reset_times;
+	int connect_failed;
+	int failed_timeout;
+	int failed_threshold;
+	int failed_threshold2;
+	int failed_threshold3;
+	int failed_everytime;
+
+	obj = obj_com( this );
+    object = obj_name( this );
+    /* offline first */
+	scalls( NETWORK_COM, "offline", object );
+
+	/*****************************************/
+	/********** get the infomation ***********/
+	/*****************************************/
+    /* get the ifdev */
+	ifdev = register_pointer( this, "ifdev" );
+    if ( ifdev == NULL || *ifdev == '\0' )
+    {
+		ifname_fault( obj, "cannot found %s ifdev", object );
+		sleep( 5 );
+        return tfalse;
+    }
+	if ( com_sexist( ifdev, NULL ) == false )
+	{
+		ifname_fault( obj, "%s ifdev %s inexistence", object, ifdev );
+		sleep( 5 );
+        return tfalse;
+	}
+    /* get the configure */
+    cfg = config_get( this, NULL ); 
+    if ( cfg == NULL )
+    {
+		ifname_fault( obj, "cannot found %s configure", object );
+		sleep( 5 );
+    	return terror;
+    }
+	json_set_string( cfg, "ifname", object );
+    /* get the ifdev reset times */
+	reset_times = reg_sint( ifdev, "reset_times" );
+
+	/*****************************************/
+	/***** get the connect mode **************/
+	/*****************************************/
+	mode = json_string( cfg, "mode" );
+	if ( mode == NULL || *mode == '\0' )
+	{
+		mode = "dhcpc";
+	}
+	method = json_string( cfg, "method" );
+	if ( method == NULL || *method == '\0' )
+	{
+		method = "disable";
+	}
+	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
+	{
+		method = "disable";
+	}
+	/* set the mode */
+	reg_set_string( this, "mode", mode );
+	reg_set_string( this, "method", method );
+	netdev = reg_sstring( ifdev, "netdev" );
+    if ( netdev == NULL || *netdev == '\0' )
+    {
+        ifname_fault( obj, "%s netdev get error", ifdev );
+        talk_free( cfg );
+        sleep( 5 );
+        return tfalse;
+    }
+
+
+
+	/*****************************************/
+	/******** up the ifdev with cfg **********/
+	/*****************************************/
+    ifname_info( obj, "%s up", ifdev );
+    ret = scallt( ifdev, "up", cfg );
+	if ( ret == tfalse )
+    {
+        ifname_warn( obj, "%s up failed", ifdev );
+        talk_free( cfg );
+        sleep( 5 );
+        return ret;
+    }
+	else if ( ret == terror )
+	{
+		ifname_warn( obj, "%s ifdev %s not work when up", object, ifdev );
+		talk_free( cfg );
+		sleep( 5 );
+		return ret;
+	}
+	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+
+	/*****************************************/
+	/******* set the netdev mac **************/
+	/*****************************************/
+    ptr = json_string( cfg, "mac" );
+    if ( ptr != NULL && *ptr != '\0' )
+    {
+        scalls( ifdev, "setmac", ptr );
+    }
+
+	/*****************************************/
+	/********** connect the ifdev ************/
+	/*****************************************/
+    ifname_debug( obj, "%s connect", ifdev );
+    ret = scallt( ifdev, "connect", cfg );
+	if ( ret == tfalse )
+    {
+        ifname_fault( obj, "%s connect failed", ifdev );
+        talk_free( cfg );
+        sleep( 3 );
+        return ret;
+    }
+	else if ( ret == terror )
+	{
+		ifname_warn( obj, "%s ifdev %s not work when connect", object, ifdev );
+		talk_free( cfg );
+		sleep( 5 );
+		return ret;
+	}
+
+
+
+	/*****************************************/
+	/**** testing connect for the ifdev ******/
+	/*****************************************/
+    ifname_debug( obj, "%s connect test", ifdev );
+	failed_threshold = 60;       // 60
+	failed_threshold2 = 180;     // 180
+	failed_threshold3 = 600;     // 600
+	failed_everytime = 1800;     // 1800
+	ptr = json_string( cfg, "connect_failed_threshold" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold = atoi( ptr );
+	}
+	ptr = json_string( cfg, "connect_failed_threshold2" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold2 = atoi( ptr );
+	}
+	ptr = json_string( cfg, "connect_failed_threshold3" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold3 = atoi( ptr );
+	}
+	ptr = json_string( cfg, "connect_failed_everytime" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_everytime = atoi( ptr );
+	}
+	ptr = json_string( cfg, "need_connect" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
+	{
+		failed_timeout = 10;
+		for( check=0; check<failed_timeout; check++ )
+		{
+			ret = scall( ifdev, "connected", NULL );
+			if ( ret == ttrue )
+			{
+				break;
+			}
+			else if ( ret == terror )
+			{
+				ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
+				talk_free( cfg );
+				sleep( 5 );
+				return ret;
+			}
+			ifname_debug( obj, "%s connect failed %d", ifdev, check );
+			sleep( 1 );
+		}
+		if ( check >= failed_timeout )
+		{
+			ifname_debug( obj, "%s ignore the connect failed", ifdev );
+		}
+	}
+	else
+	{
+		if ( reset_times == 0 )
+		{
+			failed_timeout = failed_threshold;
+		}
+		else if ( reset_times == 1 )
+		{
+			failed_timeout = failed_threshold2;
+		}
+		else if ( reset_times == 2 )
+		{
+			failed_timeout = failed_threshold3;
+		}
+		else
+		{
+			failed_timeout = failed_everytime;
+		}
+		for( check=0; check<failed_timeout; check++ )
+		{
+			ret = scall( ifdev, "connected", NULL );
+			if ( ret == ttrue )
+			{
+				break;
+			}
+			else if ( ret == terror )
+			{
+				ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
+				talk_free( cfg );
+				sleep( 5 );
+				return ret;
+			}
+			ifname_debug( obj, "%s connect failed %d", ifdev, check );
+			sleep( 1 );
+		}
+		if ( check >= failed_timeout )
+		{
+			if ( com_sexist( ifdev, "reset" ) == true )
+			{
+				ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, failed_timeout );
+				scall( ifdev, "reset", NULL );
+			}
+			else
+			{
+				ifname_debug( obj, "down the %s when connect failed for %d times", ifdev, failed_timeout );
+				scall( ifdev, "down", NULL );
+			}
+			talk_free( cfg );
+			return tfalse;
+		}
+	}
+	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+
+
+
+	/*****************************************/
+	/******** connect failed process *********/
+	/*****************************************/
+	failed_threshold = 3;       // 3*48 = 144
+	failed_threshold2 = 5;      // 5*48 = 240
+	failed_threshold3 = 15;     // 15*48 = 720
+	failed_everytime = 37;      // 37*48 = 1800
+	ptr = json_string( cfg, "failed_threshold" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold = atoi( ptr );
+	}
+	ptr = json_string( cfg, "failed_threshold2" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold2 = atoi( ptr );
+	}
+	ptr = json_string( cfg, "failed_threshold3" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_threshold3 = atoi( ptr );
+	}
+	ptr = json_string( cfg, "failed_everytime" );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		failed_everytime = atoi( ptr );
+	}
+	connect_failed = reg_int( this, "connect_failed" );
+	if ( connect_failed > 0 )
+	{
+		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (connect_failed%failed_everytime) == 0 )
+		{
+			if ( com_sexist( ifdev, "reset" ) == true )
+			{
+				ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, connect_failed );
+				scall( ifdev, "reset", NULL );
+			}
+			else
+			{
+				ifname_debug( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
+				scall( ifdev, "down", NULL );
+			}
+			connect_failed++;
+			reg_set_int( this, "connect_failed", connect_failed );
+			talk_free( cfg );
+			return tfalse;
+		}
+		ifname_debug( obj, "%s connect failed %d", object, connect_failed );
+	}
+	connect_failed++;
+	reg_set_int( this, "connect_failed", connect_failed );
+
+
+
+	/*****************************************/
+	/**** ifname ip connect take care ********/
+	/*****************************************/
+	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* static ip setting */
+	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
+	{
+		v = json_value( cfg, "static" );
+		static_ip_enable( netdev, v );
+	}
+	else if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
+	{
+		v = json_value( cfg, "dhcpc" );
+		ptr = json_string( v, "static" );
+		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+		{
+			v = json_value( cfg, "static" );
+			static_ip_enable( netdev, v );
+		}
+	}
+
+	/* slaac setting */
+	if ( method != NULL && 0 == strcmp( method, "slaac" ) )
+	{
+		slaac_ip_enable( netdev );
+	}
+	else
+	{
+		slaac_ip_disable( netdev );
+	}
+	/* manual ip setting */
+	if ( method != NULL && 0 == strcmp( method, "manual" ) )
+	{
+		/* set the static ip */
+		v = json_value( cfg, "manual" );
+		manual_ip_enable( netdev, v );
+	}
+	else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+	{
+		v = json_value( cfg, "automatic" );
+		ptr = json_string( v, "manual" );
+		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+		{
+			v = json_value( cfg, "manual" );
+			manual_ip_enable( netdev, v );
+		}
+	}
+
+	ret = tfalse;
+	v = json_create( NULL );
+	/* ipv4 static setting */
+	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
+	{
+		if ( mode_static( object, ifdev, netdev, cfg, v ) == true )
+		{
+			scallt( NETWORK_COM, "online", v );
+		}
+		/* ipv6 static setting */
+		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		{
+			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			{
+				scallt( NETWORK_COM, "upline", v );
+			}
+		}
+		/* ipv6 automatic setting */
+		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		{
+			ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
+		}
+		ret = ttrue;
+		// prevent starting multiple setup
+		sleep( 60 );
+	}
+	else
+	{
+		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		{
+			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			{
+				scallt( NETWORK_COM, "upline", v );
+			}
+		}
+		/* ipv6 automatic setting */
+		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		{
+			sstart( object, "automatic", NULL, "%s-automatic", object );
+		}
+		/* ipv4 dhcp client setting */
+		if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
+		{
+			ret = dhcp_client_connect( object, ifdev, netdev, json_value( cfg, "dhcpc" ) );
+		}
+		/* ipv4 pppoe setting */
+		else if ( mode != NULL && 0 == strcmp( mode, "pppoec" ) )
+		{
+			int mtu;
+			talk_t pppoe;
+
+			pppoe = json_value( cfg, "pppoec" );
+			mtu = json_number( cfg, "mtu" );
+			if ( mtu > 0 )
+			{
+				json_set_number( pppoe, "mtu", mtu );
+			}
+			ret = pppoe_client_connect( object, ifdev, netdev, pppoe );
+		}
+	}
+
+	/* free the exit */
+	talk_free( v );
+    talk_free( cfg );
+    return ret;
+}
+boole_t _automatic( obj_t this, param_t param )
+{
+	talk_t ret;
+    talk_t cfg;
+	const char *obj;
+	const char *ifdev;
+	const char *netdev;
+	const char *method;
+	const char *object;
+
+	obj = obj_com( this );
+    object = obj_name( this );
+    /* get the ifname configure */
+    cfg = config_get( this, NULL ); 
+    if ( cfg == NULL )
+    {
+        return terror;
+    }
+	method = json_string( cfg, "method" );
+	/* get the ifdev */
+	ifdev = reg_string( this, "ifdev" );
+    if ( ifdev == NULL || *ifdev == '\0' )
+    {
+        talk_free( cfg );
+        return tfalse;
+    }
+	/* need the ifdev exist */
+	if ( com_sexist( ifdev, NULL ) == false )
+	{
+        talk_free( cfg );
+        return tfalse;
+	}
+    /* get the netdev */
+	netdev = reg_sstring( ifdev, "netdev" );
+    if ( netdev == NULL || *netdev == '\0' )
+    {
+        ifname_fault( obj, "%s netdev get error", ifdev );
+        talk_free( cfg );
+        sleep( 3 );
+        return tfalse;
+    }
+
+	ret = terror;
+	/* automatic setting */
+	if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+	{
+		ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
+	}
+
+    talk_free( cfg );
+    return ret;
+}
+
+
+
 talk_t _state( obj_t this, param_t param )
 {
 	int tid;
@@ -438,13 +908,13 @@ talk_t _status( obj_t this, param_t param )
 	}
 	object = obj_name( this );
     /* get the ifdev or main ifdev info */
-	if ( com_sexist( ifdev, "state" ) == true )
+	if ( com_sexist( ifdev, "status" ) == true )
 	{
-		v = scalls( ifdev, "state", object );
+		v = scalls( ifdev, "status", object );
         if ( v > tpanic )
         {
 			json_delete_axp( v, "netdev" );
-			axp = json_cut_axp( v, "state" );
+			axp = json_cut_axp( v, "status" );
 			ptr = axp_string( axp );
             if ( ptr != NULL && 0 != strcmp( ptr, "up" ) )
             {
@@ -455,476 +925,12 @@ talk_t _status( obj_t this, param_t param )
             talk_free( v );
         }
     }
-    return ret;
-}
-
-
-
-/* only for apclient */
-talk_t _aplist( obj_t this, param_t param )
-{
-	talk_t ret;
-	const char *ifdev;
-
-	ret = NULL;
-	ifdev = reg_string( this, "ifdev" );
-	if ( ifdev != NULL && *ifdev != '\0' )
-	{
-		ret = scall( ifdev, "aplist", NULL );
-	}
-	return ret;
-}
-/* only for apclient */
-talk_t _chlist( obj_t this, param_t param )
-{
-	talk_t ret;
-	const char *ifdev;
-
-	ret = NULL;
-	ifdev = reg_string( this, "ifdev" );
-	if ( ifdev != NULL && *ifdev != '\0' )
-	{
-		ret = scall( ifdev, "chlist", NULL );
-	}
-	return ret;
-}
-
-
-
-boole_t _service( obj_t this, param_t param )
-{
-    int check;
-    talk_t v;
-	talk_t ret;
-    talk_t cfg;
-    const char *ptr;
-	const char *obj;
-	const char *mode;
-	const char *ifdev;
-    const char *object;
-	const char *netdev;
-	const char *method;
-	int reset_times;
-	int connect_failed;
-	int failed_timeout;
-	int failed_threshold;
-	int failed_threshold2;
-	int failed_threshold3;
-	int failed_everytime;
-
-	obj = obj_com( this );
-    object = obj_name( this );
-    /* offline first */
-	scalls( NETWORK_COM, "offline", object );
-
-	/*****************************************/
-	/********** get the infomation ***********/
-	/*****************************************/
-    /* get the ifdev */
-	ifdev = register_pointer( this, "ifdev" );
-    if ( ifdev == NULL || *ifdev == '\0' )
-    {
-		ifname_fault( obj, "cannot found %s ifdev", object );
-		sleep( 5 );
-        return tfalse;
-    }
-	if ( com_sexist( ifdev, NULL ) == false )
-	{
-		ifname_fault( obj, "%s ifdev %s inexistence", object, ifdev );
-		sleep( 5 );
-        return tfalse;
-	}
-    /* get the configure */
-    cfg = config_get( this, NULL ); 
-    if ( cfg == NULL )
-    {
-		ifname_fault( obj, "cannot found %s configure", object );
-		sleep( 5 );
-    	return terror;
-    }
-    /* get the ifdev reset times */
-	reset_times = reg_sint( ifdev, "reset_times" );
-
-
-
-	/*****************************************/
-	/******** up the ifdev with cfg **********/
-	/*****************************************/
-    ifname_info( obj, "%s up", ifdev );
-	json_set_string( cfg, "ifname", object );
-    if ( scallt( ifdev, "up", cfg ) != ttrue )
-    {
-        ifname_warn( obj, "%s up failed", ifdev );
-        talk_free( cfg );
-        sleep( 5 );
-        return tfalse;
-    }
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
-
-	/*****************************************/
-	/******* set the netdev mac **************/
-	/*****************************************/
-    ptr = json_string( cfg, "mac" );
-    if ( ptr != NULL && *ptr != '\0' )
-    {
-        scalls( ifdev, "setmac", ptr );
-    }
-
-	/*****************************************/
-	/********** connect the ifdev ************/
-	/*****************************************/
-    ifname_info( obj, "%s connect", ifdev );
-    if ( scallt( ifdev, "connect", cfg ) != ttrue )
-    {
-        ifname_fault( obj, "%s connect failed", ifdev );
-        talk_free( cfg );
-        sleep( 3 );
-        return tfalse;
-    }
-
-
-
-	/*****************************************/
-	/**** testing connect for the ifdev ******/
-	/*****************************************/
-    ifname_info( obj, "%s connect test", ifdev );
-	failed_threshold = 60;       // 60
-	failed_threshold2 = 180;     // 180
-	failed_threshold3 = 600;     // 600
-	failed_everytime = 1800;     // 1800
-	ptr = json_string( cfg, "connect_failed_threshold" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold = atoi( ptr );
-	}
-	ptr = json_string( cfg, "connect_failed_threshold2" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold2 = atoi( ptr );
-	}
-	ptr = json_string( cfg, "connect_failed_threshold3" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold3 = atoi( ptr );
-	}
-	ptr = json_string( cfg, "connect_failed_everytime" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_everytime = atoi( ptr );
-	}
-	ptr = json_string( cfg, "need_connect" );
-	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
-	{
-		failed_timeout = 10;
-		for( check=0; check<failed_timeout; check++ )
-		{
-			if ( scall( ifdev, "connected", NULL ) == ttrue )
-			{
-				break;
-			}
-			ifname_debug( obj, "%s connect failed %d", ifdev, check );
-			sleep( 1 );
-		}
-		if ( check >= failed_timeout )
-		{
-			ifname_info( obj, "%s ignore the connect failed", ifdev );
-		}
-	}
 	else
 	{
-		if ( reset_times == 0 )
-		{
-			failed_timeout = failed_threshold;
-		}
-		else if ( reset_times == 1 )
-		{
-			failed_timeout = failed_threshold2;
-		}
-		else if ( reset_times == 2 )
-		{
-			failed_timeout = failed_threshold3;
-		}
-		else
-		{
-			failed_timeout = failed_everytime;
-		}
-		for( check=0; check<failed_timeout; check++ )
-		{
-			if ( scall( ifdev, "connected", NULL ) == ttrue )
-			{
-				break;
-			}
-			ifname_debug( obj, "%s connect failed %d", ifdev, check );
-			sleep( 1 );
-		}
-		if ( check >= failed_timeout )
-		{
-			ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, failed_timeout );
-			scall( ifdev, "reset", NULL );
-			talk_free( cfg );
-			return tfalse;
-		}
+		json_set_string( ret, "status", "nodevice" );
 	}
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
-
-
-
-	/*****************************************/
-	/******** connect failed process *********/
-	/*****************************************/
-	failed_threshold = 3;       // 3*48 = 144
-	failed_threshold2 = 5;      // 5*48 = 240
-	failed_threshold3 = 15;     // 15*48 = 720
-	failed_everytime = 37;      // 37*48 = 1800
-	ptr = json_string( cfg, "failed_threshold" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold = atoi( ptr );
-	}
-	ptr = json_string( cfg, "failed_threshold2" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold2 = atoi( ptr );
-	}
-	ptr = json_string( cfg, "failed_threshold3" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_threshold3 = atoi( ptr );
-	}
-	ptr = json_string( cfg, "failed_everytime" );
-	if ( ptr != NULL && *ptr != '\0' )
-	{
-		failed_everytime = atoi( ptr );
-	}
-	connect_failed = reg_int( this, "connect_failed" );
-	if ( connect_failed > 0 )
-	{
-		if ( connect_failed == failed_threshold )
-		{
-			ifname_fault( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
-			scall( ifdev, "down", NULL );
-			talk_free( cfg );
-			return tfalse;
-		}
-		else if ( connect_failed == failed_threshold2 )
-		{
-			ifname_fault( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
-			scall( ifdev, "down", NULL );
-			talk_free( cfg );
-			return tfalse;
-		}
-		else if ( (connect_failed%failed_everytime) == 0 )
-		{
-			ifname_fault( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
-			scall( ifdev, "down", NULL );
-			talk_free( cfg );
-			return tfalse;
-		}
-		ifname_debug( obj, "%s connect failed %d", object, connect_failed );
-	}
-	connect_failed++;
-	reg_set_int( this, "connect_failed", connect_failed );
-
-
-
-	/*****************************************/
-	/***** get the connect mode **************/
-	/*****************************************/
-	mode = json_string( cfg, "mode" );
-	if ( mode == NULL || *mode == '\0' )
-	{
-		mode = "dhcpc";
-	}
-	method = json_string( cfg, "method" );
-	if ( method == NULL || *method == '\0' )
-	{
-		method = "disable";
-	}
-	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
-	{
-		method = "disable";
-	}
-	/* set the mode */
-	reg_set_string( this, "mode", mode );
-	reg_set_string( this, "method", method );
-	netdev = reg_sstring( ifdev, "netdev" );
-    if ( netdev == NULL || *netdev == '\0' )
-    {
-        ifname_fault( obj, "%s netdev get error", ifdev );
-        talk_free( cfg );
-        sleep( 5 );
-        return tfalse;
-    }
-
-	/*****************************************/
-	/**** ifname ip connect take care ********/
-	/*****************************************/
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
-	/* static ip setting */
-	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
-	{
-		v = json_value( cfg, "static" );
-		static_ip_enable( netdev, v );
-	}
-	else if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
-	{
-		v = json_value( cfg, "dhcpc" );
-		ptr = json_string( v, "static" );
-		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-		{
-			v = json_value( cfg, "static" );
-			static_ip_enable( netdev, v );
-		}
-	}
-
-	/* slaac setting */
-	if ( method != NULL && 0 == strcmp( method, "slaac" ) )
-	{
-		slaac_ip_enable( netdev );
-	}
-	else
-	{
-		slaac_ip_disable( netdev );
-	}
-	/* manual ip setting */
-	if ( method != NULL && 0 == strcmp( method, "manual" ) )
-	{
-		/* set the static ip */
-		v = json_value( cfg, "manual" );
-		manual_ip_enable( netdev, v );
-	}
-	else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-	{
-		v = json_value( cfg, "automatic" );
-		ptr = json_string( v, "manual" );
-		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-		{
-			v = json_value( cfg, "manual" );
-			manual_ip_enable( netdev, v );
-		}
-	}
-
-	ret = tfalse;
-	v = json_create( NULL );
-	/* ipv4 static setting */
-	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
-	{
-		if ( mode_static( object, ifdev, netdev, cfg, v ) == true )
-		{
-			scallt( NETWORK_COM, "online", v );
-		}
-		/* ipv6 static setting */
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
-		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
-			{
-				scallt( NETWORK_COM, "upline", v );
-			}
-		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-		{
-			ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
-		}
-		ret = ttrue;
-		// prevent starting multiple setup
-		sleep( 30 );
-	}
-	else
-	{
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
-		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
-			{
-				scallt( NETWORK_COM, "upline", v );
-			}
-		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-		{
-			sstart( object, "automatic", NULL, "%s-automatic", object );
-		}
-		/* ipv4 dhcp client setting */
-		if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
-		{
-			ret = dhcp_client_connect( object, ifdev, netdev, json_value( cfg, "dhcpc" ) );
-		}
-		/* ipv4 pppoe setting */
-		else if ( mode != NULL && 0 == strcmp( mode, "pppoec" ) )
-		{
-			int mtu;
-			talk_t pppoe;
-
-			pppoe = json_value( cfg, "pppoec" );
-			mtu = json_number( cfg, "mtu" );
-			if ( mtu > 0 )
-			{
-				json_set_number( pppoe, "mtu", mtu );
-			}
-			ret = pppoe_client_connect( object, ifdev, netdev, pppoe );
-		}
-	}
-
-	/* free the exit */
-	talk_free( v );
-    talk_free( cfg );
     return ret;
 }
-boole_t _automatic( obj_t this, param_t param )
-{
-	talk_t ret;
-    talk_t cfg;
-	const char *obj;
-	const char *ifdev;
-	const char *netdev;
-	const char *method;
-	const char *object;
-
-	obj = obj_com( this );
-    object = obj_name( this );
-    /* get the ifname configure */
-    cfg = config_get( this, NULL ); 
-    if ( cfg == NULL )
-    {
-        return terror;
-    }
-	method = json_string( cfg, "method" );
-	/* get the ifdev */
-	ifdev = reg_string( this, "ifdev" );
-    if ( ifdev == NULL || *ifdev == '\0' )
-    {
-        talk_free( cfg );
-        return tfalse;
-    }
-	/* need the ifdev exist */
-	if ( com_sexist( ifdev, NULL ) == false )
-	{
-        talk_free( cfg );
-        return tfalse;
-	}
-    /* get the netdev */
-	netdev = reg_sstring( ifdev, "netdev" );
-    if ( netdev == NULL || *netdev == '\0' )
-    {
-        ifname_fault( obj, "%s netdev get error", ifdev );
-        talk_free( cfg );
-        sleep( 3 );
-        return tfalse;
-    }
-
-	ret = terror;
-	/* automatic setting */
-	if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-	{
-		ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
-	}
-
-    talk_free( cfg );
-    return ret;
-}
-
-
-
 boole_t _online( obj_t this, param_t param )
 {
 	int i;
@@ -1214,9 +1220,6 @@ boole_t _upline( obj_t this, param_t param )
 	talk_free( cfg );
 	return ttrue;
 }
-
-
-
 boole_t _keepon( obj_t this, param_t param )
 {
 	int i;
@@ -1269,6 +1272,37 @@ boole_t _keepoff( obj_t this, param_t param )
 		sreset( NULL, NULL, NULL, object );
 	}
 	return ttrue;
+}
+
+
+
+/* only for apclient */
+talk_t _aplist( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "aplist", NULL );
+	}
+	return ret;
+}
+/* only for apclient */
+talk_t _chlist( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "chlist", NULL );
+	}
+	return ret;
 }
 
 

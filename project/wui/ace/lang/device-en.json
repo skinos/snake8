@@ -18,9 +18,7 @@
 	"misp":"LTE Gateway",
 	"nmisp":"LTE/NR Gateway",
 	"dmisp":"Dual LTE/NR Gateway",
-	"ap":"AP",
-	"bridge":"Bridge",
-	"repeater":"Repeater",
+	"isp":"LTE/NR&WISP(2.4G/5.8G) Gateway",
 	"mix":"Mix",
 	"parasite":"Parasite",
 	"test":"Factory Test"

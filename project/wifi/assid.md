@@ -116,7 +116,7 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "state":"current state",                // [ "up", "down" ], "up" for enable, "down" for disable
+        "status":"current status",              // [ "up", "down" ], "up" for enable, "down" for disable
         "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
                                                         // disable for disable the secure
                                                         // wpapsk for WPAPSK
@@ -143,7 +143,7 @@ ttrue
     # examples, get the first 5.8G SSID status
     wifi@assid.status
     {
-        "state":"up",
+        "status":"up",
         "secure":"wpapskwpa2psk",
         "rx_bytes":"767164641",
         "rx_packets":"22258095",
