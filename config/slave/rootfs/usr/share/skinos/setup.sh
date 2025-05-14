@@ -8,19 +8,21 @@ ulimit -n 65535
 $LANDDIR/bin/he arch@data.setup
 # fpk register the project
 $LANDDIR/bin/he land@machine.setup
-# start the log first
-$LANDDIR/bin/he land@syslog.setup
 
 # skinos daemon
 $LANDDIR/bin/daemon&
 
 # core
-$LANDDIR/bin/he land@init.call[core]
-$LANDDIR/bin/he land@init.call[core2]
+$LANDDIR/bin/he land@init.call[arch]
+$LANDDIR/bin/he land@init.call[land]
+
+# bus
+$LANDDIR/bin/he land@init.call[bus]
+# device
+$LANDDIR/bin/he land@init.call[device]
 
 # manage
 $LANDDIR/bin/he land@init.call[manage]
-$LANDDIR/bin/he land@init.call[manage2]
 
 # app
 $LANDDIR/bin/he land@init.call[app]

@@ -9,15 +9,16 @@ $LANDDIR/bin/he land@uninit.call[app2]
 $LANDDIR/bin/he land@uninit.call[app]
 
 # manage
-$LANDDIR/bin/he land@uninit.call[manage2]
 $LANDDIR/bin/he land@uninit.call[manage]
 
-# core
-$LANDDIR/bin/he land@uninit.call[core]
-$LANDDIR/bin/he land@uninit.call[core2]
+# device
+$LANDDIR/bin/he land@uninit.call[device]
+# bus
+$LANDDIR/bin/he land@uninit.call[bus]
 
-# shutdown the log
-$LANDDIR/bin/he land@syslog.shut
+# core
+$LANDDIR/bin/he land@uninit.call[land]
+$LANDDIR/bin/he land@uninit.call[arch]
 
 # shutdown the arch data
 $LANDDIR/bin/he arch@data.shut

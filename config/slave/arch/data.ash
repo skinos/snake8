@@ -9,18 +9,23 @@ setup()
     VROOT=/var/skinos
     TROOT=/tmp/skinos
     LANDDIR=/usr/share/skinos/land
+
     sudo mkdir -p $TROOT
-    sudo mkdir -p $VROOT
     sudo chmod a+rwx $TROOT
-    sudo chmod a+rwx $VROOT
-    mkdir -p $TROOT/.conf
     mkdir -p $TROOT/.reg
     mkdir -p $TROOT/.ser
     mkdir -p $TROOT/.com
     mkdir -p $TROOT/.cah
+    mkdir -p $TROOT/.conf
+
+    sudo mkdir -p $VROOT
+    sudo chmod a+rwx $VROOT
     mkdir -p $VROOT/mnt
+
+    mkdir -p $TROOT/.oem
     mkdir -p $VROOT/mnt/config
     mkdir -p $VROOT/mnt/internal
+
     # load the basic ko
     if [ -e /usr/prj/pdriver/crackid.ko ]; then
         insmod /usr/prj/pdriver/crackid.ko

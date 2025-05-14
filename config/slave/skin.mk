@@ -30,15 +30,15 @@ endef
 #     确认有项目目录下prj.json文件, prj.json中要有VERSION_ID
 #     拷贝NeedBeCopySubdirList指定的子目录列表, 如未给出默认拷贝${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST}
 define Build/Prepare/Default
-	if [ "X" = "X$(VERSION_ID)" ]; then \
+	@if [ "X" = "X$(VERSION_ID)" ]; then \
 		echo "project ${PROJECT_ID} version cannot find, maybe ${gPROJECT_INF} broken"; \
 		exit -1; \
 	fi
-	mkdir -p $(PKG_BUILD_DIR)
+	@mkdir -p $(PKG_BUILD_DIR)
 	if [ -d ./lib ]; then \
 		$(CP) ./lib $(PKG_BUILD_DIR); \
 	fi
-	if [ "X" = "X$(1)" ]; then \
+	@if [ "X" = "X$(1)" ]; then \
 		for i in ${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST} ;do \
 			if [ -e $$i ]; then \
 				$(CP) $$i $(PKG_BUILD_DIR); \
