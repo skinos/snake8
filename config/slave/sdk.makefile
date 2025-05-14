@@ -25,7 +25,7 @@ app: app_dep
 	if [ -d ${gRICE_DIR} ]; then \
 		make -f ${gDIR_MAKEFILE} -C ${gRICE_DIR}; \
 	fi
-	make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch
+	make -C ${gBUILD_DIR}/arch
 app_dep:
 	make -f ${gDIR_MAKEFILE} -C ${gPROJECT_DIR} dep
 	if [ -d ${gRICE_DIR} ]; then \
@@ -46,14 +46,14 @@ app_dep:
 			$(CP) ${gPLATFORM_DIR}/arch/odm/${gCUSTOM}/${gSCOPE}/* ${gBUILD_DIR}/arch; \
 		fi; \
 	fi
-	make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch dep
+	make -C ${gBUILD_DIR}/arch dep
 app_menuconfig: app_dep
 app_install:
 	make -f ${gDIR_MAKEFILE} -C ${gPROJECT_DIR} install
 	if [ -d ${gRICE_DIR} ]; then \
 		make -f ${gDIR_MAKEFILE} -C ${gRICE_DIR} install; \
 	fi
-	make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch install
+	make -C ${gBUILD_DIR}/arch install
 	make -C ${gTOP_DIR} rootfs_install
 	cd ${gosROOT_DIR};if [ -f needless.sh ]; then \
 		chmod a+rwx needless.sh;./needless.sh; \
@@ -68,7 +68,7 @@ app_clean:
 		make -f ${gDIR_MAKEFILE} -C ${gRICE_DIR} clean; \
 	fi
 	if [ -d ${gBUILD_DIR}/arch ]; then \
-		make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch clean; \
+		make -C ${gBUILD_DIR}/arch clean; \
 	fi
 app_distclean: app_clean
 	make -f ${gDIR_MAKEFILE} -C ${gPROJECT_DIR} distclean
@@ -76,7 +76,7 @@ app_distclean: app_clean
 		make -f ${gDIR_MAKEFILE} -C ${gRICE_DIR} distclean; \
 	fi
 	if [ -d ${gBUILD_DIR}/arch ]; then \
-		make -f ${gFPK_MAKEFILE} -C ${gBUILD_DIR}/arch distclean; \
+		make -C ${gBUILD_DIR}/arch distclean; \
 	fi
 .PHONY: app app_dep app_menuconfig app_install app_clean app_distclean
 
