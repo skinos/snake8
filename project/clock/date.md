@@ -13,8 +13,7 @@ Manage system date
     "ntpserver3":"NTP Server 3",                        // [ string ]
     "ntpinterval":"NTP Synchronization interval"        // [ number ], interval (in seconds) for time synchronization with the NTP server
 }
-```
-
+```   
 Examples, show all the configure
 ```shell
 clock@date
@@ -27,13 +26,11 @@ clock@date
     "ntpinterval":"86400"             # synchronization every 86400 seconds
 }
 ```  
-
 Examples, modify the time zone to West 5
 ```shell
 clock@date:timezone=-5
 ttrue
 ```  
-
 Examples, disable the NTP client time synchronization
 ```shell
 clock@date:ntpclient=disable
