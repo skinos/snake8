@@ -80,7 +80,7 @@ buff["wifi@assid_rxdata"] = [];
 buff["wifi@assid_txdata"] = [];
 function lte_show( ifname, value )
 {
-	if ( value.status == "down" )
+	if ( value.status == "down" || value.status == "nodevice" )
 	{
 		$("[id='"+ifname+"']").hide();
 		return;
@@ -246,7 +246,7 @@ function lte_show( ifname, value )
 
 function wan_show( ifname, value )
 {
-	if ( value.status == "down" )
+	if ( value.status == "down" || value.status == "nodevice" )
 	{
 		$("[id='"+ifname+"']").hide();
 		return;
@@ -362,7 +362,7 @@ function wan_show( ifname, value )
 
 function wisp_show( ifname, value )
 {
-	if ( value.status == "down" )
+	if ( value.status == "down" || value.status == "nodevice" )
 	{
 		$("[id='"+ifname+"']").hide();
 		return;

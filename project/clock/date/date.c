@@ -196,7 +196,7 @@ boole_t _service( obj_t this, param_t param )
     int interval;
     const char *ptr;
     const char *zone;
-    char *server[10];
+    const char *server[10];
     char key[NAME_MAX];
 
     /* wait the online */
