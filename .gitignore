@@ -13,7 +13,6 @@
 /gBOARDID
 
 /config/slave/*.fpk
-/config/slave/
 
 /smtk2/
 /config/smtk2/*.fpk
