@@ -149,7 +149,6 @@ boole_t _setup( obj_t this, param_t param )
 	time_setting( NULL, ptr );
 
 	/* read from the RTC when have RTC */
-	/* XXXXXXXXXXXXXXX */
 
     /* run the service of ntpclient depend attribute value of "ntpclient" */
     ptr = json_string( cfg, "ntpclient" );
@@ -197,6 +196,7 @@ boole_t _service( obj_t this, param_t param )
     int interval;
     const char *ptr;
     const char *zone;
+    char *server[10];
     char key[NAME_MAX];
 
     /* wait the online */
@@ -219,26 +219,34 @@ boole_t _service( obj_t this, param_t param )
     {
         interval = atoi( ptr );
     }
+    for ( t=0; t<10; t++ )
+    {
+        if ( t==0 )
+        {
+            strncpy( key, "ntpserver", sizeof(key) );
+        }
+        else
+        {
+            snprintf( key, sizeof(key), "ntpserver%d", t );
+        }
+        ptr = json_string( cfg, key );
+        if ( ptr == NULL || *ptr == '\0' )
+        {
+            server[t] = NULL;
+        }
+        else
+        {
+            server[t] = ptr;
+        }
+    }
+
     /* loop it */
     while(1)
     {
         /* sync every server util succeed */
         for ( t=0; t<10; t++ )
         {
-            if ( t==0 )
-            {
-                strncpy( key, "ntpserver", sizeof(key) );
-            }
-            else
-            {
-                snprintf( key, sizeof(key), "ntpserver%d", t );
-            }
-            ptr = json_string( cfg, key );
-            if ( ptr == NULL || *ptr == '\0' )
-            {
-                continue;
-            }
-            ret = ntpclient_sync( ptr, zone );
+            ret = ntpclient_sync( server[t], zone );
             if ( ret == true )
             {
                 break;
@@ -291,6 +299,38 @@ talk_t _status( obj_t this, param_t param )
 	json_set_number( ret, "uptime", uptime_int() );
 	return ret;
 }
+boole_t _current( obj_t this, param_t param )
+{
+	talk_t ret;
+    const char *ptr;
+    const char *zone;
+
+	ret = NULL;
+	ptr = param_string( param, 1 );
+	zone = param_string( param, 2 );
+	if ( ptr != NULL || zone != NULL )
+	{
+		if ( time_setting( ptr, zone ) == true )
+		{
+			return ttrue;
+		}
+		return tfalse;
+	}
+	else
+	{
+        struct timeval tv;
+        struct timezone tz;
+        if ( gettimeofday( &tv, &tz ) == 0 )
+		{
+			ret = json_create( NULL );
+			json_set_number( ret, "sec", tv.tv_sec );
+			json_set_number( ret, "usec", tv.tv_usec );
+			json_set_number( ret, "minuteswest", tz.tz_minuteswest );
+			json_set_number( ret, "dsttime", tz.tz_dsttime );
+		}
+	}
+	return ret;
+}
 boole_t _ntpsync( obj_t this, param_t param )
 {
     int t;
@@ -338,38 +378,6 @@ boole_t _ntpsync( obj_t this, param_t param )
         return ttrue;
     }
     return tfalse;
-}
-boole_t _current( obj_t this, param_t param )
-{
-	talk_t ret;
-    const char *ptr;
-    const char *zone;
-
-	ret = NULL;
-	ptr = param_string( param, 1 );
-	zone = param_string( param, 2 );
-	if ( ptr != NULL || zone != NULL )
-	{
-		if ( time_setting( ptr, zone ) == true )
-		{
-			return ttrue;
-		}
-		return tfalse;
-	}
-	else
-	{
-        struct timeval tv;
-        struct timezone tz;
-        if ( gettimeofday( &tv, &tz ) == 0 )
-		{
-			ret = json_create( NULL );
-			json_set_number( ret, "sec", tv.tv_sec );
-			json_set_number( ret, "usec", tv.tv_usec );
-			json_set_number( ret, "minuteswest", tz.tz_minuteswest );
-			json_set_number( ret, "dsttime", tz.tz_dsttime );
-		}
-	}
-	return ret;
 }
 
 
