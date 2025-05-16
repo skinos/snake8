@@ -85,7 +85,15 @@ gSCOPE_DIR := ${gCUSTOM_DIR}/${gSCOPE}
 gOEM_DIR := ${gCUSTOM_DIR}/${gOEM}
 gOEM_SHELL := ${gOEM_DIR}/${gOEM}.sh
 # Platform-specific tools directory for compile
-gpTOOLS_DIR := ${gPLATFORM_DIR}/tools
+gpTOOLS_DIR := $(shell \
+	if [ -d "${gSCOPE_DIR}/tools" ]; \
+	then echo ${gSCOPE_DIR}/tools; \
+	elif [ -d "${gCUSTOM_DIR}/tools" ]; \
+	then echo ${gCUSTOM_DIR}/tools; \
+	elif [ -d "${gHARDWARE_DIR}/tools" ]; \
+	then echo ${gHARDWARE_DIR}/tools;\
+	else echo ${gPLATFORM_DIR}/tools;\
+	fi)
 # Project source code directory
 gPROJECT_DIR := ${gTOP_DIR}/project
 # Commercial customer project source code directory
