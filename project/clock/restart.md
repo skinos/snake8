@@ -12,8 +12,8 @@ The management system restarts automatically, and it restarts the system at a sp
                                                          // "age": maximum runtime to restart
                                                          // "point": fixed-point to restart
                                                          // "idle": idle specifie period to restart
+    "delay":"delay some second to work",               // [ number ], The unit is seconds, valid for all mode
 
-    "delay":"delay some second to work",                       // [ number ], The unit is seconds, valid for all mode"
     "age":"The maximum runtime",                               // [ number ], The unit is seconds, valid for "mode" is "age"
 
     "point_age":"The maximum runtime",                         // [ number ], valid for "mode" is "point"
@@ -26,16 +26,16 @@ The management system restarts automatically, and it restarts the system at a sp
     "idle_minute":"Specifies when minute of hour to restart",  // [ number ], valid for "mode" is "idle"
     "idle_age":"The maximum runtime"                           // [ number ], valid for "mode" is "idle"
 }
-```
+```   
 
 Example show the configure that is age mode, the will restart auto at system run 2880 second
 ```shell
 clock@restart
 {
     "mode":"age",
-    "age":"2880",
+    "age":"2880"
 }
-```
+```   
 
 Example show the configure that is point mode, the will restart at 23:45
 ```shell
@@ -52,17 +52,17 @@ Example disable the restart function
 ```shell
 clock@restart:mode=disable
 ttrue
-```
+```   
 
 Example set will restart auto at system run 3600 second
 ```shell
 clock@restart|{"mode":"age","age":"3600"}
 ttrue
-```
+```   
 
 Example set will restart auto at 03:30
 ```shell
 clock@restart|{"mode":"point","point_hour":"03","point_minute":"30"}
 ttrue
-```
+```   
 

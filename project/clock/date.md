@@ -2,7 +2,7 @@
 ## Manage System Date   
 Manage system date
 
-#### Configuration( clock@date )   
+### Configuration( clock@date )   
 ```json
 // Attributes introduction
 {
@@ -39,10 +39,12 @@ ttrue
 
 
 
-#### **Methods**   
-+ `status[]` **get the date infomation**, *succeed return talk to describes, failed return NULL, error return terror*    
+### **Methods**   
++ `status[]` **get the date infomation**
+    - return NULL when failed
+    - return terror when error
+    - return json to describes date infomation when succeed
     ```json
-    // Attributes introduction of talk by the method return
     {
         "source":"The source of the time",                // [ "ntp", "set", "lte", "gps" ]
                                                              // ntp: indicates that it originated from NTP, which has the highest NTP priority, and NTP synchronization success covers all other times
@@ -55,31 +57,72 @@ ttrue
         "livetime":"system live time",                    // [ string ], format is hour:minute:second:day
         "uptime":"system uptime in second"                // [ number ]
     }    
-    ```
+    ```   
 
+    Examples, get the current date   
     ```shell
-    # examples, get the current date
     clock@date.status
     {
         "current":"12:29:41:05:10:2022",         # current is 12:29:41, On May 10, in 2022
         "livetime":"00:01:58:0",                 # system run 1 minute and 58 second
         "uptime":"118"                           # system run 118 second
-    }  
-    ```
+    }
+    ```   
 
-+ `current[ current date ]` **set current date for gateway**, *succeed return ttrue, failed return tfalse, error return terror*    
+
++ `current[ [current date], [time zone] ]` **set current date or get current time**
+    - [current date] ------ [ string ], format is hour:minuti:second:month:day:year
+    - [time zone] --------- [ number ], -12 to 12, West 12 to East 12
+    - return ttrue for succeed when set the current date or time zone
+    - return tfalse for failed when set the current date or time zone 
+    - return NULL for failed when no argument to get current time
+    - return json to describes current time when no argument
+    ```json
+    {
+        "sec":"The number of seconds since 1970.01.01:00:00:00",  // [ number ]
+        "usec":"current microsecond",                             // [ number ] 
+        "minuteswest":"How many minutes is greenwich time",       // [ number ]
+        "dsttime":"type of DST correction"                        // [ number ]
+    }
+    ```   
+
+    Examples, set current date 11:12:23, On July 8th, in 2019   
     ```shell
-    # examples, set 11:12:23, On July 8th, in 2019
     clock@date.current[ 11:12:23:07:08:2019 ]
     ttrue
-    ```
-
-+ `ntpsync[ [NTP Server] ]` **sync the time for gateway with NTP server**, *succeed return ttrue, failed return tfalse, error return terror*    
+    ```   
+    Examples, set time zone to china   
     ```shell
-    # examples, sync the time with time.window.com
+    clock@date.current[ , 8 ]
+    ttrue
+    ```   
+    Examples, get current time
+    ```shell
+    clock@date.current
+    {
+        "sec":"1747327771",
+        "usec":"803417",
+        "minuteswest":"-480",
+        "dsttime":"0"
+    }
+    ```   
+
+
++ `ntpsync[ [NTP server] ]` **sync the time with NTP server**
+    - [NTP server] ------ [ string ], NTP server   
+    - return ttrue for succeed
+    - return tfalse for failed
+    - return terror for error
+
+    Examples, sync the time with time.window.com
+    ```shell
     clock@date.ntpsync[ time.window.com ]
     ttrue
-    # examples, sync the time with NTP server in the configure
+    ```   
+    Examples, sync the time with NTP server in the configure
+    ```shell
     clock@date.ntpsync
     ttrue
-    ```
+    ```   
+
+
