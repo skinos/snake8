@@ -3,6 +3,7 @@
 Manage LTE/NR networks and 4G/NR basebands. This component must depend on the LTE/NR baseband components and network Management Framework project  
 Usually ifname@lte is the first LTE/NR network and module. If there are multiple LTE/NR modules in the system, ifname@lte2 will be the second LTE/NR network and module, and increase by degress
 
+
 #### **Configuration( ifname@lte )**   
 **ifname@lte** is first LTE network   
 **ifname@lte2** is second LTE network   
@@ -14,7 +15,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
 
     // profile attributes for LTE modem PDP
     "profile":"custom the profile",            // [ "disable", "enable" ]
-    "profile_cfg":                             // custom profile save here, the json be used when "profile" value is enable
+    "profile_cfg":                             // custom profile save here, the json be used when "profile" value is "enable"
     {
         "dial":"dial number",                     // [ number ]
         "cid":"dial CID",                         // [ number ], default is 1
@@ -24,6 +25,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
         "user":"user name",                       // [ string ]
         "passwd":"user password"                  // [ string ]
     },
+
     // backup simcard configure
     "bsim":"backup simcard function",                         // [ "disable", "enable" ]
     "bsim_cfg":                                               // settings of backup simcard save here, the json be used when "bsim" value is enable
@@ -32,11 +34,12 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
                                                                         // "bsim" for backup simcard
                                                                         // "msim" for main simcard
                                                                         // "detect" the IO for auto that need detect IO support
-        "signal_failed":"Check the signal failed how many times to switch the simcard",  // [ number ]
+        "signal_failed":"Check the signal failed how many times to switch the simcard",   // [ number ]
         "attach_failed":"attach to internet failed how many times to switch the simcard", // [ number ]
-        "failed":"connect to internet failed how many times to switch the simcard", // [ number ]
-        "failover":"backup simcard usage duration",                                      // [ number ], the unit is second
-        "keeplive_switch":"keeplive faeild to switch",                                   // [ "disable", "enable" ]
+        "failed":"connect to internet failed how many times to switch the simcard",       // [ number ]
+        "failover":"backup simcard usage duration",                                       // [ number ], the unit is second
+        "keeplive_switch":"keeplive faeild to switch",                                    // [ "disable", "enable" ]
+
         // backup profile attributes
         "profile":"custom the profile",            // [ "disable", "enable" ]
         "profile_cfg":                             // custom profile save here, the json be used when "profile" value is enable
@@ -49,12 +52,14 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
             "passwd":"user password"                  // [ string ]
         }
     },
+
     // simcard dial attributes
     "need_simcard":"SIMcard must be detected",                                                 // [ "enable", "disable" ]
     "simcard_failed_threshold":"first failed to reset time",                                   // [ number ]
     "simcard_failed_threshold2":"second failed to reset time",                                 // [ number ]
     "simcard_failed_threshold3":"third failed to reset time",                                  // [ number ]
     "simcard_failed_everytime":"every failed to reset time",                                   // [ number ]
+
     // signal dial attributes
     "need_plmn":"must register to plmn",                                                       // [ "enable", "disable" ]
     "need_signal":"signal must be effectivity",                                                // [ "enable", "disable" ]
@@ -62,6 +67,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
     "signal_failed_threshold2":"second failed to reset time",                                  // [ number ]
     "signal_failed_threshold3":"third failed to reset time",                                   // [ number ]
     "signal_failed_everytime":"every failed to reset time",                                    // [ number ]
+
     // attach dial attributes
     "need_attach":"must attach succeed",                                                       // [ "enable", "disable" ]
     "attach_failed_threshold":"first failed to reset time",                                    // [ number ]
@@ -70,9 +76,9 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
     "attach_failed_everytime":"every failed to reset time",                                    // [ number ]
 
     // IPv4
-    "tid":"table identify number",         // [ number ] exclusive route table ID, only for multiple WAN
-    "metric":"default route metric",       // [ number  ]
-    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "ppp" ] for PPP dial
+    "tid":"table identify number",            // [ number ] exclusive route table ID, only for multiple WAN
+    "metric":"default route metric",          // [ number  ]
+    "mode":"IPV4 address mode",               // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "ppp" ] for PPP dial
     "static":                                 // detial configure for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
@@ -117,7 +123,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
         "resolve":"IPv6 DNS",                       // [ ipv6 address ]
         "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
     },
-    "automatic":                             // detial configure for "method" is "automatic"
+    "automatic":                              // detial configure for "method" is "automatic"
     {
         "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
         "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
@@ -139,9 +145,9 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
         "action":"failed to do",  // [ "reboot" ] reboot the system
                                   // [ "reset" ] reset the modem
                                   // [ ] other redial the connetion
-        "icmp":                                                   // detial configure for "type" is "icmp"
+        "icmp":                                                             // detial configure for "type" is "icmp"
         {
-            "dest":                                                         // destination address for ICMP keeplive
+            "dest":                                                           // destination address for ICMP keeplive
             {
                 "destination identify2":"destination address1",                        // [ string ]:[ IP address ]
                 // "...":"..." You can configure multiple destination IP addresses. If only one PING echo packet is returned, the detection succeeds. If no PING echo packet is returned, the detection fails  
@@ -210,15 +216,47 @@ ifname@lte
 }
 ```   
 
+Example, show second LTE/NR all configure   
+```shell
+ifname@lte2
+{
+    // PDP profile
+    "profile":"enable",                # custom the APN profile
+    "profile_cfg":
+    {
+        "dial":"*99#",                     # dial number is *99#
+        "type":"ipv4v6",                   # ip address type is ipv4 and ipv6
+        "apn":"internet",                  # APN is internet
+        "user":"card",                     # username is card
+        "passwd":"card"                    # password is card
+    }
+
+    "mode":"ppp",                      # PPP mode
+    "ppp":                                 # ppp configure will be used when "mode" is ppp
+    {
+        "lcp_echo_interval":"10",          # LCP echo interval is 10 second
+        "lcp_echo_failure":"12"            # LCP echo failure times is 12
+    },
+    "masq":"enable",                                 # out stream share the interface IPv4 address to access the Internet
+
+    "method":"slaac",                                # IPv6 address mode is slaac
+
+    "keeplive":                                      # keeplive mechanism configure save here
+    {
+        "type":"dns",                               # use count dns to keeplive
+        "dns":                                      # dectet the DNS server timeout 8 second, when failed 4 times hint failed, sleep 5 second after dectet succeed
+        {
+            "timeout":"8",
+            "failed":"4",
+            "interval":"5"
+        }
+    }
+}
+```   
+
 Example, modify the keeplive to icmp for first LTE network  
 ```shell
 ifname@lte:keeplive/type=icmp
-ttrue
-```   
-
-Example, modify the mode to ppp for first LTE network  
-```shell
-ifname@lte:mode=ppp
 ttrue
 ```   
 
@@ -232,6 +270,12 @@ ifname@lte:keeplive/icmp/dest/test3=114.114.114.114   # modify the icmp keeplive
 ttrue
 # You can also use one command to complete the operation of the above three command
 ifname@lte:keeplive/icmp/dest|{"test":"8.8.8.8", "test2":"8.8.4.4", "test3":"114.114.114.114"}
+ttrue
+```   
+
+Example, modify the mode to ppp for first LTE network  
+```shell
+ifname@lte:mode=ppp
 ttrue
 ```   
 
@@ -266,9 +310,12 @@ ttrue
 **ifname@lte** is first LTE network   
 **ifname@lte2** is second LTE/NR network   
 
-+ `status[]` **get the LTE network infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*   
++ `status[]` **get the LTE network infomation**   
+    - failed reeturn NULL
+    - error return terror   
+    - succeed return json to describes infomation   
     ```json
-    // Attributes introduction of talk by the method return
+    // Attributes introduction of talk by the API return
     {
         "status":"Current state",        // [ "nodevice", "setup", "register", "up", "reset", "down" ]
                                              // "nodevice" for the corresponding module could not be found
@@ -324,11 +371,12 @@ ttrue
         "rssi":"signal intensity",       // [ number ], the unit is dBm
         "rsrp":"RSRP value",             // Optional, The format varies depending on the module
         "rsrq":"RSRQ value",             // Optional, The format varies depending on the module
-        "sinr":"sinr value",             // Optional, The format varies depending on the module 
-        "band":"current band",           // Optional, The format varies depending on the module
+        "sinr":"sinr value",             // Optional, The format varies depending on the module  
+        "band":"current band",           // Optional, The format varies depending on the module  
         "operator":"operator name"       // [ string ]
     }
     ```   
+
     Example, get the first lte network infomation
     ```shell
     ifname@lte.status
@@ -363,6 +411,42 @@ ttrue
         "operator":"中国联通"              # operator name is 中国联通
     }
     ```   
+
+    Example, get the second lte network infomation
+    ```shell
+    ifname@lte2.status
+    {
+        "status":"up",                     # connect is succeed
+
+        "mode":"dhcpc",                    # IPv4 connect mode is DHCP
+        "netdev":"usb0",                   # netdev is usb0
+        "gw":"10.137.89.154",              # gateway is 10.137.89.118
+        "dns":"114.114.114.114",           # dns is 114.114.114.114
+        "dns2":"8.8.8.8",                  # backup dns is 8.8.8.8
+        "ip":"10.137.89.117",              # ip address is 10.137.89.117
+        "mask":"255.255.255.252",          # network mask is 255.255.255.252
+        "livetime":"00:15:50:0",           # already online 15 minute and 50 second
+        "rx_bytes":"1256",                 # receive 1256 bytes
+        "rx_packets":"4",                  # receive 4 packets
+        "tx_bytes":"1320",                 # send 1320 bytes
+        "tx_packets":"4",                  # send 4 packets
+        "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
+
+        "method":"slaac",                  # IPv6 address mode is slaac
+        "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
+
+        "imei":"867160040494084",          # imei is 867160040494084
+        "imsi":"460015356123463",          # imei is 460015356123463
+        "iccid":"89860121801097564807",    # imei is 89860121801097564807
+        "csq":"3",                         # CSQ nubmer is 3
+        "signal":"3",                      # signal level is 3
+        "plmn":"46001",                    # plmn is 46001
+        "nettype":"WCDMA",                 # nettype is WCDMA
+        "rssi":"-107",                     # signal intensity is -107
+        "operator":"中国联通"              # operator name is 中国联通
+    }
+    ```   
+
 
 + `netdev[]` **get the netdev**, *succeed return netdev, failed return NULL, error return terror*   
     Example, get the first LTE network netdev
