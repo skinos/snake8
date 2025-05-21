@@ -232,17 +232,61 @@
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
     var sobj = object+"ssid2";
     var s2obj = object+"ssid3";
+    var securelist;
     /* load the configure on the input */
 
 
 
     function cfg_load()
     {
-      he.load( [ sobj, s2obj ] ).then( function(v){
-        ssid = v[0];
-        ssid2 = v[1];
+      he.load( [ object+".securelist", sobj, s2obj ] ).then( function(v){
+        securelist = v[0];
+        ssid = v[1];
+        ssid2 = v[2];
 
         /* ssid */
+		// secure
+        if ( securelist )
+        {
+            $("#secure").empty();            
+            for( m in securelist )
+            {
+                $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+            }
+            $('#secure').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_cfg").hide();
+			  }
+			  else
+			  {
+			      $("#wpa_encrypt").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+                  $("#secure_cfg").show();
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure === 'disable' )
+	          {
+	            $('#secure_cfg').hide();
+	          }
+	          else
+	          {
+	            $('#secure_cfg').show();
+	          }
+	        }).trigger('change');
+		}
         if ( ssid )
         {
             $('#status').prop( 'checked', able2boole(ssid.status) );
@@ -264,6 +308,7 @@
         {
             $('#status').prop( 'checked', false );
         }
+		// status
         $('#status').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
@@ -274,17 +319,6 @@
             $('#ssid_cfg').hide();
           }
         }).trigger('change');
-        $('#secure').unbind('change').change(function (e) {
-          var secure = e.target.value;
-          if ( secure === 'disable' )
-          {
-            $('#secure_cfg').hide();
-          }
-          else
-          {
-            $('#secure_cfg').show();
-          }
-        }).trigger('change');
         // ACL
         var link = '#app?page='+base64.encode("/prj/wifi/acl.html");
         link += '&object='+sobj;
@@ -292,6 +326,48 @@
         $('#acl').attr( "href", link );
 
         /* ssid2 */
+		// secure
+        if ( securelist )
+        {
+            $("#secure2").empty();            
+            for( m in securelist )
+            {
+                $("#secure2").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+            }
+            $('#secure2').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_cfg2").hide();
+			  }
+			  else
+			  {
+			      $("#wpa_encrypt2").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt2").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+                  $("#secure_cfg2").show();
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure2').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure === 'disable' )
+	          {
+	            $('#secure_cfg2').hide();
+	          }
+	          else
+	          {
+	            $('#secure_cfg2').show();
+	          }
+	        }).trigger('change');
+		}
         if ( ssid2 )
         {
             $('#status2').prop( 'checked', able2boole(ssid2.status) );
@@ -313,6 +389,7 @@
         {
             $('#status2').prop( 'checked', false );
         }
+		// status
         $('#status2').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
@@ -321,17 +398,6 @@
           else
           {
             $('#ssid_cfg2').hide();
-          }
-        }).trigger('change');
-        $('#secure2').unbind('change').change(function (e) {
-          var secure = e.target.value;
-          if ( secure === 'disable' )
-          {
-            $('#secure_cfg2').hide();
-          }
-          else
-          {
-            $('#secure_cfg2').show();
           }
         }).trigger('change');
         // ACL
@@ -358,10 +424,6 @@
       ssid.status = boole2able( $('#status').prop('checked') );
       if ( ssid.status == "enable" )
       {
-        if ( !ssidcopy.status || ssidcopy.status != "enable" )
-        {
-            restart = true;
-        }
         ssid.ssid = $('#ssid').val();
         ssid.secure = $('#secure').val();
         if ( ssid.secure != 'disable' )
@@ -372,7 +434,10 @@
         ssid.broadcast = boole2able( ! $('#hide').prop('checked') );
         ssid.isolated = boole2able( $('#isolated').prop('checked') );
       }
-
+      if ( ssidcopy.status != ssid.status )
+      {
+      	restart = true;
+      }
       if ( ssid2 == null )
       {
         ssid2 = {};
@@ -381,10 +446,6 @@
       ssid2.status = boole2able( $('#status2').prop('checked') );
       if ( ssid2.status == "enable" )
       {
-        if ( !ssid2copy.status || ssid2copy.status != "enable" )
-        {
-            restart = true;
-        }
         ssid2.ssid = $('#ssid2').val();
         ssid2.secure = $('#secure2').val();
         if ( ssid2.secure != 'disable' )
@@ -394,6 +455,10 @@
         }
         ssid2.broadcast = boole2able( ! $('#hide2').prop('checked') );
         ssid2.isolated = boole2able( $('#isolated2').prop('checked') );
+      }
+      if ( ssid2copy.status != ssid2.status )
+      {
+      	restart = true;
       }
 
       if ( !ocompare( ssid, ssidcopy ) )

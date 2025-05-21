@@ -43,23 +43,29 @@
                 var client = clients[index];
                 var row = {};
                 row[ 'mac'] =  index;
-                row[ 'name'] = client.name || '';
-                row[ 'ip'] = client.ip || '';
+				if ( client )
+				{
+	                row[ 'name'] = client.name || '';
+	                row[ 'ip'] = client.ip || '';
+				}
                 if ( sta.rx_bytes || sta.tx_bytes )
                 {
                     row[ 'rxtx' ] = byte2readable( sta.rx_bytes ) + " / " + byte2readable(sta.tx_bytes);
                 }
                 else
                 {
-                    if ( !client.rx_bytes )
-                    {
-                        client.rx_bytes = "0";
-                    }
-                    if ( !client.tx_bytes )
-                    {
-                        client.tx_bytes = "0";
-                    }
-                    row[ 'rxtx' ] = byte2readable( client.rx_bytes ) + " / " + byte2readable(client.tx_bytes);
+                	if ( client )
+					{
+	                    if ( !client.rx_bytes )
+	                    {
+	                        client.rx_bytes = "0";
+	                    }
+	                    if ( !client.tx_bytes )
+	                    {
+	                        client.tx_bytes = "0";
+	                    }
+	                    row[ 'rxtx' ] = byte2readable( client.rx_bytes ) + " / " + byte2readable(client.tx_bytes);
+					}
                 }
                 if ( sta.rssi )
                 {
@@ -69,13 +75,13 @@
                 {
                     row[ 'rssi'] = '';
                 }
-                if ( client.livetime )
+				if ( sta.livetime )
                 {
-                    row[ 'livetime'] = time2string(client.livetime);
+                    row[ 'livetime'] = time2string(sta.livetime);
                     count++;
                     rows.unshift( row );
-                }
-                else
+				}
+				else
                 {
                     row[ 'livetime'] = $.i18n('Leave');
                     rows.push( row );

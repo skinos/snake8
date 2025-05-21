@@ -14,11 +14,13 @@ Usually wifi@nssid is the first 2.4G SSID. If there are multiple 2.4G SSID in th
     "ssid":"SSID name",                     // [ string ]
     "isolated":"isolated clients",          // [ "enable", "disable" ]
     "broadcast":"broadcast SSID",           // [ "enable", "disable" ]
-    "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk", "wpa3psk", "wpa3sae" , "wpa3pskwpa3sae" ]
+    "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
                                                 // disable for disable the secure
                                                 // wpapsk for WPAPSK
                                                 // wpa2psk for WPA2PSK
-                                                // wpapskwpa2psk for WPA Auto
+                                                // wpa3psk for WPA3PSK
+                                                // wpapskwpa2psk for WPA1/WPA2 PSK Auto
+                                                // wpa2pskwpa3psk for WPA2/WPA3 PSK Auto
     "wpa_encrypt":"wpa encrypt mode",       // [ "aes", "tkip", "tkipaes" ]
                                                 // aes for AES
                                                 // tkip for TKIP

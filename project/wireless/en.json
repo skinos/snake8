@@ -1,0 +1,39 @@
+{
+	"b":"11B",
+	"g":"11G",
+	"n":"11N",
+	"bg":"11BG",
+	"bgn":"11BGN",
+	"2g":"HE(2G)",
+	"a":"11A",
+	"an":"11AN",
+	"ac":"11AC",
+	"anac":"11AN/AC",
+	"aanac":"11A/AN/AC",
+	"5g":"HE(5G)",
+
+	"20":"20M",
+	"40":"40M",
+	"2040":"20/40M",
+	"80":"80M",
+	"160":"160M",
+
+	"scanning":"Scanning",
+	"down":"Down",
+	"uping":"Connecting",
+	"up":"Online",
+
+
+	"disable":"Disable",
+	"owe":"OWE",
+	"wpapsk":"WPA PSK",
+	"wpa2psk":"WPA2 PSK",
+	"wpa3psk":"WPA3 PSK",
+	"wpapskwpa2psk":"WPA/WPA2 Mixed",
+	"wpa2pskwpa3psk":"WPA2/WPA3 Mixed",
+	"aes":"AES",
+	"tkip":"TKIP",
+	"tkipaes":"TKIP&AES"
+
+	
+}

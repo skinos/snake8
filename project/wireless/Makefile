@@ -3,7 +3,6 @@ include $(TOPDIR)/rules.mk
 
 # 定义项目基本信息
 PROJECT_ID:=wifi
-PROJECT_ID:=wifi
 PKG_NAME:=skinos_$(PROJECT_ID)
 PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)

@@ -18,7 +18,7 @@
 	"misp":"LTE Gateway",
 	"nmisp":"LTE/NR Gateway",
 	"dmisp":"Dual LTE/NR Gateway",
-	"isp":"LTE/NR&WISP(2.4G/5.8G) Gateway",
+	"mwm":"LTE/NR&WISP(2.4G/5.8G) Gateway",
 	"mix":"Mix",
 	"parasite":"Parasite",
 	"test":"Factory Test"

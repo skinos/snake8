@@ -1304,6 +1304,20 @@ talk_t _chlist( obj_t this, param_t param )
 	}
 	return ret;
 }
+/* only for apclient */
+talk_t _securelist( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "securelist", NULL );
+	}
+	return ret;
+}
 
 
 

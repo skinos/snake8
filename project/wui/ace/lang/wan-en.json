@@ -1,0 +1,21 @@
+{
+	"scanning":"Scanning",
+	"down":"Down",
+	"uping":"Connecting",
+	"up":"Online",
+
+	"disable":"Disable",
+	"owe":"OWE",
+	"wpapsk":"WPA PSK",
+	"wpa2psk":"WPA2 PSK",
+	"wpa3psk":"WPA3 PSK",
+	"wpapskwpa2psk":"WPA/WPA2 Mixed",
+	"wpa2pskwpa3psk":"WPA2/WPA3 Mixed",
+	"aes":"AES",
+	"tkip":"TKIP",
+	"tkipaes":"TKIP&AES",
+
+	"wifi@nsta":"Client(2.4G)",
+	"wifi@asta":"Client(5.8G)"
+    
+}

@@ -614,11 +614,6 @@ jQuery(function($) {
 						{
 							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE SMS' ), 'ltesms?object=modem@lte' );
 						}
-						var bsim = window.gpio["modem@lte_sim"];
-						if ( bsim && bsim != "" )
-						{
-							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE Backup SIM' ), 'bsim?object=modem@lte' );
-						}
 					}
 				}
 				if ( window.ifname["ifname@lte2"] )
@@ -629,11 +624,6 @@ jQuery(function($) {
 						if ( window.smsd )
 						{
 							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR SMS' ), 'ltesms?object=modem@lte2' );
-						}
-						var bsim = window.gpio["modem@lte2_sim"];
-						if ( bsim && bsim != "" )
-						{
-							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR Backup SIM' ), 'bsim?object=modem@lte2' );
 						}
 					}
 				}

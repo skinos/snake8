@@ -45,6 +45,7 @@ ttrue
     - return terror when error
     - return json to describes date infomation when succeed
     ```json
+    // Attributes introduction of json by the API return
     {
         "source":"The source of the time",                // [ "ntp", "set", "lte", "gps" ]
                                                              // ntp: indicates that it originated from NTP, which has the highest NTP priority, and NTP synchronization success covers all other times
@@ -59,7 +60,7 @@ ttrue
     }    
     ```   
 
-    Examples, get the current date   
+    Example, get the current date   
     ```shell
     clock@date.status
     {
@@ -86,17 +87,17 @@ ttrue
     }
     ```   
 
-    Examples, set current date 11:12:23, On July 8th, in 2019   
+    Example, set current date 11:12:23, On July 8th, in 2019   
     ```shell
     clock@date.current[ 11:12:23:07:08:2019 ]
     ttrue
     ```   
-    Examples, set time zone to china   
+    Example, set time zone to china   
     ```shell
     clock@date.current[ , 8 ]
     ttrue
     ```   
-    Examples, get current time
+    Example, get current time
     ```shell
     clock@date.current
     {
@@ -114,12 +115,12 @@ ttrue
     - return tfalse for failed
     - return terror for error
 
-    Examples, sync the time with time.window.com
+    Example, sync the time with time.window.com
     ```shell
     clock@date.ntpsync[ time.window.com ]
     ttrue
     ```   
-    Examples, sync the time with NTP server in the configure
+    Example, sync the time with NTP server in the configure
     ```shell
     clock@date.ntpsync
     ttrue

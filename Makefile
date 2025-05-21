@@ -48,7 +48,7 @@ gPUBLISH ?= v7.5.0101
 gVERSION ?= $(gPUBLISH)
 # Name for compiler
 gMAKER ?= dimmalex@gmail.com
-gTFTPD ?= 192.168.31.251
+gTFTPD ?= tftp 192.168.31.251
 export gNPROC
 export gBOARDIDS gPLATFORM gHARDWARE gCUSTOM gSCOPE gOEM
 export gVERSION gPUBLISH gMAKER gTFTPD

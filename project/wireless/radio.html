@@ -352,6 +352,7 @@
     var chlist;
     var modelist;
     var powerlist;
+    var securelist;
     var object = "wifi@x";
     var index = page.param( 'object', location.hash );
     if ( index )
@@ -389,21 +390,67 @@
     }
     function cfg_load()
     {
-      he.load( [ robj, robj+".modelist", robj+".powerlist", robj+".acs", sobj ] ).then( function(v){
+      he.load( [ robj, robj+".modelist", robj+".powerlist", robj+".securelist", robj+".acs", sobj ] ).then( function(v){
         radio = v[0];
         modelist = v[1];
         powerlist = v[2];
-        acs = v[3];
-        ssid = v[4];
+        securelist = v[3];
+        acs = v[4];
+        ssid = v[5];
 
         /* ssid */
         $('#status').prop( 'checked', able2boole(ssid.status) );
         $('#ssid').val( ssid.ssid || '' );
-        $('#secure').val( ssid.secure || 'disable' );
-        $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
+		/* secure mode */
+        if ( securelist )
+        {
+            $("#secure").empty();            
+            for( m in securelist )
+            {
+                $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+            }
+            $('#secure').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_cfg").hide();
+			  }
+			  else
+			  {
+			      $("#wpa_encrypt").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+                  $("#secure_cfg").show();
+			  }
+            }).trigger('change');
+            $('#secure').val( ssid.secure || 'disable' );
+            $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
+        }
+		else
+        {
+	        $('#secure').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure === 'disable' )
+	          {
+	            $('#secure_cfg').hide();
+	          }
+	          else
+	          {
+	            $('#secure_cfg').show();
+	          }
+	        }).trigger('change');
+	        $('#secure').val( ssid.secure || 'disable' );
+	        $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
+		}
         $('#wpa_key').val( ssid.wpa_key || '' );
         $('#hide').prop( 'checked', !able2boole(ssid.broadcast) );
         $('#isolated').prop( 'checked', able2boole(ssid.isolated) );
+		/* status */
         $('#status').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
@@ -412,17 +459,6 @@
           else
           {
             $('#ssid_cfg').hide();
-          }
-        }).trigger('change');
-        $('#secure').unbind('change').change(function (e) {
-          var secure = e.target.value;
-          if ( secure === 'disable' )
-          {
-            $('#secure_cfg').hide();
-          }
-          else
-          {
-            $('#secure_cfg').show();
           }
         }).trigger('change');
         /* radio */
@@ -490,7 +526,7 @@
             $("#txpower_set").hide();
         }
         // ACL
-        var link = '#app?page='+base64.encode("/prj/wifi/acl.html");
+        var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
         link += '&object='+sobj;
         link += '&lang='+base64.encode(langjson);
         $('#acl').attr( "href", link );
@@ -514,7 +550,7 @@
       {
         ssid.ssid = $('#ssid').val();
         ssid.secure = $('#secure').val();
-        if ( ssid.secure != 'disable' )
+        if ( ssid.secure != 'disable' && ssid.secure != 'owe' )
         {
           ssid.wpa_encrypt = $('#wpa_encrypt').val();
           ssid.wpa_key = $('#wpa_key').val();

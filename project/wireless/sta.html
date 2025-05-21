@@ -100,9 +100,9 @@
                 <div class="col-sm-9">
                     <select class="col-xs-10 col-sm-5" id="secure">
                         <option value="disable" data-i18n="Disable(None)"></option>
-                        <option value="wpapsk" data-i18n="WPA(Private)"></option>
-                        <option value="wpa2psk" data-i18n="WPA2(Private)"></option>
-                        <option value="wpapskwpa2psk" data-i18n="WPA-Mixed(Private)"></option>
+                        <option value="wpapsk" data-i18n="WPA-PSK(Private)"></option>
+                        <option value="wpa2psk" data-i18n="WPA2-PSK(Private)"></option>
+                        <option value="wpapskwpa2psk" data-i18n="WPA/WPA2-PSK Mixed(Private)"></option>
                     </select>
                 </div>
             </div>
@@ -200,6 +200,7 @@
     /* get the object */
     var sta;
     var chlist;
+    var securelist;
     var object = "wifi@xsta";
     var index = page.param( 'object', location.hash );
     if ( index )
@@ -211,15 +212,57 @@
     /* load the configure on the input */
     function cfg_load()
     {
-      he.load( [ object, object+'.chlist' ] ).then( function(v){
+      he.load( [ object, object+'.chlist', object+'.securelist' ] ).then( function(v){
         sta = v[0];
         chlist = v[1];
+        securelist = v[2];
         var selects = "";
         for ( var ch in chlist )
         {
             selects += ('<option value="' + ch + '">' + $.i18n( ch ) + '</option>');
         }
         $("#channel").html( selects );
+        if ( securelist )
+        {
+            $("#secure").empty();            
+            for( m in securelist )
+            {
+                $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+            }
+            $('#secure').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_config").hide();
+			  }
+			  else
+			  {
+			      $("#wpa_encrypt").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+                  $("#secure_config").show();
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure == 'disable' )
+	          {
+	            $('#secure_config').hide();
+	          }
+	          else
+	          {
+	            $('#secure_config').show();
+	          }
+	        }).trigger('change');
+		}
         if ( sta )
         {
             if ( sta.status )
@@ -256,17 +299,6 @@
           {
             $('#sta_config').hide();
           }
-        }).trigger('change');
-        $('#secure').unbind('change').change(function (e) {
-            var secure = e.target.value;
-            if ( secure === 'disable' )
-            {
-                $('#secure_config').hide();
-            }
-            else
-            {
-                $('#secure_config').show();
-            }
         }).trigger('change');
         $('#strong').unbind('change').change(function (e) {
             if ($(this).prop('checked'))
