@@ -245,7 +245,6 @@
         ssid2 = v[2];
 
         /* ssid */
-		// secure
         if ( securelist )
         {
             $("#secure").empty();            
@@ -253,40 +252,7 @@
             {
                 $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
-            $('#secure').unbind('change').change(function (e) {
-              var secure = e.target.value;
-			  if ( secure == "disable" || secure == "owe" )
-			  {
-                  $("#secure_cfg").hide();
-			  }
-			  else
-			  {
-			      $("#wpa_encrypt").empty();            
-	              if ( securelist[secure] )
-	              {
-	                  for( b in securelist[secure] )
-	                  {
-	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
-	                  }
-	              }
-                  $("#secure_cfg").show();
-			  }
-            }).trigger('change');
         }
-		else
-        {
-	        $('#secure').unbind('change').change(function (e) {
-	          var secure = e.target.value;
-	          if ( secure === 'disable' )
-	          {
-	            $('#secure_cfg').hide();
-	          }
-	          else
-	          {
-	            $('#secure_cfg').show();
-	          }
-	        }).trigger('change');
-		}
         if ( ssid )
         {
             $('#status').prop( 'checked', able2boole(ssid.status) );
@@ -308,6 +274,47 @@
         {
             $('#status').prop( 'checked', false );
         }
+		// secure
+        if ( securelist )
+        {
+            $('#secure').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_cfg").hide();
+			  }
+			  else
+			  {
+                  $("#secure_cfg").show();
+			      $("#wpa_encrypt").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+				  if ( ssid )
+				  {
+  		            $('#wpa_encrypt').val( ssid.wpa_encrypt || 'aes' );
+				  }
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure === 'disable' )
+	          {
+	            $('#secure_cfg').hide();
+	          }
+	          else
+	          {
+	            $('#secure_cfg').show();
+	          }
+	        }).trigger('change');
+		}
 		// status
         $('#status').unbind('change').change(function () {
           if ($(this).prop('checked'))
@@ -326,7 +333,6 @@
         $('#acl').attr( "href", link );
 
         /* ssid2 */
-		// secure
         if ( securelist )
         {
             $("#secure2").empty();            
@@ -334,40 +340,7 @@
             {
                 $("#secure2").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
-            $('#secure2').unbind('change').change(function (e) {
-              var secure = e.target.value;
-			  if ( secure == "disable" || secure == "owe" )
-			  {
-                  $("#secure_cfg2").hide();
-			  }
-			  else
-			  {
-			      $("#wpa_encrypt2").empty();            
-	              if ( securelist[secure] )
-	              {
-	                  for( b in securelist[secure] )
-	                  {
-	                      $("#wpa_encrypt2").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
-	                  }
-	              }
-                  $("#secure_cfg2").show();
-			  }
-            }).trigger('change');
         }
-		else
-        {
-	        $('#secure2').unbind('change').change(function (e) {
-	          var secure = e.target.value;
-	          if ( secure === 'disable' )
-	          {
-	            $('#secure_cfg2').hide();
-	          }
-	          else
-	          {
-	            $('#secure_cfg2').show();
-	          }
-	        }).trigger('change');
-		}
         if ( ssid2 )
         {
             $('#status2').prop( 'checked', able2boole(ssid2.status) );
@@ -389,6 +362,47 @@
         {
             $('#status2').prop( 'checked', false );
         }
+        // secure
+        if ( securelist )
+        {
+            $('#secure2').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_cfg2").hide();
+			  }
+			  else
+			  {
+                  $("#secure_cfg2").show();
+			      $("#wpa_encrypt2").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt2").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+				  if ( ssid2 )
+				  {
+  		            $('#wpa_encrypt2').val( ssid2.wpa_encrypt || 'aes' );
+				  }
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure2').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure === 'disable' )
+	          {
+	            $('#secure_cfg2').hide();
+	          }
+	          else
+	          {
+	            $('#secure_cfg2').show();
+	          }
+	        }).trigger('change');
+		}
 		// status
         $('#status2').unbind('change').change(function () {
           if ($(this).prop('checked'))
@@ -428,7 +442,7 @@
         ssid.secure = $('#secure').val();
         if ( ssid.secure != 'disable' )
         {
-          ssid.wpa_encrypt = $('#wpa_encrypt').val();
+          ssid.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
           ssid.wpa_key = $('#wpa_key').val();
         }
         ssid.broadcast = boole2able( ! $('#hide').prop('checked') );
@@ -450,7 +464,7 @@
         ssid2.secure = $('#secure2').val();
         if ( ssid2.secure != 'disable' )
         {
-          ssid2.wpa_encrypt = $('#wpa_encrypt2').val();
+          ssid2.wpa_encrypt = $('#wpa_encrypt2').val()||"aes";
           ssid2.wpa_key = $('#wpa_key2').val();
         }
         ssid2.broadcast = boole2able( ! $('#hide2').prop('checked') );

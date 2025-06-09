@@ -206,12 +206,12 @@
 	"vpns@pptp":"PPTP服务器",
 	"ovpns@server":"OPENVPN服务器",
 
-	"Routing Table":"路由表",
-	"Policy Routing":"策略路由",
+	"Route":"路由",
 	"Port Map":"端口映射",
-	"DMZ Host":"DMZ主机",
 	"Port Proxy":"端口代理",
 	"Firewall":"防火墙",
+	"Routing Table":"路由表",
+	"Policy Routing":"策略路由",
 	"ALG":"应用层网关",
 	"Hosts":"Hosts映射",
 

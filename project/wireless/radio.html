@@ -409,6 +409,7 @@
             {
                 $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
+            $('#secure').val( ssid.secure || 'disable' );
             $('#secure').unbind('change').change(function (e) {
               var secure = e.target.value;
 			  if ( secure == "disable" || secure == "owe" )
@@ -417,6 +418,7 @@
 			  }
 			  else
 			  {
+                  $("#secure_cfg").show();
 			      $("#wpa_encrypt").empty();            
 	              if ( securelist[secure] )
 	              {
@@ -425,14 +427,14 @@
 	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
 	                  }
 	              }
-                  $("#secure_cfg").show();
+				  $('#wpa_encrypt').val( ssid.wpa_encrypt || 'aes' );
 			  }
             }).trigger('change');
-            $('#secure').val( ssid.secure || 'disable' );
-            $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
         }
 		else
         {
+	        $('#secure').val( ssid.secure || 'disable' );
+	        $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
 	        $('#secure').unbind('change').change(function (e) {
 	          var secure = e.target.value;
 	          if ( secure === 'disable' )
@@ -444,8 +446,6 @@
 	            $('#secure_cfg').show();
 	          }
 	        }).trigger('change');
-	        $('#secure').val( ssid.secure || 'disable' );
-	        $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
 		}
         $('#wpa_key').val( ssid.wpa_key || '' );
         $('#hide').prop( 'checked', !able2boole(ssid.broadcast) );
@@ -552,7 +552,7 @@
         ssid.secure = $('#secure').val();
         if ( ssid.secure != 'disable' && ssid.secure != 'owe' )
         {
-          ssid.wpa_encrypt = $('#wpa_encrypt').val();
+          ssid.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
           ssid.wpa_key = $('#wpa_key').val();
         }
         ssid.broadcast = boole2able( ! $('#hide').prop('checked') );

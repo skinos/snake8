@@ -21,14 +21,14 @@ function status_load()
       /* status end btn */
       if ( info.status )
       {
-          $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           $(id+"_status").text( $.i18n(info.status) );
-          if ( info.status == "up" || info.status == "uping" )
+          if ( info.status == "down" )
           {
+              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
           else
           {
-              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
+			  $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           }
       }
       else
@@ -284,6 +284,7 @@ function config_load()
 		{
 			$("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
 		}
+		$('#secure').val( config.secure || 'disable' );
 		$('#secure').unbind('change').change(function (e) {
 		  var secure = e.target.value;
 		  if ( secure == "disable" || secure == "owe" )
@@ -293,6 +294,7 @@ function config_load()
 		  else
 		  {
 			  $("#wpa_encrypt").empty();			
+			  $("#secure_cfg").show();
 			  if ( securelist[secure] )
 			  {
 				  for( b in securelist[secure] )
@@ -300,14 +302,14 @@ function config_load()
 					  $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
 				  }
 			  }
-			  $("#secure_cfg").show();
+			  $('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
 		  }
 		}).trigger('change');
-		$('#secure').val( config.secure || 'disable' );
-		$('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
 	}
 	else
 	{
+		$('#secure').val( config.secure || 'disable' );
+		$('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
 		$('#secure').unbind('change').change(function (e) {
 		  var secure = e.target.value;
 		  if ( secure == 'disable' )
@@ -319,8 +321,6 @@ function config_load()
 			$('#secure_cfg').show();
 		  }
 		}).trigger('change');
-		$('#secure').val( config.secure || 'disable' );
-		$('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
 	}
     $('#lock').prop( 'checked', config.peermac );
     $('#lock').unbind('change').change(function (e) {
@@ -651,7 +651,7 @@ function config_save()
   config.secure = $('#secure').val();
   if ( config.secure != 'disable' && config.secure != "owe" )
   {
-      config.wpa_encrypt = $('#wpa_encrypt').val();
+      config.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
       config.wpa_key = $('#wpa_key').val();
       if ( !config.wpa_key )
       {

@@ -2,8 +2,9 @@ window.object = "wui@admin";
 window.hepath = "/public";
 window.talkkey = "";
 window.username = "";
-localStorage.setItem( "talkkey", window.talkkey );
-localStorage.setItem( "username", window.username );
+sessionStorage.setItem( "talkkey", window.talkkey );
+sessionStorage.setItem( "username", window.username );
+console.log( "CLEAR: talkkey" );
 
 jQuery(function($) {
 
@@ -91,8 +92,8 @@ jQuery(function($) {
 	                }
 					if ( value["return"] == "true" )
 					{
-						localStorage.setItem( "talkkey", value["key"] );
-						localStorage.setItem( "username", value["username"] );
+						sessionStorage.setItem( "talkkey", value["key"] );
+						sessionStorage.setItem( "username", value["username"] );
 						window.location.href = 'index.html';
 						return;
 					}

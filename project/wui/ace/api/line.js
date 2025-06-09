@@ -128,7 +128,8 @@ var he =
 						if ( callbak["key"] )
 						{
 							window.talkkey = callbak["key"];
-							//console.log( "UPDATE:"+window.talkkey );
+							sessionStorage.setItem( "talkkey", window.talkkey );
+							console.log( "UPDATE:"+window.talkkey );
 						}
                         for ( i in heindex )
                         {
@@ -206,7 +207,8 @@ var he =
 					if ( callbak["key"] )
 					{
 						window.talkkey = callbak["key"];
-						//console.log( "UPDATE:"+window.talkkey );
+						sessionStorage.setItem( "talkkey", window.talkkey );
+						console.log( "UPDATE:"+window.talkkey );
 					}
                     for ( i in heindex )
                     {

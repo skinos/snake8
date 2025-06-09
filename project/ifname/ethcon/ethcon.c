@@ -916,7 +916,7 @@ talk_t _status( obj_t this, param_t param )
 			json_delete_axp( v, "netdev" );
 			axp = json_cut_axp( v, "status" );
 			ptr = axp_string( axp );
-            if ( ptr != NULL && 0 != strcmp( ptr, "up" ) )
+            if ( ptr != NULL && 0 != strcmp( ptr, "up" ) && 0 != strcmp( ptr, "down" ) )
             {
                 json_set_string( ret, "status", ptr );
             }
@@ -1271,6 +1271,7 @@ boole_t _keepoff( obj_t this, param_t param )
 	    keeplive_warn( "%s keeplive check failed, must reset connection", object );
 		sreset( NULL, NULL, NULL, object );
 	}
+	talk_free( cfg );
 	return ttrue;
 }
 

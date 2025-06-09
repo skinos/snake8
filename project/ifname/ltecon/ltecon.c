@@ -1535,6 +1535,7 @@ boole_t _keepoff( obj_t this, param_t param )
 	    keeplive_warn( "%s keeplive check failed, must reset connection", object );
 		sreset( NULL, NULL, NULL, object );
 	}
+	talk_free( cfg );
 	return ttrue;
 }
 

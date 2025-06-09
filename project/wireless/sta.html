@@ -229,40 +229,7 @@
             {
                 $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
-            $('#secure').unbind('change').change(function (e) {
-              var secure = e.target.value;
-			  if ( secure == "disable" || secure == "owe" )
-			  {
-                  $("#secure_config").hide();
-			  }
-			  else
-			  {
-			      $("#wpa_encrypt").empty();            
-	              if ( securelist[secure] )
-	              {
-	                  for( b in securelist[secure] )
-	                  {
-	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
-	                  }
-	              }
-                  $("#secure_config").show();
-			  }
-            }).trigger('change');
         }
-		else
-        {
-	        $('#secure').unbind('change').change(function (e) {
-	          var secure = e.target.value;
-	          if ( secure == 'disable' )
-	          {
-	            $('#secure_config').hide();
-	          }
-	          else
-	          {
-	            $('#secure_config').show();
-	          }
-	        }).trigger('change');
-		}
         if ( sta )
         {
             if ( sta.status )
@@ -290,6 +257,46 @@
         {
             $('#status').prop( 'checked', false );
         }
+        if ( securelist )
+        {
+            $('#secure').unbind('change').change(function (e) {
+              var secure = e.target.value;
+			  if ( secure == "disable" || secure == "owe" )
+			  {
+                  $("#secure_config").hide();
+			  }
+			  else
+			  {
+                  $("#secure_config").show();
+			      $("#wpa_encrypt").empty();            
+	              if ( securelist[secure] )
+	              {
+	                  for( b in securelist[secure] )
+	                  {
+	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
+	                  }
+	              }
+				  if ( sta )
+				  {
+  		            $('#wpa_encrypt2').val( sta.wpa_encrypt || 'aes' );
+				  }
+			  }
+            }).trigger('change');
+        }
+		else
+        {
+	        $('#secure').unbind('change').change(function (e) {
+	          var secure = e.target.value;
+	          if ( secure == 'disable' )
+	          {
+	            $('#secure_config').hide();
+	          }
+	          else
+	          {
+	            $('#secure_config').show();
+	          }
+	        }).trigger('change');
+		}
         $('#status').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
@@ -419,7 +426,7 @@
         sta.secure = $('#secure').val();
         if ( sta.secure != 'disable' )
         {
-            sta.wpa_encrypt = $('#wpa_encrypt').val();
+            sta.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
             sta.wpa_key = $('#wpa_key').val();
             if ( !sta.wpa_key )
             {
@@ -618,7 +625,7 @@
     }
     else
     {
-        $('#wpa_encrypt').val(ap.wpa_encrypt || 'tkipaes');
+        $('#wpa_encrypt').val(ap.wpa_encrypt || 'tikpaes');
     }
     // 手动触发change，以便显示隐藏密码输入框
     $('#secure').trigger('change');

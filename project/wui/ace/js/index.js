@@ -1,7 +1,8 @@
 window.object = "wui@admin";
 window.hepath = "/he";
-window.talkkey = localStorage.getItem( "talkkey" );
-window.username = localStorage.getItem( "username" );
+window.talkkey = sessionStorage.getItem( "talkkey" );
+console.log( "GET:"+window.talkkey );
+window.username = sessionStorage.getItem( "username" );
 // disable load the subpage, loading when after i18n loaded
 ace.demo.functions.enableDemoAjax= function () {};
 
@@ -522,7 +523,7 @@ jQuery(function($) {
 			var menus = [];
 			var router = true;
 			var homepage = "dashboard";
-			if ( window.machine.mode == "default" || window.machine.mode == "parasite" || window.machine.mode.indexOf("bridge") >= 0 )
+			if ( window.machine.mode == "default" || window.machine.mode == "parasite" )
 			{
 				router = false;
 				$('#extern_nav').attr('href','#');
@@ -676,9 +677,18 @@ jQuery(function($) {
 						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN' ), 'lan?object=ifname@lan' );
 					}
 				}				 
+				menu.add( false, menus, $.i18n( 'Route' ), 'route', 'menu-icon glyphicon glyphicon-move' );
+				if ( window.hosts )
+				{
+					menu.addlink( menus, $.i18n( 'Route' ), $.i18n( 'Hosts' ), 'hosts' );
+				}
 			}
 			else
 			{
+				if ( window.hosts )
+				{
+					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
+				}
 				if ( window.ifname["ifname@lan"] )
 				{
 					if ( !wuimenu || wuimenu.lwan != "disable" )
@@ -709,10 +719,6 @@ jQuery(function($) {
 					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN4' ), 'lan?object=ifname@lan4' );
 				}
 			}
-	        if ( window.hosts )
-	        {
-	            menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
-	        }
 
 			menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
 
@@ -774,10 +780,6 @@ jQuery(function($) {
 					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
 					menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
 					//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
-	                if ( window.network_frame )
-	                {
-	                    menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Network Frame' ), 'net' );
-	                }
 				}
 			}
 

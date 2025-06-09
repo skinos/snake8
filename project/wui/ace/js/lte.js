@@ -21,14 +21,14 @@ function status_load()
       /* status end btn */
       if ( info.status )
       {
-          $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           $(id+"_status").text( $.i18n(info.status) );
-          if ( info.status == "up" || info.status == "uping" )
+          if ( info.status == "down" )
           {
+              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
           else
           {
-              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
+			  $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           }
       }
       else
