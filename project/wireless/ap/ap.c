@@ -157,7 +157,7 @@ boole_t _up( obj_t this, param_t param )
     {
         if ( netdev_flags( netdev, IFF_UP ) > 0 )
         {
-            shell( "ifconfig %s down", netdev );
+            ifconfig( "%s down", netdev );
         }
 		ret = ttrue;
 		lock_close( fd );
@@ -167,7 +167,7 @@ boole_t _up( obj_t this, param_t param )
 	{
         if ( netdev_flags( netdev, IFF_UP ) <= 0 )
         {
-            shell( "ifconfig %s up", netdev );
+            ifconfig( "%s up", netdev );
         }
 		/* mark the up state */
 		ptr = uptime_desc( NULL, 0 );
@@ -212,7 +212,7 @@ boole_t _down( obj_t this, param_t param )
 		/* down the netdev */
 		if ( netdev_flags( netdev, IFF_UP ) > 0 )
 		{
-			shell( "ifconfig %s down", netdev );
+			ifconfig( "%s down", netdev );
 		}
 	}
 

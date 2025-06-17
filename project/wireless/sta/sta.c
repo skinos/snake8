@@ -48,7 +48,7 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
     char path[1024];
     char readbuf[1024];
 
-	shell( "ifconfig %s up", netdev );
+	ifconfig( "%s up", netdev );
     snprintf( path, sizeof(path), "/tmp/.iwinfo_scan_%s", netdev );
     shell( "iwinfo %s scan > %s", netdev, path );
     fp = fopen( path, "r");
@@ -455,7 +455,7 @@ boole_t _up( obj_t this, param_t param )
 	{
 		if ( netdev_flags( netdev, IFF_UP ) > 0 )
 		{
-			//shell( "ifconfig %s down", netdev ); the sta interface is radio interface, the ssid cannot work when down it
+			//ifconfig( "%s down", netdev ); the sta interface is radio interface, the ssid cannot work when down it
 		}
 		ret = ttrue;
 		lock_close( fd );
@@ -539,7 +539,7 @@ boole_t _down( obj_t this, param_t param )
 		/* down the netdev */
 		if ( netdev_flags( netdev, IFF_UP ) > 0 )
 		{
-			shell( "ifconfig %s down", netdev );
+			ifconfig( "%s down", netdev );
 		}
 	}
 
@@ -1331,7 +1331,7 @@ reset:
 	/* down the netdev */
 	if ( netdev_flags( netdev, IFF_UP ) > 0 )
 	{
-		xexecute( 0, 1, "ifconfig %s down", netdev );
+		ifconfig( 0, 1, "%s down", netdev );
 	}
 	/* reset the wisp ifname */
 	if ( ifname != NULL && strstr( ifname, WISP_COM ) != NULL )

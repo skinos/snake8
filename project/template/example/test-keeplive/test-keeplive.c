@@ -77,8 +77,8 @@ talk_t _service( obj_t this, param_t param )
 		}
 		else
 		{
-			shell( "ifconfig usb0 down" );
-			shell( "ifconfig usb1 down" );
+			ifconfig( "usb0 down" );
+			ifconfig( "usb1 down" );
 		}
 		type++;
 		sleep( 30 );
