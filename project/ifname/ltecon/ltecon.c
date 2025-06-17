@@ -41,6 +41,9 @@ boole_t _setup( obj_t this, param_t param )
 		tid = atoi( ptr );
 		reg_set_int( this, "tid", tid );
 	}
+	/* set the keeplive */
+	ptr = json_string( json_value( cfg, "keeplive"), "type" );
+	reg_set_string( this, "keeplive", ptr );
 
     /* get the ifdev */
 	ifdev = reg_string( this, "ifdev" );
@@ -890,7 +893,6 @@ talk_t _state( obj_t this, param_t param )
     talk_t ret;
     talk_t v;
     struct stat st;
-    boole keeplive;
     const char *ptr;
     const char *object;
     const char *ifdev;
@@ -906,21 +908,10 @@ talk_t _state( obj_t this, param_t param )
 	const char *resolve2;
     char path[PATH_MAX];
 
+	netdev = NULL;
     object = obj_name( this );
 	/* get the ifdev */
 	ifdev = reg_string( this, "ifdev" );
-    /* get the keeplive */
-	ptr = reg_string( this, "keeplive" );
-    if ( ptr != NULL && ( 0 == strcmp( ptr, "icmp" ) || 0 == strcmp( ptr, "dns" ) || 0 == strcmp( ptr, "auto" ) ) )
-    {
-    	keeplive = true;
-		delay = reg_int( this, "delay" );
-    }
-	else
-	{
-		keeplive = false;
-	}
-	netdev = NULL;
 	/* get mode */
 	tid = reg_int( this, "tid" );
 	mode = reg_string( this, "mode" );
@@ -994,7 +985,30 @@ talk_t _state( obj_t this, param_t param )
         }
         else
         {
-            json_set_string( ret, "status", "up" );
+			/* get the keeplive */
+			ptr = reg_string( this, "keeplive" );
+			if ( ptr != NULL && ( 0 == strcmp( ptr, "icmp" ) || 0 == strcmp( ptr, "dns" ) || 0 == strcmp( ptr, "auto" ) ) )
+			{
+				delay = reg_int( this, "delay" );
+				if ( delay > 0 )
+				{
+					json_set_string( ret, "status", "up" );
+                    json_set_number( ret, "delay", delay );
+				}
+				else if ( delay < 0 )
+				{
+                    json_set_string( ret, "status", "failed" );
+				}
+				else
+				{
+                    json_set_string( ret, "status", "block" );
+				}
+			}
+			else
+			{
+				json_set_string( ret, "status", "up" );
+			}
+			/* address */
             json_set_string( ret, "ip", ip );
             json_set_string( ret, "mask", mask );
 			if ( *dstip != '\0' )
@@ -1013,22 +1027,6 @@ talk_t _state( obj_t this, param_t param )
 					json_set_string( ret, "dns2", dns2 );
 				}
 			}
-            /* get the keeplive status */
-            if ( keeplive == true )
-            {
-				if ( delay > 0 )
-				{
-                    json_set_number( ret, "delay", delay );
-				}
-				else if ( delay < 0 )
-				{
-                    json_set_string( ret, "delay", "failed" );
-				}
-				else
-				{
-                    json_set_string( ret, "delay", "block" );
-				}
-            }
             /* get the livetime */
 			ptr = json_string( ret, "ontime" );
 			if ( ptr != NULL && *ptr != '\0' )
@@ -1192,7 +1190,6 @@ boole_t _online( obj_t this, param_t param )
 	int i;
 	int tid;
     int mtu;
-	int metric;
 	talk_t v;
 	talk_t cfg;
 	talk_t value;
@@ -1225,13 +1222,12 @@ boole_t _online( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	/* set the metric */
-	metric = json_number( cfg, "metric" );
-	reg_set_int( this, "metric", metric );
-	json_set_number( v, "metric", metric );
-	/* set the keeplive */
-	ptr = json_string( json_value( cfg, "keeplive"), "type" );
-	reg_set_string( this, "keeplive", ptr );
+	/* get the metric */
+	i = json_number( cfg, "metric" );
+	if ( i > 0 )
+	{
+		json_set_number( v, "metric", i );
+	}
 	/* get mode */
 	mode = reg_string( this, "mode" );
 	/* get gateway */
@@ -1316,7 +1312,7 @@ boole_t _online( obj_t this, param_t param )
 	mtu = json_number( cfg, "mtu" );
 	if ( mtu > 0 )
 	{
-		shell( "ifconfig %s mtu %d", netdev, mtu );
+		ifconfig( "%s mtu %d", netdev, mtu );
 		reg_set_int( this, "mtu", mtu );
 		pmtu_adjust_ifname( object, netdev, mtu );
 	}

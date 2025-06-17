@@ -323,6 +323,8 @@ ttrue
                                              // "register" for register the network
                                              // "reset" for reset the modem
                                              // "down" for the modem is down
+                                             // "block" for wait keeplive return
+                                             // "failed" for keeplive failed
                                              // "up" for ready to connect to internet, hint signal/network/simcard all ok
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "ppp" ] for PPP dial

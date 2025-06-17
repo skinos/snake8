@@ -218,6 +218,8 @@ ttrue
         "status":"Current state",        // [ "uping", "down", "up" ]
                                              // "uping" for connecting
                                              // "down" for the ifname is down
+                                             // "block" for wait keeplive return
+                                             // "failed" for keeplive failed
                                              // "up" for the network is connect succeed
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
