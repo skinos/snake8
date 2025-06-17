@@ -10,7 +10,7 @@ $LANDDIR/bin/he arch@data.setup
 $LANDDIR/bin/he land@machine.setup
 
 # skinos daemon
-$LANDDIR/bin/daemon&
+$LANDDIR/bin/daemon
 
 # core
 $LANDDIR/bin/he land@init.call[arch]
