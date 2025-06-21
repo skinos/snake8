@@ -48,19 +48,19 @@ setup()
     MAC=`$LANDDIR/bin/he arch@data:mac`
     $LANDDIR/bin/he land@register.set_string[mac,$MAC]
     # default the configure if order
-    if [ -e $VROOT/mnt/config/.customv6 ]; then
+    if [ -e $VROOT/mnt/config/.customv8 ]; then
     	echo "mount the configure"
     else
     	echo "clear the configure"
         rm -fr $VROOT/mnt/config/*
-        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/config/.customv6
+        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/config/.customv8
     fi
-    if [ -e $VROOT/mnt/internal/.customv6 ]; then
+    if [ -e $VROOT/mnt/internal/.customv8 ]; then
     	echo "mount the interval"
 	else
     	echo "clear the interval"
 		rm -fr $VROOT/mnt/internal/*
-        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/internal/.customv6
+        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/internal/.customv8
     fi
 
     NAME=`hostname`

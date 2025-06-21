@@ -78,6 +78,7 @@ int main( int argc, const char **argv )
 				{
 					if ( 0 == strcmp( line, "e" ) )      // exit
 					{
+						talk_free( cfg );
 						break;
 					}
 					else if ( 0 == strcmp( line, "s" ) ) // set
