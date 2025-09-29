@@ -130,7 +130,7 @@ define Build/Compile/Default
 	$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/bin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/ko,${KO_LIST})
-	if [ "X" == "X$(1)" ]; then \
+	if [ "X" = "X$(1)" ]; then \
 		$(call Build/Compile/bin,${OSC_LIST},$(2)); \
 	fi
 	if [ "X" != "X$(1)" ]; then \

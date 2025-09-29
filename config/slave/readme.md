@@ -35,7 +35,7 @@ make preset
 ```shell
 make pid gBOARDID=<server model>
 
-# For products such as Ubuntu enter the following instructions:
+# For products such as Ubuntu(x86) enter the following instructions:
 make pid gBOARDID=slave-x86-ubuntu2004
 ```
 
