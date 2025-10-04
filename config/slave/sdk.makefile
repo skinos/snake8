@@ -120,6 +120,12 @@ sdk_install:
 	sudo cp -ar ${gosROOT_DIR}/usr/share/skinos /usr/share
 	sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin
 	sudo cp -ar ${gosROOT_DIR}/usr/local/lib/* /usr/local/lib
+	sudo chown root:root /usr/share/skinos/land/bin/he
+	sudo chmod u+s /usr/share/skinos/land/bin/he
+	sudo chown root:root /usr/share/skinos/land/bin/daemon
+	sudo chmod u+s /usr/share/skinos/land/bin/daemon
+	sudo chown root:root /usr/share/skinos/center/bin/hh
+	sudo chmod u+s /usr/share/skinos/center/bin/hh
 	sudo ldconfig
 sdk_start:
 	if [ -f /usr/share/skinos/setup.sh ]; then \
