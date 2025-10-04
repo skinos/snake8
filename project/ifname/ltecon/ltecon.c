@@ -262,7 +262,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** testing simcard for the ifdev ******/
 	/*****************************************/
-    ifname_info( obj, "%s simcard test", ifdev );
+    ifname_info( obj, "%s simcard detection", ifdev );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 180
 	failed_threshold3 = 300;     // 300
@@ -381,7 +381,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** testing signal for the ifdev *******/
 	/*****************************************/
-    ifname_info( obj, "%s plmn or signal test", ifdev );
+    ifname_info( obj, "%s plmn or signal detection", ifdev );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 300
 	failed_threshold3 = 600;     // 600
@@ -562,7 +562,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	if ( 0 != strcmp( mode, "ppp" ) )
 	{
-	    ifname_info( obj, "%s attach test", ifdev );
+	    ifname_info( obj, "%s attach", ifdev );
 		failed_threshold = 60;       // 60
 		failed_threshold2 = 180;     // 180
 		failed_threshold3 = 600;     // 600

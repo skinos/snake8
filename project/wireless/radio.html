@@ -466,7 +466,7 @@
         $('#dtim').val( radio.dtim );
         $('#stbc').prop( 'checked', able2boole(radio.stbc) );
         $('#shortgi').prop( 'checked', able2boole(radio.shortgi) );
-        $('#country').val( radio.country );
+        $('#country').val( radio.country||"db" );
         $('#country').unbind('change').change(function (e) {
             var country = e.target.value;
             flash_channel( $('#mode').val(), country, radio.channel, acs );
