@@ -67,7 +67,6 @@ boole_t _setup( obj_t this, param_t param )
 }
 boole_t _shut( obj_t this, param_t param )
 {
-    int i;
     const char *obj;
 	const char *ifdev;
     const char *object;
@@ -83,9 +82,6 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( "%s-automatic", object );
     /* stop the service */
     sdelete( object );
-	/* clear the reconnect count */
-	i = 0;
-	reg_set_int( this, "connect_failed", i );
 
     /* delete online file */
     project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ol", object );
@@ -106,14 +102,21 @@ boole_t _shut( obj_t this, param_t param )
 }
 boole _set( obj_t this, talk_t v, attr_t path )
 {
+	int i;
     boole ret;
 	const char *object;
 
 	object = obj_name( this );
 	if ( NULL == strstr( object, LAN_COM ) )
 	{
+		// shut
 		_shut( this, NULL );
+		// clear the reconnect count
+		i = 0;
+		reg_set_int( this, "connect_failed", i );
+		// set
 		ret = config_set( this, v, path );
+		// setup
 		_setup( this, NULL );
 	}
 	else
@@ -411,7 +414,7 @@ boole_t _service( obj_t this, param_t param )
 	/******** connect failed process *********/
 	/*****************************************/
 	failed_threshold = 3;       // 3*48 = 144
-	failed_threshold2 = 5;      // 5*48 = 240
+	failed_threshold2 = 7;      // 7*48 = 336
 	failed_threshold3 = 15;     // 15*48 = 720
 	failed_everytime = 37;      // 37*48 = 1800
 	ptr = json_string( cfg, "failed_threshold" );
@@ -442,15 +445,17 @@ boole_t _service( obj_t this, param_t param )
 			if ( com_sexist( ifdev, "reset" ) == true )
 			{
 				ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, connect_failed );
+				connect_failed++;
+				reg_set_int( this, "connect_failed", connect_failed );
 				scall( ifdev, "reset", NULL );
 			}
 			else
 			{
 				ifname_debug( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
+				connect_failed++;
+				reg_set_int( this, "connect_failed", connect_failed );
 				scall( ifdev, "down", NULL );
 			}
-			connect_failed++;
-			reg_set_int( this, "connect_failed", connect_failed );
 			talk_free( cfg );
 			return tfalse;
 		}
@@ -1140,6 +1145,7 @@ boole_t _upline( obj_t this, param_t param )
 	talk_t cfg;
 	talk_t value;
 	const char *ptr;
+	const char *obj;
 	const char *object;
 	const char *netdev;
 	const char *method;
@@ -1149,6 +1155,7 @@ boole_t _upline( obj_t this, param_t param )
 	const char *resolve2;
 	char path[PATH_MAX];
 
+	obj = obj_com( this );
 	object = obj_name( this );
 	v = param_talk( param, 1 );
 	/* get netdev */
@@ -1204,7 +1211,7 @@ boole_t _upline( obj_t this, param_t param )
 	}
 	reg_set_string( this, "resolve2", resolve2 );
 
-	ifname_info( "%s(%s) upline[ %s, %s ]", object, netdev, hop?:"", resolve?:"" );
+	ifname_info( obj, "%s(%s) upline[ %s, %s ]", object, netdev, hop?:"", resolve?:"" );
 	/* masquerade */
 	ip6tables( "-t nat -D %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
 	ptr = json_string( cfg, "masquerade" );

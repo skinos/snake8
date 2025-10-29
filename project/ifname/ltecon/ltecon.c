@@ -67,7 +67,6 @@ boole_t _setup( obj_t this, param_t param )
 }
 boole_t _shut( obj_t this, param_t param )
 {
-    int i;
 	talk_t cfg;
     const char *obj;
 	const char *ifdev;
@@ -86,9 +85,6 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( "%s-automatic", object );
     /* stop the service */
     sdelete( object );
-	/* clear the reconnect count */
-	i = 0;
-	reg_set_int( this, "connect_failed", i );
 
     /* delete online file */
     project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ol", object );
@@ -118,20 +114,18 @@ boole_t _shut( obj_t this, param_t param )
 }
 boole _set( obj_t this, talk_t v, attr_t path )
 {
+	int i;
     boole ret;
-	const char *object;
 
-	object = obj_name( this );
-	if ( NULL == strstr( object, LAN_COM ) )
-	{
-		_shut( this, NULL );
-		ret = config_set( this, v, path );
-		_setup( this, NULL );
-	}
-	else
-	{
-		ret = config_set( this, v, path );
-	}
+	// shut
+	_shut( this, NULL );
+	// clear the reconnect count
+	i = 0;
+	reg_set_int( this, "connect_failed", i );
+	// set
+	ret = config_set( this, v, path );
+	// setup
+	_setup( this, NULL );
     return ret;
 }
 talk_t _get( obj_t this, attr_t path )
@@ -182,11 +176,13 @@ boole_t _service( obj_t this, param_t param )
     talk_t profile;
     const char *ptr;
 	const char *obj;
+	const char *pin;
 	const char *mode;
 	const char *ifdev;
     const char *object;
 	const char *netdev;
 	const char *method;
+	const char *reason;
 	int reset_times;
 	int connect_failed;
 	int failed_timeout;
@@ -194,6 +190,8 @@ boole_t _service( obj_t this, param_t param )
 	int failed_threshold2;
 	int failed_threshold3;
 	int failed_everytime;
+	char plmn_string[NAME_MAX];
+	char signal_string[NAME_MAX];
 
 	obj = obj_com( this );
     object = obj_name( this );
@@ -287,23 +285,50 @@ boole_t _service( obj_t this, param_t param )
 	{
 		failed_everytime = atoi( ptr );
 	}
+simagain:
 	ptr = json_string( cfg, "need_simcard" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
 	{
 		failed_timeout = 10;
 		for( check=0; check<failed_timeout; check++ )
 		{
-			ret = scall( ifdev, "simcard", NULL );
+			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
 			{
 				break;
 			}
 			else if ( ret == terror )
 			{
-				ifname_warn( obj, "%s ifdev %s not work when simcard", object, ifdev );
+				ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 				talk_free( cfg );
 				sleep( 5 );
 				return ret;
+			}
+			else if ( ret > tpanic )
+			{
+				ptr = x2string( ret );
+				if ( ptr != NULL && 0 == strcmp( ptr, "pin" ) )
+				{
+					pin = json_string( cfg, "pin" );
+					ret = scalls( ifdev, "pin", pin );
+					if ( ret == ttrue )
+					{
+						talk_free( ret );
+						goto simagain;
+					}
+					pause();
+					talk_free( ret );
+					talk_free( cfg );
+					return terror;
+				}
+				else if ( ptr != NULL && 0 == strcmp( ptr, "puk" ) )
+				{
+					pause();
+					talk_free( ret );
+					talk_free( cfg );
+					return terror;
+				}
+				talk_free( ret );
 			}
 			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
 			sleep( 1 );
@@ -333,23 +358,50 @@ boole_t _service( obj_t this, param_t param )
 		}
 		for( check=0; check<failed_timeout; check++ )
 		{
-			ret = scall( ifdev, "simcard", NULL );
+			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
 			{
 				break;
 			}
 			else if ( ret == terror )
 			{
-				ifname_warn( obj, "%s ifdev %s not work when simcard", object, ifdev );
+				ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 				talk_free( cfg );
 				sleep( 5 );
 				return ret;
+			}
+			else if ( ret > tpanic )
+			{
+				ptr = x2string( ret );
+				if ( ptr != NULL && 0 == strcmp( ptr, "pin" ) )
+				{
+					pin = json_string( cfg, "pin" );
+					ret = scalls( ifdev, "pin", pin );
+					if ( ret == ttrue )
+					{
+						talk_free( ret );
+						goto simagain;
+					}
+					pause();
+					talk_free( ret );
+					talk_free( cfg );
+					return terror;
+				}
+				else if ( ptr != NULL && 0 == strcmp( ptr, "puk" ) )
+				{
+					pause();
+					talk_free( ret );
+					talk_free( cfg );
+					return terror;
+				}
+				talk_free( ret );
 			}
 			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
 			sleep( 1 );
 		}
 		if ( check >= failed_timeout )
 		{
+			reg_set_string( this, "reset_reason", "sim" );
 			ifname_fault( obj, "reset the %s when simcard failed for %d times", ifdev, failed_timeout );
 			scall( ifdev, "reset", NULL );
 			talk_free( cfg );
@@ -357,6 +409,13 @@ boole_t _service( obj_t this, param_t param )
 		}
 	}
 	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	reason = reg_string( this, "reset_reason" );
+	if ( reason != NULL && 0 == strcmp( reason, "sim" ) )
+	{
+		reg_set_string( this, "reset_reason", NULL );
+		scall( ifdev, "reset_clear", NULL );
+		reset_times = 0;
+	}
 
 	/*****************************************/
 	/**** get the custom profile for up ******/
@@ -381,6 +440,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** testing signal for the ifdev *******/
 	/*****************************************/
+	plmn_string[0] = signal_string[0] = '\0';
     ifname_info( obj, "%s plmn or signal detection", ifdev );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 300
@@ -434,7 +494,14 @@ boole_t _service( obj_t this, param_t param )
 				sleep( 5 );
 				return ret;
 			}
-			ifname_debug( obj, "%s plmn failed", ifdev );
+			else if ( ret > tpanic )
+			{
+				ptr = x2string( ret );
+				strncpy( plmn_string, ptr, sizeof(plmn_string) );
+				talk_free( ret );
+				break;
+			}
+			ifname_info( obj, "%s plmn failed", ifdev );
 			sleep( 1 );
 		}
 		if ( check >= failed_timeout )
@@ -476,7 +543,14 @@ boole_t _service( obj_t this, param_t param )
 					sleep( 5 );
 					return ret;
 				}
-				ifname_debug( obj, "%s plmn failed %d", ifdev, check );
+				else if ( ret > tpanic )
+				{
+					ptr = x2string( ret );
+					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					talk_free( ret );
+					break;
+				}
+				ifname_info( obj, "%s plmn failed %d", ifdev, check );
 			}
 			else if ( i == 0xb10 )
 			{
@@ -492,7 +566,14 @@ boole_t _service( obj_t this, param_t param )
 					sleep( 5 );
 					return ret;
 				}
-				ifname_debug( obj, "%s signal failed %d", ifdev, check );
+				else if ( ret > tpanic )
+				{
+					ptr = x2string( ret );
+					strncpy( signal_string, ptr, sizeof(signal_string) );
+					talk_free( ret );
+					break;
+				}
+				ifname_info( obj, "%s signal failed %d", ifdev, check );
 			}
 			else
 			{
@@ -502,12 +583,32 @@ boole_t _service( obj_t this, param_t param )
 				{
 					break;
 				}
+				if ( v > tpanic && ret > tpanic )
+				{
+					ptr = x2string( v );
+					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					talk_free( v );
+					ptr = x2string( ret );
+					strncpy( signal_string, ptr, sizeof(signal_string) );
+					talk_free( ret );
+					break;
+				}
 				if ( v == terror )
 				{
 					ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 					talk_free( cfg );
 					sleep( 5 );
 					return v;
+				}
+				else if ( v > tpanic )
+				{
+					ptr = x2string( v );
+					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					talk_free( v );
+				}
+				else
+				{
+					ifname_info( obj, "%s plmn failed %d", ifdev, check );
 				}
 				if ( ret == terror )
 				{
@@ -516,19 +617,22 @@ boole_t _service( obj_t this, param_t param )
 					sleep( 5 );
 					return ret;
 				}
-				if ( v == tfalse )
+				else if ( ret > tpanic )
 				{
-					ifname_debug( obj, "%s plmn failed %d", ifdev, check );
+					ptr = x2string( ret );
+					strncpy( signal_string, ptr, sizeof(signal_string) );
+					talk_free( ret );
 				}
-				if ( ret == tfalse )
+				else
 				{
-					ifname_debug( obj, "%s signal failed %d", ifdev, check );
+					ifname_info( obj, "%s signal failed %d", ifdev, check );
 				}
 			}
 			sleep( 1 );
 		}
 		if ( check >= failed_timeout )
 		{
+			reg_set_string( this, "reset_reason", "signal" );
 			ifname_fault( obj, "reset the %s when signal or plmn failed for %d times", ifdev, failed_timeout );
 			scall( ifdev, "reset", NULL );
 			talk_free( cfg );
@@ -536,6 +640,14 @@ boole_t _service( obj_t this, param_t param )
 		}
 	}
 	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	reason = reg_string( this, "reset_reason" );
+	if ( reason != NULL && 0 == strcmp( reason, "signal" ) )
+	{
+		reg_set_string( this, "reset_reason", NULL );
+		scall( ifdev, "reset_clear", NULL );
+		reset_times = 0;
+	}
+	ifname_info( obj, "%s get the plmn %s signal %s", ifdev, plmn_string, signal_string );
 
 	/*****************************************/
 	/**** set the auto profile for up ********/
@@ -597,7 +709,7 @@ boole_t _service( obj_t this, param_t param )
 				{
 					break;
 				}
-				ifname_debug( obj, "%s attach failed %d", ifdev, check );
+				ifname_info( obj, "%s attach failed %d", ifdev, check );
 				sleep( 1 );
 			}
 			if ( check >= failed_timeout )
@@ -636,11 +748,12 @@ boole_t _service( obj_t this, param_t param )
 					sleep( 5 );
 					return ret;
 				}
-				ifname_debug( obj, "%s attach failed %d", ifdev, check );
+				ifname_info( obj, "%s attach failed %d", ifdev, check );
 				sleep( 1 );
 			}
 			if ( check >= failed_timeout )
 			{
+				reg_set_string( this, "reset_reason", "attach" );
 				ifname_fault( obj, "reset the %s when attach failed for %d times", ifdev, failed_timeout );
 				scall( ifdev, "reset", NULL );
 				talk_free( cfg );
@@ -648,6 +761,13 @@ boole_t _service( obj_t this, param_t param )
 			}
 		}
 		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+		reason = reg_string( this, "reset_reason" );
+		if ( reason != NULL && 0 == strcmp( reason, "attach" ) )
+		{
+			reg_set_string( this, "reset_reason", NULL );
+			scall( ifdev, "reset_clear", NULL );
+			reset_times = 0;
+		}
 	}
 
 
@@ -656,7 +776,7 @@ boole_t _service( obj_t this, param_t param )
 	/******** connect failed process *********/
 	/*****************************************/
 	failed_threshold = 3;       // 3*48 = 144
-	failed_threshold2 = 5;      // 5*48 = 240
+	failed_threshold2 = 7;      // 7*48 = 336
 	failed_threshold3 = 15;     // 15*48 = 720
 	failed_everytime = 37;      // 37*48 = 1800
 	ptr = json_string( cfg, "failed_threshold" );
@@ -685,13 +805,13 @@ boole_t _service( obj_t this, param_t param )
 		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (connect_failed%failed_everytime) == 0 )
 		{
 			ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, connect_failed );
-			scall( ifdev, "reset", NULL );
 			connect_failed++;
 			reg_set_int( this, "connect_failed", connect_failed );
+			scall( ifdev, "reset", NULL );
 			talk_free( cfg );
 			return terror;
 		}
-		ifname_debug( obj, "%s connect failed %d", object, connect_failed );
+		ifname_info( obj, "%s connect failed %d", object, connect_failed );
 	}
 	connect_failed++;
 	reg_set_int( this, "connect_failed", connect_failed );
@@ -1404,6 +1524,7 @@ boole_t _upline( obj_t this, param_t param )
 	talk_t cfg;
 	talk_t value;
 	const char *ptr;
+	const char *obj;
 	const char *object;
 	const char *netdev;
 	const char *method;
@@ -1413,6 +1534,7 @@ boole_t _upline( obj_t this, param_t param )
 	const char *resolve2;
 	char path[PATH_MAX];
 
+	obj = obj_com( this );
 	object = obj_name( this );
 	v = param_talk( param, 1 );
 	/* get netdev */
@@ -1468,7 +1590,7 @@ boole_t _upline( obj_t this, param_t param )
 	}
 	reg_set_string( this, "resolve2", resolve2 );
 
-	ifname_info( "%s(%s) upline[ %s, %s ]", object, netdev, hop?:"", resolve?:"" );
+	ifname_info( obj, "%s(%s) upline[ %s, %s ]", object, netdev, hop?:"", resolve?:"" );
 	/* masquerade */
 	ip6tables( "-t nat -D %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
 	ptr = json_string( cfg, "masquerade" );

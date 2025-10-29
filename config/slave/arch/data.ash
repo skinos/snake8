@@ -5,6 +5,9 @@
 
 setup()
 {
+    # set ip forward
+    sudo sysctl -w net.ipv4.ip_forward=1
+    
     # mkdir basic directory
     VROOT=/var/skinos
     TROOT=/tmp/skinos
@@ -65,7 +68,7 @@ setup()
 
     NAME=`hostname`
     $LANDDIR/bin/he land@machine:name=$NAME
-    
+
     creturn ttrue
 }
 

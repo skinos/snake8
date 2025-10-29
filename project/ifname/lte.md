@@ -14,6 +14,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
     "status":"start at system startup",    // [ "enable", "disable" ]
 
     // profile attributes for LTE modem PDP
+    "pin":"simcard pin",                       // [ string ]
     "profile":"custom the profile",            // [ "disable", "enable" ]
     "profile_cfg":                             // custom profile save here, the json be used when "profile" value is "enable"
     {
@@ -41,6 +42,7 @@ Usually ifname@lte is the first LTE/NR network and module. If there are multiple
         "keeplive_switch":"keeplive faeild to switch",                                    // [ "disable", "enable" ]
 
         // backup profile attributes
+        "pin":"simcard pin",                       // [ string ]
         "profile":"custom the profile",            // [ "disable", "enable" ]
         "profile_cfg":                             // custom profile save here, the json be used when "profile" value is enable
         {

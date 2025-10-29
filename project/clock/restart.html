@@ -68,6 +68,15 @@
 
       <!-- 定点重启 -->
     <div id="pointSets">
+        <!-- 最小运行时长 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Minimum running time(sec)"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="point_start" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
         <!-- 时间点 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Point Reboot Time"></label>
@@ -123,6 +132,7 @@
            
             $('#age').val(cfg.age);
            
+            $('#point_start').val(cfg.point_start);
             $('#point_hour').val(cfg.point_hour);
             $('#point_minute').val(cfg.point_minute);
             $('#point_age').val(cfg.point_age);
@@ -180,6 +190,7 @@
                 cfg.age = $('#age').val();
                 break;
             case 'point':
+                cfg.point_start = $('#point_start').val();
                 cfg.point_hour = $('#point_hour').val();
                 cfg.point_minute = $('#point_minute').val();
                 cfg.point_age = $('#point_age').val();
