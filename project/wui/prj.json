@@ -7,7 +7,7 @@
 
     "obj":
     {
-        "wui@admin":"webs@https"
+        "wui@admin":"webs@httpd"
     },
     "init":
     {
