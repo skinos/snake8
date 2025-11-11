@@ -34,6 +34,12 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
 		return ttrue;
     }
+	/* already run */
+	if ( spid( object ) > 0 )
+	{
+        talk_free( cfg );
+		return ttrue;
+	}
 	/* set the tid */
 	ptr = json_string( cfg, "tid" );
 	if ( ptr != NULL && *ptr != '\0' )

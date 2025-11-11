@@ -34,6 +34,12 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
 		return ttrue;
     }
+	/* already run */
+	if ( spid( object ) > 0 )
+	{
+        talk_free( cfg );
+		return ttrue;
+	}
 	/* set the tid */
 	ptr = json_string( cfg, "tid" );
 	if ( ptr != NULL && *ptr != '\0' )
@@ -220,7 +226,6 @@ boole_t _service( obj_t this, param_t param )
     if ( cfg == NULL )
     {
 		ifname_fault( obj, "cannot found %s configure", object );
-		sleep( 5 );
     	return terror;
     }
     /* get the ifdev reset times */
@@ -299,9 +304,8 @@ simagain:
 			}
 			else if ( ret == terror )
 			{
-				ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
+				ifname_warn( obj, "%s ifdev %s not work", object, ifdev );
 				talk_free( cfg );
-				sleep( 5 );
 				return ret;
 			}
 			else if ( ret > tpanic )
@@ -365,9 +369,8 @@ simagain:
 			}
 			else if ( ret == terror )
 			{
-				ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
+				ifname_warn( obj, "%s ifdev %s not work", object, ifdev );
 				talk_free( cfg );
-				sleep( 5 );
 				return ret;
 			}
 			else if ( ret > tpanic )
@@ -491,7 +494,6 @@ simagain:
 			{
 				ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 				talk_free( cfg );
-				sleep( 5 );
 				return ret;
 			}
 			else if ( ret > tpanic )
@@ -540,7 +542,6 @@ simagain:
 				{
 					ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 					talk_free( cfg );
-					sleep( 5 );
 					return ret;
 				}
 				else if ( ret > tpanic )
@@ -563,7 +564,6 @@ simagain:
 				{
 					ifname_warn( obj, "%s ifdev %s not work when signal", object, ifdev );
 					talk_free( cfg );
-					sleep( 5 );
 					return ret;
 				}
 				else if ( ret > tpanic )
@@ -597,7 +597,6 @@ simagain:
 				{
 					ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
 					talk_free( cfg );
-					sleep( 5 );
 					return v;
 				}
 				else if ( v > tpanic )
@@ -614,7 +613,6 @@ simagain:
 				{
 					ifname_warn( obj, "%s ifdev %s not work when signal", object, ifdev );
 					talk_free( cfg );
-					sleep( 5 );
 					return ret;
 				}
 				else if ( ret > tpanic )
@@ -745,7 +743,6 @@ simagain:
 				else if ( ret == terror )
 				{
 					ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
-					sleep( 5 );
 					return ret;
 				}
 				ifname_info( obj, "%s attach failed %d", ifdev, check );
