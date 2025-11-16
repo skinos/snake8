@@ -20,6 +20,10 @@
         "app":"clock@restart.setup",
         "general":"clock@ntps.setup"
     },
+    "joint":
+    {
+        "network/online":"clock@date.online"
+    },
 
     "wui":
     {

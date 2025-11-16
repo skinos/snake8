@@ -268,75 +268,46 @@ static int station_dev_connected( const char *object, const char *netdev )
 
 boole_t _setup( obj_t this, param_t param )
 {
-    talk_t ret;
-    const char *obj;
 	const char *object;
 	const char *netdev;
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
 	object = obj_combine( this );
-	ret = tfalse;
 	netdev = register_value( object, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_info( "%s(%s) add to network frame", object, netdev );
-		ret = scalls( NETWORK_COM, "add", "%s,%s", object, netdev );
+		scalls( NETWORK_COM, "add", "%s,%s", object, netdev );
+		return ttrue;
 	}
 
-    return ret;
+	return tfalse;
 }
 boole_t _shut( obj_t this, param_t param )
 {
-    const char *obj;
 	const char *object;
 	const char *netdev;
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_info( "%s delete from network frame", object );
 		scalls( NETWORK_COM, "delete", object );
 	}
-
+	return ttrue;
 	return ttrue;
 }
 boole _set( obj_t this, talk_t v, attr_t path )
 {
 	boole ret;
-    const char *obj;
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return false;
-	}
+	_shut( this, NULL );
 	ret = config_set( this, v, path );
-	if ( ret == true )
-	{
-		_shut( this, NULL );
-		_setup( this, NULL );
-	}
+	_setup( this, NULL );
 	return ret;
 }
 talk_t _get( obj_t this, attr_t path )
 {
-    const char *obj;
-
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return NULL;
-	}
 	return config_get( this, path );
 }
 
@@ -344,17 +315,9 @@ talk_t _get( obj_t this, attr_t path )
 
 talk_t _netdev( obj_t this, param_t param )
 {
-    const char *obj;
-	const char *object;
 	const char *netdev;
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -369,7 +332,6 @@ boole_t _up( obj_t this, param_t param )
 	talk_t ret;
 	talk_t value;
 	const char *ptr;
-	const char *obj;
 	const char *radio;
 	const char *object;
 	const char *netdev;
@@ -389,12 +351,8 @@ boole_t _up( obj_t this, param_t param )
 	const char *ssid_disable;
 	char path[PATH_MAX];
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
+	/* get the configure */
+	object = obj_name( this );
 	radio = register_pointer( object, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{

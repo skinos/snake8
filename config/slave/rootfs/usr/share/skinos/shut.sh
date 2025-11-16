@@ -1,7 +1,7 @@
 #!/bin/bash
 LANDDIR=/usr/share/skinos/land
 
-$LANDDIR/bin/daemon stop
+$LANDDIR/bin/daemon stop15exit
 
 # delay
 $LANDDIR/bin/he land@uninit.call[delay5]

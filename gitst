@@ -52,3 +52,14 @@ do
     fi
 done
 
+# sopen platform
+for tmp in config/sopen/
+do
+    if [ -d ${TOPDIR}/${tmp} ]; then
+        echo "################################################"
+        echo "############## status the ${tmp} ###############"
+        echo "################################################"
+        cd ${TOPDIR}/${tmp};git status
+    fi
+done
+

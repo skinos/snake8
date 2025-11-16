@@ -74,7 +74,7 @@ static boole time_setting( const char *tt, const char *zone )
 			tm_current.tm_year -= 1900;
 			tm_current.tm_mon--;
 			tm_current.tm_isdst = -1;
-			default_info( "system date modifyed to %s", tt );
+			default_info( COM_IDPATH" system date modifyed to %s", tt );
 			ret  = date_set( mktime( &tm_current ), NULL );
 			/* tell the hardware clock */
 			shell( "hwclock -w >/dev/null 2>&1" );
@@ -110,7 +110,7 @@ static boole ntpclient_sync( const char* server, const char* zone )
     if ( 0 == execute( 60, true, "%s -h %s -s" , path, server ) )
     {
         ret = true;
-        default_info( "sync the system time from %s succeed", server );
+        default_info( COM_IDPATH" sync the system time from %s succeed", server );
         shell( "hwclock -w" );
 		/* record time source */
 		h = register_open( REGISTER_DEFAULT_OBJECT, O_RDWR, 0644, 0, 0 );
@@ -124,7 +124,6 @@ static boole ntpclient_sync( const char* server, const char* zone )
     }
     return ret;
 }
-
 
 
 
@@ -145,19 +144,11 @@ boole_t _setup( obj_t this, param_t param )
     {
     	ptr = "8";
     }
+	syslog( LOG_INFO, COM_IDPATH" init the date zone" );
 	/* set the timezone first */
 	time_setting( NULL, ptr );
-
 	/* read from the RTC when have RTC */
 
-    /* run the service of ntpclient depend attribute value of "ntpclient" */
-    ptr = json_string( cfg, "ntpclient" );
-    if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-    {
-        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
-    }
-
-	/* free the component configure */
     talk_free( cfg );
     return ttrue;
 }
@@ -172,12 +163,33 @@ boole_t _shut( obj_t this, param_t param )
 boole _set( obj_t this, talk_t v, attr_t path )
 {
 	boole ret;
+    talk_t cfg;
+    const char *ptr;
 
+	/* shut first */
+	_shut( this, NULL );
+	/* save the configure */
     ret = config_sset( COM_IDPATH, v, path );
-	if ( ret == true )
+	/* get the component configure */
+    cfg = config_sget( COM_IDPATH, NULL );
+	if ( cfg != NULL )
 	{
-		_shut( this, NULL );
-		_setup( this, NULL );
+		/* get the attribute value of "timezone" */
+	    ptr = json_string( cfg, "timezone" );
+	    if ( ptr == NULL || *ptr == '\0' )
+	    {
+	    	ptr = "8";
+	    }
+		/* set the timezone first */
+		time_setting( NULL, ptr );
+		/* read from the RTC when have RTC */
+		/* run the service of ntpclient depend attribute value of "ntpclient" */
+		ptr = json_string( cfg, "ntpclient" );
+		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+		{
+			sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+		}
+		talk_free( cfg );
 	}
 	return ret;
 }
@@ -200,15 +212,12 @@ boole_t _service( obj_t this, param_t param )
     char key[NAME_MAX];
 
     /* wait the online */
-    do
-    {
-		if ( gateway_info( NULL, NULL ) == true )
-        {
-            break;
-        }
-        sleep( 3 );
-    }while(1);
-
+	if ( gateway_info( NULL, NULL ) == false )
+	{
+		default_warn( COM_IDPATH" no gateway route" );
+		return ttrue;
+	}
+	default_info( COM_IDPATH" start for ntp time" );
     /* get the configure */
     ret = false;
     interval = 0;
@@ -299,6 +308,31 @@ talk_t _status( obj_t this, param_t param )
 	json_set_number( ret, "uptime", uptime_int() );
 	return ret;
 }
+boole_t _online( obj_t this, param_t param )
+{
+    talk_t cfg;
+    const char *ptr;
+
+	/* get the component configure */
+    cfg = config_sget( COM_IDPATH, NULL );
+	if ( cfg == NULL )
+	{
+		return ttrue;
+	}
+    /* run the service of ntpclient depend attribute value of "ntpclient" */
+    ptr = json_string( cfg, "ntpclient" );
+    if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+    {
+        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+    }
+
+	/* free the component configure */
+    talk_free( cfg );
+	return ttrue;
+}
+
+
+
 boole_t _current( obj_t this, param_t param )
 {
 	talk_t ret;
