@@ -1,0 +1,17 @@
+{  
+	"FTP Server": "FTP服务器",
+	"Status":"状态",
+	"Login Mode": "登录方式",
+	"Anonymous": "匿名登录",
+	"Username And Password": "用户名密码登录",
+	"Writable": "可写",
+
+	"SAMBA Server": "SAMBA服务器",
+	
+	"User Management": "用户管理",
+	"User Table": "用户列表",
+	"Username": "用户名",
+	"Password":"密码",
+	"Operation":"操作",
+	"Invalid username":"非法的用户名"
+}

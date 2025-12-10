@@ -1,0 +1,441 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+
+
+
+    <div class="form-horizontal" id="ftp"  style="display: none;" >
+      <h4 data-i18n="FTP Server"></h4>
+      <!-- 状态 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="ftp-status" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+      <div id="ftp-sets">
+        <!-- 登录模式 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="ftp-mode">
+              <option value="anonymous" data-i18n="Anonymous"></option>
+              <option value="user" data-i18n="Username And Password"></option>
+            </select>
+          </div>
+        </div>
+        <!-- 可写 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Writable"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="ftp-permission" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="form-horizontal" id="samba"  style="display: none;" >
+      <h4 data-i18n="SAMBA Server"></h4>
+      <!-- 状态 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="samba-status" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+      <div id="samba-sets">
+        <!-- 登录模式 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="samba-mode">
+              <option value="anonymous" data-i18n="Anonymous"></option>
+              <option value="user" data-i18n="Username And Password"></option>
+            </select>
+          </div>
+        </div>
+        <!-- 可写 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Writable"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="samba-permission" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="hr hr32 hr-dotted"></div>
+    </div>
+
+
+
+    <div id="auth-wrapper">
+      <h4 data-i18n="User Management"></h4>
+      <div class="form-horizontal">
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="User Table"></label>
+          <div class="col-sm-9">
+            <div>
+              <table id="auth-grid-table"></table>
+              <div id="auth-grid-pager"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="clearfix form-actions">
+      <div class="col-md-offset-3 col-md-9">
+        <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+        &nbsp; &nbsp; &nbsp;
+        <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+      </div>
+    </div>
+
+
+
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<!-- page specific plugin scripts -->
+<script type="text/javascript">
+  (function () {
+    var ftp;
+    var samba;
+    var users;
+    var auth_table = '#auth-grid-table';
+    var auth_pager = '#auth-grid-pager';
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+
+    function storage_load(  )
+    {
+      he.load( [ "storage@ftp", "storage@samba" ] ).then( function(v){
+        ftp = v[0];
+        samba = v[1];
+
+        // FTP Server
+        if ( ftp )
+        {
+            $('#ftp').show();
+            $('#ftp-status').prop('checked', able2boole( ftp.status ) );
+            $('#ftp-mode').val( ftp.mode );
+        }
+        $('#ftp-mode').unbind('change').change(function (e) {
+            var mode = e.target.value;
+            $('#ftp-permission').prop( 'checked', false );
+            if ( mode === 'anonymous' )
+            {
+                if ( ftp && ftp.anonymous )
+                {
+                    $('#ftp-permission').prop( 'checked',  ftp.anonymous.permission=="all"?true:false );
+                }
+            }
+            else
+            { // 用户名密码登录
+                if ( ftp && ftp.user && ftp.user.mnt )
+                {
+                    $('#ftp-permission').prop('checked', ftp.user.mnt.permission=="all"?true:false );
+                }
+            }
+        }).trigger('change');
+        $('#ftp-status').unbind('change').change(function () {
+            if ( $(this).prop('checked') )
+            {
+                $('#ftp-sets').show();
+            }
+            else
+            {
+                $('#ftp-sets').hide();
+            }
+            if ( $('#ftp-status').prop('checked') || $('#samba-status').prop('checked') )
+            {
+                $('#auth-wrapper').show();
+            }
+            else
+            {
+                $('#auth-wrapper').hide();
+            }
+        }).trigger('change');
+
+        // Samba Server
+        if ( samba )
+        {
+            $('#samba').show();
+            $('#samba-status').prop('checked', able2boole( samba.status ) );
+            $('#samba-mode').val( samba.mode );
+        }
+        $('#samba-mode').unbind('change').change(function (e) {
+            var mode = e.target.value;
+            $('#samba-permission').prop( 'checked', false );
+            if ( mode === 'anonymous' )
+            {
+                if ( samba && samba.anonymous )
+                {
+                    $('#samba-permission').prop( 'checked', samba.anonymous.permission=="all"?true:false );
+                }
+            }
+            else
+            {
+                if ( samba && samba.user && samba.user.mnt )
+                {
+                    $('#samba-permission').prop('checked', samba.user.mnt.permission=="all"?true:false );
+                }
+            }
+        }).trigger('change');
+        $('#samba-status').unbind('change').change(function () {
+            if ( $(this).prop('checked') )
+            {
+                $('#samba-sets').show();
+            }
+            else
+            {
+                $('#samba-sets').hide();
+            }
+            if ( $('#ftp-status').prop('checked') || $('#samba-status').prop('checked') )
+            {
+                $('#auth-wrapper').show();
+            }
+            else
+            {
+                $('#auth-wrapper').hide();
+            }
+        }).trigger('change');
+
+      });
+    }
+    function storage_save(  )
+    {
+        var cmds = [];
+        var ftpcopy = null;
+        var sambacopy = null;
+        var needsave = false;
+
+        if ( ftp )
+        {
+            ftpcopy = JSON.parse( JSON.stringify(ftp) );
+            ftp.status = boole2able( $('#ftp-status').prop('checked') );
+            if ( ftp.status )
+            {
+                ftp.mode = $('#ftp-mode').val();
+                if ( ftp.mode == "anonymous" )
+                {
+                    if ( !ftp.anonymous )
+                    {
+                        ftp.anonymous = {};
+                    }
+                    ftp.anonymous.permission = $('#ftp-permission').prop('checked') ? 'all' : 'read';
+                }
+                else
+                {
+                    if ( !ftp.user )
+                    {
+                        ftp.user = {};
+                    }
+                    if ( !ftp.user.mnt )
+                    {
+                        ftp.user.mnt = {};
+                    }
+                    ftp.user.mnt.permission = $('#ftp-permission').prop('checked') ? 'all' : 'read';
+                }
+            }
+            if ( !ocompare( ftp, ftpcopy ) )
+            {
+                cmds.push( "storage@ftp="+JSON.stringify(ftp) );
+                needsave = true;
+            }
+        }
+        if ( samba )
+        {
+            sambacopy = JSON.parse( JSON.stringify(samba) );
+            samba.status = boole2able( $('#samba-status').prop('checked') );
+            if ( samba.status )
+            {
+                samba.mode = $('#samba-mode').val();
+                if ( samba.mode == "anonymous" )
+                {
+                    if ( !samba.anonymous )
+                    {
+                        samba.anonymous = {};
+                    }
+                    samba.anonymous.permission = $('#samba-permission').prop('checked') ? 'all' : 'read';
+                }
+                else
+                {
+                    if ( !samba.user )
+                    {
+                        samba.user = {};
+                    }
+                    if ( !samba.user.mnt )
+                    {
+                        samba.user.mnt = {};
+                    }
+                    samba.user.mnt.permission = $('#samba-permission').prop('checked') ? 'all' : 'read';
+                }
+            }
+            if ( !ocompare( samba, sambacopy ) )
+            {
+                cmds.push( "storage@samba="+JSON.stringify(samba) );
+                needsave = true;
+            }
+        }
+        
+        if ( needsave == false )
+        {
+            page.alert( { message: $.i18n('Settings unchanged') } );
+            return;
+        }
+        he.exec( cmds ).then( function(){
+            page.hint2succeed( $.i18n('Modify successfully') );
+            storage_load();
+        });
+    }
+
+    function auth_load(  )
+    {
+      he.load( [ "land@auth.list[nas]" ] ).then( function(v){
+        users = v[0];
+        // 生成表格所需要的数据
+        var rows = [];
+        for ( var username in users )
+        {
+            var row = { username: username, password: '' };
+            // 将admin用户放到第一个位置
+            if ( username === 'admin' )
+            {
+                rows.unshift(row);
+            }
+            else
+            {
+                rows.push(row);
+            }
+        }
+        // 给表格赋值
+        $(auth_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
+      });
+    }
+    function add_user( data   )
+    {
+        // 添加路由的he命令
+        var cmd = 'land@auth.add[ , ' + data.username + ', ' + data.password +', nas]';
+
+        // 执行添加
+        he.exec( [ cmd ] ).then(function () {
+            // 重新加载数据
+            return auth_load();
+        }).then(function () {
+            // 提示成功
+            page.hint2succeed( $.i18n('Add successfully') );
+        });
+    }
+    function del_user( data   )
+    {
+    	var key;
+        var indexs = data.split(',');
+        var cmds = [];
+        for ( var i=0; i<indexs.length; i++ )
+        {
+            // 获取每一行的用户名
+            var row = $(auth_table).jqGrid('getRowData', indexs[i]);
+			key = row.username;
+            // 将删除命令添加到数组里面
+            if (key !== 'admin')
+            {
+                cmds.push('land@auth.delete[' + key + ']');
+            }
+        }
+        // 执行删除
+        he.exec( cmds ).then(function (){
+            // 重新加载数据
+            return auth_load();
+        }).then(function (){
+            // 提示成功
+            page.hint2succeed( $.i18n('Delete successfully') );
+        });
+    }
+
+
+
+    /* init */
+    $.i18n().load( page.lang(langjson) ).then( function () {
+      /* init the langauage */
+      $.i18n().locale = window.lang; $('body').i18n();
+      /* load the configure */
+      storage_load();
+
+      /* load the configure */
+      jqtable.create( auth_table, auth_pager,
+        {
+            caption: $.i18n('User Table'),
+            colNames: [ $.i18n('Username'), $.i18n('Password'), $.i18n('Operation') ],
+            colModel: [
+                {
+                    name:'username', width:360,
+                    editable: true,
+                    editoptions: {maxlength: 128},
+                    editrules:
+                    {
+                        required: true,
+                        custom: true,
+                        custom_func: function (value)
+                        {
+                            // 名称不能为admin
+                            return [value !== 'admin', $.i18n('Invalid username')]
+                        }
+                    }
+                },
+                {
+                    name:'password', width:200,
+                    hidden:true,
+                    editable: true,
+                    editoptions: {maxlength: 128},
+                    editrules:
+                    {
+                        required: true
+                    }
+                    
+                },
+                $.extend(true, {}, jqtable.actionOptions,
+                    { formatoptions: { delOptions: { onclickSubmit:function(params, data) { del_user(data); } }, editformbutton: false, editbutton: false } }
+                )
+            ]
+        }
+      ).jqGrid( 
+            'navGrid', auth_pager,
+            $.extend(true, {}, jqtable.navOptions, { edit: false, view: false } ),
+            {},
+            $.extend(true, {}, jqtable.addOptions, { beforeShowForm : function (formid) { jqtable.style_edit_form( formid );$('#tr_password').show();/*将隐藏的密码行显示出来*/ }, onclickSubmit: function (params, data) { add_user(data); } } ),
+            $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function (params, data) { del_user(data); } } ),
+            {}
+      );
+      auth_load();
+
+
+
+      /* bind the refresh */
+      $('#refresh').on(ace.click_event, function () {
+        location.reload();
+      });
+      /* bind the apply */
+      $('#apply').on(ace.click_event, function () {
+        storage_save();
+      });
+    });
+
+
+  })();
+</script>
