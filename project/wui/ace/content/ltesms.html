@@ -1,0 +1,75 @@
+<!-- ajax layout which only needs content area -->
+<div class="row" id="page-modes">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+
+
+        <!-- 短信功能 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="SMS Function"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="sms" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+        <div id="sms_cfg" style="display: none;">
+
+          <!-- HE -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="HE Agent"></label>
+            <div class="col-sm-9">
+              <label>
+                <input id="he" class="ace ace-switch ace-switch-6" type="checkbox" />
+                <span class="lbl"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div id="he_cfg" style="display: none;">
+              <!-- Number -->
+              <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Command Contact"></label>
+                <div class="col-sm-9">
+                  <input type="text" id="he_contact" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+              <!-- 指定前缀 -->
+              <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Command Prefix"></label>
+                <div class="col-sm-9">
+                  <input type="text" id="he_prefix" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+          </div>
+
+
+          <div class="hr hr32 hr-dotted"></div>
+          <table id="smslist-grid-table"></table>
+          <div id="smslist-grid-pager"></div>
+
+
+        </div>
+
+
+
+      <div class="clearfix form-actions">
+        <div class="col-md-offset-3 col-md-9">
+          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+          &nbsp; &nbsp; &nbsp;
+          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+        </div>
+      </div>
+
+
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script src="/js/ltesms.js"></script>
+

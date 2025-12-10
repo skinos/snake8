@@ -156,7 +156,7 @@ all:
 		make app||exit -1; \
 		make kernel_install||exit-1; \
 		make app_install||exit-1; \
-		cp -r ${gINSTALL_DIR}/include  ${gTOP_DIR}/doc/dev; \
+		cp -r ${gINSTALL_DIR}/include/* ${gTOP_DIR}/doc/dev; \
 	fi
 
 pid:

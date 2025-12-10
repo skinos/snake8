@@ -1,14 +1,14 @@
 
 /* get the object */
 var state;
-var config;
-var object = "modem@lte";
-var ifcfg;
+var mconfig;
+var iconfig;
+var modem = "modem@lte";
 var ifname = "ifname@lte";
-var index = page.param( 'object', location.hash );
+var index = page.param( 'modem', location.hash );
 if ( index )
 {
-	object = index;
+	modem = index;
 }
 var index = page.param( 'ifname', location.hash );
 if ( index )
@@ -21,19 +21,24 @@ if ( index )
 /* load the configure on the input */
 function config_load()
 {
-	he.load( [ object, object+".status", ifname, object+".custom_set", object+".custom_watch", object+".lock_imei", object+".lock_imsi" ] ).then( function(v){
-		config = v[0];
-        if ( !config )
+	he.load( [ modem, ifname, ifname+".status", ifname+".custom_set", ifname+".custom_watch", ifname+".lock_imei", ifname+".lock_imsi" ] ).then( function(v){
+		mconfig = v[0];
+        if ( !mconfig )
         {
-            config = {};
+            mconfig = {};
         }
-		state = v[1];
+		iconfig = v[1];
+        if ( !iconfig )
+        {
+            iconfig = {};
+        }
+		state = v[2];
         if ( !state )
         {
             state = {};
         }
 		// GNSS
-        if ( config.gnss == "enable" )
+        if ( iconfig.gnss == "enable" )
         {
 			$('#gnss').prop('checked', true );
         }
@@ -41,8 +46,6 @@ function config_load()
 		{
             $('#gnss').prop('checked', false );
 		}
-		// TCP Port
-		$('#tcpport').text( config.tcpport );
 		// lock nettype
         $("#lock_nettype").empty();
         $("#lock_nettype").append("<option value='auto'>" + $.i18n("Auto") + "</option>");
@@ -57,9 +60,9 @@ function config_load()
 		$("#lock_nettype").append("<option value='evdo'>" + "EVDO" + "</option>");
 		$("#lock_nettype").append("<option value='cdma'>" + "CDMA" + "</option>");
 		$("#lock_nettype").append("<option value='gsm'>" + "GSM" + "</option>");
-        $('#lock_nettype').val(config.lock_nettype || 'auto');
+        $('#lock_nettype').val(iconfig.lock_nettype || 'auto');
 		// lock pin
-        $('#lock_pin').val( config.lock_pin||'' );
+        $('#lock_pin').val( iconfig.lock_pin||'' );
 		// lock imei
         if ( v[5] )
         {
@@ -83,10 +86,10 @@ function config_load()
             $('#imsi_lock').show();
         }
 		// custom set
-        if ( config.custom_set )
+        if ( iconfig.custom_set )
         {
             var s = v[3];
-            var c = config.custom_set;
+            var c = iconfig.custom_set;
             var rows = [];
             for ( var id in c )
             {
@@ -108,10 +111,10 @@ function config_load()
             jqtable.setScrollPos(scrollPos);
         }
 		// custom watch
-        if ( config.custom_watch )
+        if ( iconfig.custom_watch )
         {
             var s = v[4];
-            var c = config.custom_watch;
+            var c = iconfig.custom_watch;
             var rows = [];
             for ( var id in c )
             {
@@ -133,54 +136,49 @@ function config_load()
             jqtable.setScrollPos(scrollPos);
         }
 		// watch interval
-        $('#watch_interval').val( config.watch_interval||'' );
+        $('#watch_interval').val( iconfig.watch_interval||'' );
 
 		// need simcard
-		ifcfg = v[2];
-        if ( !ifcfg )
-        {
-            ifcfg = {};
-        }
         $('#need_simcard').prop('checked', true );
-        if ( ifcfg.need_simcard == "disable" )
+        if ( iconfig.need_simcard == "disable" )
         {
             $('#need_simcard').prop('checked', false );
         }
-        $('#simcard_failed_threshold').val( ifcfg.simcard_failed_threshold||'' );
-        $('#simcard_failed_threshold2').val( ifcfg.simcard_failed_threshold2||'' );
-        $('#simcard_failed_threshold3').val( ifcfg.simcard_failed_threshold3||'' );
-        $('#simcard_failed_everytime').val( ifcfg.simcard_failed_everytime||'' );
+        $('#simcard_failed_threshold').val( iconfig.simcard_failed_threshold||'' );
+        $('#simcard_failed_threshold2').val( iconfig.simcard_failed_threshold2||'' );
+        $('#simcard_failed_threshold3').val( iconfig.simcard_failed_threshold3||'' );
+        $('#simcard_failed_everytime').val( iconfig.simcard_failed_everytime||'' );
 		// need plmn
         $('#need_plmn').prop('checked', true );
-        if ( ifcfg.need_plmn == "disable" )
+        if ( iconfig.need_plmn == "disable" )
         {
             $('#need_plmn').prop('checked', false );
         }
 		// need signal
         $('#need_signal').prop('checked', true );
-        if ( ifcfg.need_signal == "disable" )
+        if ( iconfig.need_signal == "disable" )
         {
             $('#need_signal').prop('checked', false );
         }
-        $('#signal_failed_threshold').val( ifcfg.signal_failed_threshold||'' );
-        $('#signal_failed_threshold2').val( ifcfg.signal_failed_threshold2||'' );
-        $('#signal_failed_threshold3').val( ifcfg.signal_failed_threshold3||'' );
-        $('#signal_failed_everytime').val( ifcfg.signal_failed_everytime||'' );
+        $('#signal_failed_threshold').val( iconfig.signal_failed_threshold||'' );
+        $('#signal_failed_threshold2').val( iconfig.signal_failed_threshold2||'' );
+        $('#signal_failed_threshold3').val( iconfig.signal_failed_threshold3||'' );
+        $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
 		// attach failed
         $('#need_attach').prop('checked', true );
-        if ( ifcfg.need_attach == "disable" )
+        if ( iconfig.need_attach == "disable" )
         {
             $('#need_attach').prop('checked', false );
         }
-        $('#attach_failed_threshold').val( ifcfg.attach_failed_threshold||'' );
-        $('#attach_failed_threshold2').val( ifcfg.attach_failed_threshold2||'' );
-        $('#attach_failed_threshold3').val( ifcfg.attach_failed_threshold3||'' );
-        $('#attach_failed_everytime').val( ifcfg.attach_failed_everytime||'' );
+        $('#attach_failed_threshold').val( iconfig.attach_failed_threshold||'' );
+        $('#attach_failed_threshold2').val( iconfig.attach_failed_threshold2||'' );
+        $('#attach_failed_threshold3').val( iconfig.attach_failed_threshold3||'' );
+        $('#attach_failed_everytime').val( iconfig.attach_failed_everytime||'' );
 		// dial failed
-        $('#failed_threshold').val( ifcfg.failed_threshold||'' );
-        $('#failed_threshold2').val( ifcfg.failed_threshold2||'' );
-        $('#failed_threshold3').val( ifcfg.failed_threshold3||'' );
-        $('#signal_failed_everytime').val( ifcfg.signal_failed_everytime||'' );
+        $('#failed_threshold').val( iconfig.failed_threshold||'' );
+        $('#failed_threshold2').val( iconfig.failed_threshold2||'' );
+        $('#failed_threshold3').val( iconfig.failed_threshold3||'' );
+        $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
 
       })
 }
@@ -190,17 +188,16 @@ function config_save()
 {
 	var cmds = [];
 	var needsave = false;
-
-	if ( config == null )
+	if ( iconfig == null )
 	{
 		return;
 	}
-	var copy = JSON.parse(JSON.stringify(config));;
+	var icopy = JSON.parse(JSON.stringify(iconfig));;
+
 	// config
-	config.gnss = boole2able( $('#gnss').prop('checked') );
-	config.tcpport = $('#tcpport').val();
-	config.lock_nettype = $('#lock_nettype').val();
-	config.lock_pin = $('#lock_pin').val();
+	iconfig.gnss = boole2able( $('#gnss').prop('checked') );
+	iconfig.lock_nettype = $('#lock_nettype').val();
+	iconfig.lock_pin = $('#lock_pin').val();
 	var data = {};
 	var rows = $("#set-grid-table").jqGrid('getDataIDs');
 	for ( var i = 0; i < rows.length; i++ )
@@ -210,11 +207,11 @@ function config_save()
 	}
 	if ( rows.length > 0 )
 	{
-		config.custom_set = data;
+		iconfig.custom_set = data;
 	}
 	else
 	{
-		config.custom_set= {};
+		delete iconfig.custom_set;
 	}
 	var data = {};
 	var rows = $("#watch-grid-table").jqGrid('getDataIDs');
@@ -225,58 +222,54 @@ function config_save()
 	}
 	if ( rows.length > 0 )
 	{
-		config.custom_watch = data;
+		iconfig.custom_watch = data;
 	}
 	else
 	{
-		config.custom_watch= {};
+		delete iconfig.custom_watch;
 	}
-	config.watch_interval = $('#watch_interval').val();
-	if ( !ocompare( config, copy ) )
+	iconfig.watch_interval = $('#watch_interval').val();
+	iconfig.need_simcard = boole2able( $('#need_simcard').prop('checked') );
+	iconfig.simcard_failed_threshold = $('#simcard_failed_threshold').val();
+	iconfig.simcard_failed_threshold2 = $('#simcard_failed_threshold2').val();
+	iconfig.simcard_failed_threshold3 = $('#simcard_failed_threshold3').val();
+	iconfig.simcard_failed_everytime = $('#simcard_failed_everytime').val();
+	iconfig.need_plmn = boole2able( $('#need_plmn').prop('checked') );
+	iconfig.need_signal = boole2able( $('#need_signal').prop('checked') );
+	iconfig.signal_failed_threshold = $('#signal_failed_threshold').val();
+	iconfig.signal_failed_threshold2 = $('#signal_failed_threshold2').val();
+	iconfig.signal_failed_threshold3 = $('#signal_failed_threshold3').val();
+	iconfig.signal_failed_everytime = $('#signal_failed_everytime').val();
+	iconfig.need_attach = boole2able( $('#need_attach').prop('checked') );
+	iconfig.attach_failed_threshold = $('#attach_failed_threshold').val();
+	iconfig.attach_failed_threshold2 = $('#attach_failed_threshold2').val();
+	iconfig.attach_failed_threshold3 = $('#attach_failed_threshold3').val();
+	iconfig.attach_failed_everytime = $('#attach_failed_everytime').val();
+	iconfig.failed_threshold = $('#failed_threshold').val();
+	iconfig.failed_threshold2 = $('#failed_threshold2').val();
+	iconfig.failed_threshold3 = $('#failed_threshold3').val();
+	iconfig.failed_everytime = $('#failed_everytime').val();
+	for ( var id in iconfig )
 	{
-		cmds.push( object+"="+JSON.stringify(config) );
+		if ( iconfig[id] == "" )
+		{
+			delete iconfig[id];
+		}
+	}
+
+	// compare
+	if ( !ocompare( iconfig, icopy ) )
+	{
+		cmds.push( ifname+"="+JSON.stringify(iconfig) );
 		needsave = true;
 	}
-	
-	// ifcfg
-	if ( ifcfg == null )
-	{
-		return;
-	}
-	var ifcopy = JSON.parse(JSON.stringify(ifcfg));;
-	ifcfg.need_simcard = boole2able( $('#need_simcard').prop('checked') );
-	ifcfg.simcard_failed_threshold = $('#simcard_failed_threshold').val();
-	ifcfg.simcard_failed_threshold2 = $('#simcard_failed_threshold2').val();
-	ifcfg.simcard_failed_threshold3 = $('#simcard_failed_threshold3').val();
-	ifcfg.simcard_failed_everytime = $('#simcard_failed_everytime').val();
-	ifcfg.need_plmn = boole2able( $('#need_plmn').prop('checked') );
-	ifcfg.need_signal = boole2able( $('#need_signal').prop('checked') );
-	ifcfg.signal_failed_threshold = $('#signal_failed_threshold').val();
-	ifcfg.signal_failed_threshold2 = $('#signal_failed_threshold2').val();
-	ifcfg.signal_failed_threshold3 = $('#signal_failed_threshold3').val();
-	ifcfg.signal_failed_everytime = $('#signal_failed_everytime').val();
-	ifcfg.need_attach = boole2able( $('#need_attach').prop('checked') );
-	ifcfg.attach_failed_threshold = $('#attach_failed_threshold').val();
-	ifcfg.attach_failed_threshold2 = $('#attach_failed_threshold2').val();
-	ifcfg.attach_failed_threshold3 = $('#attach_failed_threshold3').val();
-	ifcfg.attach_failed_everytime = $('#attach_failed_everytime').val();
-	ifcfg.failed_threshold = $('#failed_threshold').val();
-	ifcfg.failed_threshold2 = $('#failed_threshold2').val();
-	ifcfg.failed_threshold3 = $('#failed_threshold3').val();
-	ifcfg.failed_everytime = $('#failed_everytime').val();
-
-	if ( !ocompare( ifcfg, ifcopy ) )
-	{
-		cmds.push( ifname+"="+JSON.stringify(ifcfg) );
-		needsave = true;
-	}
-
-
 	if ( needsave == false )
 	{
 		page.alert( { message: $.i18n('Settings unchanged') } );
 		return;
 	}
+
+	// save
 	page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
 		if ( result )
 		{
@@ -303,17 +296,17 @@ $.i18n().load( page.lang('lte') ).then( function () {
 		colNames: [ $.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return') ],
 		colModel: [
 			{
-				name:'name', width:200,
+				name:'name', width:100,
 				editable: true,
 				editrules:{ required: true }
 			},
 			{
-				name: 'at', width: 300,
+				name: 'at', width: 250,
 				editable: true,
 				editrules: { required: true }
 			},
 			{
-				name: 'result', width: 300,
+				name: 'result', width: 400,
 				editable: false
 			}
 		]
@@ -375,7 +368,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 			if ( result )
 			{ 
 				// 执行修改
-				he.exec( [ object+".lock_imei["+state.imei+"]" ] ).then( function(v){
+				he.exec( [ ifname+".lock_imei["+state.imei+"]" ] ).then( function(v){
 					var ret = v[0];
 					if ( ret == true )
 					{
@@ -391,7 +384,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 			if ( result )
 			{ 
 				// 执行修改
-				he.exec( [ object+".lock_imsi["+state.imsi+"]" ] ).then( function(v){
+				he.exec( [ ifname+".lock_imsi["+state.imsi+"]" ] ).then( function(v){
 					var ret = v[0];
 					if ( ret == true )
 					{

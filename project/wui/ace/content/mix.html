@@ -451,22 +451,22 @@
                 return;
             }
             interfaces = v[1];
-            $('#type').val( frame.connect.type );
+            $('#type').val( frame.type );
             main_html();
-            $('#main').val( frame.connect.main );
+            $('#main').val( frame.main );
             back_html();
-            $('#back').val( frame.connect.back );
+            $('#back').val( frame.back );
             king_html();
-            $('#king').val( frame.connect.king );
+            $('#king').val( frame.king );
             reserve_html();
-            $('#reserve').val( frame.connect.reserve );
+            $('#reserve').val( frame.reserve );
             dns_html();
-            $('#custom_dns').val( frame.connect.custom_dns||"disable" );
-            $('#cdns').val( frame.connect.dns );
-            $('#cdns2').val( frame.connect.dns2 );
-            $('#delay_count').val( frame.connect.delay_count );
-            $('#delay_divide').val( frame.connect.delay_divide );
-            $('#delay_diff').val( frame.connect.delay_diff );
+            $('#custom_dns').val( frame.custom_dns||"disable" );
+            $('#cdns').val( frame.dns );
+            $('#cdns2').val( frame.dns2 );
+            $('#delay_count').val( frame.delay_count );
+            $('#delay_divide').val( frame.delay_divide );
+            $('#delay_diff').val( frame.delay_diff );
             /* load the configure */
             $('#type').unbind('change').change(function (e) {
               var type = e.target.value;
@@ -506,38 +506,35 @@
             return;
         }
         framecopy = JSON.parse(JSON.stringify(frame));
-        frame.connect.type = $('#type').val();
-        frame.connect.main = $('#main').val();
-        frame.connect.back = $('#back').val();
-        frame.connect.king = $('#king').val();
-        frame.connect.reserve = $('#reserve').val();
-        frame.connect.custom_dns = $('#custom_dns').val();
-        if ( frame.connect.custom_dns == "enable" )
+        frame.type = $('#type').val();
+        frame.main = $('#main').val();
+        frame.back = $('#back').val();
+        frame.king = $('#king').val();
+        frame.reserve = $('#reserve').val();
+        frame.custom_dns = $('#custom_dns').val();
+        if ( frame.custom_dns == "enable" )
         {
-            frame.connect.dns = $('#cdns').val();
-            frame.connect.dns2 = $('#cdns2').val();
+            frame.dns = $('#cdns').val();
+            frame.dns2 = $('#cdns2').val();
         }
-        if ( frame.connect.type == "dbdc" )
+        if ( frame.type == "dbdc" )
         {
-            frame.connect.delay_count = $('#delay_count').val();
-            frame.connect.delay_divide = $('#delay_divide').val();
-            frame.connect.delay_diff = $('#delay_diff').val();
+            frame.delay_count = $('#delay_count').val();
+            frame.delay_divide = $('#delay_divide').val();
+            frame.delay_diff = $('#delay_diff').val();
         }
         if ( ocompare( frame, framecopy ) )
         {
             page.alert( { message: $.i18n('Settings unchanged') } );
             return;
         }
-        page.confirm( { message: $.i18n('The system will restart because of the change of settings') } ).then( function(result){
+        page.confirm( { message: $.i18n('The connection will be disconneted because of the change of configuration') } ).then( function(result){
             if ( result )
             {
                 he.exec( [ "network@frame="+JSON.stringify(frame) ] ).then( function(){
-                    page.confirm( { message: $.i18n('Restart the system to apply') } ).then( function(result){
-                        if ( result )
-                        {
-                            he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
-                        }
-                    });
+                    page.hint2succeed( $.i18n('Modify successfully') );
+                    frame_load();
+                    status_load();
                 });
             }
             else

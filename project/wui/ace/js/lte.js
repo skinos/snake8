@@ -189,9 +189,10 @@ function config_load()
     }).trigger('change');
 	/* bind the button */
 	var modem = v[1];
-	$('#simcard_set').attr( "href", "#ltesim?object="+modem+"&ifname="+object );
-	$('#sms_set').attr( "href", "#ltesms?object="+modem+"&ifname="+object );
-	$('#modem_set').attr( "href", "#ltemodem?object="+modem+"&ifname="+object );
+	$('#modem_set').attr( "href", "#ltemodem?modem="+modem+"&ifname="+object );
+	$('#sms_set').attr( "href", "#ltesms?modem="+modem+"&ifname="+object );
+	$('#atproxy_set').attr( "href", "#lteat?modem="+modem+"&ifname="+object );
+	$('#simcard_set').attr( "href", "#ltesim?modem="+modem+"&ifname="+object );
 
     /* status */
     if ( config.status && config.status == "disable" )
@@ -708,7 +709,7 @@ function config_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('The LTE connection will be disconneted because of the change of configuration') } ).then( function(result){
     if ( result )
     {
       he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){

@@ -92,7 +92,7 @@ $.i18n().load( page.lang('software') ).then( function () {
   $('#upgrade').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
   // bind the upgrade
   $('#upgrade').fileupload({
-	url:'/upload?username='+window.username+'&key='+encodeURIComponent(window.talkkey)+'&object=arch@firmware&api=zz&p=[]',
+	url:'/upload?username='+window.username+'&key='+window.talkkey+'&object=arch@firmware&api=zz&p=[]',
     paramName: 'filename',
     dataType: 'text',
     add: function( e, data )

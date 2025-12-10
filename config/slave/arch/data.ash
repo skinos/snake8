@@ -11,6 +11,7 @@ setup()
     # mkdir basic directory
     VROOT=/var/skinos
     TROOT=/tmp/skinos
+    DROOT=/var/dbs
     LANDDIR=/usr/share/skinos/land
 
     sudo mkdir -p $TROOT
@@ -23,6 +24,8 @@ setup()
 
     sudo mkdir -p $VROOT
     sudo chmod a+rwx $VROOT
+    sudo mkdir -p $DROOT
+    sudo chmod a+rwx $DROOT
     mkdir -p $VROOT/mnt
 
     mkdir -p $TROOT/.oem
@@ -48,6 +51,8 @@ setup()
     fi
     MODEL=`$LANDDIR/bin/he arch@data:model`
     $LANDDIR/bin/he land@register.set_string[model,$MODEL]
+    MODEL=`$LANDDIR/bin/he arch@data:cmodel`
+    $LANDDIR/bin/he land@register.set_string[cmodel,$MODEL]
     MAC=`$LANDDIR/bin/he arch@data:mac`
     $LANDDIR/bin/he land@register.set_string[mac,$MAC]
     # default the configure if order

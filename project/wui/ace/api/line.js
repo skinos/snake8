@@ -92,7 +92,7 @@ var he =
         if ( func != null )
         {
             $.ajax({
-                'url':uri, 'type':'POST', 'timeout':timeout, 'async':true, 'contentType':'application/x-www-form-urlencoded', 'data':JSON.stringify(paramter),
+                'url':uri, 'type':'POST', 'timeout':timeout, 'async':true, dataType: "json", 'contentType':'application/json', 'data':JSON.stringify(paramter),
                 'complete': function ( x, s )
                 {
                     // return while in rebooting
@@ -171,7 +171,7 @@ var he =
         }
         else
         {
-            htmlobj = $.ajax( { 'url':uri, 'type':'POST', 'timeout':timeout, 'async':false, 'contentType':'application/x-www-form-urlencoded', 'data':JSON.stringify(paramter) } );
+            htmlobj = $.ajax( { 'url':uri, 'type':'POST', 'timeout':timeout, 'async':false, dataType: "json", 'contentType':'application/json', 'data':JSON.stringify(paramter) } );
             // return while in rebooting
             if ( window.rebooting )
             {

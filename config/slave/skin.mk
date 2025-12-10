@@ -116,13 +116,6 @@ endef
 #     NeedBeCompileOSCList给出测编译此子目录列表, 如未给出测编译${OSC_LIST}
 #     编译$(OSC_LIST)时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Compile/Default
-	# make the fpk dir
-	$(INSTALL_DIR) $(FPK_BUILD_DIR)
-	$(INSTALL_DIR) $(FPK_LIB_DIR)
-	$(INSTALL_DIR) $(FPK_BIN_DIR)
-	$(INSTALL_DIR) $(FPK_ETC_DIR)
-	$(INSTALL_DIR) $(FPK_INT_DIR)
-	$(INSTALL_DIR) $(FPK_ROOTFS_DIR)
 	$(FIND) $(PKG_BUILD_DIR) -name \*.o -or -name \*.a | $(XARGS) rm -f
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE})
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE},install)
@@ -130,7 +123,7 @@ define Build/Compile/Default
 	$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/bin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/ko,${KO_LIST})
-	if [ "X" = "X$(1)" ]; then \
+	if [ "X" == "X$(1)" ]; then \
 		$(call Build/Compile/bin,${OSC_LIST},$(2)); \
 	fi
 	if [ "X" != "X$(1)" ]; then \

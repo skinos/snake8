@@ -122,21 +122,148 @@ boole _set( obj_t this, talk_t v, attr_t path )
 {
 	int i;
     boole ret;
+    boole dret;
+    talk_t x;
+    talk_t axp;
+	talk_t cfg;
+	talk_t dcfg;
+	const char *ptr;
+	const char *ifdev;
 
 	// shut
 	_shut( this, NULL );
+	ifdev = reg_string( this, "ifdev" );
+
+	ret = dret = false;
+    ptr = attr_layer( path, 1 );
+    if ( ptr == NULL || *ptr == '\0' )
+    {
+		if ( v == NULL )
+		{
+			// delete all the configure
+			ret = config_set( this, NULL, NULL );
+		}
+		else
+		{
+			// separately all the configure
+			cfg = json_create( NULL );
+			dcfg = json_create( NULL );
+            axp = NULL;
+            while ( NULL != ( axp = json_next( v, axp ) ) )
+            {
+				ptr = axp_attr( axp );
+				x = axp_value( axp );
+				if ( 0 == strcmp( ptr, "sms" )
+					|| 0 == strcmp( ptr, "gnss" )
+					|| 0 == strcmp( ptr, "atport" )
+					|| 0 == strcmp( ptr, "lock_nettype" )
+					|| 0 == strcmp( ptr, "lock_imei" )
+					|| 0 == strcmp( ptr, "lock_imsi" )
+
+					|| 0 == strcmp( ptr, "custom_set" )
+					|| 0 == strcmp( ptr, "custom_watch" )
+
+					|| 0 == strcmp( ptr, "watch_interval" )
+					)
+				{
+					json_set_value( dcfg, ptr, talk_dup(x) );
+				}
+                else
+                {
+                    json_set_value( cfg, ptr, talk_dup(x) );
+                }
+            }
+			// set to modem config
+			x = config_sget( ifdev, NULL );
+			if ( talk_equal( x, dcfg ) == false )
+			{
+				dret = config_sset( ifdev, dcfg, NULL );
+			}
+			talk_free( x );
+            talk_free( dcfg );
+			// set the ifname config
+			x = config_get( this, NULL );
+			if ( talk_equal( x, cfg ) == false )
+			{
+	            ret = config_set( this, cfg, NULL );
+			}
+			talk_free( x );
+            talk_free( cfg );
+		}
+    }
+	else
+	{
+		if ( 0 == strcmp( ptr, "sms" )
+			|| 0 == strcmp( ptr, "gnss" )
+			|| 0 == strcmp( ptr, "atport" )
+			|| 0 == strcmp( ptr, "lock_nettype" )
+			|| 0 == strcmp( ptr, "lock_imei" )
+			|| 0 == strcmp( ptr, "lock_imsi" )
+
+			|| 0 == strcmp( ptr, "custom_set" )
+			|| 0 == strcmp( ptr, "custom_watch" )
+
+			|| 0 == strcmp( ptr, "watch_interval" )
+			)
+		{
+			dret = config_sset( ifdev, v, path );
+		}
+        else
+        {
+            ret = config_set( this, v, path );
+        }
+	}
+
 	// clear the reconnect count
 	i = 0;
 	reg_set_int( this, "connect_failed", i );
-	// set
-	ret = config_set( this, v, path );
-	// setup
+	// reload the ifdev
+    if ( dret == true )
+    {
+		creset( NULL, NULL, NULL, ifdev );
+		ret = true;
+    }
+	// setup ifname
 	_setup( this, NULL );
     return ret;
 }
 talk_t _get( obj_t this, attr_t path )
 {
-    return config_get( this, path );
+	talk_t ret;
+	talk_t cfg;
+	talk_t dcfg;
+	const char *ifdev;
+
+	// get the ifname configure
+	cfg = config_get( this, NULL );
+	// combination the downlayer configure
+	ifdev = reg_string( this, "ifdev" );
+    if ( ifdev != NULL && *ifdev != '\0' )
+    {
+        dcfg = sget( ifdev, NULL );
+        if ( cfg == NULL )
+        {
+            cfg = dcfg;
+        }
+        else if ( dcfg != NULL )
+        {
+			// delete the the repeated attr
+			json_delete_axp( dcfg, "status" );
+			json_delete_axp( dcfg, "pin" );
+			json_delete_axp( dcfg, "profile" );
+			json_delete_axp( dcfg, "profile_cfg" );
+			// combination
+            json_patch( dcfg, cfg );
+            talk_free( dcfg );
+        }
+    }
+	// pick the attr value
+    ret = attr_cut( cfg, path );
+    if ( ret != cfg )
+    {
+        talk_free( cfg );
+    }
+	return ret;
 }    
 
 
@@ -295,7 +422,7 @@ simagain:
 	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
 	{
 		failed_timeout = 10;
-		for( check=0; check<failed_timeout; check++ )
+		for( check=1; check<failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
@@ -337,7 +464,7 @@ simagain:
 			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
 			sleep( 1 );
 		}
-		if ( check >= failed_timeout )
+		if ( check > failed_timeout )
 		{
 			ifname_info( obj, "%s ignore the simcard failed", ifdev );
 		}
@@ -360,7 +487,7 @@ simagain:
 		{
 			failed_timeout = failed_everytime;
 		}
-		for( check=0; check<failed_timeout; check++ )
+		for( check=1; check<failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
@@ -402,7 +529,7 @@ simagain:
 			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
 			sleep( 1 );
 		}
-		if ( check >= failed_timeout )
+		if ( check > failed_timeout )
 		{
 			reg_set_string( this, "reset_reason", "sim" );
 			ifname_fault( obj, "reset the %s when simcard failed for %d times", ifdev, failed_timeout );
@@ -483,7 +610,7 @@ simagain:
 	if ( i == 0 )
 	{
 		failed_timeout = 10;
-		for( check=0; check<failed_timeout; check++ )
+		for( check=1; check<failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "plmn", NULL );
 			if ( ret == ttrue )
@@ -506,7 +633,7 @@ simagain:
 			ifname_info( obj, "%s plmn failed", ifdev );
 			sleep( 1 );
 		}
-		if ( check >= failed_timeout )
+		if ( check > failed_timeout )
 		{
 			ifname_info( obj, "%s ignore the plmn failed", ifdev );
 		}
@@ -529,7 +656,7 @@ simagain:
 		{
 			failed_timeout = failed_everytime;
 		}
-		for( check=0; check<failed_timeout; check++ )
+		for( check=1; check<=failed_timeout; check++ )
 		{
 			if ( i == 0b01 )
 			{
@@ -628,7 +755,7 @@ simagain:
 			}
 			sleep( 1 );
 		}
-		if ( check >= failed_timeout )
+		if ( check > failed_timeout )
 		{
 			reg_set_string( this, "reset_reason", "signal" );
 			ifname_fault( obj, "reset the %s when signal or plmn failed for %d times", ifdev, failed_timeout );
@@ -701,7 +828,7 @@ simagain:
 		if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
 		{
 			failed_timeout = 10;
-			for( check=0; check<failed_timeout; check++ )
+			for( check=1; check<=failed_timeout; check++ )
 			{
 				if ( scallt( ifdev, "connected", profile ) == ttrue )
 				{
@@ -710,7 +837,7 @@ simagain:
 				ifname_info( obj, "%s attach failed %d", ifdev, check );
 				sleep( 1 );
 			}
-			if ( check >= failed_timeout )
+			if ( check > failed_timeout )
 			{
 				ifname_info( obj, "%s ignore the attach failed", ifdev );
 			}
@@ -733,7 +860,7 @@ simagain:
 			{
 				failed_timeout = failed_everytime;
 			}
-			for( check=0; check<failed_timeout; check++ )
+			for( check=1; check<=failed_timeout; check++ )
 			{
 				ret = scallt( ifdev, "connected", profile );
 				if ( ret == ttrue )
@@ -748,7 +875,7 @@ simagain:
 				ifname_info( obj, "%s attach failed %d", ifdev, check );
 				sleep( 1 );
 			}
-			if ( check >= failed_timeout )
+			if ( check > failed_timeout )
 			{
 				reg_set_string( this, "reset_reason", "attach" );
 				ifname_fault( obj, "reset the %s when attach failed for %d times", ifdev, failed_timeout );
@@ -1656,17 +1783,17 @@ boole_t _keepoff( obj_t this, param_t param )
 
 
 
-/* only for modem */
-boole_t _operator( obj_t this, param_t param )
+/* only for ifdev */
+talk_t _operator( obj_t this, param_t param )
 {
 	talk_t ret;
 	const char *ifdev;
 
-	ret = tfalse;
+	ret = NULL;
 	ifdev = reg_string( this, "ifdev" );
 	if ( ifdev != NULL && *ifdev != '\0' )
 	{
-		ret = scall( ifdev, "operator", NULL );
+		ret = scall( ifdev, "operator", param );
 	}
 	return ret;
 }
@@ -1679,7 +1806,59 @@ boole_t _reset( obj_t this, param_t param )
 	ifdev = reg_string( this, "ifdev" );
 	if ( ifdev != NULL && *ifdev != '\0' )
 	{
-		ret = scall( ifdev, "reset", NULL );
+		ret = scall( ifdev, "reset", param );
+	}
+	return ret;
+}
+talk_t _lock_imei( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "lock_imei", param );
+	}
+	return ret;
+}
+talk_t _lock_imsi( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "lock_imsi", param );
+	}
+	return ret;
+}
+talk_t  _custom_set( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "custom_set", param );
+	}
+	return ret;
+}
+talk_t  _custom_watch( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *ifdev;
+
+	ret = NULL;
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		ret = scall( ifdev, "custom_watch", param );
 	}
 	return ret;
 }

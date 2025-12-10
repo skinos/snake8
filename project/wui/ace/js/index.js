@@ -599,7 +599,7 @@ jQuery(function($) {
 			menu.add( false, menus, $.i18n( 'Network' ), 'network', 'menu-icon fa fa-sitemap' );
 			if ( router == true )
 			{
-				if ( network_frame.connect )
+				if ( network_frame )
 				{
 					if ( !wuimenu || wuimenu.connection != "disable" )
 					{

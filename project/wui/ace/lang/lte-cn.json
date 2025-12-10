@@ -192,6 +192,6 @@
 	"Interval number of dial failures reset modem":"间隔拨号失败次数重置模块",
 
 
-	"The LTE connecttion will be disconneted because of the change of configuration":"设备LTE配置将导致网络断开重连"
+	"The LTE connection will be disconneted because of the change of configuration":"设备LTE配置将导致网络断开重连"
 
 }
