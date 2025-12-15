@@ -60,8 +60,6 @@ app_install:
 	fi
 	cd ${gBUILD_DIR} && rm -fr ${gpFIRMWARE_FILE} ${gpSTORE_FILE} ${gpFIRMWARE_LOG}
 	cd ${gosROOT_DIR} && tar jcf ../${gpFIRMWARE_FILE} *
-	cd ${gSTORE_DIR} && fpk-indexed ../${gpSTORE_FILE} ${gSTORE_DIR}
-	cd ${gBUILD_DIR} && firmware-log ${gpFIRMWARE_LOG} ${gVERSION} ${gCUSTOM} ${gSCOPE} ${gpFIRMWARE_FILE} ${gTOP_DIR}/log.json ${gPLATFORM_DIR}/log.json ${gHARDWARE_DIR}/log.json ${gCUSTOM_DIR}/log.json ${gSCOPE_DIR}/log.json
 app_clean:
 	make -f ${gDIR_MAKEFILE} -C ${gPROJECT_DIR} clean
 	if [ -d ${gRICE_DIR} ]; then \
@@ -116,13 +114,16 @@ sdk_distclean: sdk_clean
 
 sdk_install:
 	sudo rm -fr /tmp/skinos
+	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
 	sudo cp -ar ${gosROOT_DIR}/usr/share/skinos /usr/share
-	sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin
 	sudo cp -ar ${gosROOT_DIR}/usr/local/lib/* /usr/local/lib
-	sudo chown root:root /usr/share/skinos/agent/gtog
-	sudo chmod u+s /usr/share/skinos/agent/gtog
-	sudo ldconfig
+	sudo sudo ldconfig
+	sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin
+	if [ -f /usr/share/skinos/agent/gtog ];then \
+		sudo chown root:root /usr/share/skinos/agent/gtog; \
+		sudo chmod u+s /usr/share/skinos/agent/gtog; \
+	fi
 sdk_start:
 	if [ -f /usr/share/skinos/setup.sh ]; then \
 		/usr/share/skinos/setup.sh; \
@@ -132,10 +133,12 @@ sdk_stop:
 		/usr/share/skinos/shut.sh; \
 	fi
 	sudo rm -fr /tmp/skinos
+	sudo rm -fr /var/skinos
 sdk_uninstall:
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
+	sudo rm -fr /mnt/skinos
 	sudo ldconfig
 .PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_uninstall
 

@@ -3,8 +3,8 @@
 # delete clock
 rm -fr ./usr/share/skinos/clock
 # delete execute bin for compatibility tiger7
-rm -fr ./usr/local/bin/daemon
-rm -fr ./usr/local/bin/he
+#rm -fr ./usr/local/bin/daemon
+#rm -fr ./usr/local/bin/he
 # delete local
 rm -fr ./usr/share/skinos/agent/local.cfg
 # delete portc

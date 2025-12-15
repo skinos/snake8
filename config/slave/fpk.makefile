@@ -6,13 +6,14 @@ PKG_NAME:=$(shell prj-read name)
 PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
 DESC_STR:=$(shell prj-read desc)
-PKG_BUILD_DIR:=$(shell pwd)
+PKG_BUILD_DIR:=$(gBUILD_DIR)/$(PKG_NAME)
 # 生成项目通用定义
 $(eval $(call Package/Define))
 # 包编译时的目录
 export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FPK_LIB_DIR FPK_BIN_DIR FPK_ROOTFS_DIR
 #
 all:
+	$(call Build/Prepare/Default)
 	$(call Build/Compile/Default)
 	$(call Build/Install/fpk,$(gSTORE_DIR))
 install:

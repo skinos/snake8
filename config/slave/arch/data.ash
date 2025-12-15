@@ -9,28 +9,38 @@ setup()
     sudo sysctl -w net.ipv4.ip_forward=1
     
     # mkdir basic directory
-    VROOT=/var/skinos
     TROOT=/tmp/skinos
-    DROOT=/var/dbs
+    VROOT=/var/skinos
+    MROOT=/mnt/skinos
+    PROJECT_REG_DIR=$TROOT/.reg
+    PROJECT_SER_DIR=$TROOT/.ser
+    PROJECT_COM_DIR=$TROOT/.com
+    PROJECT_CAH_DIR=$TROOT/.cah
+    PROJECT_CONF_DIR=$TROOT/.conf
+    PROJECT_CFG_DIR=$MROOT/config
+    PROJECT_DBS_DIR=$MROOT/dbs
+    PROJECT_OEM_DIR=$MROOT/.oem
+    PROJECT_INT_DIR=$MROOT/internal
+    PROJECT_APP_DIR=$PROJECT_INT_DIR/skinos
     LANDDIR=/usr/share/skinos/land
 
     sudo mkdir -p $TROOT
     sudo chmod a+rwx $TROOT
-    mkdir -p $TROOT/.reg
-    mkdir -p $TROOT/.ser
-    mkdir -p $TROOT/.com
-    mkdir -p $TROOT/.cah
-    mkdir -p $TROOT/.conf
+    mkdir -p $PROJECT_REG_DIR
+    mkdir -p $PROJECT_SER_DIR
+    mkdir -p $PROJECT_COM_DIR
+    mkdir -p $PROJECT_CAH_DIR
+    mkdir -p $PROJECT_CONF_DIR
 
     sudo mkdir -p $VROOT
     sudo chmod a+rwx $VROOT
-    sudo mkdir -p $DROOT
-    sudo chmod a+rwx $DROOT
-    mkdir -p $VROOT/mnt
 
-    mkdir -p $TROOT/.oem
-    mkdir -p $VROOT/mnt/config
-    mkdir -p $VROOT/mnt/internal
+    sudo mkdir -p $MROOT
+    sudo chmod a+rwx $MROOT
+    mkdir -p $PROJECT_CFG_DIR
+    mkdir -p $PROJECT_DBS_DIR
+    mkdir -p $PROJECT_OEM_DIR
+    mkdir -p $PROJECT_INT_DIR
 
     # load the basic ko
     if [ -e /usr/prj/pdriver/crackid.ko ]; then
@@ -56,19 +66,19 @@ setup()
     MAC=`$LANDDIR/bin/he arch@data:mac`
     $LANDDIR/bin/he land@register.set_string[mac,$MAC]
     # default the configure if order
-    if [ -e $VROOT/mnt/config/.customv8 ]; then
+    if [ -e $PROJECT_CFG_DIR/.customv8 ]; then
     	echo "mount the configure"
     else
     	echo "clear the configure"
-        rm -fr $VROOT/mnt/config/*
-        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/config/.customv8
+        rm -fr $PROJECT_CFG_DIR/*
+        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $PROJECT_CFG_DIR/.customv8
     fi
-    if [ -e $VROOT/mnt/internal/.customv8 ]; then
+    if [ -e $PROJECT_INT_DIR/.customv8 ]; then
     	echo "mount the interval"
 	else
     	echo "clear the interval"
-		rm -fr $VROOT/mnt/internal/*
-        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $VROOT/mnt/internal/.customv8
+		rm -fr $PROJECT_INT_DIR/*
+        echo "$gPLATFORM-$gHARDWARE-$gCUSTOM-$gSCOPE" > $PROJECT_INT_DIR/.customv8
     fi
 
     NAME=`hostname`
