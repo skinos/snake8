@@ -8,24 +8,32 @@
 
 
 
-talk_t _setup( obj_t this, param_t param )
+boole_t _setup( obj_t this, param_t param )
 {
     struct stat st;
     const char *ptr;
+	const char *platform;
 
+	platform = reg_string( NULL, "platform" );
+	if ( platform != NULL && 0 == strcmp( platform , "slave" ) )
+	{
+		default_debug( "no ftp function on %s", platform );
+		return ttrue;
+	}
     /* proftpd check */
     if ( stat( "/usr/sbin/proftpd", &st ) != 0 )
     {
+		default_debug( "/usr/sbin/proftpd cannot found" );
         return tfalse;
     }
-    ptr = config_sgets_string( NULL, 0, COM_IDPATH, "status" );
+    ptr = config_gets_string( NULL, 0, this, "status" );
     if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
     {
-		sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+		cstart( this, "service", NULL, COM_IDPATH );
     }
     return ttrue;
 }
-talk_t _shut( obj_t this, param_t param )
+boole_t _shut( obj_t this, param_t param )
 {
     sdelete( COM_IDPATH );
     return ttrue;
@@ -35,13 +43,13 @@ boole _set( obj_t this, talk_t v, attr_t path )
     boole ret;
 
 	_shut( this, NULL );
-    ret = config_sset( COM_IDPATH, v, path );
+    ret = config_set( this, v, path );
 	_setup( this, NULL );
     return ret;
 }
 talk_t _get( obj_t this, attr_t path )
 {
-    return config_sget( COM_IDPATH, path );
+    return config_get( this, path );
 }
 
 
@@ -77,7 +85,7 @@ boole_t _service( obj_t this, param_t param )
         string2file( cfgpath, "ServerName Farm\n" );
     }
     string3file( cfgpath, "DefaultAddress %s\n", "0.0.0.0" );
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
     path = json_string( cfg, "root" );
 	if ( path == NULL )
 	{
@@ -136,7 +144,7 @@ boole_t _service( obj_t this, param_t param )
     {
         string3file( cfgpath, "RootLogin on\n" );
 		userlist = scalls( AUTH_COM, "list", "nas" );
-		share = json_value( cfg, "user");
+		share = json_json( cfg, "user");
 		axp = NULL;
 		while( NULL != ( axp = json_next( share, axp ) ) )
 		{
@@ -147,13 +155,13 @@ boole_t _service( obj_t this, param_t param )
 				path = PROJECT_MNT_DIR;
 			}
 			permission = json_string( v, "permission" );
-			permlist = json_value( v, "user" );
+			permlist = json_json( v, "user" );
 			memset( readlist,0 ,sizeof(readlist) );
 			memset( writelist,0 ,sizeof(writelist) );
 			uaxp = NULL;
 			while( NULL != ( uaxp = json_next( userlist, uaxp ) ) )
 	        {
-	            user = axp_id( uaxp );
+	            user = axp_name( uaxp );
 	            /* if the user have perm set, frist use */
 	            ptr = json_string( permlist, user );
 	            if ( ptr == NULL || *ptr == '\0' )

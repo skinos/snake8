@@ -1,3 +1,5 @@
+
+
 window.object = "wui@admin";
 window.hepath = "/public";
 window.talkkey = "";

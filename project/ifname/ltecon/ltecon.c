@@ -48,7 +48,7 @@ boole_t _setup( obj_t this, param_t param )
 		reg_set_int( this, "tid", tid );
 	}
 	/* set the keeplive */
-	ptr = json_string( json_value( cfg, "keeplive"), "type" );
+	ptr = json_string( json_json( cfg, "keeplive"), "type" );
 	reg_set_string( this, "keeplive", ptr );
 
     /* get the ifdev */
@@ -109,7 +109,7 @@ boole_t _shut( obj_t this, param_t param )
 		ptr = json_string( cfg, "profile" );
 		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 		{
-			profile = json_value( cfg, "profile_cfg" );
+			profile = json_json( cfg, "profile_cfg" );
 		}
     	scallt( ifdev, "down", profile );
 		scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
@@ -151,7 +151,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
             axp = NULL;
             while ( NULL != ( axp = json_next( v, axp ) ) )
             {
-				ptr = axp_attr( axp );
+				ptr = axp_name( axp );
 				x = axp_value( axp );
 				if ( 0 == strcmp( ptr, "sms" )
 					|| 0 == strcmp( ptr, "gnss" )
@@ -253,7 +253,7 @@ talk_t _get( obj_t this, attr_t path )
 			json_delete_axp( dcfg, "profile" );
 			json_delete_axp( dcfg, "profile_cfg" );
 			// combination
-            json_patch( dcfg, cfg );
+            json_sync( dcfg, cfg );
             talk_free( dcfg );
         }
     }
@@ -554,7 +554,7 @@ simagain:
 	ptr = json_string( cfg, "profile" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 	{
-		profile = json_value( cfg, "profile_cfg" );
+		profile = json_json( cfg, "profile_cfg" );
 	}
 
 	/*****************************************/
@@ -949,16 +949,16 @@ simagain:
 	/* static ip setting */
 	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
 	{
-		v = json_value( cfg, "static" );
+		v = json_json( cfg, "static" );
 		static_ip_enable( netdev, v );
 	}
 	else if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
 	{
-		v = json_value( cfg, "dhcpc" );
+		v = json_json( cfg, "dhcpc" );
 		ptr = json_string( v, "static" );
 		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 		{
-			v = json_value( cfg, "static" );
+			v = json_json( cfg, "static" );
 			static_ip_enable( netdev, v );
 		}
 	}
@@ -976,16 +976,16 @@ simagain:
 	if ( method != NULL && 0 == strcmp( method, "manual" ) )
 	{
 		/* set the static ip */
-		v = json_value( cfg, "manual" );
+		v = json_json( cfg, "manual" );
 		manual_ip_enable( netdev, v );
 	}
 	else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
 	{
-		v = json_value( cfg, "automatic" );
+		v = json_json( cfg, "automatic" );
 		ptr = json_string( v, "manual" );
 		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 		{
-			v = json_value( cfg, "manual" );
+			v = json_json( cfg, "manual" );
 			manual_ip_enable( netdev, v );
 		}
 	}
@@ -1010,7 +1010,7 @@ simagain:
 		/* ipv6 automatic setting */
 		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
 		{
-			ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
+			ret = automatic_client_connect( object, ifdev, netdev, json_json( cfg, "manual" ) );
 		}
 		ret = ttrue;
 		// prevent starting multiple setup
@@ -1033,7 +1033,7 @@ simagain:
 		/* ipv4 dhcp client setting */
 		if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
 		{
-			ret = dhcp_client_connect( object, ifdev, netdev, json_value( cfg, "dhcpc" ) );
+			ret = dhcp_client_connect( object, ifdev, netdev, json_json( cfg, "dhcpc" ) );
 		}
 		/* ipv4 ppp setting */
 		else if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
@@ -1049,7 +1049,7 @@ simagain:
 			}
 			else
 			{
-				ppp = json_value( cfg, "ppp" );
+				ppp = json_json( cfg, "ppp" );
 				json_set_string( ppp, "mtty", ptr );
 				mtu = json_number( cfg, "mtu" );
 				if ( mtu > 0 )
@@ -1121,7 +1121,7 @@ boole_t _automatic( obj_t this, param_t param )
 	/* automatic setting */
 	if ( method != NULL && 0 == strcmp( method, "automatic" ) )
 	{
-		ret = automatic_client_connect( object, ifdev, netdev, json_value( cfg, "manual" ) );
+		ret = automatic_client_connect( object, ifdev, netdev, json_json( cfg, "manual" ) );
 	}
 
     talk_free( cfg );
@@ -1206,7 +1206,7 @@ talk_t _state( obj_t this, param_t param )
         unsigned long long rt_bytes, rt_packets, rt_errs, rt_drops, tt_bytes, tt_packets, tt_errs, tt_drops;
         ip[0] = dstip[0] = mask[0] = mac[0] = '\0';
         rt_bytes = rt_packets = rt_errs = rt_drops = tt_bytes = tt_packets = tt_errs = tt_drops = 0;
-        ret = file2talk( path );
+        ret = file2json( path );
         netdev = device = json_string( ret, "netdev" );
 		if ( NULL == strstr( device, "ppp" ) )
 		{
@@ -1322,8 +1322,8 @@ talk_t _state( obj_t this, param_t param )
 
 		json_set_string( ret, "method", method );
 	    project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ul", object );
-		v = file2talk( path );
-	    talk_patch( v, ret );
+		v = file2json( path );
+	    json_sync( v, ret );
 		talk_free( v );
 		if ( netdev != NULL && *netdev != '\0' )
 		{
@@ -1419,7 +1419,7 @@ talk_t _status( obj_t this, param_t param )
                 json_set_string( ret, "status", ptr );
             }
 			talk_free( axp );
-            talk_patch( v, ret );
+            json_sync( v, ret );
             talk_free( v );
         }
     }
@@ -1479,7 +1479,7 @@ boole_t _online( obj_t this, param_t param )
 	/* set the dns */
 	snprintf( path, sizeof(path), "%s/%s", RESOLV_DIR, object );
 	unlink( path );
-	value = json_value( cfg, mode );
+	value = json_json( cfg, mode );
 	custom_dns = json_string( value, "custom_dns" );
 	if ( custom_dns != NULL && 0 == strcmp( custom_dns, "enable" ) )
 	{
@@ -1538,7 +1538,7 @@ boole_t _online( obj_t this, param_t param )
 	}
 
 	/* clear the failed count when no keeplive */
-	ptr = json_string( json_value( cfg, "keeplive" ), "type" );
+	ptr = json_string( json_json( cfg, "keeplive" ), "type" );
 	if ( ptr == NULL || 0 == strcmp( ptr, "disable" ) )
 	{
 		i = 0;
@@ -1570,7 +1570,7 @@ boole_t _online( obj_t this, param_t param )
 	/* set ppp tx queue */
 	if ( 0 == strncmp( netdev, "ppp", 3 ) )
 	{
-		value = json_value( cfg, "ppp" );
+		value = json_json( cfg, "ppp" );
 		ptr = json_string( value, "txqueuelen" );
 		if ( ptr == NULL || *ptr == '\0' )
 		{
@@ -1676,7 +1676,7 @@ boole_t _upline( obj_t this, param_t param )
 	/* get the custom_resolve */
 	snprintf( path, sizeof(path), "%s/%s.ipv6", RESOLV_DIR, object );
 	unlink( path );
-	value = json_value( cfg, method );
+	value = json_json( cfg, method );
 	custom_resolve = json_string( value, "custom_resolve" );
 	if ( custom_resolve != NULL && 0 == strcmp( custom_resolve, "enable" ) )
 	{

@@ -67,7 +67,7 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
             *(ptr+17) = '\0';
             lowtoupp( ptr );
 			x = json_create( NULL );
-			json_set_value( tree, ptr, x );
+			json_set_json( tree, ptr, x );
         }
         else if ( x != NULL )
         {
@@ -188,10 +188,10 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
     	signal = 0;
         child = NULL;
 		peermac = NULL;
-        while( NULL != ( child = json_each( tree, child ) ) )
+        while( NULL != ( child = json_next( tree, child ) ) )
         {
-        	value = axp_get_value( child );
-            s = json_get_string( value, "ssid" );
+        	value = axp_json( child );
+            s = json_string( value, "ssid" );
             if ( s == NULL )
             {
                 continue;
@@ -200,14 +200,14 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
             {
             	if ( good == true )
 				{
-					s = json_get_string( value, "sig" );
+					s = json_string( value, "sig" );
 					if ( s != NULL )
 					{
 						i = atoi( s );
 						if ( i > signal )
 						{
 							signal = i;
-							peermac = axp_get_attr( child );
+							peermac = axp_name( child );
 							json_set_string( value, "peermac", peermac );
 						}
 					}

@@ -10,8 +10,7 @@
 
 static boole project_create_json( const char *name, const char *apppath )
 {
-	FILE *fp;
-	talk_t info;
+	talk_t v;
 	char intro[LINE_MAX+1];
 	char prjpath[PATH_MAX+1];
 	char prjinfo[PATH_MAX+1];
@@ -52,34 +51,32 @@ static boole project_create_json( const char *name, const char *apppath )
     fgets( intro, sizeof(intro), stdin );
     intro[strlen(intro)-1] ='\0';
 	/* create the project info */
-	info = file2talk( prjinfo );
-	if ( info == NULL )
+	v = file2json( prjinfo );
+	if ( v == NULL )
 	{
-		info = json_create( NULL );
+		v = json_create( NULL );
 	}
-	json_set_string( info, "name", name );
-	json_set_string( info, "version", PROJECT_DEFAULT_VERSION );
-	json_set_string( info, "author", "fpktools" );
-	json_set_string( info, "intro", intro );
+	json_set_string( v, "name", name );
+	json_set_string( v, "version", PROJECT_DEFAULT_VERSION );
+	json_set_string( v, "author", "fpktools" );
+	json_set_string( v, "intro", intro );
 	// open file
-	if ( NULL == ( fp = fopen( prjinfo, "w+" ) ) )
+	if ( json_save( v, prjinfo ) == false )
 	{
 		fprintf( stderr, "error: cannot fopen the %s\n", prjinfo );
-		talk_free( info );
+		talk_free( v );
 		return false;
 	}
-	talk_fprint( fp, info );
-	fclose( fp );
 
-	talk_free( info );
 	project_dirty();
+	talk_free( v );
 	return true;
 }
 
 static boole project_create_wui( const char *name, const char *prjpath, const char *wuiname )
 {
+	talk_t v;
 	talk_t cfg;
-	talk_t info;
 	talk_t app;
 	talk_t lang;
 	char path[PATH_MAX];
@@ -89,7 +86,7 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 
     /* get the prj info */
 	snprintf( path, sizeof(path), "%s/"PROJECT_INFOFILE, prjpath );
-	cfg = file2talk( path );
+	cfg = file2json( path );
 	if ( cfg == NULL )
 	{
 		fprintf( stderr, "error: %s json format error\n", path );
@@ -99,21 +96,21 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	snprintf( page, sizeof(page), "%s.html", wuiname );
 	snprintf( cnjson, sizeof(cnjson), "%s-cn.json", wuiname );
 	snprintf( enjson, sizeof(enjson), "%s-en.json", wuiname );
-	info = json_value( cfg, "wui" );
-	if ( info == NULL )
+	v = json_json( cfg, "wui" );
+	if ( v == NULL )
 	{
-		info = json_create( NULL );
-		json_set_value( cfg, "wui", info );
+		v = json_create( NULL );
+		json_set_json( cfg, "wui", v );
 	}
 	/* add the wui */
-	json_delete_axp( info, name );
+	json_delete_axp( v, name );
 	app = json_create( NULL );
-	json_set_value( info, name, app );
+	json_set_json( v, name, app );
 	/* html */
 	json_set_string( app, "page", page );
 	/* lang */
 	lang = json_create( NULL );
-	json_set_value( app, "lang", lang );
+	json_set_json( app, "lang", lang );
 	json_set_string( lang, "cn", cnjson );
 	json_set_string( lang, "en", enjson );
 
@@ -257,7 +254,7 @@ int main( int argc, const char **argv )
 			fprintf( stderr, "error: %s no exist\n", name );
 			return -1;
 		}
-		hardware = register_value( LAND_PROJECT, "hardware" );
+		hardware = reg_string( NULL, "hardware" );
 		cwd[0] = '\0';
 		getcwd( cwd, sizeof(cwd) );
 		if ( chdir( path ) != 0 )
@@ -297,7 +294,7 @@ int main( int argc, const char **argv )
 		snprintf( path, sizeof(path), "%s/%s/%s.ash", PROJECT_APP_DIR, name, ptr );
 		/* create shell component */
 		shell( "cp %s/component.ash %s", TEMPLATE_PATH, path );
-		snprintf( cwd, sizeof(cwd), "%s%c%s", name, PRJ_COM_SEP, ptr );
+		snprintf( cwd, sizeof(cwd), "%s%c%s", name, PROJECT_OBJECT_GAPC, ptr );
 		com_register( cwd, path );
 		printf( "The component file %s\n", path );
     }

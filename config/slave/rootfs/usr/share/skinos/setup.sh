@@ -11,6 +11,12 @@ $LANDDIR/bin/he land@machine.setup
 
 # skinos daemon
 $LANDDIR/bin/daemon
+# debug or setup
+state=`$LANDDIR/bin/he land@machine:setup`
+if [ "X$state" == "Xdisable" ]
+then
+    exit 0
+fi
 
 # core
 $LANDDIR/bin/he land@init.call[arch]

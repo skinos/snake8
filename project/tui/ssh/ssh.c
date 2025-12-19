@@ -72,9 +72,9 @@ boole_t _setup( obj_t this, param_t param )
 	/************************ overlay **************************/
 
     /* get the configure */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
     /* get the status */
-    ptr = json_get_string( cfg, "status" );
+    ptr = json_string( cfg, "status" );
     if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
     {
         talk_free( cfg );
@@ -180,7 +180,7 @@ boole_t _setup( obj_t this, param_t param )
 	}
 
     /* start the service */
-    sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+    cstart( this, "service", NULL, COM_IDPATH );
 
     talk_free( cfg );
     return ttrue;
@@ -195,7 +195,7 @@ boole_t _shut( obj_t this, param_t param )
 }
 boole_t _reset( obj_t this, param_t param )
 {
-    sreset( COM_IDPATH, "service", NULL, COM_IDPATH );
+    creset( this, "service", NULL, COM_IDPATH );
     return ttrue;
 }
 boole_t _service( obj_t this, param_t param )
@@ -203,13 +203,13 @@ boole_t _service( obj_t this, param_t param )
     talk_t cfg;
     const char *port;
 
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
     if ( cfg == NULL )
     {
         return terror;
     }
     /* get the port */
-    port = json_get_string( cfg, "port" );
+    port = json_string( cfg, "port" );
     if ( port == NULL || *port == '\0' )
     {
         port = "22";
@@ -229,7 +229,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 {
     boole ret;
 
-    ret = config_sset( COM_IDPATH, v, path );
+    ret = config_set( this, v, path );
     if ( ret == true )
     {
         _shut( this, NULL );
@@ -239,7 +239,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 }
 talk_t _get( obj_t this, attr_t path )
 {
-    return config_sget( COM_IDPATH, path );
+    return config_get( this, path );
 }
 
 

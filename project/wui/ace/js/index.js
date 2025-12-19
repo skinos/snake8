@@ -1,3 +1,4 @@
+
 window.object = "wui@admin";
 window.hepath = "/he";
 window.talkkey = sessionStorage.getItem( "talkkey" );
@@ -750,7 +751,6 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
 			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
-			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Diagnostic' ), 'diagnostic' );
 			if ( window.wuiterm && ( !wuimenu || wuimenu.terminal != "disable" ) )
 			{
 				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );

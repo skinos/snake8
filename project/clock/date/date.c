@@ -133,7 +133,7 @@ boole_t _setup( obj_t this, param_t param )
     const char *ptr;
 
 	/* get the component configure */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
 	if ( cfg == NULL )
 	{
 		return ttrue;
@@ -169,9 +169,9 @@ boole _set( obj_t this, talk_t v, attr_t path )
 	/* shut first */
 	_shut( this, NULL );
 	/* save the configure */
-    ret = config_sset( COM_IDPATH, v, path );
+    ret = config_set( this, v, path );
 	/* get the component configure */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
 	if ( cfg != NULL )
 	{
 		/* get the attribute value of "timezone" */
@@ -187,7 +187,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		ptr = json_string( cfg, "ntpclient" );
 		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 		{
-			sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+			cstart( this, "service", NULL, COM_IDPATH );
 		}
 		talk_free( cfg );
 	}
@@ -195,7 +195,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 }
 talk_t _get( obj_t this, attr_t path )
 {
-	return config_sget( COM_IDPATH, path );
+	return config_get( this, path );
 }
 
 
@@ -221,7 +221,7 @@ boole_t _service( obj_t this, param_t param )
     /* get the configure */
     ret = false;
     interval = 0;
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
     zone = json_string( cfg, "timezone" );
     ptr = json_string( cfg, "ntpinterval" );
     if ( ptr != NULL )
@@ -314,7 +314,7 @@ boole_t _online( obj_t this, param_t param )
     const char *ptr;
 
 	/* get the component configure */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
 	if ( cfg == NULL )
 	{
 		return ttrue;
@@ -323,7 +323,7 @@ boole_t _online( obj_t this, param_t param )
     ptr = json_string( cfg, "ntpclient" );
     if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
     {
-        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+        cstart( this, "service", NULL, COM_IDPATH );
     }
 
 	/* free the component configure */
@@ -376,7 +376,7 @@ boole_t _ntpsync( obj_t this, param_t param )
 
     ret = false;
     ptr = param_string( param, 1 );
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
     zone = json_string( cfg, "timezone" );
     if ( ptr != NULL )
     {

@@ -12,13 +12,13 @@ boole_t _setup( obj_t this, param_t param )
 {
     const char *ptr;
 
-    ptr = config_sgets_string( NULL, 0, COM_IDPATH, "mode" );
+    ptr = config_gets_string( NULL, 0, this, "mode" );
     if ( ptr != NULL 
         && ( ( 0 == strcmp( ptr, "age" ) )
         || ( 0 == strcmp( ptr, "point" ) )
         || ( 0 == strcmp( ptr, "idle" ) ) ) )
     {
-        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+        cstart( this, "service", NULL, COM_IDPATH );
     }
 
     return ttrue;
@@ -32,7 +32,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 {
 	boole ret;
 
-    ret = config_sset( COM_IDPATH, v, path );
+    ret = config_set( this, v, path );
 	if ( ret == true )
 	{
 		_shut( this, NULL );
@@ -42,7 +42,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 }
 talk_t _get( obj_t this, attr_t path )
 {
-	return config_sget( COM_IDPATH, path );
+	return config_get( this, path );
 }
 
 
@@ -59,7 +59,7 @@ boole_t _service( obj_t this, param_t param )
     unsigned int pass;
 
     /* sleep 2 min for work */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
 	delay = 120;
 	ptr = json_string( cfg, "delay" );
 	if ( ptr != NULL && *ptr != '\0' )

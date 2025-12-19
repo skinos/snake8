@@ -315,13 +315,6 @@ var he =
 		return dfd.promise();
 	},
 
-    save:function( a, loading )
-    {
-    },
-	bksave:function( a, loading )
-	{
-	},
-
     /*
      * 重启路由器，屏显示进度条
      * @param {any} args 

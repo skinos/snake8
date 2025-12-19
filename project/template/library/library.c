@@ -18,16 +18,17 @@ PROJECT_ID            String, is the project name
 
 /* Available skin interfaces (specific headers are in the top /doc/ API directory) 
 link.h				implementation of general linker list
-syslog.h			   log call implementation
+log.h	    		log call implementation
 talk.h				implementation of common communication data types
 param.h 			implementation of parameter structure and related functions
 path.h				implementation of structure and related functions for object path and attribute path
-misc.h				miscellaneous function implementation
+utility.h   		miscellaneous function implementation
 register.h			global register variable implementation
 config.h			implementation function to get/set/list the config
 project.h			provide unified project information operation interface for the system
 com.h				implementation communication to other component function use talk structure or parameter structure
 he2com.h			invokes the function implementation
+serv.h		    	service call implementation
 skinapi.h			define all the general component api
 */
 

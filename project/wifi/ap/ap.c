@@ -28,7 +28,7 @@ boole_t _shut( obj_t this, param_t param )
 	const char *object;
 	const char *netdev;
 
-	object = obj_combine( this );
+	object = obj_name( this );
 	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
@@ -346,7 +346,7 @@ talk_t _stalist( obj_t this, param_t param )
             *(ptr+17) = '\0';
             low2upp( ptr );
 			x = json_create( NULL );
-			json_set_value( ret, ptr, x );
+			json_set_json( ret, ptr, x );
         }
         else if ( x != NULL )
         {

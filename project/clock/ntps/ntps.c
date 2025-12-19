@@ -15,13 +15,13 @@ boole_t _setup( obj_t this, param_t param )
     const char *ptr;
 
 	/* get the component configure */
-    cfg = config_sget( COM_IDPATH, NULL );
+    cfg = config_get( this, NULL );
 	/* get the attribute vaule of "status" from component configure */
     ptr = json_string( cfg, "status" );
     if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
     {
     	/* start the service for ntp server */
-        sstart( COM_IDPATH, "service", NULL, COM_IDPATH );
+        cstart( this, "service", NULL, COM_IDPATH );
     }
 
 	/* free the component configure */
@@ -38,7 +38,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 {
 	boole ret;
 
-    ret = config_sset( COM_IDPATH, v, path );
+    ret = config_set( this, v, path );
 	if ( ret == true )
 	{
 		_shut( this, NULL );
@@ -48,7 +48,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 }
 talk_t _get( obj_t this, attr_t path )
 {
-	return config_sget( COM_IDPATH, path );
+	return config_get( this, path );
 }
 
 
@@ -76,7 +76,7 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 30 );
 	}while(1);
 
-	cfg = config_sget( COM_IDPATH, NULL );
+	cfg = config_get( this, NULL );
 	netdev = NULL;
     ptr = json_string( cfg, "local" );
     if ( ptr == NULL || *ptr == '\0' )

@@ -20,17 +20,17 @@ COM_IDPATH            String, Full name of a component in the system, PROJECT_ID
 
 /* Available skin interfaces (specific headers are in the top /doc/ API directory) 
 link.h				implementation of general linker list
-syslog.h			log call implementation
+log.h	    		log call implementation
 talk.h				implementation of common communication data types
 param.h 			implementation of parameter structure and related functions
 path.h				implementation of structure and related functions for object path and attribute path
-misc.h				miscellaneous function implementation
+utility.h   		miscellaneous function implementation
 register.h			global register variable implementation
 config.h			implementation function to get/set/list the config
 project.h			provide unified project information operation interface for the system
 com.h				implementation communication to other component function use talk structure or parameter structure
 he2com.h			invokes the function implementation
-reactor.h           libevent reactor assist functions
+serv.h		    	service call implementation
 skinapi.h			define all the general component api
 */
 
@@ -46,7 +46,7 @@ skinapi.h			define all the general component api
  * This function can be called by the user at the he terminal, project@component.setup to call this function */
 boole_t _setup( obj_t this, param_t param )
 {
-	info( "the %s setup has be called", COM_IDPATH );
+	app_info( "the %s setup has be called", COM_IDPATH );
 	printf( "the %s setup has be called\n", COM_IDPATH );
     return ttrue;
 }
@@ -55,7 +55,7 @@ boole_t _setup( obj_t this, param_t param )
  * This function can be called by the user at the he terminal, project@component.shut to call this function */
 boole_t _shut( obj_t this, param_t param )
 {
-	info( "the %s shut has be called", COM_IDPATH );
+	app_info( "the %s shut has be called", COM_IDPATH );
 	printf( "the %s shut has be called\n", COM_IDPATH );
     return ttrue;
 }
@@ -63,7 +63,7 @@ boole_t _shut( obj_t this, param_t param )
 /* Usually it is started as a service process in other functions, so it will always run, and if it exits the system it will restart it */
 boole_t _service( obj_t this, param_t param )
 {
-	info( "the %s service has be ran", COM_IDPATH );
+	app_info( "the %s service has be ran", COM_IDPATH );
 	pause();
     return tfalse;
 }
@@ -81,10 +81,10 @@ boole_t _take( obj_t this, param_t param )
 	/* get the information that the joint event carries */
 	ms = param_talk( param, 2 );
 	/* converts the event information to a string */
-	ptr = talk2string( ms );
+	ptr = json2string( ms );
 
 	/* logger the joint event */
-	info( "receive a event, name is %s, carry message is %s", event, ptr );
+	app_info( "receive a event, name is %s, carry message is %s", event, ptr );
 
 	/* free the string */
 	free( ptr );
@@ -103,7 +103,7 @@ talk_t _get( obj_t this, attr_t path )
     /* gets the configuration parameters for the component */
     cfg = config_get( this, path );
 
-	info( "returns the configuration of the %s", COM_IDPATH );
+	app_info( "returns the configuration of the %s", COM_IDPATH );
     return cfg;
 }
 /* When you set a component parameter, you will be triggered to call this function, usually filtered by this function and then stored in the actual configuration
@@ -117,7 +117,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
     /* if the flash is successfully saved, the call is called by calling first _shut closing and then calling the _setup to restart the corresponding service */
     if ( ret == true )
     {
-		info( "save the configuration of the %s and reset it", COM_IDPATH );
+		app_info( "save the configuration of the %s and reset it", COM_IDPATH );
         _shut( this, NULL );
         _setup( this, NULL );
     }

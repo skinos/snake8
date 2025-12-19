@@ -139,6 +139,7 @@ int main( int argc, const char **argv )
 			|| 0 == strncmp( line, "ls ", 3 )
 			|| 0 == strncmp( line, "tftp ", 5 )
 			|| 0 == strncmp( line, "curl ", 5 )
+			|| 0 == strncmp( line, "reboot", 6 )
 			)
 		{
 			add_history( line );

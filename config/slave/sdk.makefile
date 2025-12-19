@@ -113,6 +113,9 @@ sdk_distclean: sdk_clean
 
 
 sdk_install:
+	if [ -f /usr/share/skinos/shut.sh ]; then \
+		/usr/share/skinos/shut.sh; \
+	fi
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
@@ -135,6 +138,9 @@ sdk_stop:
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 sdk_uninstall:
+	if [ -f /usr/share/skinos/shut.sh ]; then \
+		/usr/share/skinos/shut.sh; \
+	fi
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
