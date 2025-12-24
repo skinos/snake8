@@ -244,6 +244,35 @@ ttrue
     g1=10;g2=11;g3=01;g4=00;g5=12     # g1 output low, g2 output high, g3 input high, g4 input low, g5 output a cyclic timer
     ```
 
++ `list[]` **get the client/mqtt/serverstatus**   
+    - failed return NULL   
+    - succeed return json to describes   
+    ```json
+    // Attributes introduction of talk by the method return
+    {
+        "client":                    // Client status, have this when client enable
+        {
+            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
+            "tx":"send bytes",            // [ number ]
+            "rx":"recv bytes"             // [ number ]
+        },
+        "mqtt":                      // MQTT status, have this when MQTT enable
+        {
+            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
+            "tx":"send bytes",            // [ number ]
+            "rx":"recv bytes"             // [ number ]
+        },
+        "server:ip:port":            // Server status, have this when the client of other device connected in
+        {
+            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
+            "tx":"send bytes",            // [ number ]
+            "rx":"recv bytes"             // [ number ]
+        }
+        // ... more the client of server
+    }
+    ```
+
+
 + `modify[ io, state ]` **modify the io state**   
     - io ----------- [ "g1", "g2", "g3", ... ] the IO name
     - state -------- [ "0f", "0r", "0b", "10", "11", "2-x-y" ]
@@ -256,6 +285,7 @@ ttrue
     - failed return tfalse   
     - succeed return ttrue
 
-+ `report[]` **report io state to server right now**   
++ `report[]` **report io state to client/mqtt/client right now**   
     - failed return tfalse   
     - succeed return ttrue
+

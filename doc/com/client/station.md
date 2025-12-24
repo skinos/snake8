@@ -13,6 +13,49 @@ Management of all local client
         "bindip":"specify ip address on dhcp assignment",     // [ ip address ]
         "arpbind":"bind ip set the arp table",                // [ "disable", "enable" ]
         "lease":"specify lease on dhcp assignment"            // [ number ] the unit is second
+
+        "acl":"acl state",                                          // [ "disable", "enable" ]
+        "acl_rule"                                                  // acl rule in here
+        {
+            "rule name":                                                 // [ string ], user can custom the rule name
+            {
+                "action":"drop or accept",                               // [ "drop", "accept", "return" ]
+                                                                                  // "drop" for forbid
+                                                                                  // "accept" for pass
+                                                                                  // "return" for no more matching
+                "proto":"protocol type",                                 // [ "domain", "key", "tcp", "udp", "all", "layer7" ]
+                                                                                  // "domain", for domain, "dest" well be domain
+                                                                                  // "tcp", for tcp protocol
+                                                                                  // "udp", for udp protocol
+                                                                                  // "layer7, for layer7 application
+                                                                                  // "all", or space or none for all protocol
+                "dest":"internet destination address",                   // [ string ] packets destination
+                                                                                  // single IP: 202.96.11.32, vaild when "proto" be "tcp" or "udp" or "all"
+                                                                                  // multiple IP: 2.3.1.2,4.34.2.1,72.32,192.1, vaild when "proto" be "tcp" or "udp" or "all"
+                                                                                  // range of IP: 202.96.132.11-202.96.132.20, vaild when "proto" be "tcp" or "udp" or "all"
+                                                                                  // domain: www.baidu.com, vaild when "proto" be "domain"
+                                                                                  // layer7: Future expansion, vaild when "proto" be "layer7"
+                                                                                  // space for all ip address, vaild when "proto" be "tcp" or "udp" or "all"
+                "destport":"internet destination port",                  // [ number ] valid when "proto" be "tcp" or "udp"
+                                                                                  // single port: 8080
+                                                                                  // multiple port: 80,8000,8080
+                                                                                  // range of port: 80-800
+                                                                                  // space or none for all port
+                "key":"keyword",                                         // [ string ] matching of keyword in packets, valid when "proto" be "tcp" or "udp" or "all"
+
+                "timer":"specifying an effective time",                  // [ "disable", "enable" ]
+                "timer_cfg":                                                 // effective time, valid when "status" be "enable"
+                {
+                    "datestart":"starting date",                             // [ string ], format is YYYY-MM-DD
+                    "datestop":"ending date",                                // [ string ], format is YYYY-MM-DD
+                    "timestart":"start time of day",                         // [ string ], format is hh-mm-ss
+                    "timestop":"end time of day",                            // [ string ], format is hh-mm-ss
+                    "weekdays":"designated week number"                      // [ string ], format is 1,2,3,..., 0 for Sunday
+                }
+            }
+            // ... more rule
+        }
+
     }
     // more client MAC address rule
 }

@@ -345,25 +345,22 @@ typedef int boole;
 
 /// system important path
 #define PROJECT_DIR 			 "/usr/share/skinos"
+#define PROJECT_ETC_DIR 		 "/etc"
 #if defined gPLATFORM__slave
+	#define PROJECT_TMP_DIR 		 "/tmp/skinos"
+	#define PROJECT_VAR_DIR 		 "/var/skinos"
+	#define PROJECT_MNT_DIR 		 "/mnt/skinos"
 	#define PROJECT_LIB_DIR          "/usr/local/lib"
 	#define PROJECT_BIN_DIR          "/usr/local/bin"
-	#define PROJECT_ETC_DIR          "/etc"
-	#define PROJECT_TMP_DIR 		 "/tmp/skinos"
-	#define PROJECT_VAR_DIR          "/var/skinos"
-	#define PROJECT_MNT_DIR 		 "/mnt/skinos"
 	#define PROJECT_CFG_DIR 		 PROJECT_MNT_DIR"/config"
-	#define PROJECT_DBS_DIR 		 PROJECT_MNT_DIR"/dbs"
 	#define PROJECT_REGISTER_LIB_DIR PROJECT_LIB_DIR
 	#define PROJECT_REGISTER_BIN_DIR PROJECT_BIN_DIR
 #else
+	#define PROJECT_TMP_DIR 		 "/tmp"
+	#define PROJECT_VAR_DIR 		 "/var"
+	#define PROJECT_MNT_DIR 		 "/mnt"
 	#define PROJECT_LIB_DIR          "/usr/lib"
 	#define PROJECT_BIN_DIR          "/usr/bin"
-	#define PROJECT_ETC_DIR          "/etc"
-	#define PROJECT_VAR_DIR          "/var/skinos"
-	#define PROJECT_TMP_DIR          "/tmp/skinos"
-	#define PROJECT_DBS_DIR 		 "/var/dbs"
-	#define PROJECT_MNT_DIR 		 PROJECT_VAR_DIR"/mnt"
 	#define PROJECT_CFG_DIR          PROJECT_ETC_DIR"/config"
 	#define PROJECT_REGISTER_LIB_DIR PROJECT_VAR_DIR"/lib"
 	#define PROJECT_REGISTER_BIN_DIR PROJECT_VAR_DIR"/bin"
@@ -374,6 +371,7 @@ typedef int boole;
 #define PROJECT_CAH_DIR              PROJECT_TMP_DIR"/.cah"
 #define PROJECT_CONF_DIR             PROJECT_TMP_DIR"/.conf"
 #define PROJECT_OEM_DIR              PROJECT_MNT_DIR"/.oem"
+#define PROJECT_DBS_DIR 		     PROJECT_MNT_DIR"/dbs"
 #define PROJECT_INT_DIR              PROJECT_MNT_DIR"/internal"
 #define PROJECT_APP_DIR              PROJECT_MNT_DIR"/internal/skinos"
 #define SHELL_API_HEADER             PROJECT_DIR"/land/api.sh"

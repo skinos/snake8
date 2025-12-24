@@ -235,7 +235,7 @@ boole_t _service( obj_t this, param_t param )
             {
             	/* idle */
                 v  = scall( STATION_COM, "list", NULL );
-                if ( json_each( v, NULL ) != NULL )
+                if ( json_next( v, NULL ) != NULL )
                 {
                     i = 0;
                 }
