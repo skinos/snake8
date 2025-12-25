@@ -32,6 +32,12 @@
           <tr id="lte2" style="display: none;">
               <th data-i18n="ifname@lte2"></th><td id="lte2_status"></td><td id="lte2_state"></td>
           </tr>
+          <tr id="lte3" style="display: none;">
+              <th data-i18n="ifname@lte3"></th><td id="lte3_status"></td><td id="lte3_state"></td>
+          </tr>
+          <tr id="lte4" style="display: none;">
+              <th data-i18n="ifname@lte4"></th><td id="lte4_status"></td><td id="lte4_state"></td>
+          </tr>
       </tbody>
       </table>            
       <div class="hr hr32 hr-dotted"></div>
@@ -44,16 +50,16 @@
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="type">
             <option value="default" data-i18n="Use First Online"></option>
-            <option value="cold" data-i18n="Backup(Cold) on Main/Alternate"></option>
-            <option value="hot" data-i18n="Backup(Hot) on Main/Alternate"></option>
-            <option value="hot3" data-i18n="Backup(Hot) on Main/Alternate/King"></option>
-            <option value="hot4" data-i18n="Backup(Hot) on Main/Alternate/King/Reserve"></option>
-            <option value="lazy" data-i18n="Backup(Lazy) on Main/Alternate"></option>
-            <option value="lazy3" data-i18n="Backup(Lazy) on Main/Alternate/King"></option>
-            <option value="lazy4" data-i18n="Backup(Lazy) on Main/Alternate/King/Reserve"></option>
-            <option value="dbdc" data-i18n="Balancing on Main/Alternate"></option>
-            <option value="dbdc3" data-i18n="Balancing on Main/Alternate/King"></option>
-            <option value="dbdc4" data-i18n="Balancing on Main/Alternate/King/Reserve"></option>
+            <option value="cold" data-i18n="Backup(Cold) on (Third)/(First/Second)"></option>
+            <option value="hot" data-i18n="Backup(Hot) on (Third)/(First/Second)"></option>
+            <option value="hot3" data-i18n="Backup(Hot) on First/Second/Third"></option>
+            <option value="hot4" data-i18n="Backup(Hot) on First/Second/Third/Fourth"></option>
+            <option value="lazy" data-i18n="Backup(Lazy) on Third/(First/Second)"></option>
+            <option value="lazy3" data-i18n="Backup(Lazy) on First/Second/Third"></option>
+            <option value="lazy4" data-i18n="Backup(Lazy) on First/Second/Third/Fourth"></option>
+            <option value="dbdc" data-i18n="Balancing on Third/(First/Second)"></option>
+            <option value="dbdc3" data-i18n="Balancing on First/Second/Third"></option>
+            <option value="dbdc4" data-i18n="Balancing on First/Second/Third/Fourth"></option>
           </select>
         </div>
       </div>
@@ -61,7 +67,7 @@
 
       <!-- 主连接 -->
       <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Main Connection"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="First(Main) Connection"></label>
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="main"></select>
         </div>
@@ -70,7 +76,7 @@
 
       <!-- 备连接 -->
       <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Alternate Connection"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Second(Backup) Connection"></label>
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="back"></select>
         </div>
@@ -78,7 +84,7 @@
       
       <!-- king -->
       <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="King Connection"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Third(King) Connection"></label>
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="king"></select>
         </div>
@@ -87,7 +93,7 @@
       
       <!-- reserve -->
       <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Reserve Connection"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Fourth(Reserve) Connection"></label>
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="reserve"></select>
         </div>
@@ -274,6 +280,8 @@
             $('#wisp2').hide();
             $('#lte').hide();
             $('#lte2').hide();
+            $('#lte3').hide();
+            $('#lte4').hide();
             return;
         }
         if ( list["ifname@wan"] )
