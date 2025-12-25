@@ -485,16 +485,16 @@ int          routes_info( const char *tid, const char *destname, const char *mas
  *		@retval true for exist
  *		@retval false for not exist
  */
-boole        gateway_info( char *gateway, char *netdev );
+boole        outer_info( char *gateway, char *netdev );
 /**
- * @brief get the default extern route infomation
+ * @brief get the gateway route infomation
  * @param[out] gateway
  * @param[out] netdev
  * @return rule exist or not
  *		@retval true for exist
  *		@retval false for not exist
  */
-boole		 gate_info( char *gateway, char *netdev );
+boole        gateway_info( char *gateway, char *netdev );
 /**
  * @brief switch the extern route rule
  * @param[in] tid, route table id

@@ -7,7 +7,7 @@ The network framework defines a three-tier concept to manage network interfaces:
 - ifname, Abstract network connections
 
 
-#### **configuration( network@frame )**
+#### **Configuration( network@frame )**
 
 ```json
 // Attribute introduction
@@ -59,20 +59,24 @@ The network framework defines a three-tier concept to manage network interfaces:
 
 #### **Methods**
 
-+ `status[]` **show external connections status when multiple external connections coexist**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `status[]` **show external connections status when multiple external connections coexist**
+    - failed return NULL
+    - error return terror, Like in the wrong mode of operation, only work in the muliti-connection mode
+    - return json to describes the network infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":
         {
             "status":"Whether online",    // [ down, up ], up for online, down for offline
-            "inuse":"Whether used"       // [ disable, enable ], enable for in used, disable for not used
+            "inuse":"Whether used"        // [ disable, enable ], enable for in used, disable for not used
         },
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
     ```
+
+    Example, get external connections status
     ```shell
-    # examples, get external connections status
     network@frame.status
     {
         "ifname@lte":                   # ifname@lte status is online and inuse current
@@ -88,16 +92,19 @@ The network framework defines a three-tier concept to manage network interfaces:
     }
     ```
 
-+ `list[]` **list all connections**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `list[]` **list all connections**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":"The corresponding ifdev object",
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
-    ```
+    ``` 
+
+    Example, get all connections
     ```shell
-    # examples, get all connections
     network@frame.list
     {
         "ifname@lan":"bridge@lan",              # local connection named ifname@lan
@@ -106,12 +113,14 @@ The network framework defines a three-tier concept to manage network interfaces:
     }
     ```
 
-+ `local[]` **list all local connections and infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `local[]` **list all local connections and infomation**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":
-        {
+        {                               // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
             "ifdev":"corresponding ifdev object",
@@ -122,13 +131,14 @@ The network framework defines a three-tier concept to manage network interfaces:
             "tx_bytes":"tx bytes",
             "tx_packets":"tx packets",
             "mac":"MAC address"
-            // ... many other properties show
+            //... more the attr return by API "status" of ifname object
         }
         //"ifname object":{ ... }     How many local connections how many properties show
     }
     ```
+
+    Example, get all the local connections infomation
     ```shell
-    # examples, get all the local connections infomation
     network@frame.local
     {
         "ifname@lan":                           # local connection named ifname@lan
@@ -151,12 +161,14 @@ The network framework defines a three-tier concept to manage network interfaces:
     }
     ```
 
-+ `extern[]` **list all extern connections and infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `extern[]` **list all extern connections and infomation**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":
-        {
+        {                             // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
             "ifdev":"corresponding ifdev object",
@@ -167,13 +179,15 @@ The network framework defines a three-tier concept to manage network interfaces:
             "tx_bytes":"tx bytes",
             "tx_packets":"tx packets",
             "mac":"MAC address"            
+            //... more the attr return by API "status" of ifname object
         }
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
     ```
+
+    Example, get all the extern connections infomation
     ```shell
-    # examples, get all the extern connections infomation
-    network@frame.local
+    network@frame.extern
     {
         "ifname@lte":
         {
@@ -239,12 +253,14 @@ The network framework defines a three-tier concept to manage network interfaces:
     }
     ```
 
-+ `vpn[]` **list all vpn connections and infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `vpn[]` **list all vpn connections and infomation**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":
-        {
+        {                             // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
             "ifdev":"corresponding ifdev object",
@@ -255,21 +271,35 @@ The network framework defines a three-tier concept to manage network interfaces:
             "tx_bytes":"tx bytes",
             "tx_packets":"tx packets",
             "mac":"MAC address"            
+            //... more the attr return by API "status" of ifname object
         }
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
     ```
+
+    Example, get all the vpn connections infomation
     ```shell
-    # examples, get all the vpn connections infomation
     network@frame.vpn
+    {
+        "ovpn@client":
+        {
+            ...
+        },
+        "vpnc@pptp":
+        {
+            ...
+        }
+    }    
     ```
 
-+ `outer[]` **list all extern and vpn ifname and its infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `outer[]` **list all extern and vpn ifname and its infomation**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
         "ifname object":
-        {
+        {                             // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
             "ifdev":"corresponding ifdev object",
@@ -280,16 +310,38 @@ The network framework defines a three-tier concept to manage network interfaces:
             "tx_bytes":"tx bytes",
             "tx_packets":"tx packets",
             "mac":"MAC address"            
+            //... more the attr return by API "status" of ifname object
         }
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
     ```
+
+    Example, get all the extern and vpn connections infomation
     ```shell
-    # examples, get all the extern and vpn connections infomation
     network@frame.outer
+    {
+        "ifname@wan":
+        {
+            ...
+        },    
+        "ifname@wisp":
+        {
+            ...
+        },          
+        "ovpn@client":
+        {
+            ...
+        },
+        "vpnc@pptp":
+        {
+            ...
+        }
+    }        
     ```
 
-+ `default[]` **get current default connection and infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*
++ `default[]` **get current default connection and infomation**
+    - failed return NULL
+    - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -304,11 +356,12 @@ The network framework defines a three-tier concept to manage network interfaces:
         "tx_bytes":"tx bytes",
         "tx_packets":"tx packets",
         "mac":"MAC address"
-        // ... many other properties show
+        //... more the attr return by API "status" of ifname object
     }
     ```
+
+    Example, get current default connection infomation
     ```shell
-    # examples, get current default connection infomation
     network@frame.default
     {
         "ifname":"ifname@lte2",              # current default connetion is ifname@lte2, and the above is the infomation
@@ -338,73 +391,54 @@ The network framework defines a three-tier concept to manage network interfaces:
     }    
     ```
 
-
-
-+ `main[]` **new session immediately uses the main connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples
-    network@frame.main
-    ttrue
++ `gateway[]` **get current gateway connection and infomation**
+    - failed return NULL
+    - return json to describes the infomation  
+    ```json
+    // Attributes introduction of talk by the method return
+    {
+        "ifname":"ifname object",
+        "mode":"current mode",
+        "status":"current state",
+        "ifdev":"corresponding ifdev object",
+        "netdev":"netdev name of linux",
+        "ip":"IP address",
+        "rx_bytes":"receive bytes",
+        "rx_packets":"receive packets",
+        "tx_bytes":"tx bytes",
+        "tx_packets":"tx packets",
+        "mac":"MAC address"
+        //... more the attr return by API "status" of ifname object
+    }
     ```
 
-+ `back[]` **new session immediately uses the backup connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
+    Example, get current gateway connection infomation
     ```shell
-    # examples
-    network@frame.back
-    ttrue
+    network@frame.gateway
+    {
+        "ifname":"ifname@lte2",              # current default connetion is ifname@lte2, and the above is the infomation
+        "mode":"dhcpc",
+        "netdev":"usb0",
+        "gw":"10.232.185.157",
+        "dns":"120.80.80.80",
+        "dns2":"221.5.88.88",
+        "ontime":"02:22:47:0",
+        "status":"up",
+        "ip":"10.232.185.158",
+        "mask":"255.255.255.252",
+        "delay":"186",
+        "livetime":"03:08:57:0",
+        "rx_bytes":"142658",
+        "rx_packets":"1671",
+        "tx_bytes":"168684",
+        "tx_packets":"1808",
+        "mac":"02:50:F4:00:00:00",
+        "name":"Quectel-RG500Q",
+        "imei":"869710030002905",
+        "imsi":"460015356123463",
+        "iccid":"89860121801097564807",
+        "state":"connect",
+        "rssi":"-75",
+        "signal":"4"
+    }    
     ```
-
-+ `back[]` **new session immediately load balance on main and back connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples
-    network@frame.back
-    ttrue
-    ```
-
-+ `auto[]` **enable automatic load balance, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples
-    network@frame.auto
-    ttrue
-    ```
-
-
-
-+ `src_main[ source ip address ]` **set new session of source ip address immediately uses the main connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the source ip 192.168.8.222 new session route to main connection
-    network@frame.src_main[ 192.168.8.222 ]
-    ttrue
-    ```
-+ `dest_main[ dest ip address ]` **set new session of dest ip address immediately uses the main connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the dest ip 114.114.114.114 new session route to main connection
-    network@frame.dest_main[ 114.114.114.114 ]
-    ttrue
-    ```
-
-+ `src_back[ source ip address ]` **set new session of source ip address immediately uses the back connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the source ip 192.168.8.111 new session route to back connection
-    network@frame.src_back[ 192.168.8.111 ]
-    ttrue
-    ```
-+ `dest_main[ dest ip address ]` **set new session of dest ip address immediately uses the main connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the dest ip 114.114.115.115 new session route to back connection
-    network@frame.dest_back[ 114.114.115.115 ]
-    ttrue
-    ```
-
-+ `src_both[ source ip address ]` **set new session of source ip address load balance on main and back connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the source ip 192.168.8.123 new session load balance on main and back connection
-    network@frame.src_both[ 192.168.8.123 ]
-    ttrue
-+ `dest_both[ dest ip address ]` **set new session of dest ip address load balance on main and back connection, only vaild in dbdc**, *succeed return ttrue, failed return tfalse, error return terror*
-    ```shell
-    # examples, the dest ip 8.8.8.8 new session load balance on main and back connection
-    network@frame.dest_both[ 8.8.8.8 ]
-    ttrue
-
-
