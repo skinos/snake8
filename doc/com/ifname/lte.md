@@ -288,7 +288,8 @@ ttrue
 ifname@lte:profile_cfg/apn=NewAPN
 ttrue
 ```   
-# You can also use one command to complete the operation of the above three command
+
+You can also use one command to complete the operation of the above three command
 ```shell
 ifname@lte|{"profile":"enable","profile_cfg":{"apn":"NewAPN"}}
 ttrue
@@ -308,12 +309,12 @@ ttrue
 
 
 
-#### **Methods**   
+#### **API**   
 **ifname@lte** is first LTE network   
 **ifname@lte2** is second LTE/NR network   
 
 + `status[]` **get the LTE network infomation**   
-    - failed reeturn NULL
+    - failed return NULL
     - error return terror   
     - succeed return json to describes infomation   
     ```json
@@ -351,7 +352,7 @@ ttrue
                                             // "slaac" for Stateless address autoconfiguration
         "addr":"IPv6 address",          // [ ipv6 address ]
         "addr2":"IPv6 address2",        // [ ipv6 address ]
-        "addr3":"IPv6 address3"         // [ ipv6 address ]
+        "addr3":"IPv6 address3",        // [ ipv6 address ]
 
         // For LTE/NR baseband Status, the parameters are the same as modem@lte or modem@lte2
         "imei":"IMEI numer",            // [ string ]
@@ -452,21 +453,33 @@ ttrue
     ```   
 
 
-+ `netdev[]` **get the netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the netdev**  
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first LTE network netdev
     ```shell
     ifname@lte.netdev
     usb0
     ```   
 
-+ `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
++ `ifdev[]` **get the ifdev**   
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first LTE network ifdev
     ```shell
     ifname@lte.ifdev
     modem@lte
     ```   
 
-+ `shut[]` **shutdown the modem network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the modem network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, shutdown the frist LTE network
     ```shell
     ifname@lte.shut
@@ -478,7 +491,11 @@ ttrue
     ttrue
     ```   
 
-+ `setup[]` **setup the modem network**, *succeed return tttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the modem network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, setup the frist LTE network
     ```shell
     ifname@lte.setup

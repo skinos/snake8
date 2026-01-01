@@ -12,7 +12,7 @@
 
 
 /// Maximum options in one paramter structure
-#define PARAM_OPTIONS_MAX 20
+#define PARAM_OPTIONS_MAX 10
 
 /// parameter structure
 /// example: 'myname,{"test":"testvalue"},test3' of options description for parameter

@@ -26,14 +26,8 @@
 #ifndef LINE_MAX
 #define LINE_MAX          (1024)
 #endif
-/// command line max options macro
-#ifndef LINE_OPTIONS_MAX
-#define LINE_OPTIONS_MAX  (24)
-#endif
 /// he command line max length macro for
-#define HECMD_LINE_MAX    (63335)
-/// he command json max length macro
-#define HECMD_JSON_MAX    (63335*10)
+#define JSON_LINE_MAX   (63335)
 
 /// default file mode
 #define REGULAR_FILE_MODE (0660)

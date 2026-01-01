@@ -70,9 +70,12 @@ ttrue
 
 
 
-#### **Methods**   
+#### **API**   
 
-+ `status[]` **get the 2.4G Station infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `status[]` **get the 2.4G Station infomation**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -105,15 +108,22 @@ ttrue
     }
     ```
 
-+ `netdev[]` **get the 2.4G Station netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the 2.4G Station netdev**   
+    - failed return NULL
+    - error return terror    
+    - succeed return string to describes this infomation   
+
+    Example, get the 2.4G Station netdev
     ```shell
-    # examples, get the 2.4G Station netdev
     wifi@nsta.netdev
     ath11
     ```
 
 
-+ `aplist[]` **use the 2.4G Station scan the surrounding AP**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `aplist[]` **use the 2.4G Station scan the surrounding AP**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation       
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -138,8 +148,8 @@ ttrue
     }
     ```
 
+    Example, get the surrounding AP from 2.4G Station scan
     ```shell
-    # examples, get the surrounding AP from 2.4G Station scan
     wifi@nsta.aplist
     {
         "80:EA:07:15:0E:E6":                    # first AP by scanning
@@ -178,16 +188,24 @@ ttrue
     }
     ```
 
-+ `shut[]` **shutdown the 2.4G Station**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the 2.4G Station**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+
+    Example, shutdown the 2.4G Station
     ```shell
-    # examples, shutdown the 2.4G Station
     wifi@nsta.shut
     ttrue
     ```
 
-+ `setup[]` **setup the 2.4G Station**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the 2.4G Station**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+    
+    Example, setup the 2.4G Station
     ```shell
-    # examples, setup the 2.4G Station
     wifi@nsta.setup
     ttrue
     ```

@@ -36,7 +36,7 @@ typedef struct register_file_st
 } register_file_struct;
 typedef register_file_struct* register_file_t;
 /* default number register at one register file */
-#define REGISTER_VAR_NUM          (100)
+#define REGISTER_VAR_NUM          (50)
 /* register value default size */
 #define REGISTER_VAR_SIZE         (NAME_MAX)
 /* register default object */

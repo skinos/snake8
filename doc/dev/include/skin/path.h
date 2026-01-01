@@ -12,7 +12,7 @@
 
 
 /// Maximum object level in one object structure
-#define OBJ_MAX_LEVEL 20
+#define OBJ_MAX_LEVEL 3
 
 /// object structure: this structure can locate the components
 /// example: "myproject@component" of component path description for object
@@ -27,7 +27,6 @@ typedef struct obj_st
     // all layer pointer
     // example: layer[0] point to "top_object"       obj_layer( obj, 1 );
     // 			layer[1] point to "second_object"    obj_layer( obj, 2 );
-    // 			layer[2] point to "third_object"     obj_layer( obj, 3 );
     char *layer[OBJ_MAX_LEVEL];
 
 	// project name
@@ -35,14 +34,7 @@ typedef struct obj_st
 	// component name
     char *obj;
     // actual pathname buffer
-    char pathbuf[PATH_MAX];
-	// component type, such as:
-	// 		component file
-	// 		execute file
-	//		shell file
-	// 		configure file
-	//		kernel module file
-    signed char    type;
+    char *pathbuf;
     // corresponding pointer of component structure
     struct com_st *com;                                                // need free
 
@@ -88,17 +80,6 @@ const char *obj_prj( obj_t object );
  *  	@retval NULL for error, errno will be set
  */
 const char *obj_com( obj_t object );
-/**
- * @brief get component type from object
- * @param[in] object
- * @return component type
- * 		@retval COM_FILE_KO for kernel module
- * 		@retval COM_FILE_LIB for component
- * 		@retval COM_FILE_SHELL for shell
- * 		@retval COM_FILE_EXECUTE for execute file
- *  	@retval negative error, errno will be set
- */
-int         obj_type( obj_t object );
 /**
  * @brief get how many layer in object
  * @param[in] object

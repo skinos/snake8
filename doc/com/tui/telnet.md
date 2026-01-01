@@ -19,7 +19,7 @@ Manage gateway telnet server
 }
 ```
 
-Examples, show all telnet server configure
+Example, show all telnet server configure
 ```shell
 tui@telnet
 {
@@ -33,25 +33,25 @@ tui@telnet
 }
 ```  
 
-Examples, modify the port of telnet server
+Example, modify the port of telnet server
 ```shell
 tui@telnet:port=2323
 ttrue
 ```  
 
-Examples, disable the telnet server
+Example, disable the telnet server
 ```shell
 tui@telnet:status=disable
 ttrue
 ```  
 
-Examples, set the ip 192.168.8.250 can access the telnet server
+Example, set the ip 192.168.8.250 can access the telnet server
 ```shell
 tui@telnet:manager/pc3=192.168.8.250
 ttrue
 ```  
 
-Examples, clear the manager allow all ip can access the telnet server
+Example, clear the manager allow all ip can access the telnet server
 ```shell
 tui@telnet:manager=
 ttrue

@@ -25,7 +25,7 @@ Management ACL of client from local interface
                                                                                   // "layer7, for layer7 application
                                                                                   // "all", or space or none for all protocol
 
-                "source":"local source address",                         // [ string ] packets from the "interface name"
+                "src":"local source address",                         // [ string ] packets from the "interface name"
                                                                                   // single IP: 192.168.8.222
                                                                                   // multiple IP: 192.168.8.2,192.168.8.3,192.168.8.4
                                                                                   // range of IP: 192.168.8.2-192.168.8.4

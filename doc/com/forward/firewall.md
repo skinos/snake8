@@ -1,6 +1,6 @@
 ***
 ## Management of System Firewall
-Management of firewall to limit access from extern inteface( internet )
+Management of firewall for limit access from extern inteface( internet )
 
 #### Configuration( forward@firewall )   
 ```json
@@ -11,15 +11,15 @@ Management of firewall to limit access from extern inteface( internet )
         "status":"disable or enable the firewall",          // [ "enable", "disable" ]
         "default":"action for default access",              // [ "drop", "accept" ]
 
-        "input_icmp_through":"ICMP protocol access",        // [ "disable", "enable" ]
-        "input_espah_through":"ESP/AH protocol access",     // [ "disable", "enable" ]
-        "input_telnet_through":"TELNET Server access",      // [ "disable", "enable" ]
-        "input_ssh_through":"SSH Server access",            // [ "disable", "enable" ]
-        "input_wui_through":"WEB Server access",            // [ "disable", "enable" ]
+        "icmp_access":"ICMP protocol access",        // [ "disable", "enable" ]
+        "espah_access":"ESP/AH protocol access",     // [ "disable", "enable" ]
+        "elnet_access":"TELNET Server access",       // [ "disable", "enable" ]
+        "ssh_access":"SSH Server access",            // [ "disable", "enable" ]
+        "wui_access":"WEB Server access",            // [ "disable", "enable" ]
 
         "nat_through":"NAT rule settings at forward@nat  passthrough auto",    // [ "disable", "enable" ]
-        "forward_icmp_through":"ICMP protocol passthrough",                    // [ "disable", "enable" ]
-        "forward_espah_through":"ESP/AH protocol passthrough",                 // [ "disable", "enable" ]
+        "icmp_through":"ICMP protocol passthrough",                            // [ "disable", "enable" ]
+        "espah_through":"ESP/AH protocol passthrough",                         // [ "disable", "enable" ]
 
         "rule":                              // firewall rule settings
         {
@@ -32,7 +32,13 @@ Management of firewall to limit access from extern inteface( internet )
                                                                                   // range of IP: 192.168.8.2-192.168.8.4
                                                                                   // signal MAC: 00:23:43:13:34:40
                                                                                   // space for all ip address
-                "protocol":"protocol type",                              // [ "tcp", "udp", "all" ]
+                "srcport":"source port",                                 // [ number ]: valid when "proto" be "tcp" or "udp"
+                                                                                  // single port: 8080
+                                                                                  // multiple port: 80,8000,8080
+                                                                                  // range of port: 80-800
+                                                                                  // space for all port
+
+                "protocol":"protocol type",                              // [ "tcp", "udp", "all", ... ]
                 "dest":"destination address",                            // [ string ]:
                                                                                   // single IP: 202.96.11.32
                                                                                   // multiple IP: 2.3.1.2,4.34.2.1,72.32,192.1

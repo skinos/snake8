@@ -8,54 +8,11 @@ Management of all local client
 {
     "client MAC address":                                // [ MAC address ]
     {
-        "ifname":"specify on interface name",                 // [ "ifname@lan", "ifname@lan2", "ifname@lan3", ... ], default the "ifname@lan"
+        "ifname":"specify on interface name",                 // [ "ifname@lan", "ifname@lan2", "ifname@lan3", ... ], default the "ifname@lan", call "network@frame.list[local]" get the list
         "name":"specify hostname",                            // [ string ]
         "bindip":"specify ip address on dhcp assignment",     // [ ip address ]
         "arpbind":"bind ip set the arp table",                // [ "disable", "enable" ]
         "lease":"specify lease on dhcp assignment"            // [ number ] the unit is second
-
-        "acl":"acl state",                                          // [ "disable", "enable" ]
-        "acl_rule"                                                  // acl rule in here
-        {
-            "rule name":                                                 // [ string ], user can custom the rule name
-            {
-                "action":"drop or accept",                               // [ "drop", "accept", "return" ]
-                                                                                  // "drop" for forbid
-                                                                                  // "accept" for pass
-                                                                                  // "return" for no more matching
-                "proto":"protocol type",                                 // [ "domain", "key", "tcp", "udp", "all", "layer7" ]
-                                                                                  // "domain", for domain, "dest" well be domain
-                                                                                  // "tcp", for tcp protocol
-                                                                                  // "udp", for udp protocol
-                                                                                  // "layer7, for layer7 application
-                                                                                  // "all", or space or none for all protocol
-                "dest":"internet destination address",                   // [ string ] packets destination
-                                                                                  // single IP: 202.96.11.32, vaild when "proto" be "tcp" or "udp" or "all"
-                                                                                  // multiple IP: 2.3.1.2,4.34.2.1,72.32,192.1, vaild when "proto" be "tcp" or "udp" or "all"
-                                                                                  // range of IP: 202.96.132.11-202.96.132.20, vaild when "proto" be "tcp" or "udp" or "all"
-                                                                                  // domain: www.baidu.com, vaild when "proto" be "domain"
-                                                                                  // layer7: Future expansion, vaild when "proto" be "layer7"
-                                                                                  // space for all ip address, vaild when "proto" be "tcp" or "udp" or "all"
-                "destport":"internet destination port",                  // [ number ] valid when "proto" be "tcp" or "udp"
-                                                                                  // single port: 8080
-                                                                                  // multiple port: 80,8000,8080
-                                                                                  // range of port: 80-800
-                                                                                  // space or none for all port
-                "key":"keyword",                                         // [ string ] matching of keyword in packets, valid when "proto" be "tcp" or "udp" or "all"
-
-                "timer":"specifying an effective time",                  // [ "disable", "enable" ]
-                "timer_cfg":                                                 // effective time, valid when "status" be "enable"
-                {
-                    "datestart":"starting date",                             // [ string ], format is YYYY-MM-DD
-                    "datestop":"ending date",                                // [ string ], format is YYYY-MM-DD
-                    "timestart":"start time of day",                         // [ string ], format is hh-mm-ss
-                    "timestop":"end time of day",                            // [ string ], format is hh-mm-ss
-                    "weekdays":"designated week number"                      // [ string ], format is 1,2,3,..., 0 for Sunday
-                }
-            }
-            // ... more rule
-        }
-
     }
     // more client MAC address rule
 }
@@ -73,10 +30,46 @@ client@station:00:51:45:CB:78:89/bindip=
 ttrue
 ```
 
-#### **Methods**
+#### **API( client@station )**
 
-+ `list[ [local ifname] ]` **list current all client infomation**   
-    - [local ifname] ------ [ "ifname@lan", "ifname@lan2", "ifname@lan3", ... ], Specifying the ifname
++ `add[ mac, name, ]` **add a client with name**
+    - mac -------------- [ mac address ], the format can be AA:BB:CC:DD:EE:FF or AABBCCDDEEFF
+    - name ------------- [ string ], client name
+    - succeed return ttrue
+    - failed return tfalse
+
+    Example, add a client, custom it name "NewPhone"
+    ```shell
+    client@station.add[ 00:03:7F:22:43:2B, NewPhone ]
+    ttrue
+    ```   
+
+    Example, add a client, custom it name "OldPhone"
+    ```shell
+    client@station.add[ 345212EDFE10, OldPhone ]
+    ttrue
+    ```   
+
++ `delete[ mac ]` **delete a client**
+    - mac -------------- [ mac address ], the format can be AA:BB:CC:DD:EE:FF or AABBCCDDEEFF
+    - succeed return ttrue
+    - failed return tfalse
+    - error return terror   
+    
+    Example, delete a client, mac is 00:03:7F:22:43:2B
+    ```shell
+    client@station.delete[ 00:03:7F:22:43:2B ]
+    ttrue
+    ```   
+
+    Example, delete a client, mac is 34:52:12:ED:FE:10
+    ```shell
+    client@station.delete[ 345212EDFE10 ]
+    ttrue
+    ```   
+
+
++ `list[]` **list current all client infomation**   
     - return NULL when failed
     - return terror when error
     - return json to describes all client infomation when succeed
@@ -135,23 +128,5 @@ ttrue
     }
     ```   
 
-    Example, list all client of ifname@lan2
-    ```shell
-    client@station.list[ ifname@lan2 ]
-    {
-        "F6:F7:73:82:0A:FC":
-        {
-            "ip":"192.168.100.183",
-            "name":"Xiaomi-14-Ultra",
-            "livetime":"14:39:27:1"
-        },
-        "F6:F7:73:77:1D:3B":
-        {
-            "ip":"192.168.100.182",
-            "name":"Xiaomi-13-Ultra",
-            "livetime":"00:00:36:0"
-        }
-    }
-    ```
 
 

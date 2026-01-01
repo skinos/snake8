@@ -1,6 +1,6 @@
 ***
 ## Management of destination NAT
-Management of destination NAT to proxy internet port on local network for local client access
+Management of destination NAT to proxy internet port on gateway for local client access
 
 #### Configuration( forward@dnat )
 ```json

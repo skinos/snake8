@@ -13,12 +13,14 @@ Management of policy based routing
                                                                                 // 32766 for main table priority
                                                                                 // 50000 for default table priority
                                                                                 // default is 40000
+
         "markid":"select the packet use markid",                       // [ nubmer ], range of 1-4294967295
                                                                                 // Less than 100 is reserved for the system
                                                                                 // You are advised to use more than 100 for user-defined rules
         "srcifname":"select the packet use source interface",          // [ "ifname@lan", "ifname@lan2", ... ], interface name
         "src":"select the packet use source ip address",               // [ ip address, network ]
         "srcmask":"select the packet use source mask of ip address",   // [ netmask ], necessary when "src" be network
+
         "tid":"which route table to go to"                             // [ number ], range of 0-255
                                                                                 // 0 for local table
                                                                                 // 253 for default table
@@ -37,11 +39,11 @@ forward@rule
 {
     "myCustom1":                       # rule name is myCustom1
     {                                  # packet from ifname@lan and source address is 1.1.1.1 route to route table 101, priority is 38000
+        "pref":"38000",
         "srcifname":"ifname@lan",
         "src":"1.1.1.1",
         "srcmask":"255.255.255.255",
-        "tid":"101",
-        "pref":"38000"
+        "tid":"101"
     },
     "youCustom":                       # rule name is youCustom
     {                                  # packet from ifname@lan and markid is 300 route to route table 102, default priority is 40000
@@ -55,8 +57,7 @@ forward@rule
 #### **Methods**
 
 + `status[]` **get the current policy rule**
-    - failed reeturn NULL, error return terror*   
-    - error return terror*   
+    - failed reeturn NULL, error return terror  
     - succeed return json to describes infomation  
     ```json
     // Attributes introduction of json by the method return
@@ -125,7 +126,7 @@ forward@rule
     ttrue
     ```
 
-+ `delete[ name ]` **delete policy rule**, *succeed return ttrue, failed return tfalse, error return terror*
++ `delete[ name ]` **delete policy rule**
     - succeed return ttrue
     - failed return tfalse
     - error return terror   
@@ -143,3 +144,27 @@ forward@rule
     ```   
 
 
+
++ `tidlist[]` **list all the route table**
+    - failed reeturn NULL, error return terror   
+    - error return terror   
+    - succeed return json to describes infomation  
+    ```json
+    // Attributes introduction of json by the method return
+    {
+        "table id":"table name"                             // [ number ]: [ string ]
+        // ... more tid
+    }
+    ```   
+
+    Example, get the current route table list
+    ```shell
+    forward@rule.tidlist
+    {
+        "1":"1",
+        "2":"2",
+        "253":"local",
+        "254":"main",
+        "255":"default",
+    }
+    ```   

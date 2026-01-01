@@ -13,6 +13,7 @@
 
 /// exit when memory lack
 #define memory_exit( i )                do { default_fault("memory oops");exit( i ); }while(0)
+#define format_error( string )          do { default_fault("format oops: %s", string); }while(0)
 
 /// fpk api
 #define fpk_list( ... )                 scalls( FPK_COM, "list", __VA_ARGS__ )

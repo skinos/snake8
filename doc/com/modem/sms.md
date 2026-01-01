@@ -26,6 +26,7 @@ Management LTE modem SMS
     - contact ----------- [ string ], contact number
     - content ----------- [ string ], text of SMS     
     - failed return tfalse
+    - error return terror    
     - succeed return ttrue
     
     Example, send a "i miss you" to 17688704240
@@ -36,6 +37,7 @@ Management LTE modem SMS
 
 + `list[]` **list all received SMS**  
     - failed return NULL
+    - error return terror    
     - succeed return json to describes SMS list   
     ```json
     // Attributes introduction of json by the method return
@@ -96,6 +98,7 @@ Management LTE modem SMS
 + `delete[ SMS Identify name ]` **delete a SMS**
     - SMS Identify name ----------- [ string ]
     - failed return tfalse
+    - error return terror    
     - succeed return ttrue
     
     Example, delete the sms2.ugFCOH SMS

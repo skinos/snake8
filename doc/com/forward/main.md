@@ -1,8 +1,8 @@
 ***
-## System Route Table Management
+## Default Route Table Management
 Management of system route table, modifying this configuration directly is not recommended, It is recommended to manage through the method
 
-#### Configuration( forward@main )   
+#### Configuration( forward@default )   
 ```json
 // Attributes introduction 
 {
@@ -18,9 +18,9 @@ Management of system route table, modifying this configuration directly is not r
 }
 ```
 
-Example, show current all rule settings of route
+Example, show current all rule settings of route of default
 ```shell
-forward@main
+forward@default
 {
     "myCustomRule1":    # first rule name is "myCustomRule1"
     {                                # make dest 192.168.1.0/255.255.255.0 to ifname@wan's 192.168.8.22, mark the metric be 2
@@ -40,11 +40,10 @@ forward@main
 
 
 
-#### **Methods**
+#### **API**
 
-+ `status[]` **get the current system route table**
-    - failed reeturn NULL, error return terror*   
-    - error return terror*   
++ `status[]` **get the current default route table**
+    - failed reeturn NULL, error return terror
     - succeed return json to describes infomation   
     ```json
     // Attributes introduction of json by the method return
@@ -65,7 +64,7 @@ forward@main
 
     Example, get the current route rule
     ```shell
-    forward@main.status
+    forward@default.status
     {
         "myCustomRoute1":             // this is user add rule named "myCustomRoute1"
         {
@@ -97,26 +96,31 @@ forward@main
     ```   
 
 + `add[ name, [target], [mask], [gateway], [ifname], [metric] ]` **add route rule**
+    - name ----------- [ string ], route rule name  
+    - target --------- [ network, ip address ]
+    - mask ----------- [ network mask ]
+    - gateway -------- [ ip address ]
+    - ifname --------- [ "ifname@lan", "ifname@lte", ... ] you can get that list by call the network@frame.list
+    - metric --------- [ number ]
     - succeed return ttrue
     - failed return tfalse
-    - error return terror   
 
     Example, add a rule named office1, make that address 192.168.2.12 route to  192.168.9.40 of LAN
     ```shell
-    forward@main.add[ office1, 192.168.2.12, 255.255.255.0, 192.168.9.40, ifname@lan, ]
+    forward@main.add[ office1, 192.168.2.12, 255.255.255.0, 192.168.9.40, ifname@lan ]
     ttrue
     ```   
 
     Example, add a rule named office2, make that all ddress route to 192.168.9.41 of LAN
     ```shell
-    forward@route.add[ office2, , , 192.168.9.41, ifname@lan, ]
+    forward@route.add[ office2, , , 192.168.9.41, ifname@lan ]
     ttrue
     ```   
 
 + `delete[ name ]` **delete route rule**
+    - name ----------- [ string ], route rule name  
     - succeed return ttrue
     - failed return tfalse
-    - error return terror   
     
     Example, delete the custom route named office2
     ```shell

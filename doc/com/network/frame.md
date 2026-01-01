@@ -1,11 +1,6 @@
 ***
 ## Network frame management 
-Network management framework, define local connections and external connections and data scheduling when multiple external connections coexist
-The network framework defines a three-tier concept to manage network interfaces: 
-- netdev, network inetface of linux, such as eth1, eth2, ath0, usb0
-- ifdev, Abstract network devices, such as wifi@nssid, modem@lte, wifi@asta, can be divided by VLAN and combined by bridge, 
-- ifname, Abstract network connections
-
+Network management framework, define external connections and data scheduling when multiple external connections coexist
 
 #### **Configuration( network@frame )**
 

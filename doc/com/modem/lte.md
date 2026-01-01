@@ -90,6 +90,7 @@ ttrue
 
 + `status[]` **get the lte modem infomation**
     - failed return NULL   
+    - error return terror
     - succeed return json to describes infomation   
     ```json
     // Attributes introduction of json by the method return
@@ -151,6 +152,7 @@ ttrue
 + `tty[ [type] ]` **get the lte modem tty device**
     - type ----------- [ string ], tty type 
     - failed return NULL   
+    - error return terror
     - succeed return string that be tty device when given type
     - succeed return json to describes tty device when no type   
     ```json
@@ -186,6 +188,7 @@ ttrue
 
 + `sim[]` **get the simcard state**
     - no simcard return tfalse
+    - error return terror
     - simcard work well return ttrue
     - simcard have pin code return "pin"
     - simcard need unlock key return "puk"
@@ -205,6 +208,7 @@ ttrue
 + `pin[ [pin code] ]` **pin code to unlock the simcard**
     - pin code ----------- [ string ] 
     - failed return tfalse
+    - error return terror    
     - succeed return ttrue
     
     Example, unlock the simcard with pin
@@ -221,6 +225,7 @@ ttrue
 
 + `imei[]` **get the imei of simcard**
     - failed return NULL
+    - error return terror    
     - succeed return string of simcard imei
     
     Example, get the imei of first lte modem
@@ -231,6 +236,7 @@ ttrue
 
 + `imsi[]` **get the imsi of simcard**
     - failed return NULL
+    - error return terror    
     - succeed return string of simcard imsi
     
     Example, get the imsi of first lte modem
@@ -241,6 +247,7 @@ ttrue
 
 + `iccid[]` **get the iccid of simcard**
     - failed return NULL
+    - error return terror    
     - succeed return string of simcard iccid
     
     Example, get the iccid of first lte modem
@@ -251,6 +258,7 @@ ttrue
 
 + `plmn[]` **get the plmn of modem network**
     - failed return NULL
+    - error return terror    
     - succeed return string of modem plmn
     
     Example, get the plmn of first lte modem
@@ -261,6 +269,7 @@ ttrue
 
 + `signal[]` **get the signal of modem network**
     - failed return NULL
+    - error return terror    
     - succeed return string of modem signal, "0,1,2,3,4,5", "0" for no signal, "5" for good signal
     
     Example, get the plmn of first lte modem
@@ -271,6 +280,7 @@ ttrue
 
 + `operator[]` **get the modem current operator profile**
     - failed return NULL   
+    - error return terror    
     - succeed return json to describes infomation   
     ```json
     // Attributes introduction of json by the method return
@@ -296,6 +306,7 @@ ttrue
 + `at[ at command ]` **exeucte a AT command**
     - at command ----------- [ string ]  
     - failed return NULL
+    - error return terror    
     - succeed return string that be return of AT
     
     Example, talk to first lte modem AT command for simcard state
@@ -316,6 +327,7 @@ ttrue
 
 + `reset[]` **reset the modem**
     - failed return NULL
+    - error return terror    
     - succeed return string that be tty device when given type
     - succeed return json to describes tty device when no type  
     
