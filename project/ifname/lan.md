@@ -131,7 +131,10 @@ ttrue
 **ifname@lan** is first local network   
 **ifname@lan2** is second local network   
 
-+ `status[]` **get the local network infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `status[]` **get the local network infomation** 
+    - failed return NULL
+    - error return terror   
+    - return json to describes this infomation  
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -165,6 +168,7 @@ ttrue
 
     }
     ```   
+
     Example, get the first local network infomation
     ```shell
     ifname@lan.status
@@ -187,21 +191,33 @@ ttrue
     }
     ```   
 
-+ `netdev[]` **get the netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the netdev**   
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first local network netdev
     ```shell
     ifname@lan.netdev
     lan
     ```   
 
-+ `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
++ `ifdev[]` **get the ifdev**   
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first local network ifdev
     ```shell
     ifname@lan.ifdev
     vlan@lan
     ```   
 
-+ `shut[]` **shutdown the local network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the local network**  
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, shutdown the first local network
     ```shell
     ifname@lan.shut
@@ -213,7 +229,11 @@ ttrue
     ttrue
     ```   
 
-+ `setup[]` **setup the local network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the local network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, setup the frist local network
     ```shell
     ifname@lan.setup

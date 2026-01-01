@@ -204,7 +204,8 @@ ttrue
 ifname@wisp:wpa_key=88888888
 ttrue
 ```   
-# You can also use one command to complete the operation of the above three command
+
+You can also use one command to complete the operation of the above three command
 ```shell
 ifname@wisp|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
 ttrue
@@ -236,11 +237,14 @@ ttrue
 
 
 
-#### **Methods**   
+#### **API**   
 **ifname@wisp** is first WISP network   
 **ifname@wisp2** is second WISP network   
 
-+ `status[]` **get the WISP infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `status[]` **get the WISP infomation**   
+    - failed return NULL
+    - error return terror   
+    - succeed return json to describes infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -284,6 +288,7 @@ ttrue
         "signal":"signal level"          // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
     }
     ```   
+
     Example, get the first WISP network infomation
     ```shell
     ifname@wisp.status
@@ -316,21 +321,33 @@ ttrue
     }
     ```   
 
-+ `netdev[]` **get the WISP netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the WISP netdev**   
+    - failed return NULL
+    - error return terror       
+    - return string to describes this infomation  
+
     Example, get the first WISP netdev
     ```shell
     ifname@wisp.netdev
     ath11
     ```   
 
-+ `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
++ `ifdev[]` **get the ifdev**
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first WISP network ifdev
     ```shell
     ifname@wan.ifdev
     wifi@nsta
     ```   
 
-+ `chlist[]` **get the WISP channal list**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `chlist[]` **get the WISP channal list*   
+    - failed return NULL
+    - error return terror   
+    - succeed return json to describes infomation   
+
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -338,6 +355,7 @@ ttrue
         // ... more channel
     }
     ```
+
     Example, get the first WISP channel list
     ```shell
     ifname@wisp.chlist
@@ -356,7 +374,11 @@ ttrue
     }
     ```
 
-+ `aplist[]` **use the WISP scan the surrounding AP**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `aplist[]` **use the WISP scan the surrounding AP**   
+    - failed return NULL
+    - error return terror   
+    - succeed return json to describes infomation   
+
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -381,6 +403,7 @@ ttrue
         // ... more AP
     }
     ```   
+
     Example, get the surrounding AP from first WISP scan
     ```shell
     ifname@wisp.aplist
@@ -421,7 +444,11 @@ ttrue
     }
     ```   
 
-+ `shut[]` **shutdown the WISP network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the WISP network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, shutdown the frist WISP network
     ```shell
     ifname@wisp.shut
@@ -433,7 +460,11 @@ ttrue
     ttrue
     ```   
 
-+ `setup[]` **setup the WISP network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the WISP network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, setup the frist WISP network
     ```shell
     ifname@wisp.setup

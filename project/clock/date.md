@@ -14,7 +14,8 @@ Manage system date
     "ntpinterval":"NTP Synchronization interval"        // [ number ], interval (in seconds) for time synchronization with the NTP server
 }
 ```   
-Examples, show all the configure
+
+Example, show all the configure
 ```shell
 clock@date
 {
@@ -26,12 +27,12 @@ clock@date
     "ntpinterval":"86400"             # synchronization every 86400 seconds
 }
 ```  
-Examples, modify the time zone to West 5
+Example, modify the time zone to West 5
 ```shell
 clock@date:timezone=-5
 ttrue
 ```  
-Examples, disable the NTP client time synchronization
+Example, disable the NTP client time synchronization
 ```shell
 clock@date:ntpclient=disable
 ttrue
@@ -39,7 +40,7 @@ ttrue
 
 
 
-### **Methods**   
+### **API**   
 + `status[]` **get the date infomation**
     - return NULL when failed
     - return terror when error

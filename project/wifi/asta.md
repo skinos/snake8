@@ -68,9 +68,12 @@ ttrue
 
 
 
-#### **Methods**   
+#### **API**   
 
-+ `status[]` **get the 5.8G Station infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `status[]` **get the 5.8G Station infomation**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -103,15 +106,22 @@ ttrue
     }
     ```
 
-+ `netdev[]` **get the 5.8G Station netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the 5.8G Station netdev**   
+    - failed return NULL
+    - error return terror    
+    - succeed return string to describes this infomation   
+    
+    Example, get the 5.8G Station netdev
     ```shell
-    # examples, get the 5.8G Station netdev
     wifi@asta.netdev
     ath11
     ```
 
 
-+ `aplist[]` **use the 5.8G Station scan the surrounding AP**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `aplist[]` **use the 5.8G Station scan the surrounding AP**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -137,8 +147,8 @@ ttrue
     }
     ```
 
+    Example, get the surrounding AP from 5.8G Station scan
     ```shell
-    # examples, get the surrounding AP from 5.8G Station scan
     wifi@asta.aplist
     {
         "80:EA:07:15:0E:E6":                    # first AP by scanning
@@ -177,16 +187,24 @@ ttrue
     }
     ```
 
-+ `shut[]` **shutdown the 5.8G Station**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the 5.8G Station**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+
+    Example, shutdown the 5.8G Station
     ```shell
-    # examples, shutdown the 5.8G Station
     wifi@asta.shut
     ttrue
     ```
 
-+ `setup[]` **setup the 5.8G Station**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the 5.8G Station**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+
+    Example, setup the 5.8G Station
     ```shell
-    # examples, setup the 5.8G Station
     wifi@asta.setup
     ttrue
     ```

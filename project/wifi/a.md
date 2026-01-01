@@ -58,9 +58,12 @@ ttrue
 ```
 
 
-#### **Methods**   
+#### **API**   
 
-+ `chlist[]` **get the 5.8G radio channel list**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*   
++ `chlist[]` **get the 5.8G radio channel list**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this list   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -69,8 +72,8 @@ ttrue
     }
     ```
 
+    Example, get the 5.8G radio channel list
     ```shell
-    # examples, get the 5.8G radio channel list
     wifi@a.chlist
     {
         "36":{},
@@ -89,7 +92,10 @@ ttrue
     }
     ```
 
-+ `stalist[]` get list of clients on 5.8G radio, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*   
++ `stalist[]` **get list of clients on 5.8G radio**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this list   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -102,8 +108,8 @@ ttrue
     }
     ```
 
+    Example, get the 5.8G radio's client list
     ```shell
-    # examples, get the 5.8G radio's client list
     wifi@a.stalist
     {
         "78:11:DC:92:D3:9E":                  // client 1
@@ -130,9 +136,13 @@ ttrue
     }
     ```
 
-+ `stabeat[ MAC address ]` disconnect the client, *succeed return tttrue, failed return tfalse, error return terror*   
++ `stabeat[ MAC address ]` **disconnect the client**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+
+    Example, disconnect the client 00:03:7F:13:BD:30 from 5.8G Radio
     ```shell
-    # examples, disconnect the client 00:03:7F:13:BD:30 from 5.8G Radio
     wifi@a.stabeat[ 00:03:7F:13:BD:30 ]
     ttrue
     ```

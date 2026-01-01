@@ -187,7 +187,8 @@ ttrue
 ifname@wan:pppoe/password=123456
 ttrue
 ```   
-# You can also use one command to complete the operation of the above three command
+
+You can also use one command to complete the operation of the above three command
 ```shell
 ifname@wan:pppoe|{"username":"dimmalex@ashyelf.com", "password":"123456"}
 ttrue
@@ -211,7 +212,10 @@ ttrue
 **ifname@wan** is first WAN network
 **ifname@wan2** is second WAN network
 
-+ `status[]` **get the local network infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*   
++ `status[]` **get the local network infomation**   
+    - failed return NULL
+    - error return terror   
+    - succeed return json to describes infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -248,6 +252,7 @@ ttrue
 
     }
     ```   
+
     Example, get the first WAN network infomation
     ```shell
     ifname@wan.status
@@ -273,21 +278,33 @@ ttrue
     }
     ```   
 
-+ `netdev[]` **get the WAN netdev**, *succeed return netdev, failed return NULL, error return terror*   
++ `netdev[]` **get the WAN netdev**   
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first WAN network netdev
     ```shell
     ifname@wan.netdev
     wan
     ```   
 
-+ `ifdev[]` **get the ifdev**, *succeed return ifdev, failed return NULL, error return terror*   
++ `ifdev[]` **get the ifdev**   
+    - failed return NULL
+    - error return terror   
+    - return string to describes this infomation  
+
     Example, get the first WAN network ifdev
     ```shell
     ifname@wan.ifdev
     vlan@wan
     ```   
 
-+ `shut[]` **shutdown the WAN network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `shut[]` **shutdown the WAN network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, shutdown the frist WAN network
     ```shell
     ifname@wan.shut
@@ -299,7 +316,11 @@ ttrue
     ttrue
     ```   
 
-+ `setup[]` **setup the WAN network**, *succeed return ttrue, failed return tfalse, error return terror*   
++ `setup[]` **setup the WAN network**   
+    - failed return tfalse
+    - error return terror   
+    - succeed return ttrue
+
     Example, setup the frist WAN network
     ```shell
     ifname@wan.setup

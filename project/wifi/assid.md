@@ -108,11 +108,14 @@ wifi@assid2:status=disable
 ttrue
 ```
 
-#### **Methods**   
+#### **API**   
 **wifi@assid** is first 5.8G SSID   
 **wifi@assid2** is second 5.8G SSID   
 
-+ `status[]` **get the SSID infomation**, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*   
++ `status[]` **get the SSID infomation**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -139,8 +142,8 @@ ttrue
     }
     ```
 
+    Example, get the first 5.8G SSID status
     ```shell
-    # examples, get the first 5.8G SSID status
     wifi@assid.status
     {
         "status":"up",
@@ -162,7 +165,10 @@ ttrue
     }
     ```
 
-+ `stalist[]` get list of clients, *succeed return talk to describes infomation, failed reeturn NULL, error return terror*   
++ `stalist[]` **get list of clients**   
+    - failed return NULL
+    - error return terror    
+    - succeed return json to describes this infomation   
     ```json
     // Attributes introduction of talk by the method return
     {
@@ -175,8 +181,8 @@ ttrue
     }
     ```
 
+    Example, get the first 5.8G SSID's client list
     ```shell
-    # examples, get the first 5.8G SSID's client list
     wifi@assid.stalist
     {
         "78:11:DC:92:D3:9E":                  // client 1
@@ -203,9 +209,13 @@ ttrue
     }
     ```
 
-+ `stabeat[ MAC address ]` disconnect the client, *succeed return tttrue, failed return tfalse, error return terror*   
++ `stabeat[ MAC address ]` **disconnect the client**   
+    - failed return tfalse
+    - error return terror    
+    - succeed return ttrue
+
+    Example, disconnect the client 00:03:7F:13:BD:30 from first 5.8G SSID
     ```shell
-    # examples, disconnect the client 00:03:7F:13:BD:30 from first 5.8G SSID
     wifi@assid.stabeat[ 00:03:7F:13:BD:30 ]
     ttrue
     ```

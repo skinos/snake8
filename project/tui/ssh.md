@@ -19,7 +19,7 @@ Manage gateway SSH server
 }
 ```  
 
-Examples, show all SSH server configure
+Example, show all SSH server configure
 ```shell
 tui@ssh
 {
@@ -33,25 +33,25 @@ tui@ssh
 }
 ```  
 
-Examples, modify the port of SSH server
+Example, modify the port of SSH server
 ```shell
 tui@ssh:port=2222
 ttrue
 ```  
 
-Examples, disable the SSH server
+Example, disable the SSH server
 ```shell
 tui@ssh:status=disable
 ttrue
 ```  
 
-Examples, set the ip 192.168.8.250 can access the SSH server
+Example, set the ip 192.168.8.250 can access the SSH server
 ```shell
 tui@ssh:manager/pc3=192.168.8.250
 ttrue
 ```  
 
-Examples, clear the manager allow all ip can access the SSH server
+Example, clear the manager allow all ip can access the SSH server
 ```shell
 tui@ssh:manager=
 ttrue

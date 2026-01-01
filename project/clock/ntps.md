@@ -9,6 +9,7 @@ The management NTP Server
     "status":"NTP server status"       // [ "disable", "enable"]
 }
 ```
+
 Example, show the configure
 ```shell
 clock@ntps
