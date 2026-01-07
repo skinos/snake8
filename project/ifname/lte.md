@@ -332,12 +332,14 @@ ttrue
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "ppp" ] for PPP dial
         "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
         "gw":"gateway ip address",      // [ ip address ]
         "dns":"dns ip address",         // [ ip address ]
         "dns2":"dns2 ip address",       // [ ip address ]
         "ip":"ip address",              // [ ip address ]
         "mask":"network mask",          // [ ip address ]
-        "delay":"delay time",           // [ "failed", number ], "failed" for icmp failed
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
+        "ontime":"online uptime",       // [ string ], Optional, online system uptime
         "livetime":"online time",       // [ string ], format is hour:minute:second:day
         "rx_bytes":"send bytes",        // [ number ]
         "rx_packets":"send packets",    // [ number ]
@@ -345,14 +347,13 @@ ttrue
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
 
-        "method":"IPv6 address mode",   // [ "disable", "manual", "automatic", "slaac" ]
-                                            // "disable" is not use ipv6
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
                                             // "manual" for manual setting
                                             // "automatic" for DHCPv6
                                             // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ]
-        "addr2":"IPv6 address2",        // [ ipv6 address ]
-        "addr3":"IPv6 address3",        // [ ipv6 address ]
+        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
 
         // For LTE/NR baseband Status, the parameters are the same as modem@lte or modem@lte2
         "imei":"IMEI numer",            // [ string ]
@@ -367,18 +368,22 @@ ttrue
                                                 // "noreg" for cannot register to opeartor
                                                 // "unreg" for cannot register to opeartor
                                                 // "dereg" for register to operator be refused
+        "name":"modem name",             // [ string ], lte modem model or name
+        "operator":"operator name",      // [ string ]
         "nettype":"network type",        // The format varies depending on the module
                                          // 2G usually shows GSM, GPRS, EDGE, CDMA
                                          // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
                                          // 4G usually shows LTE, FDD, TDD
         "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
-        "csq":"CSQ number",              // [ number ]
         "rssi":"signal intensity",       // [ number ], the unit is dBm
-        "rsrp":"RSRP value",             // Optional, The format varies depending on the module
-        "rsrq":"RSRQ value",             // Optional, The format varies depending on the module
-        "sinr":"sinr value",             // Optional, The format varies depending on the module  
-        "band":"current band",           // Optional, The format varies depending on the module  
-        "operator":"operator name"       // [ string ]
+        "csq":"CSQ number",              // [ number ], Optional
+        "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
+        "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
+        "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
+        "band":"current band",           // [ string ], Optional, The format varies depending on the module
+        "ci":"cell identity",            // [ string ], Optional
+        "lac":"location area code",      // [ string ], Optional
+        "channel":"location area code"   // [ string ], Optional    
     }
     ```   
 
@@ -386,34 +391,40 @@ ttrue
     ```shell
     ifname@lte.status
     {
-        "status":"up",                     # connect is succeed
-
         "mode":"dhcpc",                    # IPv4 connect mode is DHCP
-        "netdev":"usb0",                   # netdev is usb0
-        "gw":"10.137.89.118",              # gateway is 10.137.89.118
-        "dns":"120.80.80.80",              # dns is 120.80.80.80
-        "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
-        "ip":"10.137.89.117",              # ip address is 10.137.89.117
-        "mask":"255.255.255.252",          # network mask is 255.255.255.252
-        "livetime":"00:15:50:0",           # already online 15 minute and 50 second
-        "rx_bytes":"1256",                 # receive 1256 bytes
-        "rx_packets":"4",                  # receive 4 packets
-        "tx_bytes":"1320",                 # send 1320 bytes
-        "tx_packets":"4",                  # send 4 packets
-        "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
-
-        "method":"slaac",                  # IPv6 address mode is slaac
-        "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
-
-        "imei":"867160040494084",          # imei is 867160040494084
-        "imsi":"460015356123463",          # imei is 460015356123463
-        "iccid":"89860121801097564807",    # imei is 89860121801097564807
-        "csq":"3",                         # CSQ nubmer is 3
-        "signal":"3",                      # signal level is 3
-        "plmn":"46001",                    # plmn is 46001
-        "nettype":"WCDMA",                 # nettype is WCDMA
-        "rssi":"-107",                     # signal intensity is -107
-        "operator":"中国联通"              # operator name is 中国联通
+        "netdev":"usb1",                   # netdev is usb1
+        "gw":"10.84.136.246",
+        "dns":"120.80.80.80",
+        "dns2":"221.5.88.88",
+        "ifdev":"modem@lte",
+        "ontime":"28826",
+        "status":"up",                     # connect is succeed
+        "delay":"26",
+        "ip":"10.84.136.245",
+        "mask":"255.255.255.252",
+        "livetime":"00:31:58:0",
+        "rx_bytes":"4407784",
+        "rx_packets":"34234",
+        "tx_bytes":"4440236",
+        "tx_packets":"47893",
+        "mac":"02:50:F4:00:00:00",
+        "imei":"868186042111714",
+        "ci":"4A37D91",
+        "lac":"25E3",
+        "plmn":"46001",
+        "csq":"23",
+        "nettype":"FDD LTE",
+        "rsrp":"-97",
+        "rssi":"-66",
+        "rsrq":"-9",
+        "sinr":"-18",
+        "band":"LTE BAND 1",
+        "channel":"100",
+        "signal":"4",
+        "operator":"China Unicom",
+        "imsi":"460018708133639",
+        "iccid":"8986012580155265717",
+        "name":"Quectel-EC2X"
     }
     ```   
 
@@ -448,7 +459,7 @@ ttrue
         "plmn":"46001",                    # plmn is 46001
         "nettype":"WCDMA",                 # nettype is WCDMA
         "rssi":"-107",                     # signal intensity is -107
-        "operator":"中国联通"              # operator name is 中国联通
+        "operator":"China Unicom"          # operator name is China Unicom
     }
     ```   
 

@@ -228,12 +228,14 @@ ttrue
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
         "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
         "gw":"gateway ip address",      // [ ip address ]
         "dns":"dns ip address",         // [ ip address ]
         "dns2":"dns2 ip address",       // [ ip address ]
         "ip":"ip address",              // [ ip address ]
         "mask":"network mask",          // [ ip address ]
-        "delay":"delay time",           // [ "failed", number ], "failed" for icmp failed
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
+        "ontime":"online uptime",       // [ string ], Optional, online system uptime
         "livetime":"online time",       // [ string ], format is hour:minute:second:day
         "rx_bytes":"send bytes",        // [ number ]
         "rx_packets":"send packets",    // [ number ]
@@ -241,14 +243,13 @@ ttrue
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
 
-        "method":"IPv6 address mode",   // [ "disable", "manual", "automatic", "slaac" ]
-                                            // "disable" is not use ipv6
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
                                             // "manual" for manual setting
                                             // "automatic" for DHCPv6
                                             // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ]
-        "addr2":"IPv6 address2",        // [ ipv6 address ]
-        "addr3":"IPv6 address3"         // [ ipv6 address ]
+        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr3":"IPv6 address3"         // [ ipv6 address ], Optional, exist when IPV6 enable
 
     }
     ```   
