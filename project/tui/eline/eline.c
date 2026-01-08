@@ -1,5 +1,5 @@
 /*
- *    Description:  command component call depend on sline
+ *    Description:  command component call depend on eline
  * 		Author:  dimmalex (dim), dimmalex@gmail.com
  * 	   Company:  ASHYELF
  */

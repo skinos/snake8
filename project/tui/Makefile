@@ -32,7 +32,7 @@ define Package/$(PKG_NAME)/install
 	# ########## 在此可添加额外的安装指示: 开始 ########### # 
 	# add this for hetui
 	$(INSTALL_DIR) ${FPK_ROOTFS_DIR}/bin
-	$(LN) sline ${FPK_ROOTFS_DIR}/bin/hetui
+	$(LN) eline ${FPK_ROOTFS_DIR}/bin/hetui
 	# ########## 在此可添加额外的安装指示: 结束 ########### # 
 	$(call Build/Install/fpk,$(gSTORE_DIR))
 	$(call Build/Install/fpk2rootfs,$(1))

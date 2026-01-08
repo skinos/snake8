@@ -5,7 +5,6 @@ connect to port proxy to proxy the tcp/udp/dev connection
 #### Configuration( agent@portc )
 ```json
 {
-    "status":"connect to port proxy",               // [ "disable", "enable" ]
     "port":"port proxy port",                       // [ number ]
     "pond":"pond client for proxy ",                // [ nubmer ]
 
@@ -19,7 +18,6 @@ Examples, show all the configure
 ```shell
 agent@portc
 {
-    "status":"enable",            # port proxy enable
     "port":"20005",
     "pond":"3"
     "keeplive":"8",               # keeplive to server in 8sec 
@@ -35,16 +33,13 @@ agent@portc
 + `setup[]` **setup the portc client**
     - succeed return ttrue   
     - failed return tfalse   
-    - error return terror   
 
 + `shut[]` **shutdown the portc client**
     - succeed return ttrue   
     - failed return tfalse   
-    - error return terror   
 
 + `status[]` **get the portc status**
     - failed return NULL   
-    - error return terror   
     - succeed return json to describes infomation
     ```json
     // Attributes introduction of talk by the API return
@@ -58,7 +53,6 @@ agent@portc
 
 + `list[]` **get the portc all connection**
     - failed return NULL
-    - error return terror*
     - succeed return json to describes infomation
     ```json
     // Attributes introduction of json by the method return

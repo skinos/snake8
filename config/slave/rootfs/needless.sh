@@ -5,6 +5,8 @@ rm -fr ./usr/share/skinos/clock
 # delete execute bin for compatibility tiger7
 #rm -fr ./usr/local/bin/daemon
 #rm -fr ./usr/local/bin/he
+# delete hosts
+rm -fr ./usr/share/skinos/network/hosts.cfg
 # delete local
 rm -fr ./usr/share/skinos/agent/local.cfg
 # delete portc

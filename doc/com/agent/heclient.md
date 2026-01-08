@@ -7,7 +7,7 @@ connect to heport server and accept administrative control from that
 {
     "status":"connect to heport server for he command",    // [ "disable", "enable" ]
 
-    "extern":"bind extern ifname to work",                 // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ]
+    "extern":"bind extern ifname to work",                 // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], call network@frame.local[extern] get the list
 
     "server":"http server address",                        // [ string ]
     "port":"heport server port",                           // [ number ]
@@ -15,11 +15,12 @@ connect to heport server and accept administrative control from that
     "user":"username for device",                          // [ string ]
     "vcode":"vcode for device",                            // [ string ]
 
-    "connect_timeout":"timeout for connection"          // [ number ]
-    "keeplive_interval":"keeplive interval"             // [ number ]
-    "keeplive_timeout":"timeout for keeplive"           // [ number ]
+    "connect_timeout":"timeout for connection",          // [ number ]
+    "keeplive_interval":"keeplive interval",             // [ number ]
+    "keeplive_timeout":"timeout for keeplive"            // [ number ]
 }
 ```   
+
 Example, show all the configure   
 ```shell
 agent@heclient
@@ -51,16 +52,13 @@ ttrue
 + `setup[]` **setup the he client**
     - succeed return ttrue
     - failed return tfalse
-    - error return terror   
 
 + `shut[]` **shutdown the he client**
     - succeed return ttrue
     - failed return tfalse
-    - error return terror   
 
 + `status[]` **get the he client infomation**
     - failed return NULL   
-    - error return terror   
     - succeed return json to describes infomation   
     ```json
     // Attributes introduction of talk by the API return
@@ -97,7 +95,6 @@ ttrue
     ```  
     - succeed return ttrue
     - failed return tfalse
-    - error return terror   
  
     Example, adjust to run the port client, disable the network client   
     ```shell
@@ -105,3 +102,6 @@ ttrue
     ttrue
     ```   
 
++ `update[]` **update the status to server**
+    - succeed return ttrue
+    - failed return tfalse

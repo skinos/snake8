@@ -94,7 +94,7 @@ manage IO
 }
 ```
 
-Examples, show all the io agnet configure
+Example, show all the io agnet configure
 ```shell
 agent@io
 {
@@ -179,13 +179,13 @@ agent@io
 }
 ```  
 
-Examples, disable mqtt client
+Example, disable mqtt client
 ```shell
 agent@io:mqtt/status=disable
 ttrue
 ```  
 
-Examples, modify the tcp/udp client server
+Example, modify the tcp/udp client server
 ```shell
 agent@io:client/server=new.wmdevice.com
 ttrue

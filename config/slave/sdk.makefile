@@ -119,6 +119,7 @@ sdk_install:
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
+	sudo ldconfig
 	sudo cp -ar ${gosROOT_DIR}/usr/share/skinos /usr/share
 	sudo cp -ar ${gosROOT_DIR}/usr/local/lib/* /usr/local/lib
 	sudo sudo ldconfig
@@ -146,7 +147,7 @@ sdk_uninstall:
 	sudo rm -fr /usr/share/skinos
 	sudo rm -fr /mnt/skinos
 	sudo ldconfig
-.PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_uninstall
+.PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_clean
 
 
 

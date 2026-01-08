@@ -9,10 +9,26 @@ Administration of equipment Management web page
 // Attributes introduction 
 {
     "status":"start at system startup",     // [ disable, enable ]
-    "login":"authentication is required",   // [ enable, disable ], WARNING: disable will not require login
+
     "port":"service port",                  // [ number ], 1-65535, default is 80
     "sslport":"https port",                 // [ number ], 1-65535, default is 443
     "termport":"Terminal port",             // [ number ], 1-65535, default is 81
+    "session_timeout":"session timeout",    // [ number ]
+    "talk_timeout":"talk timeout",          // [ number ]
+    "key_lifetime":"key life time",         // [ number ]
+    "auth_object":"auth object",            // [ string ]
+    "auth_api":"auth api",                  // [ string ]
+
+    "publist":                   // vaild public command list
+    {
+        "command match":"compare type"     // [ string ]: [ "start", "sub", "equal" ]
+    },
+    "helist":                   // vaild he command list
+    {
+        "command match":"compare type"     // [ string ]: [ "start", "sub", "equal" ]
+        // ... more the command match
+    },
+
     "manager":                              // Only the specified IP address or MAC address is allowed for access
     {
         // "...":"..." You can configure multiple host who can access
@@ -56,10 +72,10 @@ Administration of equipment Management web page
         "opmode":"show or not",                   // [ enable, disable  ]
         "language":"show or not",                 // [ enable, disable  ]
 
-        "terminal":"show or not",                  // [ enable, disable  ]
-        "development":"show or not",               // [ enable, disable  ]
+        "terminal":"show or not",                 // [ enable, disable  ]
+        "development":"show or not"               // [ enable, disable  ]
     }
-    
+
 }
 ```
 
@@ -90,3 +106,44 @@ ttrue
 ```  
 
 
+
+#### **Javascript API**
+
+1. include the js for he API
+
+```html
+<script src="/api/he.js"></script>
+```
+
+2. /api/he.js API
+
+```html
+<script>
+
+he.cmd( he command array, loading object for show, func call when return );
+
+he.load( he command array, loading object for show );
+he.exec( he command array, loading object for show );
+
+// exec the he command in background
+he.bkload( he command array );
+he.bkexec( he command array );
+
+</script>
+```
+
+3. The example gets a json from call the API status of object land@machine in background, the he command is "land@machine.status"
+
+```html
+<script>
+
+he.bkload( [ "land@machine.status" ] ).then( function(v){
+    
+    // the machines is a json that return by land@machine.status
+    var machines = v[0];
+
+});
+
+</script>
+
+```

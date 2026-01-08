@@ -119,8 +119,7 @@ It is generated automatically when the project is created, you can learn his for
     "exe":                                      // have 3 execute program
     {
         "daemon":"service daemon",                    // daemon, service implementation
-        "he":"tools for call all component",          // he, command tools for skinos
-        "hetui":"tools for terminal"                  // hetui, command ui for skinos
+        "he":"tools for call all component"           // he, command tools for skinos
     },
     "com":                                      // have 7 execute program
     {

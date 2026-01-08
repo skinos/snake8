@@ -5,7 +5,7 @@ preset:
 	sudo apt-get install -y vim git subversion pandoc aptitude tftp-hpa
 	sudo apt-get install -y gcc g++ binutils patch bzip2 flex bison make autoconf gettext texinfo unzip sharutils gawk
 	sudo apt-get install -y python2 libtool shtool curl lrzsz zlib1g-dev automake automake1.11
-	sudo apt-get install -y lib32z1 libssl-dev device-tree-compiler libevent-dev libreadline-dev
+	sudo apt-get install -y lib32z1 libssl-dev device-tree-compiler libevent-dev libreadline-dev libmosquitto-dev
 	sudo apt-get install -y snapd
 	sudo snap install ttyd --classic
 	-sudo apt-get install -y lib32ncurses5
@@ -34,7 +34,7 @@ update:
 
 # SDK rebuild for HOST
 rebuild:
-	make sdk_stop;make;make sdk_install;make sdk_start
+	make;make sdk_install;make sdk_start
 # SDK help for smtk2/smtk3
 menu:
 	make sdk_menu

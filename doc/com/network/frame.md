@@ -52,7 +52,7 @@ Network management framework, define external connections and data scheduling wh
 ```
 
 
-#### **Methods**
+#### **API( network@frame )**
 
 + `status[]` **show external connections status when multiple external connections coexist**
     - failed return NULL
@@ -61,7 +61,7 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":
+        "ifname object":            // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]:{}
         {
             "status":"Whether online",    // [ down, up ], up for online, down for offline
             "inuse":"Whether used"        // [ disable, enable ], enable for in used, disable for not used
@@ -93,7 +93,7 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":"The corresponding ifdev object",
+        "ifname object":"The corresponding ifdev object",    // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]: [ string ]
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
     ``` 
@@ -114,19 +114,36 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":
-        {                               // return by API "status" of ifname object
-            "mode":"current mode",
-            "status":"current state",
-            "ifdev":"corresponding ifdev object",
-            "netdev":"netdev name of linux",
-            "ip":"IP address",
-            "rx_bytes":"receive bytes",
-            "rx_packets":"receive packets",
-            "tx_bytes":"tx bytes",
-            "tx_packets":"tx packets",
-            "mac":"MAC address"
-            //... more the attr return by API "status" of ifname object
+        "ifname object":            // [ "ifname@lan", "ifname@lan2", "ifname@lan3", "ifname@lan4" ]:{}
+        {                           // return by API "status" of ifname object
+            "status":"Current state",        // [ "uping", "down", "up" ]
+                                                // "uping" for connecting
+                                                // "down" for the ifname is down
+                                                // "up" for the network is connect succeed
+
+            "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
+            "netdev":"netdev name",         // [ string ]
+            "ifdev":"ifdev name",           // [ string ], Optional
+            "gw":"gateway ip address",      // [ ip address ], Optional
+            "dns":"dns ip address",         // [ ip address ], Optional
+            "dns2":"dns2 ip address",       // [ ip address ], Optional
+            "ip":"ip address",              // [ ip address ]
+            "mask":"network mask",          // [ ip address ]
+            "ontime":"online uptime",       // [ string ], Optional, online system uptime
+            "livetime":"online time",       // [ string ], format is hour:minute:second:day
+            "rx_bytes":"send bytes",        // [ number ]
+            "rx_packets":"send packets",    // [ number ]
+            "tx_bytes":"receive bytes",     // [ number ]
+            "tx_packets":"receive packets", // [ number ]
+            "mac":"MAC address",            // [ mac address ]
+
+            "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+                                                // "manual" for manual setting
+                                                // "automatic" for DHCPv6
+                                                // "slaac" for Stateless address autoconfiguration
+            "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+            "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+            "addr3":"IPv6 address3"         // [ ipv6 address ], Optional, exist when IPV6 enable
         }
         //"ifname object":{ ... }     How many local connections how many properties show
     }
@@ -162,19 +179,83 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":
-        {                             // return by API "status" of ifname object
-            "mode":"current mode",
-            "status":"current state",
-            "ifdev":"corresponding ifdev object",
-            "netdev":"netdev name of linux",
-            "ip":"IP address",
-            "rx_bytes":"receive bytes",
-            "rx_packets":"receive packets",
-            "tx_bytes":"tx bytes",
-            "tx_packets":"tx packets",
-            "mac":"MAC address"            
-            //... more the attr return by API "status" of ifname object
+        "ifname object":          // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]:{}
+        {                         // return by API "status" of ifname object
+            "status":"Current state",        // [ "uping", "down", "up" ]
+                                                // "uping" for connecting
+                                                // "down" for the ifname is down
+                                                // "block" for wait keeplive return
+                                                // "failed" for keeplive failed
+                                                // "up" for the network is connect succeed
+
+            "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+            "netdev":"netdev name",         // [ string ]
+            "ifdev":"ifdev name",           // [ string ], Optional
+            "gw":"gateway ip address",      // [ ip address ]
+            "dns":"dns ip address",         // [ ip address ]
+            "dns2":"dns2 ip address",       // [ ip address ]
+            "ip":"ip address",              // [ ip address ]
+            "mask":"network mask",          // [ ip address ]
+            "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
+            "ontime":"online uptime",       // [ string ], Optional, online system uptime
+            "livetime":"online time",       // [ string ], format is hour:minute:second:day
+            "rx_bytes":"send bytes",        // [ number ]
+            "rx_packets":"send packets",    // [ number ]
+            "tx_bytes":"receive bytes",     // [ number ]
+            "tx_packets":"receive packets", // [ number ]
+            "mac":"MAC address",            // [ mac address ]
+
+            "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+                                                // "manual" for manual setting
+                                                // "automatic" for DHCPv6
+                                                // "slaac" for Stateless address autoconfiguration
+            "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+            "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+            "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        
+                ////////////////////////////////////////////////////////////////////////////////////////////
+                // show this attr when "ifname object" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
+                ////////////////////////////////////////////////////////////////////////////////////////////
+                "imei":"IMEI numer",            // [ string ]
+                "imsi":"IMSI number",           // [ string ]
+                "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
+                                                        // number for iccid
+                                                        // "nosim" for cannot found the simcard
+                                                        // "pin" for the simcard need PIN code
+                                                        // "puk" for the simcard pin error
+                "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
+                                                        // number for MCC and MNC
+                                                        // "noreg" for cannot register to opeartor
+                                                        // "unreg" for cannot register to opeartor
+                                                        // "dereg" for register to operator be refused
+                "name":"modem name",             // [ string ], lte modem model or name
+                "operator":"operator name",      // [ string ]
+                "nettype":"network type",        // The format varies depending on the module
+                                                // 2G usually shows GSM, GPRS, EDGE, CDMA
+                                                // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
+                                                // 4G usually shows LTE, FDD, TDD
+                "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
+                "rssi":"signal intensity",       // [ number ], the unit is dBm
+                "csq":"CSQ number",              // [ number ], Optional
+                "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
+                "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
+                "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
+                "band":"current band",           // [ string ], Optional, The format varies depending on the module
+                "ci":"cell identity",            // [ string ], Optional
+                "lac":"location area code",      // [ string ], Optional
+                "channel":"location area code",  // [ string ], Optional    
+
+                //////////////////////////////////////////////////////////////////
+                // show this attr when "ifname object" be "ifname@wisp" "ifname@wisp2" //
+                //////////////////////////////////////////////////////////////////
+                "peer":"Peer SSID",              // [ string ]
+                "peermac":"Peer BSSID",          // [ MAC address ]
+                "channel":"Peer channel",        // [ 1- 165 ]
+                "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+                "rate":"connect rate",           // [ number ], Optional, the unit is M
+                "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
+                "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
+
         }
         //"ifname object":{ ... }     How many extern connections how many properties show
     }
@@ -186,65 +267,85 @@ Network management framework, define external connections and data scheduling wh
     {
         "ifname@lte":
         {
-            "ifdev":"modem@lte",
-            "netdev":"usb1",
-            "mac":"02:50:F4:00:00:00",
-            "status":"uping",
-            "tid":"1",
-            "method":"slaac",
-            "addr":"fe80::50:f4ff:fe00:0",
-            "vid":"2c7c",
-            "pid":"0125",
-            "name":"Quectel-EC2X",
-            "devcom":"modem@device",
-            "imei":"867160040494084",
-            "state":"connect",
-            "imsi":"460115372165490",
-            "iccid":"89861120147330291660",
-            "plmn":"noreg",
-            "csq":"21",
-            "rssi":"-71",
-            "signal":"4"
-        },
-        "ifname@lte2":
-        {
-            "mode":"dhcpc",
-            "ifname":"ifname@lte2",
-            "netdev":"usb0",
-            "gw":"10.232.185.157",
+            "mode":"dhcpc",                    # IPv4 connect mode is DHCP
+            "netdev":"usb1",                   # netdev is usb1
+            "gw":"10.84.136.246",
             "dns":"120.80.80.80",
             "dns2":"221.5.88.88",
-            "ontime":"02:22:47:0",
-            "status":"up",
-            "ip":"10.232.185.158",
+            "ifdev":"modem@lte",
+            "ontime":"28826",
+            "status":"up",                     # connect is succeed
+            "delay":"26",
+            "ip":"10.84.136.245",
             "mask":"255.255.255.252",
-            "delay":"205",
-            "livetime":"03:02:35:0",
-            "rx_bytes":"137450",
-            "rx_packets":"1609",
-            "tx_bytes":"162336",
-            "tx_packets":"1739",
+            "livetime":"00:31:58:0",
+            "rx_bytes":"4407784",
+            "rx_packets":"34234",
+            "tx_bytes":"4440236",
+            "tx_packets":"47893",
             "mac":"02:50:F4:00:00:00",
-            "tid":"2",
-            "method":"slaac",
-            "addr":"fe80::50:f4ff:fe00:0",
-            "vid":"2c7c",
-            "pid":"0800",
-            "name":"Quectel-RG500Q",
-            "devcom":"modem@device",
-            "imei":"869710030002905",
-            "imsi":"460015356123463",
-            "iccid":"89860121801097564807",
-            "state":"connect",
-            "rsrp":"-104",
-            "rssi":"-72",
-            "signal":"4",
+            "imei":"868186042111714",
+            "ci":"4A37D91",
+            "lac":"25E3",
+            "plmn":"46001",
+            "csq":"23",
             "nettype":"FDD LTE",
-            "rsrq":"-15",
-            "sinr":"-18.0",
-            "band":"LTE BAND 8",
-            "csq":"19"
-        }
+            "rsrp":"-97",
+            "rssi":"-66",
+            "rsrq":"-9",
+            "sinr":"-18",
+            "band":"LTE BAND 1",
+            "channel":"100",
+            "signal":"4",
+            "operator":"China Unicom",
+            "imsi":"460018708133639",
+            "iccid":"8986012580155265717",
+            "name":"Quectel-EC2X"
+        },
+        "ifname@wisp":
+        {
+            "status":"up",                     # connect is succeed
+            "mode":"dhcpc",                    # IPv4 connect mode is DHCP
+            "netdev":"ath11",                  # netdev is ath11
+            "gw":"192.168.10.254",             # gateway is 192.168.10.254
+            "dns":"114.114.114.114",           # dns is 114.114.114.114
+            "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
+            "ip":"192.168.10.1",               # ip address is 192.168.1.1
+            "mask":"255.255.255.0",            # network mask is 255.255.255.0
+            "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
+            "rx_bytes":"1256",                 # receive 1256 bytes
+            "rx_packets":"4",                  # receive 4 packets
+            "tx_bytes":"1320",                 # send 1320 bytes
+            "tx_packets":"4",                  # send 4 packets
+            "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
+            "method":"slaac",                  # IPv6 address mode is slaac
+            "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
+            "peer":"TP-link-2231",            # peer is TP-link-2231
+            "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
+            "channel":"10",                   # channel is 10
+            "rate":"270",                     # rate is 270M
+            "rssi":"-41",                     # rssi is -41dBm
+            "signal":"3"                      # signal level is 3
+        },
+        "ifname@wan":
+        {
+            "status":"up",                     # connect is succeed
+            "mode":"static",                   # IPv4 connect mode is static
+            "netdev":"wan",                    # netdev is lan
+            "gw":"192.168.10.254",             # gateway is 192.168.10.254
+            "dns":"114.114.114.114",           # dns is 114.114.114.114
+            "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
+            "ip":"192.168.10.1",               # ip address is 192.168.1.1
+            "mask":"255.255.255.0",            # network mask is 255.255.255.0
+            "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
+            "rx_bytes":"1256",                 # receive 1256 bytes
+            "rx_packets":"4",                  # receive 4 packets
+            "tx_bytes":"1320",                 # send 1320 bytes
+            "tx_packets":"4",                  # send 4 packets
+            "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
+            "method":"slaac",                  # IPv6 address mode is slaac
+            "addr":"fe80::50:f4ff:fe00:0"      # local IPv6 address is fe80::50:f4ff:fe00:0
+        }        
     }
     ```
 
@@ -254,7 +355,7 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":
+        "ifname object":              // [ string ]:{}, VPN ifname object name
         {                             // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
@@ -293,7 +394,7 @@ Network management framework, define external connections and data scheduling wh
     ```json
     // Attributes introduction of talk by the method return
     {
-        "ifname object":
+        "ifname object":              // [ string ]:{}, VPN and extern ifname object name
         {                             // return by API "status" of ifname object
             "mode":"current mode",
             "status":"current state",
@@ -339,19 +440,82 @@ Network management framework, define external connections and data scheduling wh
     - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
-    {
-        "ifname":"ifname object",
-        "mode":"current mode",
-        "status":"current state",
-        "ifdev":"corresponding ifdev object",
-        "netdev":"netdev name of linux",
-        "ip":"IP address",
-        "rx_bytes":"receive bytes",
-        "rx_packets":"receive packets",
-        "tx_bytes":"tx bytes",
-        "tx_packets":"tx packets",
-        "mac":"MAC address"
-        //... more the attr return by API "status" of ifname object
+    {                                // return by API "status" of ifname object
+        "ifname":"ifname object",       // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
+        "status":"Current state",       // [ "uping", "down", "up" ]
+                                            // "uping" for connecting
+                                            // "down" for the ifname is down
+                                            // "block" for wait keeplive return
+                                            // "failed" for keeplive failed
+                                            // "up" for the network is connect succeed
+
+        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+        "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
+        "gw":"gateway ip address",      // [ ip address ]
+        "dns":"dns ip address",         // [ ip address ]
+        "dns2":"dns2 ip address",       // [ ip address ]
+        "ip":"ip address",              // [ ip address ]
+        "mask":"network mask",          // [ ip address ]
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
+        "ontime":"online uptime",       // [ string ], Optional, online system uptime
+        "livetime":"online time",       // [ string ], format is hour:minute:second:day
+        "rx_bytes":"send bytes",        // [ number ]
+        "rx_packets":"send packets",    // [ number ]
+        "tx_bytes":"receive bytes",     // [ number ]
+        "tx_packets":"receive packets", // [ number ]
+        "mac":"MAC address",            // [ mac address ]
+
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+                                            // "manual" for manual setting
+                                            // "automatic" for DHCPv6
+                                            // "slaac" for Stateless address autoconfiguration
+        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+    
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            // show this attr when "ifname" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            "imei":"IMEI numer",            // [ string ]
+            "imsi":"IMSI number",           // [ string ]
+            "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
+                                                    // number for iccid
+                                                    // "nosim" for cannot found the simcard
+                                                    // "pin" for the simcard need PIN code
+                                                    // "puk" for the simcard pin error
+            "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
+                                                    // number for MCC and MNC
+                                                    // "noreg" for cannot register to opeartor
+                                                    // "unreg" for cannot register to opeartor
+                                                    // "dereg" for register to operator be refused
+            "name":"modem name",             // [ string ], lte modem model or name
+            "operator":"operator name",      // [ string ]
+            "nettype":"network type",        // The format varies depending on the module
+                                            // 2G usually shows GSM, GPRS, EDGE, CDMA
+                                            // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
+                                            // 4G usually shows LTE, FDD, TDD
+            "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
+            "rssi":"signal intensity",       // [ number ], the unit is dBm
+            "csq":"CSQ number",              // [ number ], Optional
+            "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
+            "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
+            "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
+            "band":"current band",           // [ string ], Optional, The format varies depending on the module
+            "ci":"cell identity",            // [ string ], Optional
+            "lac":"location area code",      // [ string ], Optional
+            "channel":"location area code",  // [ string ], Optional    
+
+            //////////////////////////////////////////////////////////////////
+            // show this attr when "ifname" be "ifname@wisp" "ifname@wisp2" //
+            //////////////////////////////////////////////////////////////////
+            "peer":"Peer SSID",              // [ string ]
+            "peermac":"Peer BSSID",          // [ MAC address ]
+            "channel":"Peer channel",        // [ 1- 165 ]
+            "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+            "rate":"connect rate",           // [ number ], Optional, the unit is M
+            "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
+            "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
     }
     ```
 
@@ -391,19 +555,82 @@ Network management framework, define external connections and data scheduling wh
     - return json to describes the infomation  
     ```json
     // Attributes introduction of talk by the method return
-    {
-        "ifname":"ifname object",
-        "mode":"current mode",
-        "status":"current state",
-        "ifdev":"corresponding ifdev object",
-        "netdev":"netdev name of linux",
-        "ip":"IP address",
-        "rx_bytes":"receive bytes",
-        "rx_packets":"receive packets",
-        "tx_bytes":"tx bytes",
-        "tx_packets":"tx packets",
-        "mac":"MAC address"
-        //... more the attr return by API "status" of ifname object
+    {                                // return by API "status" of ifname object
+        "ifname":"ifname object",       // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
+        "status":"Current state",       // [ "uping", "down", "up" ]
+                                            // "uping" for connecting
+                                            // "down" for the ifname is down
+                                            // "block" for wait keeplive return
+                                            // "failed" for keeplive failed
+                                            // "up" for the network is connect succeed
+
+        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+        "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
+        "gw":"gateway ip address",      // [ ip address ]
+        "dns":"dns ip address",         // [ ip address ]
+        "dns2":"dns2 ip address",       // [ ip address ]
+        "ip":"ip address",              // [ ip address ]
+        "mask":"network mask",          // [ ip address ]
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
+        "ontime":"online uptime",       // [ string ], Optional, online system uptime
+        "livetime":"online time",       // [ string ], format is hour:minute:second:day
+        "rx_bytes":"send bytes",        // [ number ]
+        "rx_packets":"send packets",    // [ number ]
+        "tx_bytes":"receive bytes",     // [ number ]
+        "tx_packets":"receive packets", // [ number ]
+        "mac":"MAC address",            // [ mac address ]
+
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+                                            // "manual" for manual setting
+                                            // "automatic" for DHCPv6
+                                            // "slaac" for Stateless address autoconfiguration
+        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+    
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            // show this attr when "ifname" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
+            ////////////////////////////////////////////////////////////////////////////////////////////
+            "imei":"IMEI numer",            // [ string ]
+            "imsi":"IMSI number",           // [ string ]
+            "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
+                                                    // number for iccid
+                                                    // "nosim" for cannot found the simcard
+                                                    // "pin" for the simcard need PIN code
+                                                    // "puk" for the simcard pin error
+            "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
+                                                    // number for MCC and MNC
+                                                    // "noreg" for cannot register to opeartor
+                                                    // "unreg" for cannot register to opeartor
+                                                    // "dereg" for register to operator be refused
+            "name":"modem name",             // [ string ], lte modem model or name
+            "operator":"operator name",      // [ string ]
+            "nettype":"network type",        // The format varies depending on the module
+                                            // 2G usually shows GSM, GPRS, EDGE, CDMA
+                                            // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
+                                            // 4G usually shows LTE, FDD, TDD
+            "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
+            "rssi":"signal intensity",       // [ number ], the unit is dBm
+            "csq":"CSQ number",              // [ number ], Optional
+            "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
+            "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
+            "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
+            "band":"current band",           // [ string ], Optional, The format varies depending on the module
+            "ci":"cell identity",            // [ string ], Optional
+            "lac":"location area code",      // [ string ], Optional
+            "channel":"location area code",  // [ string ], Optional    
+
+            //////////////////////////////////////////////////////////////////
+            // show this attr when "ifname" be "ifname@wisp" "ifname@wisp2" //
+            //////////////////////////////////////////////////////////////////
+            "peer":"Peer SSID",              // [ string ]
+            "peermac":"Peer BSSID",          // [ MAC address ]
+            "channel":"Peer channel",        // [ 1- 165 ]
+            "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+            "rate":"connect rate",           // [ number ], Optional, the unit is M
+            "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
+            "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
     }
     ```
 

@@ -11,7 +11,7 @@
     },
     "cmd":
     {
-        "sline":"tools for terminal command line"
+        "eline":"tools for terminal line to execute the he command"
     },
     "obj":
     {
