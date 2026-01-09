@@ -124,7 +124,11 @@
                         return '<button class="btn btn-warning btn-xs btn-choose" onclick="knock_client( ' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Knock') + '</button>'
                     }
                 }
-            ]
+            ],
+             autowidth:true,
+             loadonce:true,
+             shrinkToFit:true,
+             responsive:true,
         }
       );
 

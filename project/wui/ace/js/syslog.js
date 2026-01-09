@@ -195,7 +195,11 @@ $.i18n().load( page.lang('syslog') ).then( function () {
             },
             $.extend( true, {}, jqtable.actionOptions,
                 { formatoptions:{ delOptions:{ onclickSubmit:function(params, data) { syslog_delete(data); } }, editformbutton:false, editbutton:false } } )
-        ]
+        ],
+        autowidth:true,
+        loadonce:true,
+        shrinkToFit:true,
+        responsive:true,
     }
   ).jqGrid( 
         'navGrid', syslogs_pager,

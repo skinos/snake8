@@ -208,7 +208,11 @@
                         }
                     }
                 )
-            ]
+            ],
+            autowidth:true,
+            loadonce:true,
+            shrinkToFit:true,
+            responsive:true,
         };
         var item = jqtable.create( rule_table, rule_pager, tbcustom );
 
@@ -223,7 +227,28 @@
                 }
             ),
             $.extend(true, {}, jqtable.editOptions, { onclickSubmit: function (params, data) { edit_rule(data); } } ),
-            $.extend(true, {}, jqtable.addOptions, {onclickSubmit: function (params, data) { add_rule(data); } }),
+            $.extend(true, {}, jqtable.addOptions, 
+            {
+                onclickSubmit: function (params, data) 
+                { 
+                    add_rule(data); 
+                },
+                afterShowForm:function(form){
+                // 添加自定义样式和提示
+                    $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+                    $("label[for='call']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+                    $("label[for='joint']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+
+                    var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+                        '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+                        '</div>';
+                    
+                    $("table > tbody > tr:first", form).before('<tr><td colspan="3">' + hintText + '</td></tr>');
+                    // 设置 placeholder
+                    $("#name", form).attr("placeholder", $.i18n('Enter Task Name'));
+                    $("#call", form).attr("placeholder", $.i18n('Enter Component API'));
+            }
+            }),
             $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function(params, data) { delete_rule(data); } }),
             {} );
 

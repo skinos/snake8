@@ -9,6 +9,20 @@
     <div id="service-grid-pager"></div>
 
 
+    <div id="grid-controls" style="margin-bottom: 15px; display: flex; padding: 8px 10px;background: #f5f5f5;">
+        <div style="display: flex; align-items: center">
+          <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+          <select id="rowNums" style="width: 60px;">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </div>
+    </div>
+
 
       <div class="clearfix form-actions">
         <div class="col-md-offset-3 col-md-9">
@@ -101,10 +115,52 @@
                         return '<button class="btn btn-warning btn-xs btn-choose" onclick="service_reset(' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Reset') + '</button>'
                     }
                 }
-            ]
+            ],
+            pager: '#service-grid-pager',
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
+            autowidth:true,
+            loadonce:true,
+            shrinkToFit:true,
+            responsive:true,
+
+            gridComplete: function() {
+                var $titlebar = $(this).closest('.ui-jqgrid').find('.ui-jqgrid-titlebar');
+                if ($titlebar.length && !$('#grid-controls').prev().is($titlebar)) {
+                
+                $('#grid-controls').insertAfter($titlebar);
+                $('#grid-controls').css({
+                    'display': 'flex',
+                    'justify-content': 'space-between',
+                    'background': '#f5f5f5',
+                    'padding': '8px 10px',
+                    // 'border-radius': '4px',
+                    'margin-bottom': '0px'
+                });
+                $('#grid-controls > div:first-child').css({
+                    'display': 'flex',
+                    'align-items': 'center'
+                });
+                $('#grid-controls > div:last-child').css({
+                    'display': 'flex',
+                    'align-items': 'center'
+                });
+                }
+            },
+
         };
         jqtable.create( rule_table, rule_pager, tbcustom );
 
+        $('#rowNums').on('change',function(){
+                var newRowNum = parseInt($(this).val(),10);
+                $(rule_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+        
         /* load the configure */
         rule_load();
         /* bind the refresh */

@@ -78,7 +78,11 @@ $.i18n().load( page.lang('hosts') ).then( function () {
                     editrules: { required: true }
                 },
                 jqtable.actionOptions,
-            ]
+            ],
+            autowidth:true,
+            loadonce:true,
+            shrinkToFit:true,
+            responsive:true,
         }
     ).jqGrid( 'navGrid', hosts_pager,
         $.extend(true, {}, jqtable.navOptions, 
@@ -90,7 +94,23 @@ $.i18n().load( page.lang('hosts') ).then( function () {
             }
         ),
         jqtable.editOptions,
-        jqtable.addOptions,
+        //jqtable.addOptions,
+        $.extend(true,{},jqtable.addOptions,{
+            afterShowForm:function(form){
+                // 添加自定义样式和提示
+                    $("label[for='hostname']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+                    $("label[for='ip']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+
+                    var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+                        '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+                        '</div>';
+                    
+                    $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+                    // 设置 placeholder
+                    $("#hostname", form).attr("placeholder", $.i18n('Enter Hostname'));
+                    $("#ip", form).attr("placeholder", $.i18n('Enter IP'));
+            }
+        }),
         jqtable.deleteOptions
     );
 
