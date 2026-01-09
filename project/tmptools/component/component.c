@@ -1,6 +1,6 @@
 /*
- *    Description:  executable program template
- *         Author:  fpktools, zxx@ashyelf.com
+ *    Description:  component template
+ *         Author:  tmptools, zxx@ashyelf.com
  *        Company:  ashyelf
  */
 
@@ -16,8 +16,6 @@ gCUSTOM__XXXX         Such as D218 products will have ggCUSTOM D218 macro defini
 PROJECT_ID            String, is the project name
 COM_ID                String, component name, Name of the directory where this component resides
 COM_IDPATH            String, Full name of a component in the system, PROJECT_ID@COM_ID
-EXE_ID                String, execute program name, Name of the directory where this execute program resides
-EXE_IDPATH            String, Full name of a execute program name in the system, PROJECT_ID@EXE_ID
 */
 
 /* Available skin interfaces (specific headers are in the top /doc/ API directory) 
@@ -62,6 +60,36 @@ boole_t _shut( obj_t this, param_t param )
     return ttrue;
 }
 
+/* Functions that are triggered when viewing a component configuration are usually used to obtain the actual configuration and then calibrate and then return
+ * This function can be called by the user at the he terminal, project@component to call this function */
+talk_t _get( obj_t this, attr_t path )
+{
+    talk_t cfg;
+
+    /* gets the configuration parameters for the component */
+    cfg = config_get( this, path );
+
+	app_info( "returns the configuration of the %s", COM_IDPATH );
+    return cfg;
+}
+/* When you set a component parameter, you will be triggered to call this function, usually filtered by this function and then stored in the actual configuration
+ * This function can be called by the user at the he terminal, project@component= to call this function */
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+
+    /* directly save the set parameters into the flash */
+    ret = config_set( this, v, path );
+    /* if the flash is successfully saved, the call is called by calling first _shut closing and then calling the _setup to restart the corresponding service */
+    if ( ret == true )
+    {
+		app_info( "save the configuration of the %s and reset it", COM_IDPATH );
+        _shut( this, NULL );
+        _setup( this, NULL );
+    }
+    return ret;
+}
+
 /* Usually it is started as a service process in other functions, so it will always run, and if it exits the system it will restart it */
 boole_t _service( obj_t this, param_t param )
 {
@@ -71,8 +99,9 @@ boole_t _service( obj_t this, param_t param )
 }
 
 
-/* Typically used for event process */
-boole_t _take( obj_t this, param_t param )
+
+/* Typically used for online event process */
+boole_t _online( obj_t this, param_t param )
 {
     talk_t ms;
 	char *ptr;
@@ -83,90 +112,14 @@ boole_t _take( obj_t this, param_t param )
 	/* get the information that the joint event carries */
 	ms = param_talk( param, 2 );
 	/* converts the event information to a string */
-	ptr = json2string( ms );
 
 	/* logger the joint event */
+	ptr = json2string( ms );
 	app_info( "receive a event, name is %s, carry message is %s", event, ptr );
-
 	/* free the string */
 	free( ptr );
 	/* To exit, remember to quit immediately after running, if you do not exit may cause the entire event handling to freeze here */
-    return tfalse;
-}
-
-
-
-/* main function */
-int main( int argc, const char **argv )
-{
-	int i;
-	int pipe;
-	talk_t ret;
-	obj_t this;
-	param_t param;
-	const char *api;
-
-	// get the object name
-	this = shell_object();
-	// get the parameter
-	param = shell_param();
-	// get call API
-	api = shell_api();
-	// get the PIPE for return
-	pipe = shell_pipe();
-
-	// delivery to API
- 	ret = tfalse;
-	if ( 0 == strcmp( api, "setup" ) )
-	{
-		ret = _setup( this, param );
-	}
-	else if ( 0 == strcmp( api, "shut" ) )
-	{
-		ret = _shut( this, param );
-	}
-	else if ( 0 == strcmp( api, "take" ) )
-	{
-		ret = _take( this, param );
-	}
-	else if ( 0 == strcmp( api, "service" ) )
-	{
-		ret = _service( this, param );
-	}
-
-	// exit
-	i = EXIT_EFUNC;
-	if ( ret > tpanic )
-	{
-		i = 0;
-	}
-	if ( ret == ttrue )
-	{
-		i = EXIT_ttrue;
-	}
-	else if ( ret == tfalse )
-	{
-		i = EXIT_tfalse;
-	}
-	else if ( ret == tnull )
-	{
-		i = EXIT_tnull;
-	}
-	else
-	{
-		i = EXIT_terror;
-	}
-	// return to call
-	if ( pipe > 0 )
-	{
-		talk2fd( pipe, ret, errno );
-		close( pipe );
-	}
-	// free
-	param_free( param );
-	obj_free( this );
-	talk_free( ret );
-	return i;
+    return ttrue;
 }
 
 

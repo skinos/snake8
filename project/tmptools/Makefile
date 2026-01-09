@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 # 项目名称(替换名称即可)
-PROJECT_ID:=template
+PROJECT_ID:=tmptools
 # 定义项目基本信息
 PKG_NAME:=skinos_$(PROJECT_ID)
 PKG_VERSION:=$(shell prj-read version)
@@ -29,9 +29,10 @@ endef
 
 # 安装到系统运行目录中( 注意必须要有这个函数才会执行Build/Compile )
 define Package/$(PKG_NAME)/install
-	$(call Build/Install/Collect,$(1))
+	$(call Build/Install/doc)
 	# More installation instructions can be added here
-	$(call Build/Install/Fpk,$(1),$(gSTORE_DIR))
+	$(call Build/Install/fpk,$(gSTORE_DIR))
+	$(call Build/Install/fpk2rootfs,$(1))
 endef
 
 # 调用编译安装

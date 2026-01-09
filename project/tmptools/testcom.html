@@ -5,25 +5,64 @@
     <div class="form-horizontal" role="form">
 
 
-        
+    <!-- 运行状态 -->
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Service State"></label>
+      <div class="col-sm-9 form-right-text">
+        <span id="service_state"></span>
+      </div>
+    </div>
+    <!-- 进程ID -->
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Service PID"></label>
+      <div class="col-sm-9 form-right-text">
+        <span id="service_pid"></span>
+      </div>
+    </div>
+    <!-- 进程循环计数 -->
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Current Loop"></label>
+      <div class="col-sm-9 form-right-text">
+        <span id="service_loop"></span>
+      </div>
+    </div>
+    <!-- 操作 -->
+    <div class="form-horizontal" role="form">
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right"></label>
+        <div class="col-sm-9">
+          <div class="btn-group">
+		    <!-- 启动进程 -->
+            <button class="btn btn-second" data-i18n="Start Service" id="service_start"></button>
+		    <!-- 停止进程 -->
+            <button class="btn btn-danger" data-i18n="Stop Service" id="service_stop" style="display: none;"></button>
+		    <!-- 修改进程循环计数 -->
+            <button class="btn btn-warning" data-i18n="Modify Loop" id="loop_modify" style="display: none;"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="hr hr32 hr-dotted"></div>
     <!-- Custom a status -->
     <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Custom Status"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Configure Status"></label>
         <div class="col-sm-9">
             <!-- status option -->
             <label><input id="status" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label>
         </div>
     </div>
 
-
-    <div id="statusSets">
+    <div id="statusSets" style="display: none;">
 
         <!-- Custom a property -->
         <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Custom Property"></label>
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Name"></label>
             <div class="col-sm-9">
                 <!-- property input box -->
-                <div class="clearfix"><input type="text" id="property" class="col-xs-10 col-sm-5" maxlength="128" /></div>
+                <div class="clearfix"><input type="text" id="name" class="col-xs-10 col-sm-5" maxlength="128" /></div>
             </div>
         </div>
 
@@ -58,9 +97,11 @@
 
 
     // Component full name
-    var comname = "template@com";
+    var comname = "tmptools@testcom";
     // Component configure
     var comcfg;
+    // Component Status
+    var comstat;
     // Language file path, which automatically varies according to the system language type (named in prj.json)
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
 
@@ -68,7 +109,7 @@
     function load_comcfg()
     {
         // Get the component configure from the system
-        he.load( [ comname ] ).then( function(v){
+        he.load( [ comname, comname+".status" ] ).then( function(v){
             // Get the component configure and stored to "comcfg"
             comcfg = v[0];
             if ( !comcfg )
@@ -78,7 +119,7 @@
             // load the attribute "status"
             $('#status').prop( 'checked', able2boole(comcfg.status) );
             // load the attribute "property"
-            $('#property').val( comcfg.property );
+            $('#name').val( comcfg.name );
             // Bind function handling for status options to hide or display property input box when clicked
             $('#status').unbind('change').change(function () {
                 // if select
@@ -94,6 +135,36 @@
                     $('#statusSets').hide();
                 }
             }).trigger('change');
+
+            // Get the component status and stored to "comstat"
+            comstat = v[1];
+            if ( !comstat )
+            {
+                comstat = {};
+            }
+			if ( comstat.status )
+			{
+				$('#service_state').text( $.i18n(comstat.status) );
+				if ( comstat.status == "running" )
+				{
+                    $('#service_start').hide();
+                    $('#service_stop').show();
+                    $('#loop_modify').show();
+					if ( comstat.pid )
+					{
+						$('#service_pid').text( comstat.pid );
+					}
+					if ( comstat.loop )
+					{
+						$('#service_loop').text( comstat.loop );
+					}
+				}
+			}
+			else
+			{
+				$('#service_state').text( $.i18n("stopped") );
+			}
+
         });
     }
 
@@ -112,7 +183,7 @@
         if ( comcfg.status == "enable" )
         {
             // get the attribute "property"
-            comcfg.property = $('#property').val();
+            comcfg.name = $('#name').val();
         }
         // Compare copies to determine if component configure have been modified
         if ( ocompare( comcfg, comcfgcopy ) )
@@ -129,7 +200,43 @@
             load_comcfg();
         });
     }
-    
+
+    // bind the start service
+    $('#service_start').on(ace.click_event, function () {
+        he.exec( [ comname+".start" ] ).then( function(v){
+            var ret = v[0];
+            if ( ret == true )
+            {
+              location.reload();
+            }
+        });
+    });
+    // bind the stop service
+    $('#service_stop').on(ace.click_event, function () {
+        he.exec( [ comname+".shut" ] ).then( function(v){
+            var ret = v[0];
+            if ( ret == true )
+            {
+              location.reload();
+            }
+        });
+    });
+	// bind the loop modify
+    $('#loop_modify').on(ace.click_event, function () {
+        page.prompt( { message: $.i18n('Input Loop'), callback:function(result){
+            if ( result )
+            { 
+                he.exec( [ comname+".modify["+result+"]" ] ).then( function(v){
+                    var ret = v[0];
+                    if ( ret == true )
+                    {
+                      location.reload();
+                    }
+                });
+            }
+        } } );
+    });
+
     // Load the language file
     $.i18n().load( page.lang(langjson) ).then( function () {
         // HTML language initialization

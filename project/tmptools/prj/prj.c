@@ -4,7 +4,12 @@
  * 	   Company:  ASHYELF
  */
 #include "skin/skin.h"
-#define TEMPLATE_PATH "/prj/template"
+#define TEMPLATE_PATH          PROJECT_DIR"/"PROJECT_ID
+#define TEMPLATE_COM_SHELL     "component.ash"
+#define TEMPLATE_HTML_FILE     "page.html"
+#define TEMPLATE_HTML_FILE_KEY "tmptools@com"
+#define TEMPLATE_LANGEN_FILE   "en.json"
+#define TEMPLATE_LANGCN_FILE   "cn.json"
 
 
 
@@ -119,19 +124,17 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	{
 		int i;
 		FILE *fp;
-		char src[PATH_MAX];
 		char buf[LINE_MAX];
 
 		unlink( page );
-		snprintf( src, sizeof(src), "%s/page.html", TEMPLATE_PATH );
 		buf[LINE_MAX-1] = '\0';
-		fp = fopen( src, "r" );
+		fp = fopen( TEMPLATE_PATH"/"TEMPLATE_HTML_FILE, "r" );
 		if ( fp != NULL )
 		{
 			i = 0;
 			while( NULL != fgets( buf, sizeof(buf)-1, fp ) )
 			{
-				if ( NULL != strstr( buf, "templat@com" ) )
+				if ( NULL != strstr( buf, TEMPLATE_HTML_FILE_KEY ) )
 				{
 					string3file( page, "\tvar comname = \"%s@%s\"\n", name, wuiname );
 				}
@@ -146,8 +149,8 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	}
 
 	/* make the lang file */
-	shell( "cp %s/en.json %s/%s", TEMPLATE_PATH, prjpath, enjson );
-	shell( "cp %s/cn.json %s/%s", TEMPLATE_PATH, prjpath, cnjson );
+	shell( "cp %s/%s %s/%s", TEMPLATE_PATH, TEMPLATE_LANGEN_FILE, prjpath, enjson );
+	shell( "cp %s/%s %s/%s", TEMPLATE_PATH, TEMPLATE_LANGCN_FILE, prjpath, cnjson );
 
 	/* get the chinese menu title */
 	printf( "web menu title(Chinese): " );
@@ -163,7 +166,7 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	json_set_string( app, "en", page );
 
 	/* write the PROJECT_INFOFILE */
-	talk_save( cfg, path );
+	json_save( cfg, path );
 	talk_print( app );
 
 	talk_free( cfg );
@@ -293,7 +296,7 @@ int main( int argc, const char **argv )
         }
 		snprintf( path, sizeof(path), "%s/%s/%s.ash", PROJECT_APP_DIR, name, ptr );
 		/* create shell component */
-		shell( "cp %s/component.ash %s", TEMPLATE_PATH, path );
+		shell( "cp %s/%s %s", TEMPLATE_PATH, TEMPLATE_COM_SHELL, path );
 		snprintf( cwd, sizeof(cwd), "%s%c%s", name, PROJECT_OBJECT_GAPC, ptr );
 		com_register( cwd, path );
 		printf( "The component file %s\n", path );

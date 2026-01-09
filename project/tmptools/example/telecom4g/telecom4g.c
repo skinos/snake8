@@ -1,5 +1,5 @@
 /*
- *    Description:  component template
+ *    Description:  component
  *         Author:  devtools, zxx@ashyelf.com
  *        Company:  ashyelf
  */
@@ -20,17 +20,17 @@ COM_IDPATH            String, Full name of a component in the system, PROJECT_ID
 
 /* Available skin interfaces (specific headers are in the top /doc/ API directory) 
 link.h				implementation of general linker list
-syslog.h			log call implementation
+log.h	    		log call implementation
 talk.h				implementation of common communication data types
 param.h 			implementation of parameter structure and related functions
 path.h				implementation of structure and related functions for object path and attribute path
-misc.h				miscellaneous function implementation
+utility.h   		miscellaneous function implementation
 register.h			global register variable implementation
 config.h			implementation function to get/set/list the config
 project.h			provide unified project information operation interface for the system
 com.h				implementation communication to other component function use talk structure or parameter structure
 he2com.h			invokes the function implementation
-reactor.h           libevent reactor assist functions
+serv.h		    	service call implementation
 skinapi.h			define all the general component api
 */
 
@@ -134,7 +134,7 @@ boole_t _setup( obj_t this, param_t param )
 	const char *object;
 
 	/* 获取组件名全称 */
-	object = obj_combine(this);
+	object = obj_name(this);
 	/* 获取组件配置 */
 	cfg = config_get( this, NULL );
 	/* 得到组件配置的status属性值 */
@@ -151,7 +151,6 @@ boole_t _setup( obj_t this, param_t param )
 	/* 退出, 记住一定要运行后立即退出, 如果不退出可能导致整个系统启动卡死在这里 */
     return ttrue;
 }
-
 /* Typically used to shut down or exit this component, this method is called when the system shuts down, which can be registered in the project information file
  * This function can be called by the user at the he terminal, project@component.shut to call this function */
 boole_t _shut( obj_t this, param_t param )
@@ -159,12 +158,44 @@ boole_t _shut( obj_t this, param_t param )
 	const char *object;
 
 	/* 获取组件名全称 */
-	object = obj_combine(this);
+	object = obj_name(this);
 	/* 停止服务 */
 	sdelete( object );
 	/* 退出, 记住一定要运行后立即退出, 如果不退出可能导致整个系统启动卡死在这里 */
 	return ttrue;
 }
+
+/* Functions that are triggered when viewing a component configuration are usually used to obtain the actual configuration and then calibrate and then return
+ * This function can be called by the user at the he terminal, project@component to call this function */
+talk_t _get( obj_t this, attr_t path )
+{
+    talk_t cfg;
+
+    /* gets the configuration parameters for the component */
+    cfg = config_get( this, path );
+
+	app_info( "returns the configuration of the %s", COM_IDPATH );
+    return cfg;
+}
+/* When you set a component parameter, you will be triggered to call this function, usually filtered by this function and then stored in the actual configuration
+ * This function can be called by the user at the he terminal, project@component= to call this function */
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+
+    /* directly save the set parameters into the flash */
+    ret = config_set( this, v, path );
+    /* if the flash is successfully saved, the call is called by calling first _shut closing and then calling the _setup to restart the corresponding service */
+    if ( ret == true )
+    {
+		app_info( "save the configuration of the %s and reset it", COM_IDPATH );
+        _shut( this, NULL );
+        _setup( this, NULL );
+    }
+    return ret;
+}
+
+
 
 /* Usually it is started as a service process in other functions, so it will always run, and if it exits the system it will restart it */
 boole_t _service( obj_t this, param_t param )
@@ -183,7 +214,7 @@ boole_t _service( obj_t this, param_t param )
 	const char *save_iccid;
 
 	/* 获取组件名全称 */
-	object = obj_combine( this );
+	object = obj_name( this );
 	/* 查看是否存在默认路由来确定数据业务是否可用 */
     do
     {
@@ -227,12 +258,12 @@ boole_t _service( obj_t this, param_t param )
 	if ( r == false )
 	{
 		/* 对注册失败做计数 */
-		iptr = register_pointer( object, "regfailed" );
+		iptr = register_spointer( object, "regfailed" );
 		if ( iptr == NULL )
 		{
 			/* 初始化计数为1 */
 			i = 1;
-			iptr = register_set( object, "regfailed", &i, sizeof(i), 0 );
+			iptr = register_sset( object, "regfailed", &i, sizeof(i), 0 );
 		}
 		else
 		{
@@ -275,7 +306,7 @@ talk_t _status( obj_t this, param_t param )
 	const char *object;
 
 	/* 获取组件名全称 */
-	object = obj_combine( this );
+	object = obj_name( this );
 	/* 创建返回 JSON */
 	ret = json_create( NULL );
 	/* 获取组件所有配置 */
@@ -291,7 +322,7 @@ talk_t _status( obj_t this, param_t param )
 	{
 		json_set_string( ret, "status", "unregistered" );
 		/* 获到注册失败次数 */
-		iptr = register_value( object, "regfailed" );
+		iptr = register_svalue( object, "regfailed" );
 		if ( iptr != NULL )
 		{
 			json_set_number( ret, "failed", *iptr );
@@ -303,14 +334,14 @@ talk_t _status( obj_t this, param_t param )
     return ret;
 }
 
-/* Typically used for event process */
-talk_t _take( obj_t this, param_t param )
+/* Typically used for online event process */
+talk_t _online( obj_t this, param_t param )
 {
 	const char *event;
 	const char *object;
 
 	/* 获取组件名全称 */
-	object = obj_combine( this );
+	object = obj_name( this );
 	/* 得到事件名称 */
 	event = param_string( param, 1 );
 	/* 如果事件名称为network/online(即外网连接上线)则立即重启组件的服务 */
@@ -320,38 +351,6 @@ talk_t _take( obj_t this, param_t param )
 		return ttrue;
 	}
     return tfalse;
-}
-
-
-
-/* Functions that are triggered when viewing a component configuration are usually used to obtain the actual configuration and then calibrate and then return
- * This function can be called by the user at the he terminal, project@component to call this function */
-talk_t _get( obj_t this, attr_t path )
-{
-    talk_t cfg;
-
-    /* gets the configuration parameters for the component */
-    cfg = config_get( this, path );
-
-	info( "returns the configuration of the %s", COM_IDPATH );
-    return cfg;
-}
-/* When you set a component parameter, you will be triggered to call this function, usually filtered by this function and then stored in the actual configuration
- * This function can be called by the user at the he terminal, project@component= to call this function */
-boole _set( obj_t this, talk_t v, attr_t path )
-{
-    boole ret;
-
-    /* directly save the set parameters into the flash */
-    ret = config_set( this, v, path );
-    /* if the flash is successfully saved, the call is called by calling first _shut closing and then calling the _setup to restart the corresponding service */
-    if ( ret == true )
-    {
-		info( "save the configuration of the %s and reset it", COM_IDPATH );
-        _shut( this, NULL );
-        _setup( this, NULL );
-    }
-    return ret;
 }
 
 

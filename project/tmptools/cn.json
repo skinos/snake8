@@ -1,0 +1,15 @@
+{
+    "Service State":"服务状态",
+        "running":"正在运行",
+        "stopped":"未运行",
+    "Service PID": "服务进程号",
+    "Current Loop": "当前循环计数",
+    "Input Loop":"输入循环计数",
+
+    "Stop Service":"停止服务",
+    "Start Service":"启动服务",
+    "Modify Loop":"修改循环计数",
+
+    "Configure Status":"配置状态",
+    "Name":"名称"
+}

@@ -1,0 +1,62 @@
+{
+    "name":"tmptools",
+    "intro":"Assist template development tools",
+    "desc":"Assist with template development projects, including many examples and templates, and some debugging tools",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "cmd":
+    {
+        "prj":"online programming tool"
+    },
+    "com":
+    {
+        "testcom":"example for the components programming"
+    },
+    "exe":
+    {
+        "testexe":"example for the exeucte program programming"
+    },
+
+    "init":
+    {
+        "app":
+        {
+            "tmptools@testcom.setup":""
+        }
+    },
+
+    "joint":
+    {
+        "network/on":
+        {
+            "tmptools@testcom.on":""
+        },
+        "network/onextern":
+        {
+            "tmptools@testcom.onextern":""
+        },
+        "network/online":
+        {
+            "tmptools@testcom.online":""
+        }
+    },
+
+    "wui":
+    {
+        "testcom":
+        {
+            "en":"Test components",
+            "cn":"示例组件",
+            "page":"testcom.html",
+            "config":"tmptools@testcom",
+            "lang":
+            {
+                "cn":"cn.json",
+                "en":"en.json"
+            }
+        }
+    }
+    
+}
