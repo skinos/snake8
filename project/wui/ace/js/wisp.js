@@ -837,13 +837,13 @@ function ap_select( rowId )
     $('#lock').trigger('change');
     $('#secure').val( ap.secure || 'disable');
     // wpa_encrypt 为auto 时设置为tkipaes
-    if ( ap.wpa_encrypt === 'auto' )
+    if ( ap.wpa_encrypt == 'auto' )
     {
         $('#wpa_encrypt').val('tkipaes');
     }
     else
     {
-        $('#wpa_encrypt').val(ap.wpa_encrypt || 'tkipaes');
+        $('#wpa_encrypt').val( ap.wpa_encrypt||'tkipaes' );
     }
     // 手动触发change，以便显示隐藏密码输入框
     $('#secure').trigger('change');

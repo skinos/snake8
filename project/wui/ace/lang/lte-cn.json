@@ -98,6 +98,7 @@
 	"LCP Echo Times":"LCP检测次数",
 	"PPP Option":"PPP选项",
 
+    "Route Options":"路由选项",
 	"IPv4 Address":"IPV4地址",
 	"Subnet Mask":"子网掩码",
 	"Gateway":"网关",
