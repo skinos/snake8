@@ -15,6 +15,7 @@ do
         DIR_LIST=`ls ${DIR_ROOT}`
         for dir in $DIR_LIST
         do
+            echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
             rm -fr ${DIR_ROOT}/${dir}/skinos_*
         done
     fi
