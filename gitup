@@ -20,7 +20,7 @@ fi
 cd ${TOPDIR}
 
 # Custom
-for tmp in rice doc
+for tmp in rice
 do
     if [ -d ${TOPDIR}/${tmp} ]; then
         echo "################################################"
@@ -52,8 +52,19 @@ do
     fi
 done
 
-# sopen platform
+# openwrt platform
 for tmp in config/sopen/
+do
+    if [ -d ${TOPDIR}/${tmp} ]; then
+        echo "################################################"
+        echo "############## update the ${tmp} ###############"
+        echo "################################################"
+        cd ${TOPDIR}/${tmp};git pull
+    fi
+done
+
+# rockchip platform
+for tmp in config/srock/
 do
     if [ -d ${TOPDIR}/${tmp} ]; then
         echo "################################################"
