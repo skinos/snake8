@@ -5,8 +5,8 @@
 # All Rights Reserved.
 
 boot: boot_dep
-boot_dep:
 boot_menuconfig: boot_dep
+boot_dep:
 boot_install:
 boot_clean:
 boot_distclean: boot_clean
@@ -85,17 +85,18 @@ OPENWRT_FEED_NAME:=feeds-raw.tar.gz
 OPENWRT_SDK_NAME:=openwrt-raw.tar.xz
 sdk_update:
 	# 下载或更新底层SDK
+	if [ ! -d ${gPLATFORM_DIR}/dl ]; then \
+		mkdir ${gPLATFORM_DIR}/dl
+	fi
 	# 更新dl目录, 避免每次一个一个下载
 	# 更新并安装所有的菜单项
 	# 更新fpk
-	if [ -e ${gPLATFORM_DIR} ]; then \
-		cd ${gPLATFORM_DIR}; rm -fr *.fpk*; \
-		cd ${gPLATFORM_DIR}; repo-update slave ${gHARDWARE} ${gCUSTOM} fpk; \
-	fi
+	cd ${gPLATFORM_DIR}/dl; rm -fr *.fpk*
+	cd ${gPLATFORM_DIR}/dl; repo-update slave ${gHARDWARE} ${gCUSTOM} fpk
 sdk_adjust:
 	# 对底层SDK打补丁
-	if [ -e ${gPLATFORM_DIR}/adjust/patch.sh ]; then \
-		${gPLATFORM_DIR}/adjust/patch.sh; \
+	if [ -e ${gPLATFORM_DIR}/adjust/patch/patch.sh ]; then \
+		${gPLATFORM_DIR}/adjust/patch/patch.sh; \
 	fi
 sdk_menu:
 	# 更新并安装所有的菜单项
@@ -107,7 +108,7 @@ sdk_clean:
 	# distclean整个SDK
 sdk_distclean: sdk_clean
 	# 清除所有download
-	cd ${gCUSTOM_DIR}; rm -fr *.fpk *.store
+	rm -fr ${gPLATFORM_DIR}/dl
 .PHONY: sdk_update sdk_adjust sdk_menu sdk_menuconfig sdk_clean sdk_distclean
 
 

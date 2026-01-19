@@ -15,9 +15,9 @@ rootfs_prepare:
 		${gSCOPE_DIR}/mkrootfs.sh ${gosROOT_DIR}; \
 	fi
 	# copy a fpk to build
-	tmpls=`find ${gPLATFORM_DIR}/ -maxdepth 1 -name "*.fpk"`; \
+	tmpls=`find ${gPLATFORM_DIR}/dl/ -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
-		cp ${gPLATFORM_DIR}/*.fpk $(gBUILD_DIR); \
+		cp ${gPLATFORM_DIR}/dl/*.fpk $(gBUILD_DIR); \
 	fi
 	tmpls=`find ${gHARDWARE_DIR}/ -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
