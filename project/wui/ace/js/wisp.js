@@ -769,7 +769,7 @@ $.i18n().load( page.lang('wan') ).then( function () {
           {},{},{},{},{},
     );
 
-    var $toolbar = $("#t_" + "#aplist-grid-table");
+    var $toolbar = $("#t_" + "aplist-grid-table");
     $toolbar.append($('#grid-controls').children());
     $toolbar.css({
         'display': 'flex',
