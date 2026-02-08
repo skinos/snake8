@@ -35,27 +35,20 @@
         <!-- IMEI -->
         <div class="form-group">
             <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock IMEI"></label>
-            <div class="col-sm-9">
-              <div id="lock_imei" class="col-xs-7 col-sm-3 form-right-text"></div>
-              <button class="btn btn-main btn-mini" id="imei_lock" data-i18n="Lock"></button>
+            <div class="col-sm-9" style="display: flex; align-items: center;">
+                <div id="lock_imei" class="form-right-text" style="width: 14%; margin-right: 10px;"></div>
+                <button class="btn btn-main btn-mini" id="imei_lock" data-i18n="Lock" style="padding: 4px 12px; font-size: 12px;"></button>
             </div>
         </div>
+
         <!-- IMSI -->
         <div class="form-group">
             <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock IMSI"></label>
-            <div class="col-sm-9">
-              <div id="lock_imsi" class="col-xs-7 col-sm-3 form-right-text"></div>
-              <button class="btn btn-main btn-mini" id="imsi_lock" data-i18n="Lock"></button>
+            <div class="col-sm-9" style="display: flex; align-items: center;">
+                <div id="lock_imsi" class="form-right-text" style="width: 14%; margin-right: 10px;"></div>
+                <button class="btn btn-main btn-mini" id="imsi_lock" data-i18n="Lock" style="padding: 4px 12px; font-size: 12px;"></button>
             </div>
         </div>
-
-
-        <div class="hr hr32 hr-dotted"></div>
-        <table id="set-grid-table"></table>
-        <div id="set-grid-pager"></div>
-        <table id="watch-grid-table"></table>
-        <div id="watch-grid-pager"></div>
-
 
         <div class="hr hr32 hr-dotted"></div>
         <div class="form-group">
@@ -64,9 +57,6 @@
             <input type="text" id="watch_interval" class="col-xs-10 col-sm-5" maxlength="128" />
           </div>
         </div>
-
-
-
 
         <div class="hr hr32 hr-dotted"></div>
 
@@ -220,6 +210,41 @@
         </div>
 
 
+        <div class="hr hr32 hr-dotted"></div>
+        <table id="set-grid-table"></table>
+        <div id="set-grid-pager"></div>
+
+        <div id="grid-controls" style="display: none;">
+          <div style="display: flex; align-items: center">
+            <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+            <select id="rowNums" style="width: 60px;">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr hr32 hr-dotted"></div>
+        <table id="watch-grid-table"></table>
+        <div id="watch-grid-pager"></div>
+
+        <div id="grid-controls2" style="display: none;">
+          <div style="display: flex; align-items: center">
+            <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+            <select id="rowNums" style="width: 60px;">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+        </div>
 
 
       <div class="clearfix form-actions">

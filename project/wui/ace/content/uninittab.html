@@ -8,6 +8,19 @@
     <table id="rule-grid-table"></table>
     <div id="rule-grid-pager"></div>
 
+    <div id="grid-controls" style="display: none;">
+        <div style="display: flex; align-items: center">
+          <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+          <select id="rowNums" style="width: 60px;">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </div>
+    </div>
 
 
       <div class="clearfix form-actions">
@@ -141,6 +154,7 @@
         var tbcustom = 
         {
             caption: $.i18n('Shutdown Table'),
+            toolbar: [true, "top"],
             colNames:[ $.i18n('Name(unique)'), $.i18n('Call'), $.i18n('Level'), $.i18n('Operation') ],
             colModel:
             [
@@ -191,10 +205,19 @@
                     }
                 )
             ],
+            pager: '#rule-grid-pager',
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
             autowidth:true,
             loadonce:true,
             shrinkToFit:true,
             responsive:true,
+           
         };
         var item = jqtable.create( rule_table, rule_pager, tbcustom );
 
@@ -227,12 +250,29 @@
                     
                     $("table > tbody > tr:first", form).before('<tr><td colspan="3">' + hintText + '</td></tr>');
                     // 设置 placeholder
-                    $("#name", form).attr("placeholder", $.i18n('Enter Task Name'));
-                    $("#call", form).attr("placeholder", $.i18n('Enter Component API'));
+                    $("#name", form).attr("placeholder", $.i18n('Enter task name'));
+                    $("#call", form).attr("placeholder", $.i18n('Enter component API'));
             }
             }),
             $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function(params, data) { delete_rule(data); } }),
             {} );
+
+            var $toolbar = $("#t_" + rule_table.replace('#', ''));
+            $toolbar.append($('#grid-controls').children());
+            $toolbar.css({
+                'display': 'flex',
+                'justify-content': 'space-between', // 撑开两端
+                'align-items': 'center',            // 垂直居中
+                'background': '#f5f5f5',
+                'padding': '8px 10px',
+                'height': 'auto',                   // 覆盖默认高度
+                //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+            });
+
+            $('#rowNums').on('change',function(){
+                var newRowNum = parseInt($(this).val(),10);
+                $(rule_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+            });
 
         /* load the configure */
         rule_load();
@@ -241,9 +281,6 @@
             location.reload();
         });
     });
-
-
-
 
   })();
 </script>

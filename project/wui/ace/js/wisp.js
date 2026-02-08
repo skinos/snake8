@@ -690,7 +690,6 @@ function config_save()
 }
 
 
-
 /* init */
 page.password('password', 'password-icon' );
 page.password('wpa_key', 'wpa_key-icon' );
@@ -703,6 +702,7 @@ $.i18n().load( page.lang('wan') ).then( function () {
         {
             multiselect: false,
             caption: $.i18n('AP List'),
+            toolbar: [true, "top"],
             colNames: [ $.i18n('Choose'), $.i18n('SSID'), $.i18n('Channel'), $.i18n('Signal'), $.i18n('MAC'), $.i18n('Security Mode'), $.i18n('WPA Mode') ],
             colModel:
             [
@@ -715,9 +715,9 @@ $.i18n().load( page.lang('wan') ).then( function () {
                     }
                 },
                 { name: 'ssid', width: 180 },
-                { name: 'channel', width: 50 },
+                { name: 'channel', width: 70 },
                 {
-                    name: 'signal', width: 50,
+                    name: 'signal', width: 70,
                     formatter: function ( cellvalue, options, rowObject )
                     {
                         if ( cellvalue > 0 )
@@ -730,9 +730,9 @@ $.i18n().load( page.lang('wan') ).then( function () {
                         }
                     }
                 },
-                { name: 'mac', width: 130 },
+                { name: 'mac', width: 160 },
                 {
-                    name: 'secure', width: 130,
+                    name: 'secure', width: 190,
                     formatter: function ( cellvalue )
                     {
                         return '<span data-secure="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
@@ -743,7 +743,7 @@ $.i18n().load( page.lang('wan') ).then( function () {
                     }
                 },
                 {
-                    name: 'wpa_encrypt', width: 80,
+                    name: 'wpa_encrypt', width: 100,
                     formatter: function (cellvalue)
                     {
                         return '<span data-wpa_encrypt="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
@@ -753,13 +753,38 @@ $.i18n().load( page.lang('wan') ).then( function () {
                         return $(cell).children('span').data('wpa_encrypt');
                     }
                 }
-            ]
+            ],
+            pager: '#aplist-grid-pager',
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+            
         }
     ).jqGrid( 
           'navGrid', '#aplist-grid-pager',
           $.extend(true, {}, jqtable.navOptions, { add: false, edit: false, search: false, refresh: false, del: false, view: false } ),
           {},{},{},{},{},
     );
+
+    var $toolbar = $("#t_" + "#aplist-grid-table");
+    $toolbar.append($('#grid-controls').children());
+    $toolbar.css({
+        'display': 'flex',
+        'justify-content': 'space-between', // 撑开两端
+        'align-items': 'center',            // 垂直居中
+        'background': '#f5f5f5',
+        'padding': '8px 10px',
+        'height': 'auto',                   // 覆盖默认高度
+        //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+    });
+
+    $('#rowNums').on('change',function(){
+        var newRowNum = parseInt($(this).val(),10);
+        $('#aplist-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
 
     /* load the configure */
     status_load();
@@ -786,11 +811,27 @@ $.i18n().load( page.lang('wan') ).then( function () {
       interval: 1000
     });
 
-    // scanning
+    // scanning 修复scan赋值bug
     $('#apscan').unbind(ace.click_event).on(ace.click_event, function () {
         he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
             var list = v[0];
             var rows = json2array( list, {}, "mac" );
+
+            apDataStore = {};
+
+            // 将原始数据存储到全局变量中
+            if (Array.isArray(list)) {
+                list.forEach(function(ap) {
+                    if (ap && ap.mac) {
+                        // 存储原始数据
+                        apDataStore[ap.mac] = {
+                            secure: ap.secure || '',
+                            wpa_encrypt: ap.wpa_encrypt || '',
+                        };
+                    }
+                });
+            }
+
             // 给表格赋值
             $('#aplist-grid-table').jqGrid('clearGridData').jqGrid('setGridParam', {
                 data: rows
@@ -798,10 +839,27 @@ $.i18n().load( page.lang('wan') ).then( function () {
             $('#aplist-modal').modal('show');
         });
     });
+
     $('#rescan').unbind(ace.click_event).on(ace.click_event, function () {
         he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
             var list = v[0];
             var rows = json2array( list, {}, "mac" );
+
+            apDataStore = {};
+
+            // 将原始数据存储到全局变量中
+            if (Array.isArray(list)) {
+                list.forEach(function(ap) {
+                    if (ap && ap.mac) {
+                        // 存储原始数据
+                        apDataStore[ap.mac] = {
+                            secure: ap.secure || '',
+                            wpa_encrypt: ap.wpa_encrypt || '',
+                        };
+                    }
+                });
+            }
+
             // 给表格赋值
             $('#aplist-grid-table').jqGrid('clearGridData').jqGrid('setGridParam', {
                 data: rows
@@ -821,38 +879,58 @@ $.i18n().load( page.lang('wan') ).then( function () {
     });
 });
 
-
+/* 全局变量存储AP列表原始数据 */
+ var apDataStore = {};
 
 /* 必须在全局中才可以被调用到 */
-function ap_select( rowId )
-{
+function ap_select(rowId) {
     // 隐藏表格
     $('#aplist-modal').modal('hide');
-    // 某个选中行的数据
-    var ap = $('#aplist-grid-table').jqGrid( 'getRowData', rowId );
+
+    // 获取行数据
+    var ap = $('#aplist-grid-table').jqGrid('getRowData', rowId);
+    var mac = ap.mac;
+    
+    // 从全局存储中获取原始数据
+    var originalData = apDataStore[mac];
+    
     // 将选中的数据填到对应的输入框中
-    $('#peer').val( ap.ssid );
-    $('#peermac').val( ap.mac );
-    $('#lock').prop( 'checked', false );
-    $('#lock').trigger('change');
-    $('#secure').val( ap.secure || 'disable');
-    // wpa_encrypt 为auto 时设置为tkipaes
-    if ( ap.wpa_encrypt == 'auto' )
-    {
-        $('#wpa_encrypt').val('tkipaes');
+    $('#peer').val(ap.ssid);
+    $('#peermac').val(mac);
+    $('#lock').prop('checked', false).trigger('change');
+    $('#secure').val(ap.secure || 'disable');
+    
+    // 处理WPA加密模式的映射
+    var wpaEncryptValue = originalData ? originalData.wpa_encrypt : ap.wpa_encrypt;
+    var cleanValue = (wpaEncryptValue || '').toString().trim().toLowerCase();
+    var finalValue = 'tkipaes'; // 默认值
+    
+    if (cleanValue === 'tkip') {
+        finalValue = 'tkip';
+    } else if (cleanValue === 'aes') {
+        finalValue = 'aes';
     }
-    else
-    {
-        $('#wpa_encrypt').val( ap.wpa_encrypt||'tkipaes' );
-    }
-    // 手动触发change，以便显示隐藏密码输入框
+    // auto 和 tkipaes 都使用默认值 tkipaes
+    
+    // 设置选择框的值
+    $('#wpa_encrypt').val(finalValue);
+    
+    // 修复i18n翻译问题：直接设置选中选项的文本
+    setTimeout(function() {
+        var $selected = $('#wpa_encrypt option:selected');
+        if (finalValue === 'tkip') {
+            $selected.text('TKIP');
+        } else if (finalValue === 'aes') {
+            $selected.text('AES');
+        } else {
+            $selected.text('Auto');
+        }
+    }, 0);
+    
+    // 触发必要的事件
     $('#secure').trigger('change');
-    // $('#wpa_key').val('');
-    $('#hidden').prop( 'checked', false );
-    $('#hidden').trigger('change');
+    $('#hidden').prop('checked', false).trigger('change');
     $('#radio').val('');
     $('#channel').val('');
 }
-
-
   

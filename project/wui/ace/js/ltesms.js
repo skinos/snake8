@@ -39,6 +39,14 @@ function config_load()
     $('#sms').unbind('change').change(function () {
       if ($(this).prop('checked'))
       {
+        var containerWidth = $('#sms_cfg').parent().width() || 
+                           $(window).width() - 100; // 估算
+        
+        // 设置表格宽度后再显示
+        if ($(smslist_table).hasClass('ui-jqgrid-btable')) {
+            $(smslist_table).jqGrid('setGridWidth', containerWidth);
+        }
+
         $('#sms_cfg').show();
       } 
       else
@@ -171,8 +179,6 @@ function config_save()
   });
 }
 
-
-
 /* init */
 page.password('passwd', 'password-icon' );
 $.i18n().load( page.lang('lte') ).then( function () {
@@ -183,6 +189,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
   jqtable.create( smslist_table, smslist_pager,
       {
           caption: ' ', // 必需设置值, 防止表格不能折叠
+          toolbar: [true, "top"],
           colNames: [ $.i18n('Contact'), $.i18n('SMS ID'), $.i18n('Date'), $.i18n('Content'), $.i18n('Operation') ],
           colModel:
           [
@@ -200,7 +207,20 @@ $.i18n().load( page.lang('lte') ).then( function () {
               },
               $.extend( true, {}, jqtable.actionOptions,
                   { formatoptions:{ delOptions:{ onclickSubmit:function(params, data) { delete_smss(data); } }, editformbutton:false, editbutton:false } } )
-          ]
+          ],
+          pager: '#smslist-grid-pager',
+          rowNum: 10,
+          viewrecords: true,
+
+          pgbuttons: true,
+          pagerpos:'center',
+          pginput:true,
+
+          autowidth:true,
+          loadonce:true,
+          shrinkToFit:true,
+          responsive:true,
+          
       }
   ).jqGrid( 'navGrid', smslist_pager,
       $.extend(true, {}, jqtable.navOptions, 
@@ -216,9 +236,25 @@ $.i18n().load( page.lang('lte') ).then( function () {
       $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function(params, data) { delete_smss(data); } })
   );
 
+    var $toolbar = $("#t_" + smslist_table_table.replace('#', ''));
+    $toolbar.append($('#grid-controls').children());
+    $toolbar.css({
+        'display': 'flex',
+        'justify-content': 'space-between', // 撑开两端
+        'align-items': 'center',            // 垂直居中
+        'background': '#f5f5f5',
+        'padding': '8px 10px',
+        'height': 'auto',                   // 覆盖默认高度
+        //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+    });
 
-  /* load the configure */
-  config_load();
+    $('#rowNums').on('change',function(){
+        var newRowNum = parseInt($(this).val(),10);
+        $(smslist_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
+
+    /* load the configure */
+    config_load();
 
   // 设置定时器
   smslist_load();

@@ -293,6 +293,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 	jqtable.create( "#set-grid-table", "set-grid-pager",
 	{
 		caption: $.i18n("Custom setting AT"),
+		toolbar: [true, "top"],
 		colNames: [ $.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return') ],
 		colModel: [
 			{
@@ -309,7 +310,20 @@ $.i18n().load( page.lang('lte') ).then( function () {
 				name: 'result', width: 400,
 				editable: false
 			}
-		]
+		],
+		pager: '#set-grid-pager',
+		rowNum: 10,
+		viewrecords: true,
+
+		pgbuttons: true,
+		pagerpos:'center',
+		pginput:true,
+
+		autowidth:true,
+		loadonce:true,
+		shrinkToFit:true,
+		responsive:true,
+		
 	} ).jqGrid(
 		'navGrid', "#set-grid-pager",
 		$.extend(true, {}, jqtable.navOptions, 
@@ -321,12 +335,30 @@ $.i18n().load( page.lang('lte') ).then( function () {
 			}
 		),
 		jqtable.editOptions,
-		jqtable.addOptions,
+		//jqtable.addOptions,
+		$.extend(true, {}, jqtable.addOptions, 
+		{
+			afterShowForm:function(form){
+			// 添加自定义样式和提示
+				$("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+				$("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+			
+				var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+					'<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+					'</div>';
+				
+				$("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+				// 设置 placeholder
+				$("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
+				$("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
+		}
+		}),
 		jqtable.deleteOptions
 	);
 	jqtable.create( "#watch-grid-table", "watch-grid-pager",
 	{
 		caption: $.i18n("Custom watching AT"),
+		toolbar: [true, "top"],
 		colNames: [ $.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return') ],
 		colModel: [
 			{
@@ -343,7 +375,20 @@ $.i18n().load( page.lang('lte') ).then( function () {
 				name: 'result', width: 300,
 				editable: false
 			}
-		]
+		],
+		pager: '#watch-grid-pager',
+        rowNum: 10,
+        viewrecords: true,
+
+		pgbuttons: true,
+		pagerpos:'center',
+		pginput:true,
+
+		autowidth:true,
+		loadonce:true,
+		shrinkToFit:true,
+		responsive:true,
+		
 	} ).jqGrid(
 		'navGrid', "#watch-grid-pager",
 			$.extend(true, {}, jqtable.navOptions, 
@@ -355,10 +400,60 @@ $.i18n().load( page.lang('lte') ).then( function () {
 			}
 		),
 		jqtable.editOptions,
-		jqtable.addOptions,
+		//jqtable.addOptions,
+		$.extend(true, {}, jqtable.addOptions, 
+		{
+			afterShowForm:function(form){
+			// 添加自定义样式和提示
+				$("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+				$("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+			
+				var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+					'<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+					'</div>';
+				
+				$("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+				// 设置 placeholder
+				$("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
+				$("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
+		}
+		}),
 		jqtable.deleteOptions
 	);
 
+	var $toolbar = $("#t_" + "set-grid-table");
+	$toolbar.append($('#grid-controls').children());
+	$toolbar.css({
+		'display': 'flex',
+		'justify-content': 'space-between', // 撑开两端
+		'align-items': 'center',            // 垂直居中
+		'background': '#f5f5f5',
+		'padding': '8px 10px',
+		'height': 'auto',                   // 覆盖默认高度
+		//'border-bottom': '1px solid #e1e1e1' // 加个分割线
+	});
+
+	var $toolbar = $("#t_" + "watch-grid-table");
+	$toolbar.append($('#grid-controls2').children());
+	$toolbar.css({
+		'display': 'flex',
+		'justify-content': 'space-between', // 撑开两端
+		'align-items': 'center',            // 垂直居中
+		'background': '#f5f5f5',
+		'padding': '8px 10px',
+		'height': 'auto',                   // 覆盖默认高度
+		//'border-bottom': '1px solid #e1e1e1' // 加个分割线
+	});
+
+	$('#rowNums').on('change',function(){
+			var newRowNum = parseInt($(this).val(),10);
+			$('#set-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+	});
+
+	$('#rowNums').on('change',function(){
+			var newRowNum = parseInt($(this).val(),10);
+			$('#watch-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+	});
 	/* load the configure */
 	config_load();
 

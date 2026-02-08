@@ -64,6 +64,7 @@ $.i18n().load( page.lang('hosts') ).then( function () {
     jqtable.create( hosts_table, hosts_pager,
         {
             caption: $.i18n('Hosts Table'),
+            toolbar: [true, "top"], 
             colNames: [ $.i18n('Hostname'), $.i18n('IP Address'), $.i18n('Operation') ],
             colModel:
             [
@@ -79,10 +80,18 @@ $.i18n().load( page.lang('hosts') ).then( function () {
                 },
                 jqtable.actionOptions,
             ],
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
             autowidth:true,
             loadonce:true,
             shrinkToFit:true,
             responsive:true,
+            
         }
     ).jqGrid( 'navGrid', hosts_pager,
         $.extend(true, {}, jqtable.navOptions, 
@@ -114,6 +123,23 @@ $.i18n().load( page.lang('hosts') ).then( function () {
         jqtable.deleteOptions
     );
 
+    var $toolbar = $("#t_" + hosts_table.replace('#', ''));
+    $toolbar.append($('#grid-controls').children());
+    $toolbar.css({
+        'display': 'flex',
+        'justify-content': 'space-between', // 撑开两端
+        'align-items': 'center',            // 垂直居中
+        'background': '#f5f5f5',
+        'padding': '8px 10px',
+        'height': 'auto',                   // 覆盖默认高度
+        //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+    });
+
+    $('#rowNums').on('change',function(){
+        var newRowNum = parseInt($(this).val(),10);
+        $(hosts_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
+    
     /* 加载参数 */
     hosts_load();
     /* bind the refresh */

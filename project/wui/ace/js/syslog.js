@@ -1,4 +1,3 @@
-
 var syslog;
 var filelist;
 var wuimenu = window.wui.menu;
@@ -173,8 +172,6 @@ function syslog_down( rowId )
 	}, 200);
 }
   
-
-
 $.i18n().load( page.lang('syslog') ).then( function () {
   /* init the langauage */
   $.i18n().locale = lang; $('body').i18n();
@@ -182,11 +179,12 @@ $.i18n().load( page.lang('syslog') ).then( function () {
   jqtable.create(  syslogs_table, syslogs_pager,
     {
         caption: ' ', // 必需设置值, 防止表格不能折叠
+        toolbar: [true, "top"],
         colNames: [ $.i18n('Log File'), $.i18n('Download'), $.i18n('Operation') ],
         colModel: [
             { name:'name', width:180 },
             {
-                name: 'download', width: 80,
+                name: 'download', width: 160,
                 fixed: true, sortable: false,
                 formatter: function ( cellvalue, options, rowObject )
                 {
@@ -196,10 +194,19 @@ $.i18n().load( page.lang('syslog') ).then( function () {
             $.extend( true, {}, jqtable.actionOptions,
                 { formatoptions:{ delOptions:{ onclickSubmit:function(params, data) { syslog_delete(data); } }, editformbutton:false, editbutton:false } } )
         ],
+        pager: '#syslogs-grid-pager',
+        rowNum: 10,
+        viewrecords: true,
+
+        pgbuttons: true,
+        pagerpos:'center',
+        pginput:true,
+
         autowidth:true,
         loadonce:true,
         shrinkToFit:true,
         responsive:true,
+       
     }
   ).jqGrid( 
         'navGrid', syslogs_pager,
@@ -209,6 +216,23 @@ $.i18n().load( page.lang('syslog') ).then( function () {
         $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function(params, data) { syslog_delete(data); } }),
         {}
   );
+
+    var $toolbar = $("#t_" + syslogs_table.replace('#', ''));
+    $toolbar.append($('#grid-controls').children());
+    $toolbar.css({
+        'display': 'flex',
+        'justify-content': 'space-between', // 撑开两端
+        'align-items': 'center',            // 垂直居中
+        'background': '#f5f5f5',
+        'padding': '8px 10px',
+        'height': 'auto',                   // 覆盖默认高度
+        //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+    });
+
+    $('#rowNums').on('change',function(){
+        var newRowNum = parseInt($(this).val(),10);
+        $(syslogs_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
 
   /* load the configure */
   load_syslog();
