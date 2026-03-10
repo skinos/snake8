@@ -31,39 +31,45 @@ There are multiple boot levels at system startup:
 ```json
 // Attributes introduction 
 {
-    "task name":                             // [ string ], you can custom the name
+    "list":
     {
-        "level":"boot levels",                          // [ string ], boot levels 
-                                                                // "arch"
-                                                                // "land"
-                                                                // "bus"
-                                                                // "device"
-                                                                // "network"
-                                                                // "manage"
-                                                                // "local"
-                                                                // "extern"
-                                                                // "app"
-                                                                // "app2"
-                                                                // "delay"
-                                                                // "delay2"
-                                                                // "delay3"
-                                                                // "delay4"
-                                                                // "delay5"
-        "call":"component API or program"           // [ string ]
+        "task name":                             // [ string ], you can custom the name
+        {
+            "level":"boot levels",                          // [ string ], boot levels 
+                                                                    // "arch"
+                                                                    // "land"
+                                                                    // "bus"
+                                                                    // "device"
+                                                                    // "network"
+                                                                    // "manage"
+                                                                    // "local"
+                                                                    // "extern"
+                                                                    // "app"
+                                                                    // "app2"
+                                                                    // "delay"
+                                                                    // "delay2"
+                                                                    // "delay3"
+                                                                    // "delay4"
+                                                                    // "delay5"
+            "call":"component API or program"               // [ string ]
+        }
+        // "...":{ ... }     How many startup task show how many properties
     }
-    // "...":{ ... }     How many startup task show how many properties
 }
 // Examples
 {
-    "tuisetup":                               // call tui@telnet.setup at the app boot levels
+    "list":
     {
-        "level":"app",
-        "call":"tui@telnet.setup"
-    },
-    "webreset":                               // call wui@admin.reset at the general boot levels
-    {
-        "level":"general",
-        "call":"wui@admin.reset"
+        "tuisetup":                               // call tui@telnet.setup at the app boot levels
+        {
+            "level":"app",
+            "call":"tui@telnet.setup"
+        },
+        "webreset":                               // call wui@admin.reset at the general boot levels
+        {
+            "level":"general",
+            "call":"wui@admin.reset"
+        }
     }
 }
 ```  

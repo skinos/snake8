@@ -320,15 +320,16 @@ ttrue
     ```json
     // Attributes introduction of talk by the API return
     {
-        "status":"Current state",        // [ "nodevice", "setup", "register", "up", "reset", "down" ]
+        "status":"Current state",        // [ "nodevice", "reset", "setup", "register", "uping", "block", "up", "failed", "down" ]
                                              // "nodevice" for the corresponding module could not be found
+                                             // "reset" for reset the modem
                                              // "setup" for setup the modem
                                              // "register" for register the network
-                                             // "reset" for reset the modem
-                                             // "down" for the modem is down
+                                             // "uping" for connecting
                                              // "block" for wait keeplive return
-                                             // "failed" for keeplive failed
                                              // "up" for ready to connect to internet, hint signal/network/simcard all ok
+                                             // "failed" for keeplive failed
+                                             // "down" for the modem is down
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "ppp" ] for PPP dial
         "netdev":"netdev name",         // [ string ]

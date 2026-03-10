@@ -219,12 +219,12 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "down", "up" ]
+        "status":"Current state",        // [ "uping", "block", "up", "failed", "down" ]
                                              // "uping" for connecting
-                                             // "down" for the ifname is down
-                                             // "block" for wait keeplive return
-                                             // "failed" for keeplive failed
+                                             // "block" for wait keeplive succeed
                                              // "up" for the network is connect succeed
+                                             // "failed" for keeplive failed
+                                             // "down" for the ifname is down
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
         "netdev":"netdev name",         // [ string ]

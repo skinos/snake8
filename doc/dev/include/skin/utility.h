@@ -713,12 +713,14 @@ unsigned long random_long( void );
  */
 boole         partition_dev( const char *name, char *mtd, char *mtdblock );
 /**
- * @brief get the system have overlay filesystem
- * @return have or not
- * 		@retval true for have
- *  	@retval false for not have
+ * @brief get the mmc device by partlabel name
+ * @param[in] name, partlabel name
+ * @param[out] mmc, save the char type mmc device pathname
+ * @return operation succeed or failed
+ * 		@retval true for succeed
+ *  	@retval false for failed, the errno code will be sets
  */
-boole         overlay_fs( void );
+boole         partlabel_dev( const char *name, char *mmc );
 /**
  * @brief merge the adjust file to src in line by line, create the merge file
  * @param[in] gap, key and value gap

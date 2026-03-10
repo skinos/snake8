@@ -365,6 +365,7 @@ typedef int boole;
 #define PROJECT_CAH_DIR              PROJECT_TMP_DIR"/.cah"
 #define PROJECT_CONF_DIR             PROJECT_TMP_DIR"/.conf"
 #define PROJECT_OEM_DIR              PROJECT_MNT_DIR"/.oem"
+#define PROJECT_FAC_DIR              PROJECT_MNT_DIR"/.fac"
 #define PROJECT_DBS_DIR 		     PROJECT_MNT_DIR"/dbs"
 #define PROJECT_INT_DIR              PROJECT_MNT_DIR"/internal"
 #define PROJECT_APP_DIR              PROJECT_MNT_DIR"/internal/skinos"

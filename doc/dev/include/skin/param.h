@@ -9,10 +9,12 @@
  * @details used to pass strings or talk_t when called, component's function need accept a pointer of pararmter structure, strings and talk can build into paramter as options
  */
 
-
+/// Parameter option type
+#define PARAM_OPTION_TEXT    0
+#define PARAM_OPTION_POINTER 1
 
 /// Maximum options in one paramter structure
-#define PARAM_OPTIONS_MAX 10
+#define PARAM_OPTIONS_MAX    10
 
 /// parameter structure
 /// example: 'myname,{"test":"testvalue"},test3' of options description for parameter
@@ -28,6 +30,9 @@ typedef struct param_st
 	// what serial number does the end with
     // example: size is 3
     int end;
+
+	// description the option type
+	boole type[PARAM_OPTIONS_MAX];
 
     // string options pointer
     // example: id[0] point to "myname"                      param_string( obj, 1 );
@@ -47,9 +52,6 @@ typedef struct param_st
 
 	// description the option is modifyied
 	boole dirty;
-
-	// description the option is pinter
-	boole pointer;
 
 } param_struct;
 typedef param_struct* param_t;
@@ -99,6 +101,7 @@ void        param_free( param_t parameter );
  */
 param_t 	param_inserts( param_t param, const char *option );
 param_t 	param_insertt( param_t param, const talk_t option );
+param_t 	param_insertp( param_t param, void *option );
 /**
  * @brief create a structure of parameter and add the option
  * @param[out] parameter, calloc a new paramter when this is NULL
@@ -109,6 +112,7 @@ param_t 	param_insertt( param_t param, const talk_t option );
  */
 param_t 	param_adds( param_t param, const char *option );
 param_t 	param_addt( param_t param, const talk_t option );
+param_t 	param_addp( param_t param, void *option );
 /**
  * @brief adjust param beginning location, increase starting location
  * @param[in] parameter

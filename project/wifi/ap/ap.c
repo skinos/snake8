@@ -17,7 +17,7 @@ boole_t _setup( obj_t this, param_t param )
 	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
-		wifi_info( "%s(%s) add to network frame", object, netdev );
+		wifi_debug( "%s(%s) add to network frame", object, netdev );
 		scalls( NETWORK_COM, "add", "%s,%s", object, netdev );
 		return ttrue;
 	}
@@ -32,7 +32,7 @@ boole_t _shut( obj_t this, param_t param )
 	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
-		wifi_info( "%s delete from network frame", object );
+		wifi_debug( "%s delete from network frame", object );
 		scalls( NETWORK_COM, "delete", object );
 	}
 	return ttrue;
@@ -98,7 +98,7 @@ boole_t _up( obj_t this, param_t param )
 	fd = lock_open( path, O_RDWR|O_CREAT|O_EXCL, 0666, -1 );
     if ( fd < 0 )
     {
-		wifi_info( "%s(%s) already up", object, netdev );
+		wifi_warn( "%s(%s) already up", object, netdev );
 		talk_free( cfg );
 		return ttrue;
     }
@@ -203,14 +203,18 @@ talk_t _status( obj_t this, param_t param )
 
     ret = json_create( NULL );
 	/* get the state */
-	if ( netdev_flags( netdev, IFF_UP ) > 0 )
+	if ( netdev_flags( netdev, IFF_BROADCAST ) <= 0 )
 	{
-		json_set_string( ret, "state", "up" );
+		json_set_string( ret, "status", "nodevice" );
+		return ret;
 	}
-	else
+	/* state get */
+	if ( netdev_flags( netdev, IFF_UP ) <= 0 )
 	{
-		json_set_string( ret, "state", "down" );
+		json_set_string( ret, "status", "down" );
+		return ret;
 	}
+	json_set_string( ret, "status", "up" );
     /* get the secure mode */
     json_set_string( ret, "secure", json_string( cfg, "secure" ) );
     /* flew get */

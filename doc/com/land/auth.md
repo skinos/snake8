@@ -3,7 +3,7 @@
 ***
 ## Username/Password and Permission Management
 
-Manage username and permissions, modifying this configuration directly is not recommended, It is recommended to manage through the method
+Manage username and permissions, modifying this configuration directly is not recommended, It is recommended to manage through the API
 The configuration structure is divided into three layers
 - username can belong to multiple groups
 - group can have permissions of domains
@@ -41,7 +41,7 @@ The configuration structure is divided into three layers
                 }
                 // "...":{ ... }                                  // How many domain show how many properties
             }
-        },
+        }
         // "...":{...}                  // How many username show how many properties
     },
     "group":     // Group list, all groups in the system are under this node
@@ -54,7 +54,7 @@ The configuration structure is divided into three layers
                 "domain name":"enable state"  // [ string ]: [ "disable","enable" ]
                 // "...":"..."             // How many domain show how many properties
             }
-        },
+        }
         // "...":{...}                  // How many group show how many properties
     }
 }
@@ -68,32 +68,31 @@ land@auth
     {
         "admin":                       # username: admin
         {
-            "id":"0",                  # admin username id is 0
-            "key":"E@3DLKSLKJWEWWWWW", # admin default password is E@3DLKSLKJWEWWWWW
-            "group":                   # admin belongs groups: admin, web, tui, nas
+            "id":"0",                         # admin username id is 0
+            "key":"eYgJU9Koun1yPYJ78JeH2Q==", # admin default domain encode password
+            "group":                          # admin belongs groups: admin, nas, vpn
             {
                 "admin":"enable",
-                "web":"enable",
-                "tui":"enable",
+                "vpn":"enable",
                 "nas":"enable"
             },
             "domain":
             {
-                "nas":                 # admin password is ADSAADFFF at the nas domain
+                "admin":
                 {
-                    "key":"ADSAADFFF"
+                    "key":"pTxxKkPm+ezb9w/wowVxSg=="       # admin domain encode password
                 },
-                "web":                 # admin password is DSDFSDFF at the web domain
+                "nas":
                 {
-                    "key":"DSDFSDFF"
+                    "key":"CL088bD9dcJUgNzhCKBnfg=="       # nas domain encode password
                 }
             }
         },
-        "nas":                         # username: nas
+        "eason":                         # username: eason
         {
-            "id":"1000",               # nas username id is 1000
-            "key":"nas",               # nas default password is nas
-            "group":                   # admin belongs group: nas
+            "id":"1000",                      # eason username id is 1000
+            "key":"CL088bD9dcJUgNzhCKBnfg==", # eason default domain encode password
+            "group":                          # eason belongs group: nas
             {
                 "nas":"enable"
             }
@@ -104,31 +103,23 @@ land@auth
         "admin":                       # admin group
         {
             "id":"0",                  # admin group identify is 0
-            "domain":                  # admin group belongs admin domain
+            "domain":                  # admin group has admin domain permissions
             {
                 "admin":"enable"
             }
         },
-        "web":                         # web group
+        "vpn":                         # tui group
         {
-            "id":"1000",               # web group identify is 1000
-            "domain":                  # web group belongs web domain
+            "id":"1001",               # tui group identify is 1001
+            "domain":                  # tui group has tui domain permissions
             {
-                "web":"enable"
-            }
-        },
-        "tui":                         # tui group
-        {
-            "id":"1001",               # tui group identify is 0
-            "domain":                  # tui group belongs tui domain
-            {
-                "tui":"enable"
+                "vpn":"enable"
             }
         },
         "nas":                         # nas group
         {
-            "id":"1002",               # nas group identify is 0
-            "domain":                  # nas group belongs nas domain
+            "id":"1002",               # nas group identify is 1002
+            "domain":                  # nas group has nas domain permissions
             {
                 "nas":"enable"
             }
@@ -296,7 +287,18 @@ land@auth
     {
         "admin":
         {
-            "key":"E@3DLKSLKJWEWWWWW"
+            "key":"eYgJU9Koun1yPYJ78JeH2Q==",
+            "domain":
+            {
+                "nas":
+                {
+                    "key":"CL088bD9dcJUgNzhCKBnfg=="
+                },
+                "wui":
+                {
+                    "key":"pTxxKkPm+ezb9w/wowVxSg=="
+                }
+            }
         }
     }
     ```
@@ -307,14 +309,22 @@ land@auth
     {
         "admin":
         {
-            "key":"E@3DLKSLKJWEWWWWW"
-        },
-        "nas":
+            "key":"eYgJU9Koun1yPYJ78JeH2Q==",
+            "domain":
+            {
+                "nas":
+                {
+                    "key":"CL088bD9dcJUgNzhCKBnfg=="
+                },
+                "wui":
+                {
+                    "key":"pTxxKkPm+ezb9w/wowVxSg=="
+                }
+            }
+        }
+        "eason":
         {
-            "key":"nas"
-        },
-        "nobody":
-        {
+            "key":"CL088bD9dcJUgNzhCKBnfg=="
         }
     }
     ```

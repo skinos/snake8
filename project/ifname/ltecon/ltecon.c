@@ -338,7 +338,7 @@ boole_t _service( obj_t this, param_t param )
 	ifdev = register_pointer( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
-		ifname_fault( obj, "cannot found %s ifdev", object );
+		ifname_fault( obj, "%s cannot found ifdev", object );
 		sleep( 5 );
         return tfalse;
     }
@@ -352,7 +352,7 @@ boole_t _service( obj_t this, param_t param )
     cfg = config_get( this, NULL ); 
     if ( cfg == NULL )
     {
-		ifname_fault( obj, "cannot found %s configure", object );
+		ifname_fault( obj, "%s cannot found configure", object );
     	return terror;
     }
     /* get the ifdev reset times */
@@ -381,7 +381,7 @@ boole_t _service( obj_t this, param_t param )
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
-		ifname_warn( obj, "%s modify the mode to ppp when cannot find netdev", ifdev );
+		ifname_warn( obj, "%s modify the mode to ppp when cannot find netdev", object );
     	mode = "ppp";
 		method = "disable";
 		json_set_string( cfg, "mode", "ppp" );
@@ -392,7 +392,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** testing simcard for the ifdev ******/
 	/*****************************************/
-    ifname_info( obj, "%s simcard detection", ifdev );
+    ifname_info( obj, "%s simcard detection", object );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 180
 	failed_threshold3 = 300;     // 300
@@ -422,7 +422,7 @@ simagain:
 	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
 	{
 		failed_timeout = 10;
-		for( check=1; check<failed_timeout; check++ )
+		for( check=1; check<=failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
@@ -461,12 +461,12 @@ simagain:
 				}
 				talk_free( ret );
 			}
-			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
+			ifname_warn( obj, "%s simcard failed %d", object, check );
 			sleep( 1 );
 		}
 		if ( check > failed_timeout )
 		{
-			ifname_info( obj, "%s ignore the simcard failed", ifdev );
+			ifname_info( obj, "%s ignore the simcard failed", object );
 		}
 	}
 	else
@@ -487,7 +487,7 @@ simagain:
 		{
 			failed_timeout = failed_everytime;
 		}
-		for( check=1; check<failed_timeout; check++ )
+		for( check=1; check<=failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "sim", NULL );
 			if ( ret == ttrue )
@@ -526,13 +526,13 @@ simagain:
 				}
 				talk_free( ret );
 			}
-			ifname_warn( obj, "%s simcard failed %d", ifdev, check );
+			ifname_warn( obj, "%s simcard failed %d", object, check );
 			sleep( 1 );
 		}
 		if ( check > failed_timeout )
 		{
 			reg_set_string( this, "reset_reason", "sim" );
-			ifname_fault( obj, "reset the %s when simcard failed for %d times", ifdev, failed_timeout );
+			ifname_fault( obj, "%s reset the %s when simcard failed for %d times", object, ifdev, failed_timeout );
 			scall( ifdev, "reset", NULL );
 			talk_free( cfg );
 			return terror;
@@ -562,7 +562,7 @@ simagain:
 	/*****************************************/
 	if ( profile != NULL )
 	{
-		ifname_info( obj, "%s custom profile setting", ifdev );
+		ifname_info( obj, "%s custom profile setting", object );
 		ret = scallt( ifdev, "up", profile );
 		
 	}
@@ -571,7 +571,7 @@ simagain:
 	/**** testing signal for the ifdev *******/
 	/*****************************************/
 	plmn_string[0] = signal_string[0] = '\0';
-    ifname_info( obj, "%s plmn or signal detection", ifdev );
+    ifname_info( obj, "%s plmn or signal detection", object );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 300
 	failed_threshold3 = 600;     // 600
@@ -610,7 +610,7 @@ simagain:
 	if ( i == 0 )
 	{
 		failed_timeout = 10;
-		for( check=1; check<failed_timeout; check++ )
+		for( check=1; check<=failed_timeout; check++ )
 		{
 			ret = scall( ifdev, "plmn", NULL );
 			if ( ret == ttrue )
@@ -630,12 +630,12 @@ simagain:
 				talk_free( ret );
 				break;
 			}
-			ifname_info( obj, "%s plmn failed", ifdev );
+			ifname_info( obj, "%s plmn failed", object );
 			sleep( 1 );
 		}
 		if ( check > failed_timeout )
 		{
-			ifname_info( obj, "%s ignore the plmn failed", ifdev );
+			ifname_info( obj, "%s ignore the plmn failed", object );
 		}
 	}
 	else
@@ -678,7 +678,7 @@ simagain:
 					talk_free( ret );
 					break;
 				}
-				ifname_info( obj, "%s plmn failed %d", ifdev, check );
+				ifname_info( obj, "%s plmn failed %d", object, check );
 			}
 			else if ( i == 0xb10 )
 			{
@@ -700,7 +700,7 @@ simagain:
 					talk_free( ret );
 					break;
 				}
-				ifname_info( obj, "%s signal failed %d", ifdev, check );
+				ifname_info( obj, "%s signal failed %d", object, check );
 			}
 			else
 			{
@@ -734,7 +734,7 @@ simagain:
 				}
 				else
 				{
-					ifname_info( obj, "%s plmn failed %d", ifdev, check );
+					ifname_info( obj, "%s plmn failed %d", object, check );
 				}
 				if ( ret == terror )
 				{
@@ -750,7 +750,7 @@ simagain:
 				}
 				else
 				{
-					ifname_info( obj, "%s signal failed %d", ifdev, check );
+					ifname_info( obj, "%s signal failed %d", object, check );
 				}
 			}
 			sleep( 1 );
@@ -758,7 +758,7 @@ simagain:
 		if ( check > failed_timeout )
 		{
 			reg_set_string( this, "reset_reason", "signal" );
-			ifname_fault( obj, "reset the %s when signal or plmn failed for %d times", ifdev, failed_timeout );
+			ifname_fault( obj, "%s reset the %s when signal or plmn failed for %d times", object, ifdev, failed_timeout );
 			scall( ifdev, "reset", NULL );
 			talk_free( cfg );
 			return terror;
@@ -772,14 +772,14 @@ simagain:
 		scall( ifdev, "reset_clear", NULL );
 		reset_times = 0;
 	}
-	ifname_info( obj, "%s get the plmn %s signal %s", ifdev, plmn_string, signal_string );
+	ifname_info( obj, "%s get the plmn %s signal %s", object, plmn_string, signal_string );
 
 	/*****************************************/
 	/**** set the auto profile for up ********/
 	/*****************************************/
 	if ( profile == NULL )
 	{
-		ifname_info( obj, "%s auto profile setting", ifdev );
+		ifname_info( obj, "%s auto profile setting", object );
 		scall( ifdev, "up", NULL );
 	}
 
@@ -788,7 +788,7 @@ simagain:
 	/*****************************************/
 	if ( 0 != strcmp( mode, "ppp" ) )
 	{
-	    ifname_info( obj, "%s connect", ifdev );
+	    ifname_info( obj, "%s connect", object );
 	    scallt( ifdev, "connect", profile );
 	}
 
@@ -799,7 +799,7 @@ simagain:
 	/*****************************************/
 	if ( 0 != strcmp( mode, "ppp" ) )
 	{
-	    ifname_info( obj, "%s attach", ifdev );
+	    ifname_info( obj, "%s attach", object );
 		failed_threshold = 60;       // 60
 		failed_threshold2 = 180;     // 180
 		failed_threshold3 = 600;     // 600
@@ -834,12 +834,12 @@ simagain:
 				{
 					break;
 				}
-				ifname_info( obj, "%s attach failed %d", ifdev, check );
+				ifname_info( obj, "%s attach failed %d", object, check );
 				sleep( 1 );
 			}
 			if ( check > failed_timeout )
 			{
-				ifname_info( obj, "%s ignore the attach failed", ifdev );
+				ifname_info( obj, "%s ignore the attach failed", object );
 			}
 		}
 		else
@@ -872,13 +872,13 @@ simagain:
 					ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
 					return ret;
 				}
-				ifname_info( obj, "%s attach failed %d", ifdev, check );
+				ifname_info( obj, "%s attach failed %d", object, check );
 				sleep( 1 );
 			}
 			if ( check > failed_timeout )
 			{
 				reg_set_string( this, "reset_reason", "attach" );
-				ifname_fault( obj, "reset the %s when attach failed for %d times", ifdev, failed_timeout );
+				ifname_fault( obj, "%s reset the %s when attach failed for %d times", object, ifdev, failed_timeout );
 				scall( ifdev, "reset", NULL );
 				talk_free( cfg );
 				return terror;
@@ -928,7 +928,7 @@ simagain:
 	{
 		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (connect_failed%failed_everytime) == 0 )
 		{
-			ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, connect_failed );
+			ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, connect_failed );
 			connect_failed++;
 			reg_set_int( this, "connect_failed", connect_failed );
 			scall( ifdev, "reset", NULL );
@@ -1045,7 +1045,7 @@ simagain:
 			if ( ptr == NULL || *ptr == '\0' )
 			{
 				ret = terror;
-				ifname_faulting( obj, "cannot found %s mtty port" ); 
+				ifname_faulting( obj, "%s cannot found %s mtty port", object ); 
 			}
 			else
 			{
@@ -1111,7 +1111,7 @@ boole_t _automatic( obj_t this, param_t param )
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
-        ifname_fault( obj, "%s netdev get error", ifdev );
+        ifname_fault( obj, "%s netdev get error", object );
         talk_free( cfg );
         sleep( 3 );
         return tfalse;

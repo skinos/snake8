@@ -7,26 +7,24 @@ Network management framework, define external connections and data scheduling wh
 ```json
 // Attribute introduction
 {
-    "type":"Multiple link connect type",                          // [ "cold", "hot", "dhdc", "auto" ]
-                                                                                // "clod" for clod backup at the main and back
-                                                                                // "hot" for hot backup at the main and back
-                                                                                // "spare" for hot backup at the main and back, king
-                                                                                // "backup" for hot backup at the main and back, king, reserve
-                                                                                // "dhdc" for load balancing at the main and back 
-                                                                                // "auto" for load balancing at the main and back, king, reserve
+    "type":"Multiple link connect type",                          // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5", "dbdc", "dbdc2", "dbdc3", "dbdc4", "dbdc5" ]
+                                                                                // "clod" for clod backup at the connection 1, 2, 3, 4, 5, 6
+                                                                                // "hot" for hot backup at the connection 1, 2, 3, 4, 5, 6
+                                                                                // "lazy" for hot backup at the connection 1, 2, 3, 4, 5, 6
+                                                                                // "dhdc" for load balancing at the connection 1, 2, 3, 4, 5, 6
     "concom":"Multiple link connection management components",    // [ string ], You can customize the data scheduling component to implement more personalized requirements
 
-    // When type is hot, it is the main connection. When type is dbdc, it is one of the external network connections 
-    "main":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
+    "1":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
 
-    // When type is hot, it is the backup connection. When type is dbdc, it is one of the external network connections 
-    "back":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "2":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
 
-    // When type is hot, the value is ignored. If the type is dbdc, all the default route data is forwarded by the connection as soon as the connection goes online
-    "king":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "3":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
 
-    // When type is hot, the value is ignored. If the type is dbdc, the connections only connect but on route data via it
-    "reserve":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "4":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+
+    "5":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+
+    "6":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
 
     // Configure parameters of the delay switchover function, only in dbdc mode, the function can control the data via low delay connection
     "delay_count":"Statistical delay times of last",   // [ number ]
@@ -40,11 +38,11 @@ Network management framework, define external connections and data scheduling wh
 }
 // Examples
 {
-    "type":"dbdc",                  // dhdc for load balancing 
-    "main":"ifname@lte",            // load balancing at ifname@lte and ifname@lte2
-    "back":"ifname@lte2",
-    "king":"ifname@wan",            // all data switch to ifname@wan when ifname@wan is online
-    "reserve":"ifname@wisp",        // keep the ifname@wisp online, but don't switch the data via it
+    "type":"dbdc",                  // dhdc for load balancing on ifname@lte, ifname@lte2, ifname@wan, ifname@wisp
+    "1":"ifname@lte",
+    "2":"ifname@lte2",
+    "3":"ifname@wan",
+    "4":"ifname@wisp",
     "delay_count":"10",             // Collect statistics on the latest 10 delays and schedule traffic based on the delay
     "delay_divide":"150", 
     "delay_diff":"100"
@@ -63,7 +61,18 @@ Network management framework, define external connections and data scheduling wh
     {
         "ifname object":            // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]:{}
         {
-            "status":"Whether online",    // [ down, up ], up for online, down for offline
+            "status":"Whether online",    // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "reset", "down" ], "up" for online
+                                             // "nodevice" for the corresponding module could not be found
+                                             // "reset" for reset the device
+                                             // "setup" for setup the connection
+                                             // "register" for register to peer
+                                             // "uping" for connecting
+                                             // "scanning" for scanning the peer
+                                             // "block" for wait keeplive succeed
+                                             // "up" for ready to connect to internet, hint signal/network/simcard all ok
+                                             // "failed" for keeplive failed
+                                             // "down" for the ifname is down
+
             "inuse":"Whether used"        // [ disable, enable ], enable for in used, disable for not used
         },
         //"ifname object":{ ... }     How many extern connections how many properties show

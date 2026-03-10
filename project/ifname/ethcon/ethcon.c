@@ -202,7 +202,7 @@ boole_t _service( obj_t this, param_t param )
 	ifdev = register_pointer( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
-		ifname_fault( obj, "cannot found %s ifdev", object );
+		ifname_fault( obj, "%s cannot found ifdev", object );
 		sleep( 5 );
         return tfalse;
     }
@@ -216,7 +216,7 @@ boole_t _service( obj_t this, param_t param )
     cfg = config_get( this, NULL ); 
     if ( cfg == NULL )
     {
-		ifname_fault( obj, "cannot found %s configure", object );
+		ifname_fault( obj, "%ss cannot found configure", object );
 		sleep( 5 );
     	return terror;
     }
@@ -247,7 +247,7 @@ boole_t _service( obj_t this, param_t param )
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
-        ifname_fault( obj, "%s netdev get error", ifdev );
+        ifname_fault( obj, "%s netdev get error", object );
         talk_free( cfg );
         sleep( 5 );
         return tfalse;
@@ -258,11 +258,11 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/******** up the ifdev with cfg **********/
 	/*****************************************/
-    ifname_info( obj, "%s up", ifdev );
+    ifname_info( obj, "%s up", object );
     ret = scallt( ifdev, "up", cfg );
 	if ( ret == tfalse )
     {
-        ifname_warn( obj, "%s up failed", ifdev );
+        ifname_warn( obj, "%s up failed", object );
         talk_free( cfg );
         sleep( 5 );
         return ret;
@@ -288,11 +288,11 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/********** connect the ifdev ************/
 	/*****************************************/
-    ifname_debug( obj, "%s connect", ifdev );
+    ifname_debug( obj, "%s connect", object );
     ret = scallt( ifdev, "connect", cfg );
 	if ( ret == tfalse )
     {
-        ifname_fault( obj, "%s connect failed", ifdev );
+        ifname_fault( obj, "%s connect failed", object );
         talk_free( cfg );
         sleep( 3 );
         return ret;
@@ -310,7 +310,7 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** testing connect for the ifdev ******/
 	/*****************************************/
-    ifname_debug( obj, "%s connect test", ifdev );
+    ifname_debug( obj, "%s connect test", object );
 	failed_threshold = 60;       // 60
 	failed_threshold2 = 180;     // 180
 	failed_threshold3 = 600;     // 600
@@ -353,12 +353,12 @@ boole_t _service( obj_t this, param_t param )
 				sleep( 5 );
 				return ret;
 			}
-			ifname_debug( obj, "%s connect failed %d", ifdev, check );
+			ifname_debug( obj, "%s connect failed %d", object, check );
 			sleep( 1 );
 		}
 		if ( check >= failed_timeout )
 		{
-			ifname_debug( obj, "%s ignore the connect failed", ifdev );
+			ifname_debug( obj, "%s ignore the connect failed", object );
 		}
 	}
 	else
@@ -393,19 +393,19 @@ boole_t _service( obj_t this, param_t param )
 				sleep( 5 );
 				return ret;
 			}
-			ifname_debug( obj, "%s connect failed %d", ifdev, check );
+			ifname_debug( obj, "%s connect failed %d", object, check );
 			sleep( 1 );
 		}
 		if ( check >= failed_timeout )
 		{
 			if ( com_sexist( ifdev, "reset" ) == true )
 			{
-				ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, failed_timeout );
+				ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, failed_timeout );
 				scall( ifdev, "reset", NULL );
 			}
 			else
 			{
-				ifname_debug( obj, "down the %s when connect failed for %d times", ifdev, failed_timeout );
+				ifname_debug( obj, "%s down the %s when connect failed for %d times", object, ifdev, failed_timeout );
 				scall( ifdev, "down", NULL );
 			}
 			talk_free( cfg );
@@ -450,14 +450,14 @@ boole_t _service( obj_t this, param_t param )
 		{
 			if ( com_sexist( ifdev, "reset" ) == true )
 			{
-				ifname_fault( obj, "reset the %s when connect failed for %d times", ifdev, connect_failed );
+				ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, connect_failed );
 				connect_failed++;
 				reg_set_int( this, "connect_failed", connect_failed );
 				scall( ifdev, "reset", NULL );
 			}
 			else
 			{
-				ifname_debug( obj, "down the %s when connect failed for %d times", ifdev, connect_failed );
+				ifname_debug( obj, "%s down the %s when connect failed for %d times", object, ifdev, connect_failed );
 				connect_failed++;
 				reg_set_int( this, "connect_failed", connect_failed );
 				scall( ifdev, "down", NULL );
@@ -622,7 +622,7 @@ boole_t _automatic( obj_t this, param_t param )
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
-        ifname_fault( obj, "%s netdev get error", ifdev );
+        ifname_fault( obj, "%s netdev get error", object );
         talk_free( cfg );
         sleep( 3 );
         return tfalse;

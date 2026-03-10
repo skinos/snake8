@@ -9,16 +9,16 @@
 
 
 /// log for modem
-extern const char       *atd_obj;
-#define modem_verbose( ... )   modem_log( LANDLOG_VERBOSE, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_debug( ... )     modem_log( LANDLOG_DEBUG, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_info( ... )      modem_log( LANDLOG_INFO, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_warn( ... )      modem_log( LANDLOG_WARN, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_warning( ... )   modem_log( LANDLOG_WARN|LANDLOG_ERRNO, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_fault( ... )     modem_log( LANDLOG_FAULT, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
-#define modem_faulting( ... )  modem_log( LANDLOG_FAULT|LANDLOG_ERRNO, atd_obj, (__FILE__), (__LINE__),  __VA_ARGS__ )
+extern const char       *atd_object;
+#define modem_verbose( ... )   modem_log( LANDLOG_VERBOSE, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_debug( ... )     modem_log( LANDLOG_DEBUG, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_info( ... )      modem_log( LANDLOG_INFO, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_warn( ... )      modem_log( LANDLOG_WARN, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_warning( ... )   modem_log( LANDLOG_WARN|LANDLOG_ERRNO, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_fault( ... )     modem_log( LANDLOG_FAULT, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
+#define modem_faulting( ... )  modem_log( LANDLOG_FAULT|LANDLOG_ERRNO, atd_object, (__FILE__), (__LINE__),  __VA_ARGS__ )
 /* modem defalut log function */
-void    modem_log( int level, const char *ifname, const char *file, int line, const char *format, ... );
+void    modem_log( int level, const char *object, const char *file, int line, const char *format, ... );
 #define OPERATOR_CONFIG "modem@operator"
 /* modem defalut log function */
 talk_t  modem_operator( talk_t state );
@@ -29,7 +29,7 @@ int     rsrp2rssi( int rsrp );
 
 #define MODEM_OBJECT_MAX 10
 /* modem object name allocation */
-const char *modem_alloc( const char *syspath, talk_t cfg, char *buf, int buflen );
+const char *modem_alloc( const char *syspath, const char *id, talk_t matchcfg, char *buf, int buflen );
 /* modem object other name allocation */
 const char *modem_relate( const char *object, const char *prefix, char *buf, int buflen );
 /* modem object name free */

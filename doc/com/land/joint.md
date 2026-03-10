@@ -9,35 +9,57 @@ There are multiple joint event, you can register a task for executed when joint 
 
 1. system event
 - machine/status
+    when system status change
 - date/modify
+    when system date modify
+- auth/modify
+    when system auth configure modify
 
 2. ifname ipv4 up event
 - network/on
+    when local ifname connected
 - network/onvpn
+    when vpn ifname connected
 - network/onextern
+    when extern ifname connected
 - network/online
+    when default connection connected
 
 3. ifname ipv4 down event
 - network/off
+    when local ifname offline
 - network/offvpn
+    when vpn ifname offline
 - network/offextern
+    when extern ifname offline
 - network/offline
+    when default connection offline
 
 4. ifname ipv6 up event
 - network/up
+    when local ifname connected
 - network/upvpn
+    when vpn ifname connected
 - network/upextern
+    when extern ifname connected
 - network/upline
+    when default connection connected
 
 5. ifname ipv6 down event
 - network/down
+    when local ifname offline
 - network/downvpn
+    when vpn ifname offline
 - network/downextern
+    when extern ifname offline
 - network/downline
+    when default connection offline
 
 6. client event
 - station/appear
+    client connected
 - station/disappear
+    client disconnected
 
 
 
@@ -46,24 +68,40 @@ There are multiple joint event, you can register a task for executed when joint 
 ```json
 // Attributes introduction 
 {
-    "task name":                             // [ string ], you can custom the name
+    "remote":
     {
-        "joint":"joint event name",                 // [ string ]
-        "call":"component API or program"           // [ string ]
+        "ip":"remote ip address",            // [ ip address ]
+        "port":"remote port"                 // [ port ]
+    },
+    "list":
+    {
+        "task name":                             // [ string ], you can custom the name
+        {
+            "joint":"joint event name",                 // [ string ]
+            "call":"component API or program"           // [ string ]
+        }
+        // "...":{ ... }     How many joint event task show how many properties
     }
-    // "...":{ ... }     How many joint event task show how many properties
 }
 // Examples
 {
-    "online_talk_to_me":                               // execute tui@telnet.reset when the network/online joint event happen
+    "remote":
     {
-        "joint":"network/onlne",
-        "call":"tui@telnet.reset"
+        "ip":"192.168.8.222",                          // remote ip is 192.168.8.222
+        "port":"2230"                                  // port is 2230
     },
-    "offline_talk_to_me":                              // execute tui@ssh.shut when the network/onliofflinene joint event happen
+    "list":
     {
-        "joint":"network/offline",
-        "call":"tui@ssh.shut"
+        "online_talk_to_me":                               // execute tui@telnet.reset when the network/online joint event happen
+        {
+            "joint":"network/onlne",
+            "call":"tui@telnet.reset"
+        },
+        "offline_talk_to_me":                              // execute tui@ssh.shut when the network/onliofflinene joint event happen
+        {
+            "joint":"network/offline",
+            "call":"tui@ssh.shut"
+        }
     }
 }
 ```  

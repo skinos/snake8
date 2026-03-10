@@ -69,8 +69,9 @@
 #define LANDLOG_ARCH_GPIO           (0x03)
 #define LANDLOG_ARCH_USB            (0x04)
 #define LANDLOG_ARCH_PCI            (0x05)
-#define LANDLOG_ARCH_WIFI           (0x06)
-#define LANDLOG_ARCH_FIRMWARE       (0x07)
+#define LANDLOG_ARCH_SDIO           (0x06)
+#define LANDLOG_ARCH_WIFI           (0x07)
+#define LANDLOG_ARCH_FIRMWARE       (0x08)
 
 /// network
 #define LANDLOG_NETWORK             (0x03)
@@ -286,6 +287,14 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define pci_warning( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_PCI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define pci_fault( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_PCI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define pci_faulting( ... )      landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_PCI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+/* sdio arch type log function */
+#define sdio_verbose( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define sdio_debug( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define sdio_info( ... )          landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define sdio_warn( ... )          landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define sdio_warning( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+#define sdio_fault( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define sdio_faulting( ... )      landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 /* pci arch type log function */
 #define wifi_verbose( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_WIFI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define wifi_debug( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_WIFI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
