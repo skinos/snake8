@@ -44,7 +44,7 @@ gOEM := default
 endif 
 # Get the date
 #gPUBLISH ?= $(shell date +%m%d%y)
-gPUBLISH ?= v8.5.1109
+gPUBLISH ?= v8.6.0213
 gVERSION ?= $(gPUBLISH)
 # Name for compiler
 gMAKER ?= dimmalex@gmail.com
@@ -156,12 +156,11 @@ all:
 		make app||exit -1; \
 		make kernel_install||exit-1; \
 		make app_install||exit-1; \
-		headdir=`ls $${gINSTALL_DIR}/include`; \
-		if [ "X${headdir}" != "X" ]; then \
-			cp -r ${gINSTALL_DIR}/include/* ${gTOP_DIR}/doc/dev/include; \
-		fi \
 	fi
-
+	headdir=`ls ${gINSTALL_DIR}/include`; \
+	if [ "X$${headdir}" != "X" ]; then \
+		cp -r ${gINSTALL_DIR}/include/* ${gTOP_DIR}/doc/dev/include; \
+	fi
 pid:
 	@echo '\ngBOARDID=${gBOARDID}' >> gBOARDID
 	@echo "Switch the Board Identify to ${gBOARDID}"
