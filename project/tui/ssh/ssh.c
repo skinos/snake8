@@ -13,67 +13,38 @@ boole_t _setup( obj_t this, param_t param )
     talk_t v;
 	talk_t axp;
     talk_t cfg;
-	boole overlay;
 	struct stat st;
     const char *ptr;
     const char *port;
 	boole manager_init;
 	char path[PATH_MAX];
+	const char *scope;
+	const char *platform;
 	struct in_addr iptest;
-    const char *test_dropbear = "/tmp/.dropbear_exsit";
+    const char *test_file = "/tmp/.dropbear_exsit";
+
+	/************************ slave or wrt **************************/
+	scope = reg_string( NULL, "scope" );
+	platform = reg_string( NULL, "platform" );
+	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
+		|| ( platform != NULL && 0 == strcmp( platform , "slave" ) ) )
+	{
+		default_debug( "no ssh function on %s or %s", platform, scope );
+		return ttrue;
+	}
+	/************************ slave or wrt **************************/
 
     /* test the dropbear have */
-    shell( "which dropbear > %s", test_dropbear );
-    ptr = file2string( test_dropbear, NULL, 0 );
+    shell( "which dropbear > %s", test_file );
+    ptr = file2string( test_file, NULL, 0 );
     if ( ptr == NULL || strlen( ptr ) < 8 )
     {
-        shell( "rm %s", test_dropbear );
         return tfalse;
     }
-    shell( "rm %s", test_dropbear );
-
-	/************************ overlay **************************/
-	overlay = reg_boole( NULL, "overlay" );
-	if ( overlay == true )
-	{
-		boole reset;
-		struct stat st;
-		if ( stat( "/etc/init.d/dropbear", &st ) == 0 )
-		{
-			shell( "/etc/init.d/dropbear stop" );
-			unlink( "/etc/init.d/dropbear" );
-			shell( "mkdir -p /etc/dropbear" );
-			if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
-			{
-				shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
-			}
-			if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
-			{
-				shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
-			}
-		}
-		else
-		{
-			reset = reg_boole( NULL, "reset" );
-			if ( reset == true )
-			{
-				shell( "mkdir -p /etc/dropbear" );
-				if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
-				{
-					shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
-				}
-				if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
-				{
-					shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
-				}
-			}
-		}
-	}
-	/************************ overlay **************************/
+    unlink( test_file );
 
     /* get the configure */
     cfg = config_get( this, NULL );
-    /* get the status */
     ptr = json_string( cfg, "status" );
     if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
     {
@@ -81,19 +52,15 @@ boole_t _setup( obj_t this, param_t param )
         return ttrue;
     }
 	/* key preset */
-	if ( overlay == false )
+	shell( "mkdir -p /etc/dropbear" );
+	if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
 	{
-		shell( "mkdir -p /etc/dropbear" );
-		if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
-		{
-			shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
-		}
-		if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
-		{
-			shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
-		}
+		shell( "cp %s /etc/dropbear/dropbear_dss_host_key", path );
 	}
-	/* execute preset */
+	if ( config_path( path, sizeof(path), PROJECT_ID, "rsakey"CONFIG_FILE_POSTFIX ) != NULL )
+	{
+		shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
+	}
 	ptr = exe2path( NULL, 0, "dropbearkey.sh" );
 	if ( stat( ptr, &st ) == 0 )
 	{
@@ -193,11 +160,38 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( COM_IDPATH );
     return ttrue;
 }
-boole_t _reset( obj_t this, param_t param )
+boole _set( obj_t this, talk_t v, attr_t path )
 {
-    creset( this, "service", NULL, COM_IDPATH );
-    return ttrue;
+    boole ret;
+	const char *scope;
+	const char *platform;
+
+	/************************ slave or wrt **************************/
+	scope = reg_string( NULL, "scope" );
+	platform = reg_string( NULL, "platform" );
+	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
+		|| ( platform != NULL && 0 == strcmp( platform , "slave" ) ) )
+	{
+		default_debug( "no ssh function on %s or %s", platform, scope );
+		return false;
+	}
+	/************************ slave or wrt **************************/
+
+    ret = config_set( this, v, path );
+    if ( ret == true )
+    {
+        _shut( this, NULL );
+        _setup( this, NULL );
+    }
+    return ret;
 }
+talk_t _get( obj_t this, attr_t path )
+{
+    return config_get( this, path );
+}
+
+
+
 boole_t _service( obj_t this, param_t param )
 {
     talk_t cfg;
@@ -221,25 +215,6 @@ boole_t _service( obj_t this, param_t param )
     default_faulting( "exec the dropbear error" );
     talk_free( cfg );
     return tfalse;
-}
-
-
-
-boole _set( obj_t this, talk_t v, attr_t path )
-{
-    boole ret;
-
-    ret = config_set( this, v, path );
-    if ( ret == true )
-    {
-        _shut( this, NULL );
-        _setup( this, NULL );
-    }
-    return ret;
-}
-talk_t _get( obj_t this, attr_t path )
-{
-    return config_get( this, path );
 }
 
 

@@ -16,17 +16,31 @@ boole_t _setup( obj_t this, param_t param )
     const char *ptr;
     const char *port;
 	boole manager_init;
+	const char *scope;
+	const char *platform;
 	struct in_addr iptest;
-    const char *test_dropbear = "/tmp/.telnetd_exsit";
+    const char *test_file = "/tmp/.telnetd_exsit";
+
+	/************************ slave or wrt **************************/
+	scope = reg_string( NULL, "scope" );
+	platform = reg_string( NULL, "platform" );
+	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
+		|| ( platform != NULL && 0 == strcmp( platform , "slave" ) ) )
+	{
+		default_debug( "no telnet function on %s or %s", platform, scope );
+		return ttrue;
+	}
+	/************************ slave or wrt **************************/
 
     /* test the telnetd have */
-    shell( "which telnetd > %s", test_dropbear );
-    ptr = file2string( test_dropbear, NULL, 0 );
+    shell( "which telnetd > %s", test_file );
+    ptr = file2string( test_file, NULL, 0 );
     if ( ptr == NULL || strlen( ptr ) < 8 )
     {
         return tfalse;
     }
-    unlink( test_dropbear );
+    unlink( test_file );
+
     /* get the configure */
     cfg = config_get( this, NULL );
     /* get the status */
@@ -130,6 +144,39 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( COM_IDPATH );
     return ttrue;
 }
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+	const char *scope;
+	const char *platform;
+
+	/************************ slave or wrt **************************/
+	scope = reg_string( NULL, "scope" );
+	platform = reg_string( NULL, "platform" );
+	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
+		|| ( platform != NULL && 0 == strcmp( platform , "slave" ) ) )
+	{
+		default_debug( "no telnet function on %s or %s", platform, scope );
+		return false;
+	}
+	/************************ slave or wrt **************************/
+
+    ret = config_set( this, v, path );
+    if ( ret == true )
+    {
+        _shut( this, NULL );
+        _setup( this, NULL );
+		scalls( FIREWALL_COM, "setup", NULL );
+    }
+    return ret;
+}
+talk_t _get( obj_t this, attr_t path )
+{
+    return config_get( this, path );
+}
+
+
+
 boole_t _service( obj_t this, param_t param )
 {
     talk_t cfg;
@@ -154,26 +201,6 @@ boole_t _service( obj_t this, param_t param )
     default_faulting( "exec the telnetd error" );
     talk_free( cfg );
     return tfalse;
-}
-
-
-
-boole _set( obj_t this, talk_t v, attr_t path )
-{
-    boole ret;
-
-    ret = config_set( this, v, path );
-    if ( ret == true )
-    {
-        _shut( this, NULL );
-        _setup( this, NULL );
-		scalls( FIREWALL_COM, "setup", NULL );
-    }
-    return ret;
-}
-talk_t _get( obj_t this, attr_t path )
-{
-    return config_get( this, path );
 }
 
 
