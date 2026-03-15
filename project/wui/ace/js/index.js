@@ -381,6 +381,8 @@ jQuery(function($) {
 			'.wifi@a',
 			'.modem@lte.status',
 			'.modem@lte2.status',
+			'.modem@lte3.status',
+			'.modem@lte4.status',
 			'.ifname@lan.status',
 			'.ifname@lan2.status',
 			'.ifname@lan3.status',
@@ -391,6 +393,8 @@ jQuery(function($) {
 			'.ifname@wan4.status',
 			'.ifname@lte.status',
 			'.ifname@lte2.status',
+			'.ifname@lte3.status',
+			'.ifname@lte4.status',
 			'.ifname@wisp.status',
 			'.ifname@wisp2.status'
 	] ).then( function(v){
@@ -411,20 +415,24 @@ jQuery(function($) {
 		window.ifdev["wifi@n"] = v[13];
 		window.ifdev["wifi@a"] = v[14];
 		window.ifdev["modem@lte"] = v[15];
-		window.ifdev["modem@lte"] = v[16];
+		window.ifdev["modem@lte2"] = v[16];
+		window.ifdev["modem@lte3"] = v[17];
+		window.ifdev["modem@lte4"] = v[18];
 		window.ifname = {};
-		window.ifname["ifname@lan"] = v[17];
-		window.ifname["ifname@lan2"] = v[18];
-		window.ifname["ifname@lan3"] = v[19];
-		window.ifname["ifname@lan4"] = v[20];
-		window.ifname["ifname@wan"] = v[21];
-		window.ifname["ifname@wan2"] = v[22];
-		window.ifname["ifname@wan3"] = v[23];
-		window.ifname["ifname@wan4"] = v[24];
-		window.ifname["ifname@lte"] = v[25];
-		window.ifname["ifname@lte2"] = v[26];
-		window.ifname["ifname@wisp"] = v[27];
-		window.ifname["ifname@wisp2"] = v[28];
+		window.ifname["ifname@lan"] = v[19];
+		window.ifname["ifname@lan2"] = v[20];
+		window.ifname["ifname@lan3"] = v[21];
+		window.ifname["ifname@lan4"] = v[22];
+		window.ifname["ifname@wan"] = v[23];
+		window.ifname["ifname@wan2"] = v[24];
+		window.ifname["ifname@wan3"] = v[25];
+		window.ifname["ifname@wan4"] = v[26];
+		window.ifname["ifname@lte"] = v[27];
+		window.ifname["ifname@lte2"] = v[28];
+		window.ifname["ifname@lte3"] = v[29];
+		window.ifname["ifname@lte4"] = v[30];
+		window.ifname["ifname@wisp"] = v[31];
+		window.ifname["ifname@wisp2"] = v[32];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
 
@@ -590,9 +598,9 @@ jQuery(function($) {
 			}
 			if ( !wuimenu || wuimenu.interface != "disable" )
 			{
-				menu.add( true, menus, $.i18n( 'Interface' ), 'interface', 'menu-icon fa fa-list' );
+				menu.add( true, menus, $.i18n( 'Traffic' ), 'traffic', 'menu-icon fa fa-list' );
 			}
-			else if ( homepage == "interface" )
+			else if ( homepage == "traffic" )
 			{
 				homepage = "";
 			}
@@ -611,22 +619,28 @@ jQuery(function($) {
 				{
 					if ( !wuimenu || wuimenu.lte != "disable" )
 					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE' ), 'lte?object=ifname@lte' );
-						if ( window.smsd )
-						{
-							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE SMS' ), 'ltesms?object=modem@lte' );
-						}
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR' ), 'lte?object=ifname@lte' );
 					}
 				}
 				if ( window.ifname["ifname@lte2"] )
 				{
 					if ( !wuimenu || wuimenu.lte2 != "disable" )
 					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR' ), 'lte?object=ifname@lte2' );
-						if ( window.smsd )
-						{
-							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR SMS' ), 'ltesms?object=modem@lte2' );
-						}
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR2' ), 'lte?object=ifname@lte2' );
+					}
+				}
+				if ( window.ifname["ifname@lte3"] )
+				{
+					if ( !wuimenu || wuimenu.lte3 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR3' ), 'lte?object=ifname@lte3' );
+					}
+				}
+				if ( window.ifname["ifname@lte4"] )
+				{
+					if ( !wuimenu || wuimenu.lte4 != "disable" )
+					{
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LTE/NR4' ), 'lte?object=ifname@lte4' );
 					}
 				}
 				if ( window.ifname["ifname@wan"] )

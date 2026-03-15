@@ -1,0 +1,2658 @@
+<!-- ajax layout which only needs content area -->
+<div class="row" id="page-modes">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="row">
+      <div class="col-xs-12">
+
+      <div id ="extern-layout-chart-1" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LTE2图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte2-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LTE3图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte3-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LTE4图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte4-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WISP图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wisp-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WISP2图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wisp2-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAN2图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wan2-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAN3图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wan3-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAN4图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@wan4-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div id ="extern-layout-chart-2" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-6">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div id ="extern-layout-chart-3" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div id ="extern-layout-chart-4" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-6">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-6" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div id ="extern-layout-chart-5" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id ="extern-layout-chart-6" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div id ="extern-layout-chart-7" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id ="extern-layout-chart-8" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
+      <div id ="extern-layout-chart-9" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id ="extern-layout-chart-10" class="chart-layout" style="display: none;">
+        <!-- LTE1图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lte-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-green4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte2-row" style="display: none;">
+            <div class="widget-box widget-color-green3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte3-row" style="display: none;">
+            <div class="widget-box widget-color-green2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LTE4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@lte4-row" style="display: none;">
+            <div class="widget-box widget-color-green-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lte4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lte4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp-row" style="display: none;">
+            <div class="widget-box widget-color-purple2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WISP2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wisp2-row" style="display: none;">
+            <div class="widget-box widget-color-purple-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wisp2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wisp2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- WAN图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan-row" style="display: none;">
+            <div class="widget-box widget-color-blue4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN2图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan2-row" style="display: none;">
+            <div class="widget-box widget-color-blue3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan2-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN3图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan3-row" style="display: none;">
+            <div class="widget-box widget-color-blue2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan3-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WAN4图表 - 独立框架 -->
+          <div class="col-sm-4" id="widget-ifname@wan4-row" style="display: none;">
+            <div class="widget-box widget-color-blue-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@wan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@wan4-charts" style="height:150px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="hr hr32 hr-dotted" style="margin-top: 10px;margin-bottom: 10px;"></div>
+        
+      <div id ="local-layout-chart-1" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAN2图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan2-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAN3图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan3-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAN4图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan4-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WiFi N图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-wifi@nssid-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>        
+
+        <!-- WiFi A图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-wifi@assid-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div id ="local-layout-chart-2" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-6">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6" id="widget-ifname@lan2-row" style="display: none;">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-ifname@lan3-row" style="display: none;">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-ifname@lan4-row" style="display: none;">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-wifi@nssid-row" style="display: none;">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="col-sm-6" id="widget-wifi@assid-row" style="display: none;">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+        <div id ="local-layout-chart-3" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4" id="widget-ifname@lan2-row" style="display: none;">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan3-row" style="display: none;">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan4-row" style="display: none;">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-wifi@nssid-row" style="display: none;">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="col-sm-4" id="widget-wifi@assid-row" style="display: none;">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+        <div id ="local-layout-chart-4" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-6">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-6" id="widget-ifname@lan2-row" style="display: none;">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-ifname@lan3-row" style="display: none;">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-ifname@lan4-row" style="display: none;">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-6" id="widget-wifi@nssid-row" style="display: none;">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="col-sm-6" id="widget-wifi@assid-row" style="display: none;">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+
+        <div id ="local-layout-chart-5" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4" id="widget-ifname@lan2-row" style="display: none;">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan3-row" style="display: none;">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan4-row" style="display: none;">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-wifi@nssid-row" style="display: none;">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="col-sm-4" id="widget-wifi@assid-row" style="display: none;">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+        <div id ="local-layout-chart-6" class="chart-layout" style="display: none;">
+        <!-- LAN图表 - 独立框架 -->
+        <div class="row chart-widget-row" id="widget-ifname@lan-row" style="display: none;">
+          <div class="space-6"></div>
+          <div class="col-sm-4">
+            <div class="widget-box widget-color-grey4-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4" id="widget-ifname@lan2-row" style="display: none;">
+            <div class="widget-box widget-color-grey3-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan2 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan2-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan3-row" style="display: none;">
+            <div class="widget-box widget-color-grey2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan3 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan3-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-ifname@lan4-row" style="display: none;">
+            <div class="widget-box widget-color-grey-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="ifname@lan4 Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="ifname@lan4-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div> 
+
+          <div class="col-sm-4" id="widget-wifi@nssid-row" style="display: none;">
+            <div class="widget-box widget-color-dark2-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@nssid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@nssid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+
+          <div class="col-sm-4" id="widget-wifi@assid-row" style="display: none;">
+            <div class="widget-box widget-color-dark-custom">
+              <div class="widget-header widget-header-flat widget-header-small">
+                <h5 class="widget-title bigger lighter">
+                  <i class="ace-icon fa fa-line-chart"></i> 
+                  <span data-i18n="wifi@assid Speed"></span>
+                </h5>
+              </div>
+              <div class="widget-body">
+                <div class="widget-main">
+                  <div id="wifi@assid-charts" style="height:100px; display: none;width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+      
+
+      <div class="hr hr32 hr-dotted" style="margin-top: 20px;margin-bottom: 10px;"></div>
+
+        <!-- 终端列表 -->
+        <div class="row">
+          <div class="space-6"></div>
+          <div class="col-sm-12">
+            <!-- 客户端表格 -->
+            <table id="dashboard-clients-grid-table"></table>
+            <div id="dashboard-clients-grid-pager"></div>
+
+            <div id="grid-controls" style="display: none;">
+              <div style="display: flex; align-items: center">
+                <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+                <select id="rowNums" style="width: 60px;">
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                </select>
+              </div>
+            </div>
+
+            
+            <!-- 提示信息 -->
+            <div class="hr hr32 hr-dotted"></div>
+            <span class="grey" data-i18n="This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray."></span>
+          </div>
+        </div><!-- /.row -->
+
+      </div><!-- /.col -->
+    </div><!-- /.row -->
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+
+<script src="/js/traffic.js"></script>
+
+<style>
+  /* lte */
+.widget-box.widget-color-green4-custom {
+    border-color: #3b8a48 !important; 
+}
+
+.widget-box.widget-color-green4-custom .widget-header {
+    background-color: #3b8a48 !important;  
+    border-bottom: 1px solid #3b8a48 !important;  
+}
+
+/* lte2 */
+.widget-box.widget-color-green3-custom {
+    border-color: #409a4f !important; 
+}
+
+.widget-box.widget-color-green3-custom .widget-header {
+    background-color: #409a4f !important;  
+    border-bottom: 1px solid #409a4f !important;  
+}
+
+/* lte3 */
+.widget-box.widget-color-green2-custom {
+    border-color: #43a954 !important; 
+}
+
+.widget-box.widget-color-green2-custom .widget-header {
+    background-color: #43a954 !important;  
+    border-bottom: 1px solid #43a954 !important;  
+}
+
+/* lte4 */
+.widget-box.widget-color-green-custom {
+    border-color: #47bb5a !important; 
+}
+
+.widget-box.widget-color-green-custom .widget-header {
+    background-color: #47bb5a !important;  
+    border-bottom: 1px solid #47bb5a !important;  
+}
+
+/* wisp2.4 */
+.widget-box.widget-color-purple2-custom {
+    border-color: #348ca0 !important;  
+}
+
+.widget-box.widget-color-purple2-custom .widget-header {
+    background-color: #348ca0 !important; 
+    border-bottom: 1px solid #348ca0 !important;  
+}
+
+/* wisp5.8 */
+.widget-box.widget-color-purple-custom {
+    border-color: #3a9db3 !important;  
+}
+
+.widget-box.widget-color-purple-custom .widget-header {
+    background-color: #3a9db3 !important; 
+    border-bottom: 1px solid #3a9db3 !important;  
+}
+
+/* wan */
+.widget-box.widget-color-blue4-custom {
+    border-color: #2f5b7e !important;  
+}
+
+.widget-box.widget-color-blue4-custom .widget-header {
+    background-color: #2f5b7e !important; 
+    border-bottom: 1px solid #2f5b7e !important;  
+}
+
+/* wan2 */
+.widget-box.widget-color-blue3-custom {
+    border-color: #366e9b !important;  
+}
+
+.widget-box.widget-color-blue3-custom .widget-header {
+    background-color: #366e9b !important; 
+    border-bottom: 1px solid #366e9b !important;  
+}
+
+/* wan3 */
+.widget-box.widget-color-blue2-custom {
+    border-color: #397aaf !important;  
+}
+
+.widget-box.widget-color-blue2-custom .widget-header {
+    background-color: #397aaf !important; 
+    border-bottom: 1px solid #397aaf !important;  
+}
+
+/* wan4 */
+.widget-box.widget-color-blue-custom {
+    border-color: #3f8dcd !important;  
+}
+
+.widget-box.widget-color-blue-custom .widget-header {
+    background-color: #3f8dcd !important; 
+    border-bottom: 1px solid #3f8dcd !important;  
+}
+
+/* lan */
+.widget-box.widget-color-grey4-custom {
+    border-color: #333381 !important;  
+}
+
+.widget-box.widget-color-grey4-custom .widget-header {
+    background-color: #333381 !important; 
+    border-bottom: 1px solid #333381 !important;  
+}
+
+/* lan2 */
+.widget-box.widget-color-grey3-custom {
+    border-color: #474798 !important;  
+}
+
+.widget-box.widget-color-grey3-custom .widget-header {
+    background-color: #474798 !important; 
+    border-bottom: 1px solid #474798 !important;  
+}
+
+/* lan3 */
+.widget-box.widget-color-grey2-custom {
+    border-color: #5d5daf !important;  
+}
+
+.widget-box.widget-color-grey2-custom .widget-header {
+    background-color: #5d5daf !important; 
+    border-bottom: 1px solid #5d5daf !important;  
+}
+
+/* lan4 */
+.widget-box.widget-color-grey-custom {
+    border-color: #7171bf !important;  
+}
+
+.widget-box.widget-color-grey-custom .widget-header {
+    background-color: #7171bf !important; 
+    border-bottom: 1px solid #7171bf !important;  
+}
+
+/* wifi2.4g */
+.widget-box.widget-color-dark2-custom {
+    border-color: #55595e !important;  
+}
+
+.widget-box.widget-color-dark2-custom .widget-header {
+    background-color: #55595e !important; 
+    border-bottom: 1px solid #55595e !important;  
+}
+
+/* wifi: 5.8g */
+.widget-box.widget-color-dark-custom {
+    border-color: #707377 !important;  
+}
+
+.widget-box.widget-color-dark-custom .widget-header {
+    background-color: #707377 !important; 
+    border-bottom: 1px solid #707377 !important;  
+}
+</style>

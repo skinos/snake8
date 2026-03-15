@@ -1,858 +1,1014 @@
-const FLUSH_INTERVAL = 1; // 刷新间隔
-const CLIENT_REFRESH_INTERVAL = 3000; // 客户端刷新间隔
+/* flush interval */
+var flush_interval = 2;
 
-// 全局缓冲区
-const buff = {};
+function adjustBoxLayout() {
+    var containers = $('.responsive-flex-container');
+    var windowWidth = window.innerWidth;
 
-// 网络接口配置
-const interfaceConfigs = {
-    'ifname@lte': { type: 'lte', max: 15, height: 150 },
-    'ifname@lte2': { type: 'lte', max: 15, height: 150 },
-    'ifname@wan': { type: 'wan', max: 15, height: 150 },
-    'ifname@wan2': { type: 'wan', max: 15, height: 150 },
-    'ifname@wan3': { type: 'wan', max: 15, height: 150 },
-    'ifname@wan4': { type: 'wan', max: 15, height: 150 },
-    'ifname@wisp': { type: 'wisp', max: 15, height: 150 },
-    'ifname@wisp2': { type: 'wisp', max: 15, height: 150 },
-    'ifname@lan': { type: 'lan', max: 15, height: 100 },
-    'ifname@lan2': { type: 'lan', max: 15, height: 100 },
-    'wifi@nssid': { type: 'wifi', max: 15, height: 100 },
-    'wifi@assid': { type: 'wifi', max: 15, height: 100 }
-};
+    containers.each(function() {
+        var container = $(this);
 
-// 处理extern中的图表接口
-const externChartIds = ['ifname@lte', 'ifname@lte2', 'ifname@wan', 'ifname@wan2', 
-                       'ifname@wan3', 'ifname@wan4', 'ifname@wisp', 'ifname@wisp2'];
+        var visibleBoxes = container.find('.pricing-box').filter(function() {
+            return $(this).css('display') !== 'none';
+        });
+        
+        var count = visibleBoxes.length;
+        
+        // 移除当前容器内所有已有的布局类
+        container.find('.pricing-box').removeClass(
+            'layout-1 layout-2 layout-3 layout-4-last layout-5-last ' +
+            'layout-6-last layout-7-last layout-8-last layout-9 layout-10-last'
+        );
 
-const localChartIds = ['ifname@lan','ifname@lan2','wifi@nssid','wifi@assid'];
+        if(windowWidth > 1400){
+        // 根据可见数量添加对应的类
+        if (count === 1) {
+            visibleBoxes.addClass('layout-1');
+        } else if (count === 2) {
+            visibleBoxes.addClass('layout-2');
+        } else if (count === 3) {
+            visibleBoxes.addClass('layout-3');
+        } else if (count === 4) {
+            visibleBoxes.slice(0, 3).addClass('layout-3');
+            visibleBoxes.slice(3).addClass('layout-4-last');
+        } else if (count === 5) {
+            visibleBoxes.slice(0, 3).addClass('layout-3');
+            visibleBoxes.slice(3).addClass('layout-5-last');
+        } else if (count === 6) {
+            visibleBoxes.addClass('layout-3');
+            visibleBoxes.slice(3).addClass('layout-6-last');
+        } else if (count === 7) {
+            visibleBoxes.slice(0, 6).addClass('layout-3');
+            visibleBoxes.slice(6).addClass('layout-7-last');
+        } else if (count === 8) {
+            visibleBoxes.slice(0, 6).addClass('layout-3');
+            visibleBoxes.slice(6).addClass('layout-8-last');
+        } else if (count === 9) {
+            visibleBoxes.addClass('layout-9');
+        } else if (count === 10) {
+            visibleBoxes.slice(0, 9).addClass('layout-9');
+            visibleBoxes.slice(9).addClass('layout-10-last');
+        }
+    }else if (windowWidth > 850 && windowWidth <= 1400) {
+            if (count === 1) {
+                visibleBoxes.addClass('layout-1');
+            } else if (count % 2 === 0) { // 偶数个
+                visibleBoxes.addClass('layout-2');
+            } else { // 奇数个
+                visibleBoxes.slice(0, count - 1).addClass('layout-2');
+                visibleBoxes.slice(count - 1).addClass('layout-1');
+            }
+        }
+        else if(windowWidth < 850){
+            visibleBoxes.addClass('layout-1');
+        }
 
-// 初始化缓冲区
-function initBuffers() {
-    Object.keys(interfaceConfigs).forEach(ifname => {
-        buff[`${ifname}_max`] = interfaceConfigs[ifname].max;
-        buff[`${ifname}_rx`] = 0;
-        buff[`${ifname}_tx`] = 0;
-        buff[`${ifname}_rxdata`] = [];
-        buff[`${ifname}_txdata`] = [];
     });
 }
 
-// 初始化缓冲区
-initBuffers();
-
-// 辅助函数：转义CSS选择器中的特殊字符
-function escapeSelector(selector) {
-    return selector.replace(/[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g, '\\$&');
+function showChart(id) {
+    $(id).show();
+    adjustBoxLayout();
 }
 
-// 图表管理器
-const chartManager = {
-    // 图表状态缓存
-    chartStates: {},
-    
-    // 当前显示的布局
-    currentLayouts: {
-        extern: 0,
-        local: 0
-    },
-    
-    // 初始化图表管理器
-    init: function() {
-        Object.keys(interfaceConfigs).forEach(ifname => {
-            this.chartStates[ifname] = {
-                visible: false,
-                isExtern: externChartIds.includes(ifname),
-                data: {
-                    rx_bytes: 0,
-                    tx_bytes: 0,
-                    rx_data: [],
-                    tx_data: []
-                }
-            };
-        });
-        
-        // 初始隐藏所有布局框架
-        this.hideAllLayouts();
-    },
-    
-    // 隐藏所有布局框架
-    hideAllLayouts: function() {
-        // 隐藏所有extern布局框架
-        for (let i = 1; i <= 8; i++) {
-            const layout = document.getElementById(`extern-layout-chart-${i}`);
-            if (layout) {
-                layout.style.display = 'none';
-            }
-        }
-        
-        // 隐藏所有local布局框架
-        for (let i = 1; i <= 4; i++) {
-            const layout = document.getElementById(`local-layout-chart-${i}`);
-            if (layout) {
-                layout.style.display = 'none';
-            }
-        }
-        
-        // 隐藏分割线
-        const hr = document.querySelector('.hr.hr32.hr-dotted');
-        if (hr) {
-            hr.style.display = 'none';
-        }
-    },
-    
-    // 更新接口图表数据
-    updateInterfaceChart: function(ifname, value) {
-        const config = interfaceConfigs[ifname];
-        if (!config) return false;
-        
-        // 检查接口状态
-        if (!value || value.status === "down" || value.status === "nodevice") {
-            this.hideChart(ifname);
-            return false;
-        }
-        
-        // 处理数据
-        this.processChartData(ifname, value);
-
-        // 获取当前图表是否可见的状态
-        const wasVisible = this.chartStates[ifname].visible;
-
-        // 显示图表
-        this.showChart(ifname);
-
-        // 如果图表之前已经可见，直接绘制
-        if (wasVisible) {
-            this.drawChart(ifname);
-        }
-        //调用drawAllVisibleCharts函数 绘制所有可见图表
-        return true;
-    },
-    
-    // 显示图表
-    showChart: function(ifname) {
-        // 更新图表状态
-        this.chartStates[ifname].visible = true;
-        this.updateChartDisplay(ifname, true);
-
-        // 更新布局
-        this.updateLayouts();
-    },
-    
-    // 隐藏图表
-    hideChart: function(ifname) {
-        // 更新图表状态
-        this.chartStates[ifname].visible = false;
-        this.updateChartDisplay(ifname, false);
-
-        // 更新布局
-        this.updateLayouts();
-    },
-    
-    // 更新图表可见性
-    updateChartDisplay: function(ifname, show) {
-        const display = show ? 'block' : 'none';
-        const escapedIfname = escapeSelector(ifname);
-        const rowSelector = `#widget-${escapedIfname}-row`;
-        const chartSelector = `#${escapedIfname}-charts`;
-        
-        // 合并查询和设置逻辑
-        const setDisplay = selector => {
-            document.querySelectorAll(selector).forEach(el => el.style.display = display);
-        };
-        
-        setDisplay(rowSelector);
-        setDisplay(chartSelector);
-        
-        // 如果是显示，确保父容器也可见
-        if (show) {
-            document.querySelectorAll(rowSelector).forEach(el => {
-                let parent = el.parentElement;
-                while (parent) {
-                    if (parent.style && parent.style.display === 'none') {
-                        parent.style.display = 'block';
-                    }
-                    parent = parent.parentElement;
-                }
-            });
-        }
-    },
-    
-    // 更新布局（extern和local同时处理）
-    updateLayouts: function() {
-       
-        // 处理extern布局
-        const externCount = this.getOnlineChartCount(true);
-        const prevExternLayout = this.currentLayouts.extern;
-        this.updateExternLayout(externCount);
-        
-        // 处理local布局
-        const localCount = this.getOnlineChartCount(false);
-        const prevLocalLayout = this.currentLayouts.local;
-        this.updateLocalLayout(localCount);
-        
-        // 更新分割线显示状态
-        this.updateHrVisibility();
-        
-        // 应用特殊布局调整（针对extern布局）
-        this.adjustExternLayouts();
-
-        if (prevExternLayout !== this.currentLayouts.extern || 
-        prevLocalLayout !== this.currentLayouts.local) {
-            this.drawAllVisibleCharts();
-        
-    }
-    },
-
-    // 通用布局更新函数
-    updateLayout: function(type, count, max) {
-        const prefix = type === 'extern' ? 'extern' : 'local';
-        
-        // 隐藏所有该类型的布局
-        for (let i = 1; i <= max; i++) {
-            const layout = document.getElementById(`${prefix}-layout-chart-${i}`);
-            if (layout) layout.style.display = 'none';
-        }
-        
-        if (count === 0) {
-            this.currentLayouts[type] = 0;
-            return;
-        }
-        
-        const layoutNumber = Math.min(count, max);
-        const targetLayout = document.getElementById(`${prefix}-layout-chart-${layoutNumber}`);
-        if (targetLayout) {
-            targetLayout.style.display = 'block';
-            this.currentLayouts[type] = layoutNumber;
-        }
-    },
-    
-    updateExternLayout: function(count) {
-        this.updateLayout('extern', count, 8);
-    },
-    
-    updateLocalLayout: function(count) {
-        this.updateLayout('local', count, 4);
-    },
-    
-    //绘制所有可见图表
-    drawAllVisibleCharts: function() {
-        Object.keys(this.chartStates).forEach(ifname => {
-            if (this.chartStates[ifname].visible) {
-                this.drawChart(ifname);
-            }
-        });
-    },
-    
-    // 调整extern布局
-    adjustExternLayouts: function() {
-        const layoutNumber = this.currentLayouts.extern;
-        const layoutRules = {
-                5: { layoutId: 'extern-layout-chart-5', start: 3, count: 2, class: 'col-sm-6' },
-                7: { layoutId: 'extern-layout-chart-7', start: 6, count: 1, class: 'col-sm-12' },
-                8: { layoutId: 'extern-layout-chart-8', start: 6, count: 2, class: 'col-sm-6' }
-            };
-            
-            if (layoutRules[layoutNumber]) {
-                this.adjustSpecificLayout(layoutRules[layoutNumber]);
-            }
-    },
-    
-    // 调整特定布局
-    adjustSpecificLayout: function(layoutId, layoutRules) {
-        const layout = document.getElementById(layoutId);
-        if (!layout || layout.style.display === 'none') return;
-        
-        const visibleCharts = layout.querySelectorAll('.row.chart-widget-row[style*="block"]');
-        const count = visibleCharts.length;
-        
-        if (count === 0) return;
-        
-        // 重置该布局中的所有可见图表为col-sm-4
-        visibleCharts.forEach(chart => {
-            const col = chart.querySelector('.col-sm-4, .col-sm-6, .col-sm-12');
-            if (col) {
-                col.className = 'col-sm-4';
-            }
-        });
-        
-        // 应用该布局的特定规则
-        const rule = layoutRules[count];
-        if (rule) {
-            for (let i = rule.start; i < rule.start + rule.count && i < count; i++) {
-                const col = visibleCharts[i].querySelector('.col-sm-4');
-                if (col) {
-                    col.className = rule.class;
-                }
-            }
-        }
-    },
-    
-    // 更新分割线可见性
-    updateHrVisibility: function() {
-        const hr = document.querySelector('.hr.hr32.hr-dotted');
-        if (!hr) return;
-        
-        const externCount = this.getOnlineChartCount(true);
-        const localCount = this.getOnlineChartCount(false);
-      
-        // 只有当有extern图表且同时有local图表时才显示分割线
-        hr.style.display = (externCount > 0 && localCount > 0) ? 'block' : 'none';
-    },
-    
-    // 计算在线图表数量
-    getOnlineChartCount: function(isExtern) {
-        const count = Object.values(this.chartStates).filter(state => 
-            state.visible && state.isExtern === isExtern
-        ).length;
-        return count;
-    },
-    
-    // 处理图表数据
-    processChartData: function(ifname, value) {
-        // 获取时间戳
-        const date = new Date();
-        const day = date.getHours();
-        const d_time = new Date(date.setHours(8 + day)).getTime();
-        
-        // 计算数据传输速率
-        let rx = 0;
-        let tx = 0;
-        const orx = buff[`${ifname}_rx`];
-        const otx = buff[`${ifname}_tx`];
-        
-        buff[`${ifname}_rx`] = parseInt(value.rx_bytes || 0);
-        buff[`${ifname}_tx`] = parseInt(value.tx_bytes || 0);
-        
-        if (orx !== 0 || otx !== 0) {
-            rx = buff[`${ifname}_rx`] - orx;
-            tx = buff[`${ifname}_tx`] - otx;
-            
-            if (rx < 0) rx = 0;
-            if (tx < 0) tx = 0;
-        }
-        
-        // 转换为KB
-        if (rx > 0) rx = Math.round(rx / 1024);
-        if (tx > 0) tx = Math.round(tx / 1024);
-        
-        // 更新最大值
-        if (buff[`${ifname}_max`] < rx) buff[`${ifname}_max`] = rx;
-        if (buff[`${ifname}_max`] < tx) buff[`${ifname}_max`] = tx;
-        
-        // 添加数据点
-        buff[`${ifname}_txdata`].push([d_time, tx]);
-        buff[`${ifname}_rxdata`].push([d_time, rx]);
-        
-        // 保持数据长度
-        if (buff[`${ifname}_txdata`].length > 60) buff[`${ifname}_txdata`].shift();
-        if (buff[`${ifname}_rxdata`].length > 60) buff[`${ifname}_rxdata`].shift();
-    },
-    
-    // 绘制图表
-    drawChart: function(ifname) {
-        const isExtern = externChartIds.includes(ifname);
-        const layoutType = isExtern ? 'extern' : 'local';
-        const layoutNumber = this.currentLayouts[layoutType];
-        
-        if (layoutNumber === 0) return;
-        
-        const layoutId = `${layoutType}-layout-chart-${layoutNumber}`;
-        const layout = document.getElementById(layoutId);
-        if (!layout) return;
-        
-        // 查找图表容器
-        let chartElement = layout.querySelector(`#${escapeSelector(ifname)}-charts`) || 
-                          document.getElementById(`${ifname}-charts`);
-        
-        if (!chartElement) return;
-        if (chartElement.style.display === 'none') {
-            chartElement.style.display = 'block';
-        }
-        
-        const datas = [
-            { 
-                label: $.i18n('TX byte'), 
-                color: "#0000ff", 
-                data: buff[`${ifname}_txdata`]
-            },
-            { 
-                label: $.i18n('RX byte'), 
-                color: "#00ff00", 
-                data: buff[`${ifname}_rxdata`]
-            },
-        ];
-        
-        // 图表选项
-        const opt = {
-            points: { clickable: true, hoverable: true },
-            lines: { show: true, lineWidth: 1 },
-            selection: { mode: "x" },
-            yaxis: { 
-                max: buff[`${ifname}_max`], 
-                tickFormatter: function(axis) { 
-                    return axis.toFixed(0) + "K"; 
-                } 
-            },
-            xaxis: { 
-                mode: "time", 
-                timeformat: "%M:%S", 
-                minTickSize: [1, "second"] 
-            },
-            legend: { 
-                position: "ne", 
-                backgroundColor: "#fff" 
-            }
-        };
-        
-        // 绘制图表
-        $.plot(chartElement, datas, opt);
-    }
-};
-
-
-// 工具函数 字节转换为可读格式
-function byte2readable(bytes) {
-    bytes = parseInt(bytes);
-    if (bytes === 0) return "0B";
-    
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    
-    while (bytes >= 1024 && i < units.length - 1) {
-        bytes /= 1024;
-        i++;
+function lte_show(info, id) {
+    if (!info) {
+        $(id).hide();
+        return;
     }
     
-    return bytes.toFixed(2) + units[i];
-}
-
-// 工具函数 秒数转换为时间字符串
-function time2string(seconds) {
-    seconds = parseInt(seconds);
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (days > 0) {
-        return days + "d " + hours + "h";
-    } else if (hours > 0) {
-        return hours + "h " + minutes + "m";
-    } else if (minutes > 0) {
-        return minutes + "m " + secs + "s";
+    // 状态和按钮
+    if (info.status) {
+        showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+        $(id + "_status").text($.i18n(info.status));
+        
+        if (info.status === "up" || info.status === "uping" || info.status === "connect") {
+            // 状态正常
+        } else {
+            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        }
     } else {
-        return secs + "s";
+        $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        $(id + "_status").text($.i18n("down"));
+    }
+
+    // 填充所有数据
+    
+    // 运营商
+    var operatorText = "";
+    if (info.operator) {
+        operatorText = $.i18n(info.operator);
+    } else if (info.plmn) {
+        operatorText = $.i18n(info.plmn);
+    }
+    
+    // 网络类型
+    $(id + "_nettype").text(info.nettype || "");
+    $(id + "_nettype5").text(info.nettype2 || "");
+    
+    // CSQ
+    $(id + "_csq").text(info.csq || "");
+    
+    // 信号图标 - 4G
+    if (info.signal) {
+        $(id + "_rssiimg").attr("src", "/assets/css/images/signal_" + info.signal + ".png");
+    } else {
+        $(id + "_rssiimg").attr("src", "/assets/css/images/signal_0.png");
+    }
+    
+    // 信号图标 - 5G
+    if (info.signal2) {
+        $(id + "_rssiimg5").attr("src", "/assets/css/images/signal_" + info.signal2 + ".png");
+    } else {
+        $(id + "_rssiimg5").attr("src", "/assets/css/images/signal_0.png");
+    }
+    
+    // RSSI/RSRP - 4G
+    if (info.rssi) {
+        $(id + "_rssi").text(info.rssi + "dBm");
+    } else {
+        $(id + "_rssi").text("");
+    }
+    
+    if (info.rsrp) {
+        $(id + "_rsrp").text("RSRP:" + info.rsrp + "dBm");
+    } else {
+        $(id + "_rsrp").text("");
+    }
+    
+    // RSRP - 5G
+    if (info.rsrp2) {
+        $(id + "_rsrp5").text(info.rsrp2 + "dBm");
+    } else {
+        $(id + "_rsrp5").text("");
+    }
+    
+    // RSRQ/SINR - 4G
+    if (info.rsrq) {
+        $(id + "_rsrq").text("RSRQ:" + info.rsrq + "dB");
+    } else {
+        $(id + "_rsrq").text("");
+    }
+    
+    if (info.sinr) {
+        $(id + "_sinr").text("SINR:" + info.sinr + "dB");
+    } else {
+        $(id + "_sinr").text("");
+    }
+    
+    // RSRQ/SINR - 5G
+    if (info.rsrq2) {
+        $(id + "_rsrq5").text("RSRQ:" + info.rsrq2 + "dB");
+    } else {
+        $(id + "_rsrq5").text("");
+    }
+    
+    if (info.sinr2) {
+        $(id + "_sinr5").text("SINR:" + info.sinr2 + "dB");
+    } else {
+        $(id + "_sinr5").text("");
+    }
+
+    // 频段 - 4G
+    $(id + "_band").text(info.band || "");
+    
+    // 频段 - 5G
+    $(id + "_band5").text(info.band2 || "");
+    
+    // 设备信息
+    $(id + "_vidpid").text(info.name || "");
+    $(id + "_imei").text(info.imei || "");
+    $(id + "_imsi").text(info.imsi || "");
+    $(id + "_iccid").text(info.iccid || "");
+    
+    // LAC/CI/ARFCN
+    $(id + "_lac").text(info.lac || "");
+    $(id + "_ci").text(info.ci || "");
+    $(id + "_arfcn").text(info.arfcn || "");
+    
+    // IPv4
+    $(id + "_ip").text(info.ip || ' ');
+    $(id + "_mask").text(info.mask || ' ');
+    
+    if (!info.gw || info.gw === "0.0.0.0") {
+        $(id + "_gateway").text(info.dstip || ' ');
+    } else {
+        $(id + "_gateway").text(info.gw || ' ');
+    }
+    
+    // DNS
+    $(id + "_dns").text(info.dns || ' ');
+    $(id + "_dns2").text(info.dns2 || ' ');
+    
+    // 延迟
+    if (info.delay) {
+        if (info.delay === "failed" || info.delay === "block") {
+            $(id + "_delay").text($.i18n(info.delay));
+        } else {
+            $(id + "_delay").text(info.delay + "ms");
+        }
+    } else {
+        $(id + "_delay").text("");
+    }
+    
+    // IPv6
+    if (info.method && info.method !== "disable") {
+        $(id + "_method").text($.i18n(info.method));
+        
+        $(id + "_addr").text(info.addr || "");
+        $(id + "_addr2").text(info.addr2 || "");
+        $(id + "_addr3").text(info.addr3 || "");
+        $(id + "_hop").text(info.hop || "");
+        $(id + "_resolve").text(info.resolve || "");
+        $(id + "_resolve2").text(info.resolve2 || "");
+    } else {
+        $(id + "_method").text("");
+        $(id + "_addr").text("");
+        $(id + "_addr2").text("");
+        $(id + "_addr3").text("");
+        $(id + "_hop").text("");
+        $(id + "_resolve").text("");
+        $(id + "_resolve2").text("");
+    }
+    
+    // 流量统计
+    $(id + "_rxtx").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+    $(id + "_livetime").text(info.livetime || ' ');
+
+    // 控制显示/隐藏
+    
+    // 判断4G和5G是否有内容
+    var has4G = info.signal || info.nettype || info.csq;
+    var has5G = info.signal2 || info.nettype2;
+    
+    // 4G头部显示控制
+    if (has4G) {
+        $(id + "_4g_head").show();
+        // 4G有信号时，运营商加到4G后面
+        $(id + "_operator").text(operatorText);
+    } else {
+        $(id + "_4g_head").hide();
+        $(id + "_operator").text("");
+    }
+    
+    // 5G头部显示控制
+    if (has5G) {
+        $(id + "_5g_head").show();
+        // 5G有信号且4G无信号时，运营商加到5G后面
+        if (!has4G && operatorText) {
+            $(id + "_operator5").text(operatorText);
+        } else {
+            $(id + "_operator5").text("");
+        }
+    } else {
+        $(id + "_5g_head").hide();
+        $(id + "_operator5").text("");
+    }
+    
+    // 没有任何信号但运营商存在
+    if (!has4G && !has5G && operatorText) {
+        $(id + "_4g_head").show();
+        $(id + "_operator").text(operatorText);
+        $(id + "_nettype").text("");
+        $(id + "_csq").text("");
+    }
+    
+    // 美化显示：无5G且无信号时显示默认图标
+    if (!info.nettype2 && !info.signal && !info.signal2) {
+        $(id + "_4g_head").show();
+    }
+    
+    // RSSI行显示控制 - 4G
+    var hasRssi4 = info.rssi || info.rsrp;
+    if (hasRssi4) {
+        $(id + "_rssi4_head").show();
+    } else {
+        $(id + "_rssi4_head").hide();
+    }
+    
+    // RSSI行显示控制 - 5G
+    var hasRssi5 = info.rsrp2;
+    if (hasRssi5) {
+        $(id + "_rssi5_head").show();
+    } else {
+        $(id + "_rssi5_head").hide();
+    }
+    
+    // 无信号时显示"No Signal"
+    if (!info.rssi && !info.rsrp && !info.rsrp2) {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi").text($.i18n("nosignal"));
+    }
+    
+    //RSRQ行控制显示 - 4G
+    var hasRsrq4 = info.rsrq || info.sinr;
+    if (hasRsrq4) {
+        $(id + "_rsrq4_head").show();
+    } else {
+        $(id + "_rsrq4_head").hide();
+    }
+
+    //RSRQ行控制显示 - 5G
+    var hasRsrq5 = info.rsrq2 || info.sinr2;
+    if (hasRsrq5) {
+        $(id + "_rsrq5_head").show();
+    } else {
+        $(id + "_rsrq5_head").hide();
+    }
+
+    //Band行控制显示 - 4G
+    if(info.band){
+        $(id + "_band4_head").show();
+    }else{
+        $(id + "_band4_head").hide();
+    }
+
+    //Band行控制显示 - 5G
+    if(info.band2){
+        $(id + "_band5_head").show();
+    }else{
+        $(id + "_band5_head").hide();
+    }
+
+    // 延迟头部显示控制
+    if (info.delay) {
+        $(id + "_delay_head").show();
+    } else {
+        $(id + "_delay_head").hide();
+    }
+
+    // IPv6头部显示控制
+    if (info.method && info.method !== "disable") {
+        $(id + "_addr_head").show();
+        $(id + "_hop_head").show();
+    } else {
+        $(id + "_addr_head").hide();
+        $(id + "_hop_head").hide();
     }
 }
 
-// 终端列表管理器
-const clientManager = {
-    // 客户端表格相关变量
-    clients_table: '#dashboard-clients-grid-table',
-    clients_pager: '#dashboard-clients-grid-pager',
-    timer: null,
-    nstalist: null,
-    astalist: null,
-    clientlist: null,
-    object: 'client@station',
-    inputFocused:false,
-
-    // 定时器控制相关变量
-    refresh_interval: CLIENT_REFRESH_INTERVAL,
-    
-    // 初始化客户端表格
-    init: function() {
-        const self = this;
-        
-        $.i18n().load(page.lang('dashboard')).then(function() {
-            // 获取翻译文本
-            var connectedClientsText = $.i18n('Connected Clients');
-            
-            // 创建客户端表格
-            jqtable.create(self.clients_table, self.clients_pager, {
-                caption: '<i class="ace-icon fa fa-users"></i> ' + connectedClientsText + ' <span id="online-clients-count" style="font-size: 14px; margin-left: 5px;"></span>',
-                toolbar: [true, "top"], 
-                colNames: [
-                    $.i18n('Hostname'), 
-                    $.i18n('MAC Address'), 
-                    $.i18n('IP Address'), 
-                    $.i18n('Live Time'), 
-                    $.i18n('Rx/Tx'), 
-                    $.i18n('Interface'), 
-                    $.i18n('Interface Device')
-                ],
-                colModel: [
-                    { name: 'name', width: 200 },
-                    { name: 'mac', width: 150 },
-                    { name: 'ip', width: 130 },
-                    { name: 'livetime', width: 90 },
-                    { name: 'rxtx', width: 150 },
-                    { name: 'ifname', width: 100 },
-                    { name: 'ifdev', width: 100 }
-                ],
-                pager: '#dashboard-clients-grid-pager',
-                rowNum: 10,
-                viewrecords: true,
-
-                pgbuttons: true,
-                pagerpos:'center',
-                pginput:true,
-
-                autowidth: true,
-                loadonce: true,
-                shrinkToFit: true,
-                responsive: true,
-                
-                // 当用户进行分页操作时触发
-                onPaging: function(pgButton) {
-                    //console.log('用户操作分页，按钮:', pgButton);
-
-                    // 如果用户输入页码
-                    if (pgButton === 'user') {
-                        // 获取输入的页码
-                        var inputPage = null;
-                        var pagerInput = $(this).closest('.ui-jqgrid')
-                                   .find('.ui-pg-table .ui-pg-input');
-            
-                        if (pagerInput.length > 0) {
-                            inputPage = parseInt(pagerInput.val(), 10);
-                            //console.log('获取到输入页码:', inputPage);
-                        }
-                            // 如果输入的是第一页，设置标记
-                            if (inputPage === 1) {
-                                //console.log('用户输入页码1 重启定时器');
-                                self.startRefreshTimer();
-                            }
-                        }
-                        // 如果是点击第一页按钮
-                        else if (pgButton === 'first') {
-                            //console.log('点击第一页按钮 重启定时器');
-                            self.startRefreshTimer();
-                        }
-                        // 如果是点击上一页按钮且当前在第二页
-                        else if (pgButton === 'prev') {
-                            var currentPage = $(this).getGridParam('page');
-                            if (currentPage === 2) {
-                                //console.log('从第二页点击上一页 重启定时器');
-                                self.startRefreshTimer();
-                            }
-                        }
-                        
-                        return true;
-                    },
-                
-                gridComplete: function() {
-                    // 绑定分页行数选择器事件
-                    $('#rowNums').off('change.grid').on('change.grid', function() {
-                        //console.log('用户修改行数');
-
-                        var newRowNum = parseInt($(this).val(), 10);
-                        if (!isNaN(newRowNum)) {
-                            $(self.clients_table).jqGrid('setGridParam', {
-                                rowNum: newRowNum
-                            }).trigger('reloadGrid');
-                        }
-                    });
-
-                    // 绑定分页输入框事件
-                    var pagerInput = $(this).closest('.ui-jqgrid')
-                                           .find('.ui-pg-table .ui-pg-input');
-
-                    if (pagerInput.length > 0) {
-                        // 焦点获得时暂停定时器
-                        pagerInput.on('focus', function() {
-                            //console.log('分页输入框获得焦点，暂停定时器');
-                            self.stopRefreshTimer();
-                            self.inputFocused = true;
-                        });
-                        
-                        // 焦点失去时处理
-                        pagerInput.on('blur', function() {
-                            //console.log('分页输入框失去焦点');
-                            self.inputFocused = false;
-                            
-                            // 延迟处理 等待分页操作完成
-                            setTimeout(function() {
-                                var currentPage = $(self.clients_table).getGridParam('page');
-                                //console.log('失去焦点后检查，当前页:', currentPage, '输入框焦点:', self.inputFocused);
-                                
-                                if (currentPage === 1 && !self.inputFocused) {
-                                    //console.log('在第一页且输入框无焦点，重启定时器');
-                                    self.startRefreshTimer();
-                                }
-                            }, 100);
-                        });
-                        
-                        // 回车键处理
-                        pagerInput.on('keyup', function(e) {
-                            if (e.keyCode === 13) {
-                                // 回车后会自动触发onPaging事件 处理定时器
-                            }
-                        });
-                    }
-                    
-                    // 检查是否应该重启定时器
-                    var currentPage = $(this).getGridParam('page');
-                    if (currentPage === 1 && !self.inputFocused) {
-                        // 如果在第一页且输入框无焦点
-                        //console.log('需要重启定时器（由分页操作触发）');
-                        self.startRefreshTimer();
-                    }
-                },
-            });
-
-            var $toolbar = $("#t_" + clients_table.replace('#', ''));
-            $toolbar.append($('#grid-controls').children());
-            $toolbar.css({
-                'display': 'flex',
-                'justify-content': 'space-between', // 撑开两端
-                'align-items': 'center',            // 垂直居中
-                'background': '#f5f5f5',
-                'padding': '8px 10px',
-                'height': 'auto',                   // 覆盖默认高度
-                //'border-bottom': '1px solid #e1e1e1' // 加个分割线
-            });
-
-            // 初始加载客户端数据
-            self.load_clients_dashboard();
-            
-            // 启动定时刷新
-            self.startRefreshTimer();
-        });
-    },
-    
-    // 启动定时刷新器
-    startRefreshTimer: function() {
-        const self = this;
-        
-        // 如果定时器已经在运行，先停止
-        if (self.timer) {
-            clearInterval(self.timer);
-        }
-        self.timer = setInterval(function() {
-        
-            var currentPage = $(self.clients_table).getGridParam('page');
-            //console.log('定时器触发，当前页:', currentPage);
-            if (currentPage === 1) {
-                // 只有在第一页时才刷新数据
-                //console.log('在第一页，执行刷新');
-                self.load_clients_dashboard();
-            }
-            // 不在第一页时什么也不做，定时器继续运行
-        }, self.refresh_interval);
-        
-        //console.log('定时器已启动，间隔:', self.refresh_interval, 'ms');
-    },
-    
-    // 停止定时刷新器
-    stopRefreshTimer: function() {
-        const self = this;
-        
-        if (self.timer) {
-            clearInterval(self.timer);
-            self.timer = null;
-            //console.log('定时器已暂停');
-        }
-    },
-
-    // 加载客户端信息
-    load_clients_dashboard: function() {
-        const self = this;
-        
-        he.bkload([
-            self.object + '.list', 
-            "wifi@n.stalist", 
-            "wifi@a.stalist"
-        ]).then(function(v) {
-            self.clientlist = v[0];
-            self.nstalist = v[1] || {};
-            self.astalist = v[2] || {};
-            
-            // 处理客户端数据
-            const rows = self.processClientData();
-            
-            // 更新在线客户端数量
-            const onlineCount = rows.filter(row => row.livetime !== $.i18n('Leave')).length;
-            $('#online-clients-count').text('(' + onlineCount + ' ' + $.i18n('Online') + ')');
-            
-            // 获取当前分页状态
-            const currentPage = $(self.clients_table).getGridParam('page');
-            const currentRowNum = $(self.clients_table).getGridParam('rowNum');
-            
-            //console.log('数据加载完成，当前页码:', currentPage);
-
-            // 更新表格数据，保持当前分页状态
-            $(self.clients_table).jqGrid('setGridParam', { 
-                data: rows,
-                page: currentPage,
-                rowNum: currentRowNum
-            }).trigger('reloadGrid');
-            
-
-            // 设置离线行的样式
-            $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({ color: '#888' });
-
-        })
-    },
-    
-    // 处理客户端数据
-    processClientData: function() {
-        const rows = [];
-        const self = this;
-        
-        // 处理有线和WiFi客户端
-        for (const index in self.clientlist) {
-            const client = self.clientlist[index];
-            const row = this.createClientRow(index, client);
-            
-            // 合并WiFi信息
-            if (self.nstalist[index]) {
-                this.mergeWifiInfo(row, self.nstalist[index]);
-                self.nstalist[index] = null;
-            } else if (self.astalist[index]) {
-                this.mergeWifiInfo(row, self.astalist[index]);
-                self.astalist[index] = null;
-            }
-            
-            // 根据在线状态排序
-            if (client.livetime) {
-                rows.unshift(row);
-            } else {
-                rows.push(row);
-            }
-        }
-        
-        // 处理剩余的WiFi客户端
-        this.processRemainingWifiClients(rows, self.nstalist);
-        this.processRemainingWifiClients(rows, self.astalist);
-        
-        return rows;
-    },
-    
-    // 创建客户端行
-    createClientRow: function(mac, client) {
-        const row = {
-            'mac': mac,
-            'ip': client.ip || '',
-            'name': client.name || '',
-            'rxtx': this.formatRxTx(client.rx_bytes, client.tx_bytes),
-            'ifname': client.ifname ? $.i18n(client.ifname) : '',
-            'ifdev': client.ifdev ? $.i18n(client.ifdev) : '',
-            'livetime': client.livetime ? time2string(client.livetime) : $.i18n('Leave')
-        };
-        
-        return row;
-    },
-    
-    // 合并WiFi信息
-    mergeWifiInfo: function(row, wifiInfo) {
-        if (wifiInfo.ifdev) {
-            row.ifdev = $.i18n(wifiInfo.ifdev);
-        }
-    },
-    
-    // 处理剩余的WiFi客户端
-    processRemainingWifiClients: function(rows, wifiList) {
-        for (const index in wifiList) {
-            const client = wifiList[index];
-            if (client == null) continue;
-            
-            const row = {
-                'mac': index,
-                'ip': '',
-                'name': '',
-                'rxtx': '',
-                'ifname': '',
-                'ifdev': client.ifdev ? $.i18n(client.ifdev) : '',
-                'livetime': client.livetime ? time2string(client.livetime) : $.i18n('Leave')
-            };
-            
-            if (client.livetime) {
-                rows.unshift(row);
-            } else {
-                rows.push(row);
-            }
-        }
-    },
-    
-    // 格式化Rx/Tx显示
-    formatRxTx: function(rx_bytes, tx_bytes) {
-        if (!rx_bytes && !tx_bytes) {
-            return '';
-        }
-        
-        const rx = rx_bytes || "0";
-        const tx = tx_bytes || "0";
-        return byte2readable(rx) + " / " + byte2readable(tx);
+function wan_show(info, id) {
+    if (!info) {
+        $(id).hide();
+        return;
     }
-};
-
-// 主数据加载函数
-function dashboard_reload() {
-    he.bkload([
-        'network@frame.extern', 
-        'network@frame.local', 
-        "wifi@nssid.status", 
-        "wifi@assid.status"
-    ]).then(function(v) {
-        // 初始化图表管理器
-        if (!chartManager.chartStates['ifname@lte']) {
-            chartManager.init();
-        }
-        
-        // 处理外部网络接口
-        if (v[0]) {
-            for (const id in v[0]) {
-                const value = v[0][id];
-                chartManager.updateInterfaceChart(id, value);
-            }
-        }
-        
-        // 处理内部网络接口
-        if (v[1]) {
-            for (const id in v[1]) {
-                const value = v[1][id];
-                chartManager.updateInterfaceChart(id, value);
-            }
-        }
-        
-        // 处理WiFi接口
-        if (v[2]) {
-            chartManager.updateInterfaceChart('wifi@nssid', v[2]);
-        }
-        
-        if (v[3]) {
-            chartManager.updateInterfaceChart('wifi@assid', v[3]);
-        }
-    });
-}
-
-// 初始化函数
-function initDashboard() {
-    $.i18n().load(page.lang('dashboard')).then(function() {
-        // 设置语言
-        $.i18n().locale = lang;
-        $('body').i18n();
-        
-        // 初始化客户端管理器
-        clientManager.init();
-        
-        // 加载初始数据 折线图
-        dashboard_reload();
-        
-        // 设置定时刷新 折线图
-        page.timing({
-            refresh: function() {
-                dashboard_reload();
-            },
-            interval: FLUSH_INTERVAL * 1000
-        });
-        
-    });
-}
-
-// 页面加载完成后初始化
-$(document).ready(function() {
     
-    initDashboard();
+    // 状态和按钮
+    if (info.status) {
+        showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+        $(id + "_status").text($.i18n(info.status));
+        
+        if (info.status === "uping") {
+            if (info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
+        } else if (info.status === "down") {
+            if (info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
+            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        }
+        
+        if (info.error) {
+            $(id + "_status").text($.i18n(info.error));
+        }
+    } else {
+        $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        $(id + "_status").text($.i18n("down"));
+    }
+    // 模式
+    if (info.mode) {
+        $(id + "_mode").text($.i18n(info.mode));
+    } else {
+        $(id + "_mode").text("");
+    }
+    
+    // MAC地址
+    $(id + "_mac").text(info.mac || ' ');
+    
+    // IPv4
+    $(id + "_ip").text(info.ip || ' ');
+    $(id + "_mask").text(info.mask || ' ');
+    
+    if (!info.gw || info.gw === "0.0.0.0") {
+        $(id + "_gateway").text(info.dstip || ' ');
+    } else {
+        $(id + "_gateway").text(info.gw || ' ');
+    }
+    
+    // DNS
+    $(id + "_dns").text(info.dns || ' ');
+    $(id + "_dns2").text(info.dns2 || ' ');
+    
+    // IPv6
+    if (info.method && info.method !== "disable") {
+        $(id + "_addr_head").show();
+        $(id + "_hop_head").show();
+
+        $(id + "_method").text($.i18n(info.method));
+        
+        if (info.addr) {
+            $(id + "_addr").text(info.addr);
+        } else {
+            $(id + "_addr").text("");
+        }
+        
+        if (info.addr2) {
+            $(id + "_addr2").text(info.addr2);
+        } else {
+            $(id + "_addr2").text("");
+        }
+        
+        if (info.addr3) {
+            $(id + "_addr3").text(info.addr3);
+        } else {
+            $(id + "_addr3").text("");
+        }
+        
+        if (info.hop) {
+            $(id + "_hop").text(info.hop);
+        } else {
+            $(id + "_hop").text("");
+        }
+        
+        if (info.resolve) {
+            $(id + "_resolve").text(info.resolve);
+        } else {
+            $(id + "_resolve").text("");
+        }
+        
+        if (info.resolve2) {
+            $(id + "_resolve2").text(info.resolve2);
+        } else {
+            $(id + "_resolve2").text("");
+        }
+    } else {
+        $(id + "_addr_head").hide();
+        $(id + "_hop_head").hide();
+
+        $(id + "_method").text("");
+        $(id + "_addr").text("");
+        $(id + "_addr2").text("");
+        $(id + "_addr3").text("");
+        $(id + "_hop").text("");
+        $(id + "_resolve").text("");
+        $(id + "_resolve2").text("");
+    }
+    
+    // 流量统计
+    $(id + "_rxtx").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+    
+    // 延迟
+    if (info.delay) {
+        $(id + "_ack_head").show();
+        if (info.delay === "failed" || info.delay === "block") {
+            $(id + "_ack").text($.i18n(info.delay));
+        } else {
+            $(id + "_ack").text(info.delay + "ms");
+        }
+    } else {
+        $(id + "_ack_head").hide();
+        $(id + "_ack").text("");
+    }
+    
+    // 在线时间
+    $(id + "_livetime").text(info.livetime || ' ');
+}
+
+function lan_show(info, id) {
+    if (!info) {
+        $(id).hide();
+        return;
+    }
+    
+    // 状态
+    if (info.status) {
+        showChart(id);
+        $(id + "_status").text($.i18n(info.status));
+        $(id + "_mac").text(info.mac || ' ');
+        
+        if (info.status === "up") {
+            // IPv4
+            $(id + "_ip").text(info.ip || ' ');
+            $(id + "_mask").text(info.mask || ' ');
+            $(id + "_rxtx").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+            
+            // IPv6
+            if (info.method && info.method !== "disable") {
+                $(id + "_addr_head").show();
+
+                $(id + "_method").text($.i18n(info.method));
+                
+                if (info.addr) {
+                    $(id + "_addr").text(info.addr);
+                } else {
+                    $(id + "_addr").text("");
+                }
+                
+                if (info.addr2) {
+                    $(id + "_addr2").text(info.addr2);
+                } else {
+                    $(id + "_addr2").text("");
+                }
+                
+                if (info.addr3) {
+                    $(id + "_addr3").text(info.addr3);
+                } else {
+                    $(id + "_addr3").text("");
+                }
+                
+                if (info.hop) {
+                    $(id + "_hop").text(info.hop);
+                } else {
+                    $(id + "_hop").text("");
+                }
+            } else {
+                $(id + "_addr_head").hide();
+
+                $(id + "_method").text("");
+                $(id + "_addr").text("");
+                $(id + "_addr2").text("");
+                $(id + "_addr3").text("");
+                $(id + "_hop").text("");
+            }
+        }
+    } else {
+        $(id + "_status").text($.i18n("down"));
+    }
+}
+
+function wisp_show(info, id) {
+    if (!info) {
+        $(id).hide();
+        return;
+    }
+    
+    // 状态和按钮
+    if (info.status) {
+        showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+        $(id + "_status").text($.i18n(info.status));
+        
+        if (info.status === "uping") {
+            if (info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
+        } else if (info.status === "down") {
+            if (info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
+            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        }
+        
+        if (info.error) {
+            $(id + "_status").text($.i18n(info.error));
+        }
+    } else {
+        $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+        $(id + "_status").text($.i18n("down"));
+    }
+    
+    // 模式
+    if (info.mode) {
+        $(id + "_mode").text($.i18n(info.mode));
+    } else {
+        $(id + "_mode").text("");
+    }
+    
+    // WISP特定信息
+    $(id + "_peer").text(info.peer || ' ');
+    $(id + "_peermac").text(info.peermac || ' ');
+    
+    if (info.rate) {
+        $(id + "_rate").text(info.rate + 'Mbps');
+    } else {
+        $(id + "_rate").text("");
+    }
+    
+    $(id + "_channel").text(info.channel || ' ');
+    
+    // 信号
+    if (info.sig) {
+        $(id + "_rssi").text(info.sig + "%");
+    } else if (info.rssi) {
+        $(id + "_rssi").text(info.rssi + "dBm");
+    } else {
+        $(id + "_rssi").text("");
+    }
+    
+    if (info.signal) {
+        $(id + "_rssiimg").attr("src", "/assets/css/images/signal_" + info.signal + ".png");
+    } else {
+        $(id + "_rssiimg").attr("src", "/assets/css/images/signal_0.png");
+    }
+    
+    // MAC地址
+    $(id + "_mac").text(info.mac || ' ');
+    
+    // IPv4
+    $(id + "_ip").text(info.ip || ' ');
+    $(id + "_mask").text(info.mask || ' ');
+    
+    if (!info.gw || info.gw === "0.0.0.0") {
+        $(id + "_gateway").text(info.dstip || ' ');
+    } else {
+        $(id + "_gateway").text(info.gw || ' ');
+    }
+    
+    // DNS
+    $(id + "_dns").text(info.dns || ' ');
+    $(id + "_dns2").text(info.dns2 || ' ');
+    
+    // IPv6
+    if (info.method && info.method !== "disable") {
+        $(id + "_addr_head").show();
+        $(id + "_hop_head").show();
+
+        $(id + "_method").text($.i18n(info.method));
+        
+        if (info.addr) {
+            $(id + "_addr").text(info.addr);
+        } else {
+            $(id + "_addr").text("");
+        }
+        
+        if (info.addr2) {
+            $(id + "_addr2").text(info.addr2);
+        } else {
+            $(id + "_addr2").text("");
+        }
+        
+        if (info.addr3) {
+            $(id + "_addr3").text(info.addr3);
+        } else {
+            $(id + "_addr3").text("");
+        }
+        
+        if (info.hop) {
+            $(id + "_hop").text(info.hop);
+        } else {
+            $(id + "_hop").text("");
+        }
+        
+        if (info.resolve) {
+            $(id + "_resolve").text(info.resolve);
+        } else {
+            $(id + "_resolve").text("");
+        }
+        
+        if (info.resolve2) {
+            $(id + "_resolve2").text(info.resolve2);
+        } else {
+            $(id + "_resolve2").text("");
+        }
+    } else {
+        $(id + "_addr_head").hide();
+        $(id + "_hop_head").hide();
+
+        $(id + "_method").text("");
+        $(id + "_addr").text("");
+        $(id + "_addr2").text("");
+        $(id + "_addr3").text("");
+        $(id + "_hop").text("");
+        $(id + "_resolve").text("");
+        $(id + "_resolve2").text("");
+    }
+    
+    // 流量统计
+    $(id + "_rxtx").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+    
+    // 延迟
+    if (info.delay) {
+        $(id + "_ack_head").show();
+        if (info.delay === "failed" || info.delay === "block") {
+            $(id + "_ack").text($.i18n(info.delay));
+        } else {
+            $(id + "_ack").text(info.delay + "ms");
+        }
+    } else {
+        $(id + "_ack_head").hide();
+        $(id + "_ack").text("");
+    }
+    
+    // 在线时间
+    $(id + "_livetime").text(info.livetime || ' ');
+}
+
+function wifi_24g(info) {
+    if (!info || Object.keys(info).length === 0) {
+        $("#wifi_24g_container").hide();
+        return;
+    }
+    $("#wifi_24g_container").show();
+    $("#wifi_24g_ssid").text(info.ssid || "");
+    $("#wifi_24g_bssid").text(info.bssid || "");
+    $("#wifi_24g_channel").text(info.channel || "");
+}
+
+function wifi_58g(info) {
+    if (!info || Object.keys(info).length === 0) {
+        $("#wifi_58g_container").hide();
+        return;
+    }
+    $("#wifi_58g_container").show();
+    $("#wifi_58g_ssid").text(info.ssid || "");
+    $("#wifi_58g_bssid").text(info.bssid || "");
+    $("#wifi_58g_channel").text(info.channel || "");
+}
+
+function switch_show(ethInfo, wifi24Info, wifi58Info) {
+    var hasEthData = ethInfo && Object.keys(ethInfo).length > 0;
+    var hasWifi24Data = wifi24Info && Object.keys(wifi24Info).length > 0;
+    var hasWifi58Data = wifi58Info && Object.keys(wifi58Info).length > 0;
+    
+    // 显示WiFi信息
+    wifi_24g(wifi24Info);
+    wifi_58g(wifi58Info);
+
+    if (!hasEthData && !hasWifi24Data && !hasWifi58Data) {
+        $("#switch").hide();
+        return;
+    }
+    
+    $("#switch").show();
+
+    if (hasEthData) {
+        var container = $("#compact-ports-container");
+        container.empty();
+        
+        var portCount = 0;
+        
+        // 遍历所有网口信息
+        for (var name in ethInfo) {
+            if (!ethInfo.hasOwnProperty(name)) continue;
+            
+            var value = ethInfo[name];
+            if (!value) continue;
+            
+            portCount++;
+            
+            var portItem = createPortItem(portCount, name, value);
+            container.append(portItem);
+        }
+        
+        if (portCount === 0) {
+            $("#switch").hide();
+        }
+    }
+}
+
+function createPortItem(index, name, value) {
+    var portItem = $('<div>', {
+        'class': 'compact-port-item',
+        'id': 'compact-port-' + index,
+        'style': 'display: block;'
+    });
+    
+    var portWrapper = $('<div>', {
+        'class': 'compact-port-wrapper'
+    });
+    
+    var imgContainer = $('<span>', {
+        'class': 'port-img-container'
+    });
+    
+    var offlineImg = $('<img>', {
+        'src': '/assets/css/images/net_offline.jpg',
+        'class': 'port-img offline-img',
+        'style': value.status === 'up' ? 'display: none;' : 'display: block;'
+    });
+    
+    var onlineImg = $('<img>', {
+        'src': '/assets/css/images/net_online.jpg',
+        'class': 'port-img online-img',
+        'style': value.status === 'up' ? 'display: block;' : 'display: none;'
+    });
+    
+    imgContainer.append(offlineImg).append(onlineImg);
+    
+    var portLabel = $('<span>', {
+        'class': 'compact-port-label',
+        'id': 'sport' + index + 't',
+        'text': $.i18n(name) || name,
+    });
+    
+    portWrapper.append(imgContainer);
+    portItem.append(portWrapper).append(portLabel);
+    
+    return portItem;
+}
+
+function interface_load() {
+    // 获取外网数据
+    he.bkload(['network@frame.extern']).then(function(externData) {
+        if (!externData) return;
+        
+        var data = externData[0];
+        if (!data) return;
+        
+        // LTE
+        if (data['ifname@lte']) {
+            lte_show(data['ifname@lte'], "#lte");
+        }
+        
+        if (data['ifname@lte2']) {
+            lte_show(data['ifname@lte2'], "#lte2");
+        }
+        
+        if (data['ifname@lte3']) {
+            lte_show(data['ifname@lte3'], "#lte3");
+        }
+        
+        if (data['ifname@lte4']) {
+            lte_show(data['ifname@lte4'], "#lte4");
+        }
+        
+         // WISP
+        if (window.ifdev && window.ifdev["wifi@n"] === true && data['ifname@wisp']) {
+            wisp_show(data['ifname@wisp'], "#wisp");
+        }
+        
+        if (window.ifdev && window.ifdev["wifi@a"] === true && data['ifname@wisp2']) {
+            wisp_show(data['ifname@wisp2'], "#wisp2");
+        }
+
+        // WAN
+        if (data['ifname@wan']) {
+            wan_show(data['ifname@wan'], "#wan");
+        }
+        
+        if (data['ifname@wan2']) {
+            wan_show(data['ifname@wan2'], "#wan2");
+        }
+        
+        if (data['ifname@wan3']) {
+            wan_show(data['ifname@wan3'], "#wan3");
+        }
+        
+        if (data['ifname@wan4']) {
+            wan_show(data['ifname@wan4'], "#wan4");
+        }
+        
+        adjustBoxLayout();
+    });
+    
+    // 获取本地数据
+    he.bkload(['network@frame.local']).then(function(localData) {
+        if (!localData) return;
+        
+        var data = localData[0];
+        if (!data) return;
+        
+        // LAN
+        if (data['ifname@lan']) {
+            lan_show(data['ifname@lan'], "#lan");
+        }
+        
+        if (data['ifname@lan2']) {
+            lan_show(data['ifname@lan2'], "#lan2");
+        }
+        
+        if (data['ifname@lan3']) {
+            lan_show(data['ifname@lan3'], "#lan3");
+        }
+        
+        if (data['ifname@lan4']) {
+            lan_show(data['ifname@lan4'], "#lan4");
+        }
+        adjustBoxLayout();
+    });
+    
+    // 获取以太网状态
+    he.bkload(['arch@ethernet.status']).then(function(ethData) {
+        if (!ethData) return;
+        
+        var data = ethData[0];
+
+         // 获取WiFi信息
+        he.bkload(['wifi@nssid.status', 'wifi@assid.status']).then(function(wifiData) {
+            var wifi24Data = wifiData[0] || null;
+            var wifi58Data = wifiData[1] || null;
+            
+            switch_show(data, wifi24Data, wifi58Data);
+            
+            adjustBoxLayout();
+        });
+    });
+}
+
+// 按钮事件绑定函数
+function bindButtonEvents() {
+    $('#lte_btn').on(ace.click_event, function() {
+        toggleLteInterface('lte');
+    });
+    
+    $('#lte2_btn').on(ace.click_event, function() {
+        toggleLteInterface('lte2');
+    });
+    
+    $('#lte3_btn').on(ace.click_event, function() {
+        toggleLteInterface('lte3');
+    });
+    
+    $('#lte4_btn').on(ace.click_event, function() {
+        toggleLteInterface('lte4');
+    });
+    
+    $('#wan_btn').on(ace.click_event, function() {
+        toggleWanInterface('wan');
+    });
+    
+    $('#wan2_btn').on(ace.click_event, function() {
+        toggleWanInterface('wan2');
+    });
+    
+    $('#wan3_btn').on(ace.click_event, function() {
+        toggleWanInterface('wan3');
+    });
+    
+    $('#wan4_btn').on(ace.click_event, function() {
+        toggleWanInterface('wan4');
+    });
+    
+    $('#wisp_btn').on(ace.click_event, function() {
+        toggleWispInterface('wisp');
+    });
+    
+    $('#wisp2_btn').on(ace.click_event, function() {
+        toggleWispInterface('wisp2');
+    });
+}
+
+// LTE设备开关函数
+function toggleLteInterface(type) {
+    var status = $('#' + type + '_status').text();
+    
+    if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect")) {
+        he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
+            location.reload();
+        });
+    } else {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+            location.reload();
+        });
+    }
+}
+
+// WAN设备开关函数
+function toggleWanInterface(type) {
+    var status = $('#' + type + '_status').text();
+    
+    if (status === $.i18n("down")) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+            location.reload();
+        });
+    } else {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+            location.reload();
+        });
+    }
+}
+
+// WISP设备开关函数
+function toggleWispInterface(type) {
+    var status = $('#' + type + '_status').text();
+    
+    if (status === $.i18n("down")) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+            location.reload();
+        });
+    } else {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+            location.reload();
+        });
+    }
+}
+
+/* init */
+$.i18n().load(page.lang('dashboard')).then(function() {
+    
+    /* init the language */
+    $.i18n().locale = lang;
+    $('body').i18n();
+    
+    /* button bind */
+    bindButtonEvents();
+
+    /* load the configure */
+    interface_load();
+
+    adjustBoxLayout();
+    
+    /* set the timer flush */
+    page.timing({
+        refresh: function() {
+            interface_load();
+        },
+        interval: flush_interval * 1000
+    });
+    
 });
+
+
