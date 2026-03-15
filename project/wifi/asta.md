@@ -15,6 +15,7 @@ Manage 5.8G Station
     "peermac":"BSSID to connect",          // [ mac address ]
     "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
     "channel":"wireless channel",          // [ number ], 0, 36-165, 0 for auto
+    "nossid":"disable the ssid",           // [ "disable", "enable" ], disable the local ssid when connected
     "secure":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
                                                             // [ disable ] for no securiyt
                                                             // [ wpapsk ]  for WPAPSK
@@ -25,7 +26,6 @@ Manage 5.8G Station
                                                             // [ tkip ] for TKIP
                                                             // [ tkipaes ] for auto
     "wpa_key":"WPA key"                    // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
-    "ssid_disable":"disable the ssid",     // [ "disable", "enable" ], disable the local ssid when connected
 
 }
 ```

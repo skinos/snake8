@@ -402,6 +402,7 @@ boole_t _service( obj_t this, param_t param )
 			{
 				ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, failed_timeout );
 				scall( ifdev, "reset", NULL );
+				sleep( 3 );
 			}
 			else
 			{
@@ -454,6 +455,7 @@ boole_t _service( obj_t this, param_t param )
 				connect_failed++;
 				reg_set_int( this, "connect_failed", connect_failed );
 				scall( ifdev, "reset", NULL );
+				sleep( 3 );
 			}
 			else
 			{
@@ -925,7 +927,7 @@ talk_t _status( obj_t this, param_t param )
 			json_delete_axp( v, "netdev" );
 			axp = json_cut_axp( v, "status" );
 			ptr = axp_string( axp );
-            if ( ptr != NULL && 0 != strcmp( ptr, "up" ) && 0 != strcmp( ptr, "down" ) )
+            if ( ptr != NULL && 0 != strcmp( ptr, "up" ) )
             {
                 json_set_string( ret, "status", ptr );
             }

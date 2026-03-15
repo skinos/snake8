@@ -5,11 +5,8 @@
  */
 
 #include "skin/skin.h"
-#define DISABLE_HOSTAPD_TO_MODIFY_CHANNEL 1
 
-
-
-int dbm2signal( int rssi )
+static int dbm2signal( int rssi )
 {
 	if ( rssi >= -55 )
 	{
@@ -29,9 +26,6 @@ int dbm2signal( int rssi )
 	}
     return 0;
 }
-
-
-
 static talk_t station_dev_aplist( const char *netdev, const char *ssid, const char *bssid, const char *ssid2, const char *ssid3, boole good )
 {
     int i;
@@ -65,7 +59,7 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
         {
             ptr = readbuf+19;
             *(ptr+17) = '\0';
-            lowtoupp( ptr );
+            low2upp( ptr );
 			x = json_create( NULL );
 			json_set_json( tree, ptr, x );
         }
@@ -148,6 +142,12 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 					json_set_string( x, "secure", "wpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkipaes" );
                 }
+                /* wpa3psk aes */
+                else if ( strstr( readbuf, "WPA3 SAE (CCMP)" ) != NULL )
+                {
+					json_set_string( x, "secure", "wpa3psk" );
+					json_set_string( x, "wpa_encrypt", "aes" );
+                }
                 /* wpapskwpa2psk aes */
                 else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP)" ) != NULL )
                 {
@@ -165,6 +165,12 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
                 {
 					json_set_string( x, "secure", "wpapskwpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkipaes" );
+                }
+                /* wpa2pskwpa3psk aes */
+                else if ( strstr( readbuf, "mixed WPA2/WPA3 PSK/SAE (CCMP)" ) != NULL )
+                {
+					json_set_string( x, "secure", "wpa2pskwpa3psk" );
+					json_set_string( x, "wpa_encrypt", "aes" );
                 }
                 continue;
             }
@@ -214,7 +220,7 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 				}
 				else
 				{
-					peermac = axp_get_attr( child );
+					peermac = axp_name( child );
 				}
             }
         }
@@ -271,11 +277,11 @@ boole_t _setup( obj_t this, param_t param )
 	const char *object;
 	const char *netdev;
 
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
-		wifi_info( "%s(%s) add to network frame", object, netdev );
+		wifi_debug( "%s(%s) add to network frame", object, netdev );
 		scalls( NETWORK_COM, "add", "%s,%s", object, netdev );
 		return ttrue;
 	}
@@ -291,10 +297,9 @@ boole_t _shut( obj_t this, param_t param )
 	netdev = reg_string( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
-		wifi_info( "%s delete from network frame", object );
+		wifi_debug( "%s delete from network frame", object );
 		scalls( NETWORK_COM, "delete", object );
 	}
-	return ttrue;
 	return ttrue;
 }
 boole _set( obj_t this, talk_t v, attr_t path )
@@ -327,10 +332,9 @@ talk_t _netdev( obj_t this, param_t param )
 boole_t _up( obj_t this, param_t param )
 {
 	int fd;
+	talk_t v;
 	talk_t cfg;
 	talk_t opt;
-	talk_t ret;
-	talk_t value;
 	const char *ptr;
 	const char *radio;
 	const char *object;
@@ -345,21 +349,26 @@ boole_t _up( obj_t this, param_t param )
 	const char *strong;
 	const char *channel;
 	const char *chext;
+	const char *nossid;
 	const char *secure;
 	const char *wpa_encrypt;
 	const char *wpa_key;
-	const char *ssid_disable;
 	char path[PATH_MAX];
 
 	/* get the configure */
 	object = obj_name( this );
-	radio = register_pointer( object, "radio" );
+	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
-	netdev = register_pointer( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return terror;
+	}
+	cfg = config_get( this, NULL );
+	if ( cfg == NULL )
 	{
 		return tfalse;
 	}
@@ -369,13 +378,13 @@ boole_t _up( obj_t this, param_t param )
 	fd = lock_open( path, O_RDWR|O_CREAT|O_EXCL, 0666, -1 );
     if ( fd < 0 )
     {
-		wifi_info( "%s(%s) already up", object, netdev );
+		wifi_warn( "%s(%s) already up", object, netdev );
+		talk_free( cfg );
 		return ttrue;
     }
 	wifi_info( "%s(%s) up", object, netdev );
 
 	/* get the configure */
-	value = cfg = NULL;
 	peer = peer2 = peer3 = peermac = NULL;
 	opt = param_talk( param, 1 );
 	if ( opt != NULL )
@@ -385,122 +394,96 @@ boole_t _up( obj_t this, param_t param )
 		peer3 = json_string( opt, "peer3" );
 		peermac = json_string( opt, "peermac" );
 	}
+	v = NULL;
 	if ( peer != NULL || peer2 != NULL || peer2 != NULL || peermac != NULL )
 	{
-		value = opt;
+		v = opt;
 	}
 	else
 	{
-		value = cfg = config_get( this, NULL );
+		v = cfg;
+		peer = json_string( cfg, "peer" );
+		peer2 = json_string( cfg, "peer2" );
+		peer3 = json_string( cfg, "peer3" );
+		peermac = json_string( cfg, "peermac" );
+		/* status[enable/disable] */
+		status = json_string( v, "status" );
+		if ( status != NULL && 0 == strcmp( status, "disable" ) )
+		{
+			talk_free( cfg );
+			lock_close( fd );
+			unlink( path );
+			return ttrue;
+		}
 	}
 
-	ret = tfalse;
 	/* keeplive stop */
 	sstop( "%s-keeplive", netdev );
 	/* relayd stop */
 	sstop( "%s-relayd", netdev );
 	/* wpa_supplicant stop */
 	sstop( "%s-wpa", netdev );
-	/* status[enable/disable] */
-	status = json_string( value, "status" );
-	peer = json_string( value, "peer" );
-	peer2 = json_string( value, "peer2" );
-	peer3 = json_string( value, "peer3" );
-	peermac = json_string( value, "peermac" );
-	if ( ( status != NULL && 0 == strcmp( status, "disable" ) ) ||
-		( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
-	)
+	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
 	{
-		if ( netdev_flags( netdev, IFF_UP ) > 0 )
-		{
-			//ifconfig( "%s down", netdev ); the sta interface is radio interface, the ssid cannot work when down it
-		}
-		ret = ttrue;
+		talk_free( cfg );
 		lock_close( fd );
 		unlink( path );
-	}
-	else
-	{
-		/* get all configure */
-		ifname = json_string( value, "ifname" );
-		peermode = json_string( value, "peermode" );
-		strong = json_string( value, "strong" );
-		channel = json_string( value, "channel" );
-		chext = json_string( value, "chext" );
-		secure = json_string( value, "secure" );
-		wpa_encrypt = json_string( value, "wpa_encrypt" );
-		wpa_key = json_string( value, "wpa_key" );
-		ssid_disable = json_string( value, "ssid_disable" );
-		/* save the configure */
-		register_set( object, "peer", peer, stringlen(peer)+1, 40 );
-		register_set( object, "peer2", peer2, stringlen(peer2)+1, 40 );
-		register_set( object, "peer3", peer3, stringlen(peer3)+1, 40 );
-		register_set( object, "peermac", peermac, stringlen(peermac)+1, 20 );
-		register_set( object, "ifname", ifname, stringlen(ifname)+1, 20 );
-		register_set( object, "peermode", peermode, stringlen(peermode)+1, 20 );
-		register_set( object, "strong", strong, stringlen(strong)+1, 20 );
-		register_set( object, "channel", channel, stringlen(channel)+1, 20 );
-		register_set( object, "chext", chext, stringlen(chext)+1, 20 );
-		register_set( object, "secure", secure, stringlen(secure)+1, 20 );
-		register_set( object, "wpa_encrypt", wpa_encrypt, stringlen(wpa_encrypt)+1, 20 );
-		register_set( object, "wpa_key", wpa_key, stringlen(wpa_key)+1, 200 );
-		register_set( object, "ssid_disable", ssid_disable, stringlen(ssid_disable)+1, 20 );
-		/* up the device */
-		sstart( object, "wpa", NULL, "%s-wpa", netdev );
-		sstart( object, "keeplive", NULL, "%s-keeplive", netdev );
-		ret = ttrue;
-		/* mark the up state */
-		ptr = uptime_desc( NULL, 0 );
-		if ( ptr != NULL )
-		{
-			write( fd, ptr,	strlen(ptr) );
-		}
-		lock_close( fd );
+		return ttrue;
 	}
 
+	/* get all configure */
+	ifname = json_string( v, "ifname" );
+	peermode = json_string( v, "peermode" );
+	strong = json_string( v, "strong" );
+	channel = json_string( v, "channel" );
+	chext = json_string( v, "chext" );
+	nossid = json_string( v, "nossid" );
+	/* save peer configure */
+	secure = json_string( v, "secure" );
+	wpa_encrypt = json_string( v, "wpa_encrypt" );
+	wpa_key = json_string( v, "wpa_key" );
+	reg_set_string( this, "peer", peer );
+	reg_set_string( this, "secure", secure );
+	reg_set_string( this, "wpa_encrypt", wpa_encrypt );
+	reg_set_string( this, "wpa_key", wpa_key );
+	/* save peer2 configure */
+	secure = json_string( v, "secure2" );
+	wpa_encrypt = json_string( v, "wpa_encrypt2" );
+	wpa_key = json_string( v, "wpa_key2" );
+	reg_set_string( this, "peer2", peer2 );
+	reg_set_string( this, "secure2", secure );
+	reg_set_string( this, "wpa_encrypt2", wpa_encrypt );
+	reg_set_string( this, "wpa_key2", wpa_key );
+	/* save peer3 configure */
+	secure = json_string( v, "secure3" );
+	wpa_encrypt = json_string( v, "wpa_encrypt3" );
+	wpa_key = json_string( v, "wpa_key3" );
+	reg_set_string( this, "peer3", peer3 );
+	reg_set_string( this, "secure3", secure );
+	reg_set_string( this, "wpa_encrypt3", wpa_encrypt );
+	reg_set_string( this, "wpa_key3", wpa_key );
+	/* save other configure */
+	reg_set_string( this, "peermac", peermac );
+	reg_set_string( this, "ifname", ifname );
+	reg_set_string( this, "peermode", peermode );
+	reg_set_string( this, "strong", strong );
+	reg_set_string( this, "channel", channel );
+	reg_set_string( this, "chext", chext );
+	reg_set_string( this, "nossid", nossid );
+
+	/* up the device */
+	cstart( this, "wpa", NULL, "%s-wpa", netdev );
+	sleep( 1 );
+	cstart( this, "keeplive", NULL, "%s-keeplive", netdev );
+
+	/* mark the up state */
+	ptr = uptime_desc( NULL, 0 );
+	if ( ptr != NULL )
+	{
+		write( fd, ptr, strlen(ptr) );
+	}
 	talk_free( cfg );
-	return ret;
-}
-boole_t _down( obj_t this, param_t param )
-{
-    const char *obj;
-	const char *object;
-	const char *netdev;
-    char path[PATH_MAX];
-
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
-	{
-		return tfalse;
-	}
-
-	/* delete the mark file */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	unlink( path );
-
-    /* down the deivce */
-	if ( netdev != NULL && netdev_flags( netdev, IFF_BROADCAST ) > 0 )
-	{
-		info( "%s(%s) down", object, netdev );
-		/* keeplive stop */
-		sstop( "%s-keeplive", netdev );
-		/* relayd stop */
-		sstop( "%s-relayd", netdev );
-		/* wpa_supplicant stop */
-		sstop( "%s-wpa", netdev );
-		/* down the netdev */
-		if ( netdev_flags( netdev, IFF_UP ) > 0 )
-		{
-			ifconfig( "%s down", netdev );
-		}
-	}
-
+	lock_close( fd );
 	return ttrue;
 }
 boole_t _connect( obj_t this, param_t param )
@@ -510,20 +493,15 @@ boole_t _connect( obj_t this, param_t param )
 boole_t _connected( obj_t this, param_t param )
 {
 	talk_t ret;
-	const char *prj;
 	const char *object;
 	const char *netdev;
 
-	prj = obj_prj( this );
-	if ( 0 != strcmp( prj, WIFI_PROJECT ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	/* get the netdev */
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
 
 	/* test the connected */
@@ -535,32 +513,90 @@ boole_t _connected( obj_t this, param_t param )
 
 	return ret;
 }
+boole_t _down( obj_t this, param_t param )
+{
+	talk_t ret;
+	const char *object;
+	const char *netdev;
+    char path[PATH_MAX];
+
+	object = obj_name( this );
+	/* get the netdev */
+	netdev = reg_string( this, "netdev" );
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return tfalse;
+	}
+	/* delete the keeplive */
+	sdelete( "%s-keeplive", netdev );
+	/* delete the relayd */
+	sdelete( "%s-relayd", netdev );
+	/* delete wpa_supplicant */
+	sdelete( "%s-wpa", netdev );
+    /* down the deivce */
+	ret = tfalse;
+	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
+	{
+		wifi_info( "%s(%s) down", object, netdev );
+		//ifconfig( "%s down", netdev );
+		ret = ttrue;
+	}
+	/* delete the mark file */
+	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
+	unlink( path );
+
+	return ret;
+}
+
+
+
+boole_t _reset( obj_t this, param_t param )
+{
+	int reset_times;
+	const char *object;
+	const char *netdev;
+    char path[PATH_MAX];
+
+	object = obj_name( this );
+	/* get the netdev */
+	netdev = reg_string( this, "netdev" );
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return tfalse;
+	}
+	/* record the count */
+	reset_times = reg_int( this, "reset_times" );
+	wifi_fault( "%s reset %d times", object, reset_times+1 );
+	reset_times++;
+	reg_set_int( this, "reset_times", reset_times );
+	/* delete the keeplive */
+	sdelete( "%s-keeplive", netdev );
+	/* delete the relayd */
+	sdelete( "%s-relayd", netdev );
+	/* delete wpa_supplicant */
+	sdelete( "%s-wpa", netdev );
+	/* delete the mark file */
+	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
+	unlink( path );
+	
+	return ttrue;
+}
+
+
+
 talk_t _status( obj_t this, param_t param )
 {
 	talk_t ret;
 	talk_t cfg;
-    const char *obj;
-	const char *object;
 	const char *netdev;
-    char mac[NAME_MAX];
     char path[PATH_MAX];
-    char buffer[NAME_MAX];
-    unsigned long long rt_bytes, rt_packets, rt_errs, rt_drops, tt_bytes, tt_packets, tt_errs, tt_drops;
-
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
 
 	/* get the netdev */
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
 	}
-	/* get the configure */
 	cfg = config_get( this, NULL );
 	if ( cfg == NULL )
 	{
@@ -569,55 +605,28 @@ talk_t _status( obj_t this, param_t param )
 
     ret = json_create( NULL );
 	/* get the state */
-	if ( netdev_flags( netdev, IFF_UP ) > 0 )
+	if ( netdev_flags( netdev, IFF_BROADCAST ) <= 0 )
 	{
-		snprintf( path, sizeof(path), "%s-wpa", netdev );
-		if ( spid( path ) >= 0 )
-		{
-			json_set_string( ret, "state", "uping" );
-		}
-		else
-		{
-			json_set_string( ret, "state", "down" );
-		}
+		json_set_string( ret, "status", "nodevice" );
+		talk_free( cfg );
+		return ret;
+	}
+	/* state get */
+	if ( netdev_flags( netdev, IFF_UP ) <= 0 )
+	{
+		json_set_string( ret, "status", "down" );
+		talk_free( cfg );
+		return ret;
+	}
+	snprintf( path, sizeof(path), "%s-wpa", netdev );
+	if ( spid( path ) >= 0 )
+	{
+		json_set_string( ret, "status", "uping" );
 	}
 	else
 	{
-		json_set_string( ret, "state", "down" );
+		json_set_string( ret, "status", "down" );
 	}
-    /* get the secure mode */
-    json_set_string( ret, "secure", json_string( cfg, "secure" ) );
-    /* flew get */
-    rt_bytes = rt_packets = rt_errs = rt_drops = tt_bytes = tt_packets = tt_errs = tt_drops = 0;
-    netdev_flew( netdev, &rt_bytes, &rt_packets, &rt_errs, &rt_drops, &tt_bytes, &tt_packets, &tt_errs, &tt_drops );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_bytes );
-    json_set_string( ret, "rx_bytes", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_packets );
-    json_set_string( ret, "rx_packets", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_errs );
-    json_set_string( ret, "rx_errs", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_drops );
-    json_set_string( ret, "rx_drops", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_bytes );
-    json_set_string( ret, "tx_bytes", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_packets );
-    json_set_string( ret, "tx_packets", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_errs );
-    json_set_string( ret, "tx_errs", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_drops );
-    json_set_string( ret, "tx_drops", buffer );
-    /* get the mac */
-    if ( netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) ) == 0 )
-	{
-		json_set_string( ret, "mac", mac );
-	}
-    /* get uptime and livetime_string */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-    if ( file2string( path, buffer, sizeof(buffer) ) > 0 )
-    {
-        json_set_string( ret, "ontime", buffer );
-        json_set_string( ret, "livetime", livetime_desc( atoi(buffer), path, sizeof(path) ) );
-    }
 
 	{
 		int i;
@@ -648,7 +657,7 @@ talk_t _status( obj_t this, param_t param )
 					}
 					else if ( strcmp( ptr, "COMPLETED" ) == 0 )
 					{
-						json_set_string( ret, "state", "up" );
+						json_set_string( ret, "status", "up" );
 					}
 				}
 				else if ( strncmp( readbuf, "ssid=", 5 ) == 0 )
@@ -659,13 +668,13 @@ talk_t _status( obj_t this, param_t param )
 				else if ( strncmp( readbuf, "bssid=", 6 ) == 0 )
 				{
 					ptr = readbuf+6;
-					lowtoupp( ptr );
+					low2upp( ptr );
 					json_set_string( ret, "peermac", ptr );
 				}
 				else if ( strncmp( readbuf, "address=", 8 ) == 0 )
 				{
 					ptr = readbuf+8;
-					lowtoupp( ptr );
+					low2upp( ptr );
 					json_set_string( ret, "mac", ptr );
 				}
 			}
@@ -724,54 +733,49 @@ talk_t _status( obj_t this, param_t param )
 	talk_free( cfg );
 	return ret;
 }
-talk_t _state( obj_t this, param_t param )
-{
-	talk_t ret;
-
-	ret = _status( this, param );
-	json_delete_axp( ret, "rx_bytes" );
-	json_delete_axp( ret, "rx_packets" );
-	json_delete_axp( ret, "rx_errs" );
-	json_delete_axp( ret, "rx_drops" );
-	json_delete_axp( ret, "tx_bytes" );
-	json_delete_axp( ret, "tx_packets" );
-	json_delete_axp( ret, "tx_errs" );
-	json_delete_axp( ret, "tx_drops" );
-	return ret;
-}
 boole_t _online( obj_t this, param_t param )
 {
+	int reset_times;
 	const char *object;
 	const char *netdev;
 	const char *ifname;
-	const char *gateway;
 
-	object = obj_combine( this );
+	object = obj_name( this );
+	/* clear the count */
+	reset_times = 0;
+	reg_set_int( this, "reset_times", reset_times );
 	/* get the netdev */
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
-	/* get the ifname for sta the lan */
+	/* reset the relayd for in bridge */
 	ifname = param_string( param, 1 );
-	if ( ifname == NULL || strstr( ifname, LAN_COM ) == NULL )
+	if ( ifname != NULL && strstr( ifname, LAN_COM ) != NULL )
 	{
-		return ttrue;
+		wifi_info( "%s(%s) online reset the relayd", object, netdev );
+		sreset( NULL, NULL, NULL, "%s-relayd", netdev );
 	}
-	/* get the ifname gateway for set the sta gateway */
-	gateway = register_value( ifname, "gateway" );
-	if ( gateway == NULL || *gateway == '\0' )
-	{
-		return ttrue;
-	}
-	info( "%s(%s) online reset the relayd", object, netdev );
-	/* reset the relayd */
-	sreset( NULL, NULL, NULL, "%s-relayd", netdev );
 	return ttrue;
 }
 boole_t _offline( obj_t this, param_t param )
 {
+	const char *netdev;
+	const char *ifname;
+
+	/* get the netdev */
+	netdev = reg_string( this, "netdev" );
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return terror;
+	}
+	/* delete the relayd for in bridge */
+	ifname = param_string( param, 1 );
+	if ( ifname != NULL && strstr( ifname, LAN_COM ) != NULL )
+	{
+		sdelete( "%s-keeplive", netdev );
+	}
 	return ttrue;
 }
 
@@ -781,9 +785,7 @@ talk_t _aplist( obj_t this, param_t param )
 {
 	talk_t ret;
 	boole good;
-	const char *obj;
     const char *radio;
-	const char *object;
 	const char *netdev;
 	const char *peer;
 	const char *peer2;
@@ -791,23 +793,15 @@ talk_t _aplist( obj_t this, param_t param )
 	const char *peermac;
 	const char *strong;
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-	radio = register_value( object, "radio" );
+	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return NULL;
 	}
-
-	/* get the netdev */
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return tfalse;
+		return NULL;
 	}
 
 	/* get the paramter */
@@ -822,96 +816,68 @@ talk_t _aplist( obj_t this, param_t param )
 		good = true;
 	}
 
-#ifdef DISABLE_HOSTAPD_TO_MODIFY_CHANNEL
 	/* stop the hostapd to update the channel */
-	sstop( "%s-hostapd", radio );
-#endif
+	//sstop( "%s-hostapd", radio );
 
 	/* scanning */
 	ret = station_dev_aplist( netdev, peer, peermac, peer2, peer3, good );
 
-#ifdef DISABLE_HOSTAPD_TO_MODIFY_CHANNEL
 	/* start the hostapd */
-	sstart( radio, "hostapd", NULL, "%s-hostapd", radio );
-#endif
+	//sstart( NULL, "NULL", NULL, "%s-hostapd", radio );
 
 	return ret;
 }
-#define WPA_SUPPLICANT_DIR "/var/run/wpa_supplicant"
 boole_t _wpa( obj_t this, param_t param )
 {
 	FILE *fp;
-    const char *obj;
     const char *radio;
-    const char *object;
     const char *netdev;
-	const char *ssidctl;
 	const char *peer;
 	const char *peer2;
 	const char *peer3;
 	const char *peermac;
-	//const char *ifname;
-	//const char *peermode;
-	//const char *strong;
-	//const char *channel;
-	//const char *chext;
 	const char *secure;
-	//const char *wpa_encrypt;
 	const char *wpa_key;
 	char path[PATH_MAX];
 	char pidfile[PATH_MAX];
+	const char *hostapdctl = NULL;
+	char *wap_dir = "/var/run/wpa_supplicant";
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return NULL;
-	}
-	object = obj_combine( this );
-	radio = register_value( object, "radio" );
+	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
-		return NULL;
+		return terror;
 	}
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return NULL;
+		return terror;
 	}
 
 	/* get the hostapd ctrl file */
-	ssidctl = register_value( radio, "ssidctl" );
+	hostapdctl = reg_sstring( radio, "ctl" );
     /* get the configure */
-	peer = register_value( object, "peer" );
-	peer2 = register_value( object, "peer2" );
-	peer3 = register_value( object, "peer3" );
-	peermac = register_value( object, "peermac" );
-	//ifname = register_value( object, "ifname" );
-	//peermode = register_value( object, "peermode" );
-	//strong = register_value( object, "strong" );
-	//channel = register_value( object, "channel" );
-	//chext = register_value( object, "chext" );
-	secure = register_value( object, "secure" );
-	//wpa_encrypt = register_value( object, "wpa_encrypt" );
-	wpa_key = register_value( object, "wpa_key" );
-
 	project_var_path( pidfile, sizeof(pidfile), PROJECT_ID, "wpa_supplicant_%s.pid", netdev );
     project_var_path( path, sizeof(path), PROJECT_ID, "wpa_supplicant_%s.conf", netdev );
     fp = fopen( path, "w" );
     if( fp == NULL )
     {
-        faulting( "fopen error on %s write", path );
+        wifi_faulting( "fopen error on %s write", path );
 		return terror;
     }
     fprintf( fp, "ap_scan=1\n" );
-
+    fprintf( fp, "fast_reauth=1\n" );
+	
     /* set the peer */
+	peer = reg_string( this, "peer" );
+	peer2 = reg_string( this, "peer2" );
+	peer3 = reg_string( this, "peer3" );
+	peermac = reg_string( this, "peermac" );
 	if ( peer != NULL && *peer != '\0' )
-		{
+	{
 	    fprintf( fp, "network={\n" );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "scan_ssid=1\n" );
-	    //fprintf( fp, "\t\t");
-	    //fprintf( fp, "beacon_int=%s\n", beacon );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "ssid=\"%s\"\n", peer );
 		if ( peermac != NULL && *peermac != '\0' )
@@ -919,6 +885,8 @@ boole_t _wpa( obj_t this, param_t param )
 			fprintf( fp, "\t\t");
 			fprintf( fp, "bssid=%s\n", peermac );
 		}
+		secure = reg_string( this, "secure" );
+		wpa_key = reg_string( this, "wpa_key" );
 		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
 		{
 			fprintf( fp, "\t\t");
@@ -950,7 +918,7 @@ boole_t _wpa( obj_t this, param_t param )
 			fprintf( fp, "key_mgmt=NONE\n" );
 		}
 		fprintf( fp, "\t\t");
-		fprintf( fp, "priority=3\n" );
+		fprintf( fp, "priority=1\n" );
 	    fprintf( fp, "}\n" );
 	}
     /* set the peer2 */
@@ -959,8 +927,6 @@ boole_t _wpa( obj_t this, param_t param )
 	    fprintf( fp, "network={\n" );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "scan_ssid=1\n" );
-	    //fprintf( fp, "\t\t");
-	    //fprintf( fp, "beacon_int=%s\n", beacon );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "ssid=\"%s\"\n", peer3 );
 		if ( peermac != NULL && *peermac != '\0' )
@@ -968,6 +934,8 @@ boole_t _wpa( obj_t this, param_t param )
 			fprintf( fp, "\t\t");
 			fprintf( fp, "bssid=%s\n", peermac );
 		}
+		secure = reg_string( this, "secure2" );
+		wpa_key = reg_string( this, "wpa_key2" );
 		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
 		{
 			fprintf( fp, "\t\t");
@@ -1008,8 +976,6 @@ boole_t _wpa( obj_t this, param_t param )
 	    fprintf( fp, "network={\n" );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "scan_ssid=1\n" );
-	    //fprintf( fp, "\t\t");
-	    //fprintf( fp, "beacon_int=%s\n", beacon );
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "ssid=\"%s\"\n", peer3 );
 		if ( peermac != NULL && *peermac != '\0' )
@@ -1017,6 +983,8 @@ boole_t _wpa( obj_t this, param_t param )
 			fprintf( fp, "\t\t");
 			fprintf( fp, "bssid=%s\n", peermac );
 		}
+		secure = reg_string( this, "secure3" );
+		wpa_key = reg_string( this, "wpa_key3" );
 		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
 		{
 			fprintf( fp, "\t\t");
@@ -1048,51 +1016,46 @@ boole_t _wpa( obj_t this, param_t param )
 			fprintf( fp, "key_mgmt=NONE\n" );
 		}	
 		fprintf( fp, "\t\t");
-		fprintf( fp, "priority=1\n" );
+		fprintf( fp, "priority=2\n" );
 	    fprintf( fp, "}\n" );
 	}
-	
     fclose( fp );
 
-
-#ifdef DISABLE_HOSTAPD_TO_MODIFY_CHANNEL
 	/* stop the hostapd to update the channel */
+	hostapdctl = NULL;
 	sstop( "%s-hostapd", radio );
-	ssidctl = NULL;
-#endif
 
     /* exec the wpa_supplicant */
 #if defined gPLATFORM__smtk || defined gPLATFORM__mtk || defined gPLATFORM__smtk2 || defined gPLATFORM__mtk2
-	if ( ssidctl == NULL )
+	if ( hostapdctl == NULL )
 	{
-		debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, WPA_SUPPLICANT_DIR );
-    	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", WPA_SUPPLICANT_DIR, (char *)0 );
+		wifi_debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, wap_dir );
+    	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, (char *)0 );
 	}
 	else
 	{
-		debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s -H %s", netdev, path, pidfile, WPA_SUPPLICANT_DIR, ssidctl );
-    	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", WPA_SUPPLICANT_DIR, "-H", ssidctl, (char *)0 );
+		wifi_debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s -H %s", netdev, path, pidfile, wap_dir, hostapdctl );
+    	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, "-H", hostapdctl, (char *)0 );
 	}
 #else
-	if ( ssidctl == NULL )
+	if ( hostapdctl == NULL )
 	{
-		debug( "wpa_supplicant -s -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, WPA_SUPPLICANT_DIR );
-		execlp( "wpa_supplicant", "wpa_supplicant", "-s", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", WPA_SUPPLICANT_DIR, (char *)0 );
+		wifi_debug( "wpa_supplicant -s -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, wap_dir );
+		execlp( "wpa_supplicant", "wpa_supplicant", "-s", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, (char *)0 );
 	}
 	else
 	{
-		debug( "wpa_supplicant -s -D nl80211 -i %s -c %s -P %s -C %s -H %s", netdev, path, pidfile, WPA_SUPPLICANT_DIR, ssidctl );
-		execlp( "wpa_supplicant", "wpa_supplicant", "-s", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", WPA_SUPPLICANT_DIR, "-H", ssidctl, (char *)0 );
+		wifi_debug( "wpa_supplicant -s -D nl80211 -i %s -c %s -P %s -C %s -H %s", netdev, path, pidfile, wap_dir, hostapdctl );
+		execlp( "wpa_supplicant", "wpa_supplicant", "-s", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, "-H", hostapdctl, (char *)0 );
 	}
 #endif
-    faulting( "run the wpa_supplicant error" );
+    wifi_faulting( "run the wpa_supplicant error" );
 
-    return NULL;
+    return tfalse;
 }
 boole_t _relayd( obj_t this, param_t param )
 {
 	const char *ptr;
-    const char *obj;
     const char *object;
 	const char *netdev;
 	const char *gateway;
@@ -1101,21 +1064,14 @@ boole_t _relayd( obj_t this, param_t param )
 	char bridge[NAME_MAX];
 	char bridge_netdev[NAME_MAX];
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-
-	/* get the netdev */
-	netdev = register_value( object, "netdev" );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
 	/* brdige id */
-	ptr = scalls_string( bridge, sizeof(bridge), BRIDGE_COM, "search", object );
+	ptr = scalls_string( bridge, sizeof(bridge), BRIDGE_COM, "bridge", object );
 	if ( ptr == NULL )
 	{
 		return ttrue;
@@ -1133,7 +1089,7 @@ boole_t _relayd( obj_t this, param_t param )
 		return ttrue;
 	}
 	/* get the gateway when have */
-	gateway = register_value( ifname, "gateway" );
+	gateway = reg_sstring( ifname, "gateway" );
 	/* brdige status */
 	ip[0] = '\0';
 	netdev_info( bridge_netdev, ip, sizeof(ip), NULL, 0, NULL, 0, NULL, 0 );
@@ -1142,169 +1098,156 @@ boole_t _relayd( obj_t this, param_t param )
 	/* run the relayd */
 	if ( ip[0] != '\0' && gateway != NULL && gateway[0] != '\0' )
 	{
-		info( "%s(%s) relayd use %s on %s", object, netdev, gateway, ip );
+		wifi_info( "%s(%s) relayd use %s on %s", object, netdev, gateway, ip );
 		execlp( "relayd", "relayd", "-I", netdev, "-I", bridge_netdev, "-B", "-D", "-L", ip, "-G", gateway, (char*)0 );
 	}
 	else if ( ip[0] != '\0' )
 	{
-		info( "%s(%s) relayd on %s", object, netdev, ip );
+		wifi_info( "%s(%s) relayd on %s", object, netdev, ip );
 		execlp( "relayd", "relayd", "-I", netdev, "-I", bridge_netdev, "-B", "-D", "-L", ip, (char*)0 );
 	}
 	else if ( gateway != NULL && gateway[0] != '\0' )
 	{
-		info( "%s(%s) relayd use %s", object, netdev, gateway );
+		wifi_info( "%s(%s) relayd use %s", object, netdev, gateway );
 		execlp( "relayd", "relayd", "-I", netdev, "-I", bridge_netdev, "-B", "-D", "-G", gateway, (char*)0 );
 	}
 	else
 	{
-		info( "%s(%s) relayd", object, netdev );
+		wifi_info( "%s(%s) relayd", object, netdev );
 		execlp( "relayd", "relayd", "-I", netdev, "-I", bridge_netdev, "-B", "-D", (char*)0 );
 	}
-	faulting( "execlp the relayd(%s) error" , "relayd" );
+	wifi_faulting( "execlp the relayd(%s) error" , "relayd" );
 
 	return tfalse;
 }
 boole_t _keeplive( obj_t this, param_t param )
 {
 	int i;
-	int s;
 	talk_t v;
-    const char *obj;
 	const char *radio;
     const char *object;
 	const char *netdev;
 	const char *ifname;
+	const char *nossid;
 	const char *channel;
-	const char *ssid_disable;
+	char path[PATH_MAX];
 
-	obj = obj_com( this );
-	if ( 0 == strcmp( obj, COM_ID ) )
-	{
-		return tfalse;
-	}
-	object = obj_combine( this );
-
-	/* get the radio */
-	radio = register_value( object, "radio" );
+	object = obj_name( this );
+	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
-	/* get the netdev */
-	netdev = register_value( object, "netdev" );
+	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
-		return tfalse;
+		return terror;
 	}
-	/* get the ifname */
-	ifname = register_value( object, "ifname" );
-	/* get the ssid_disable */
-	ssid_disable = register_value( object, "ssid_disable" );
 
-start:
+	/* get the ifname */
+	ifname = reg_string( this, "ifname" );
+	/* get the ssid_disable */
+	nossid = reg_string( this, "nossid" );
     /* first check */
-    debug( "check %s(%s) connect state", object, netdev );
+    wifi_debug( "check %s(%s) connect state", object, netdev );
     for ( i=0; i<90; i++ )
     {
         if ( station_dev_connected( object, netdev ) == 0 )
         {
             break;
         }
-		debug( "%s(%s) connecting", object, netdev );
+		wifi_debug( "%s(%s) connecting", object, netdev );
 		sleep( 1 );
     }
 	if ( i >= 90 )
 	{
-		warn( "%s(%s) connecting timeout", object, netdev );
+		wifi_warn( "%s(%s) connecting timeout", object, netdev );
 		goto reset;
 	}
-    info( "%s(%s) connect succeed", object, netdev );
+    wifi_info( "%s(%s) connect succeed", object, netdev );
 	/* run the relayd */
 	sstart( object, "relayd", NULL, "%s-relayd", netdev );
 
-#ifdef DISABLE_HOSTAPD_TO_MODIFY_CHANNEL
-	/* start the hostapd */
+	/* get the channel */
 	v = _status( this, param );
 	channel = json_string( v, "channel" );
 	if ( channel != NULL )
 	{
-		register_set( radio, "channel", channel, strlen(channel)+1, 20 );
+		reg_sset_string( radio, "channel", channel );
 	}
 	talk_free( v );
-	sstart( radio, "hostapd", NULL, "%s-hostapd", radio );
-#endif
+
+	/* start the hostapd */
+	if ( nossid == NULL || 0 != strcmp( nossid, "enable" ) )
+	{
+		sleep( 3 );
+		sstart( NULL, NULL, NULL, "%s-hostapd", radio );
+	}
 
 	/* check and check forever */
-	s = i = 0;
 	while( 1 )
 	{
 		if ( station_dev_connected( object, netdev ) == 0 )
 		{
-			if ( i != 0 )
-			{
-				i = 0;
-				debug( "%s(%s) is connected", object, netdev );
-			}
 			sleep( 5 );
-			s++;
-			if ( s == 36 )
-			{
-				/* disable the ssid when enable */
-				if ( ssid_disable != NULL && 0 == strcmp( ssid_disable, "enable" ) )
-				{
-					info(  "%s(%s) connection connected disable the local SSID", object, netdev );
-					if ( 0 == strcmp( object, NSTA_COM ) )
-					{
-						scalls( NSSID_COM, "shut", NULL );
-						scalls( NSSID2_COM, "shut", NULL );
-					}
-					else if ( 0 == strcmp( object, ASTA_COM ) )
-					{
-						scalls( ASSID_COM, "shut", NULL );
-						scalls( ASSID2_COM, "shut", NULL );
-					}
-				}
-			}
 		}
 		else
 		{
-			if ( i >= 10 )
+			wifi_info( "%s(%s) connection lost 1 time", object, netdev );
+			sleep( 2 );
+			if ( station_dev_connected( object, netdev ) == 0 )
 			{
-				info(  "%s(%s) connection lost", object, netdev );
-				goto reset;
+				continue;
 			}
-			else
+			wifi_info( "%s(%s) connection lost 2 time", object, netdev );
+			sleep( 2 );
+			if ( station_dev_connected( object, netdev ) == 0 )
 			{
-				debug( "%s(%s) connection broke", object, netdev );
-				i++;
-				usleep( 200000 );
+				continue;
 			}
+			wifi_info( "%s(%s) connection lost 3 time", object, netdev );
+			sleep( 2 );
+			if ( station_dev_connected( object, netdev ) == 0 )
+			{
+				continue;
+			}
+			wifi_info( "%s(%s) connection lost 4 time", object, netdev );
+			sleep( 2 );
+			if ( station_dev_connected( object, netdev ) == 0 )
+			{
+				continue;
+			}
+			wifi_info( "%s(%s) connection lost 4 time", object, netdev );
+			sleep( 2 );
+			if ( station_dev_connected( object, netdev ) == 0 )
+			{
+				continue;
+			}
+			wifi_info( "%s(%s) connection broken", object, netdev );
+			break;
 		}
 	}
 
 reset:
-	info( "%s(%s) reconnect", object, netdev );
+	wifi_info( "%s(%s) reconnect", object, netdev );
 	/* stop the relayd */
 	sstop( "%s-relayd", netdev );
-	/* down the netdev */
-	if ( netdev_flags( netdev, IFF_UP ) > 0 )
-	{
-		ifconfig( 0, 1, "%s down", netdev );
-	}
-	/* reset the wisp ifname */
+	/* stop wpa_supplicant */
+	sstop( "%s-wpa", netdev );
+	/* reset the wisp ifname when wisp */
 	if ( ifname != NULL && strstr( ifname, WISP_COM ) != NULL )
 	{
-		sstop( "%s-wpa", netdev );
+		/* delete the mark file */
+		var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
+		unlink( path );
 		sreset( NULL, NULL, NULL, ifname );
 		return ttrue;
 	}
-	/* reset the wpa to connect */
-	sreset( object, "wpa", NULL, "%s-wpa", netdev );
-	goto start;
+	/* restart the wpa_supplicant when lan bridge */
+	sstart( NULL, NULL, NULL, "%s-wpa", netdev );
 
 	return tfalse;
 }
-
 
 
 

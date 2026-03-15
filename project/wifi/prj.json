@@ -12,7 +12,8 @@
     },
     "com":
     {
-        "ap":"wireless ssid management"
+        "ap":"wireless ssid management",
+        "sta":"wireless staion management"
     },
 
     "wui":

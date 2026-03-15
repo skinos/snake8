@@ -105,8 +105,6 @@ boole_t _up( obj_t this, param_t param )
 	wifi_info( "%s(%s) up", object, netdev );
 
 	ret = tfalse;
-    /* stop the hostapd */
-    sdelete( "%s-hostapd", radio );
     /* status */
     ptr = json_string( cfg, "status" );
     if (  ptr == NULL || 0 != strcmp( ptr, "enable" ) )
@@ -134,14 +132,27 @@ boole_t _up( obj_t this, param_t param )
 		lock_close( fd );
 	}
 	/* start the hostapd */
-	sstart( radio, "hostapd", NULL, "%s-hostapd", radio );
+	sreset( radio, "hostapd", NULL, "%s-hostapd", radio );
 
 	talk_free( cfg );
     return ret;
 }
 boole_t _connect( obj_t this, param_t param )
 {
-	return ttrue;
+	talk_t ret;
+	talk_t cfg;
+	const char *ptr;
+
+	ret = tfalse;
+	cfg = config_get( this, NULL );
+	ptr = json_string( cfg, "status" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	{
+		ret = ttrue;
+	}
+
+	talk_free( cfg );
+	return ret;
 }
 boole_t _connected( obj_t this, param_t param )
 {
