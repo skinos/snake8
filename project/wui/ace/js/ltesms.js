@@ -236,7 +236,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
       $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function(params, data) { delete_smss(data); } })
   );
 
-    var $toolbar = $("#t_" + smslist_table_table.replace('#', ''));
+    var $toolbar = $("#t_" + smslist_table.replace('#', ''));
     $toolbar.append($('#grid-controls').children());
     $toolbar.css({
         'display': 'flex',
