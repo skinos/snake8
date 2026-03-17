@@ -5,27 +5,34 @@
     <div class="row">
         <div class="col-xs-12">
             <!-- PAGE CONTENT BEGINS -->
-
-
-
+            
+            <!-- 处理器和内存部分 -->
             <div class="row">
                 <div class="space-6"></div>
-                <div class="col-sm-5">
-                    <div class="widget-box">
-                        <div class="widget-header widget-header-flat widget-header-small"><i class="ace-icon fa fa-bar-chart-o"></i> <h5 class="widget-title" data-i18n="Utilization"></h5></div>
-                        <div class="space-6"></div>
+                
+                <!-- 左侧：处理器部分 -->
+                <div class="col-sm-6">
+                    <div class="widget-box dynamic-height-widget">
+                        <div class="widget-header widget-header-flat widget-header-small">
+                            <!-- 图标文字没有间隙的写法 -->
+                            <!-- 有间隙的写法参考流量界面 -->
+                            <i class="ace-icon fa fa-bar-chart-o" style="color: white;"></i> 
+                            <h5 class="widget-title bigger lighter" data-i18n="CPU" style="color: white;"></h5>
+                        </div>
+                        
+                        <!-- 处理器饼状图和详情 -->
                         <div class="row">
-                            <div class="col-sm-4" >
+                            <div class="col-sm-5">
                                 <div class="center">
-                                    <div class="space-6"></div>
-                                    <div class="easy-pie-chart percentage" data-percent="100" data-size="125" id="cpu_usage_pie" ><span class="percent" id="cpu_usage">100</span>% <span data-i18n="CPU"></span></div>
-                                    <div class="space-6"></div>
-                                    <div class="space-6"></div>
-                                    <div class="easy-pie-chart percentage" data-percent="100" data-size="125" id="mem_usage_pie" ><span class="percent" id="mem_usage">100</span>% <span data-i18n="Memory"></span></div>
-                                    <div class="space-6"></div>
+                                    <div class="space-4"></div>
+                                    <div class="easy-pie-chart percentage" data-percent="100" data-size="190" id="cpu_usage_pie">
+                                        <span class="percent" id="cpu_usage">100</span>% 
+                                        <span data-i18n="CPU"></span>
+                                    </div>
+                                    <div class="space-4"></div>
                                 </div>
                             </div>
-                            <div class="col-sm-8" >
+                            <div class="col-sm-7">
                                 <div class="widget-body">
                                     <div class="widget-main no-padding">
                                         <table class="table">
@@ -34,92 +41,97 @@
                                                 <tr><td data-i18n="CPU system"></td><td id="cpu_system"></td></tr>
                                                 <tr><td data-i18n="CPU IRQ"></td><td id="cpu_irq"></td></tr>
                                                 <tr><td data-i18n="CPU Softirq"></td><td id="cpu_softirq"></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 处理器折线图 -->
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-sm-12">
+                                <div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">
+                                            <div id="cpu-charts"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：内存部分 -->
+                <div class="col-sm-6">
+                    <div class="widget-box dynamic-height-widget2">
+                        <div class="widget-header widget-header-flat widget-header-small">
+                            <i class="ace-icon fa fa-bar-chart-o" style="color: white;"></i> 
+                            <h5 class="widget-title bigger lighter" data-i18n="Memory" style="color: white;"></h5>
+                        </div>
+                        
+                        <!-- 内存饼状图和详情 -->
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <div class="center">
+                                    <div class="space-4"></div>
+                                    <div class="easy-pie-chart percentage" data-percent="100" data-size="190" id="mem_usage_pie">
+                                        <span class="percent" id="mem_usage">100</span>% 
+                                        <span data-i18n="Memory"></span>
+                                    </div>
+                                    <div class="space-4"></div>
+                                </div>
+                            </div>
+                            <div class="col-sm-7">
+                                <div class="widget-body">
+                                    <div class="widget-main no-padding">
+                                        <table class="table">
+                                            <tbody>
                                                 <tr><td data-i18n="Memory Total"></td><td id="memory_total"></td></tr>
                                                 <tr><td data-i18n="Memory Free"></td><td id="memory_free"></td></tr>
                                                 <tr><td data-i18n="Memory Buffers"></td><td id="memory_buffer"></td></tr>
                                                 <tr><td data-i18n="Memory Cached"></td><td id="memory_cached"></td></tr>
                                             </tbody>
                                         </table>
-                                    </div><!-- /.widget-main -->
-                                </div><!-- /.widget-body -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="widget-body">
-                            <div class="widget-main">
-                                <div class="clearfix">
-                                    <!-- #section:custom/extra.grid -->
-                                    <div class="grid2">
-                                        <div class="infobox infobox-blue" id="sg1" style="display: none;">
-                                            <div class="infobox-icon"><div class="easy-pie-chart percentage" data-percent="100" data-size="50" id="sg1_usage_pie"><span class="percent" id="sg1_usage">100</span>%</div></div>
-                                            <div class="infobox-data">
-                                                <span class="infobox-data-number" id="sg1_name"></span>
-                                                <div class="infobox-content" id="sg1_free"></div>
-                                            </div>
-                                            <div class="badge badge-success" id="sg1_total"></div>
+                        
+                        <!-- 内存折线图 -->
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-sm-12">
+                                <div>
+                                    <div class="widget-body">
+                                        <div class="widget-main">
+                                            <div id="mem-charts"></div>
                                         </div>
                                     </div>
-                                    <div class="grid2">
-                                        <div class="infobox infobox-blue" id="sg2" style="display: none;">
-                                            <div class="infobox-icon"><div class="easy-pie-chart percentage" data-percent="100" data-size="50" id="sg2_usage_pie"><span class="percent" id="sg2_usage">100</span>%</div></div>
-                                            <div class="infobox-data">
-                                                <span class="infobox-data-number" id="sg2_name"></span>
-                                                <div class="infobox-content" id="sg2_free"></div>
-                                            </div>
-                                            <div class="badge badge-success" id="sg2_total"></div>
-                                        </div>
-                                    </div>
-                                    <!-- /section:custom/extra.grid -->
                                 </div>
-                                <div class="clearfix">
-                                    <!-- #section:custom/extra.grid -->
-                                    <div class="grid2">
-                                        <div class="infobox infobox-blue" id="sg3" style="display: none;">
-                                            <div class="infobox-icon"><div class="easy-pie-chart percentage" data-percent="100" data-size="50" id="sg3_usage_pie"><span class="percent" id="sg3_usage">100</span>%</div></div>
-                                            <div class="infobox-data">
-                                                <span class="infobox-data-number" id="sg3_name"></span>
-                                                <div class="infobox-content" id="sg3_free"></div>
-                                            </div>
-                                            <div class="badge badge-success" id="sg3_total"></div>
-                                        </div>
-                                    </div>
-                                    <div class="grid2">
-                                        <div class="infobox infobox-blue" id="sg4" style="display: none;">
-                                            <div class="infobox-icon"><div class="easy-pie-chart percentage" data-percent="100" data-size="50" id="sg4_usage_pie"><span class="percent" id="sg4_usage">100</span>%</div></div>
-                                            <div class="infobox-data">
-                                                <span class="infobox-data-number" id="sg4_name"></span>
-                                                <div class="infobox-content" id="sg4_free"></div>
-                                            </div>
-                                            <div class="badge badge-success" id="sg4_total"></div>
-                                        </div>
-                                    </div>
-                                    <!-- /section:custom/extra.grid -->
-                                </div>
-                            </div><!-- /.widget-main -->
-                        </div><!-- /.widget-body -->
-                    </div><!-- /.widget-box -->
-                </div><!-- /.col -->
-            
-                <div class="col-sm-5">
-                    <div class="widget-box widget-color-green2">
-                        <div class="widget-header"><h5 class="widget-title bigger lighter" data-i18n="CPU Usage"></h5></div>
-                        <div class="widget-body">
-                            <div class="widget-main"><div id="cpu-charts" style="height:100px"></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-5">
-                    <div class="widget-box widget-color-green">
-                        <div class="widget-header widget-header-flat widget-header-small"><h5 class="widget-title bigger lighter" data-i18n="Memory Usage"></h5></div>
-                        <div class="widget-body">
-                            <div class="widget-main"><div id="mem-charts" style="height:100px"></div></div>
-                        </div>
-                    </div>
-                </div>
-            
             </div><!-- /.row -->
-            
 
-
+            <div class="row" id="storage-groups-container">
+                <!-- 存储组卡片将动态生成在这里 -->
+                <!-- 最多4个，每个占3列，铺满一行 -->
+                <div class="col-xs-12">
+                    <div class="widget-box dynamic-height-widget3">
+                        <div class="widget-header widget-header-flat widget-header-small">
+                            <i class="ace-icon fa fa-database" style="color: white;"></i> 
+                            <h5 class="widget-title bigger lighter" data-i18n="Storage" style="color: white;"></h5>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main" id="storage-groups-content">
+                                <!-- 存储组内容将动态生成在这里 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- PAGE CONTENT ENDS -->
         </div><!-- /.col -->
@@ -128,5 +140,220 @@
   </div><!-- /.col -->
 </div><!-- /.row -->
 
+<!-- 存储组widget模板 -->
+<template id="storage-widget-template">
+    <div class="storage-group-item">
+        <div class="row">
+            <!-- 左侧：饼图 -->
+            <div class="col-xs-5 col-sm-5">
+                <div class="storage-pie-container">
+                    <svg class="storage-pie-svg" width="130" height="100" viewBox="0 0 130 100" preserveAspectRatio="xMidYMid meet">
+                        <!-- SVG内容将通过JS动态生成 -->
+                    </svg>
+                    <div class="chart-inner-text">
+                        <span class="chart-percent">0</span>%
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧：详细信息 -->
+            <div class="col-xs-7 col-sm-7">
+                <table class="table storage-table">
+                    <tbody>
+                        <tr>
+                            <td data-i18n="Type"></td>
+                            <td class="storage-used"></td>
+                        </tr>
+                        <tr>
+                            <td data-i18n="Available"></td>
+                            <td class="storage-available">0</td>
+                        </tr>
+                        <tr>
+                            <td data-i18n="Size"></td>
+                            <td class="storage-size">0</td>
+                        </tr>
+                        <tr>
+                            <td data-i18n="Free"></td>
+                            <td class="storage-free">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</template>
+
 <script src="/js/utilization.js"></script>
 
+<style>
+
+.widget-box.dynamic-height-widget{
+    border-color: rgb(79, 121, 123) !important;  
+}
+
+.widget-box.dynamic-height-widget .widget-header{
+    background-color: rgb(79, 121, 123) !important;
+    border-bottom: 1px solid rgb(79, 121, 123) !important;  
+}
+
+.widget-box.dynamic-height-widget2{
+    border-color: rgb(96, 142, 144) !important;  
+}
+
+.widget-box.dynamic-height-widget2 .widget-header{
+    background-color: rgb(96, 142, 144) !important;
+    border-bottom: 1px solid rgb(96, 142, 144) !important;  
+}
+ 
+.widget-box.dynamic-height-widget3{
+    border-color: rgb(98, 113, 147) !important;  
+}
+
+.widget-box.dynamic-height-widget3 .widget-header{
+    background-color: rgb(98, 113, 147) !important;
+    border-bottom: 1px solid rgb(98, 113, 147) !important;  
+}
+
+.dynamic-height-widget,
+.dynamic-height-widget2{
+    height: auto !important;
+    min-height: 190px;
+    margin-bottom: 15px;
+}
+
+#storage-groups-container .widget-box {
+    min-height: 190px;
+}
+
+#system-metrics-container .widget-box {
+    min-height: 450px;
+}
+
+@media (max-width: 992px) {
+    #storage-groups-container .col-md-3 {
+        width: 50% !important;
+    }
+    
+    #storage-groups-container .widget-box {
+        min-height: 190px;
+    }
+}
+
+@media (max-width: 768px) {
+    #storage-groups-container .col-sm-6,
+    #storage-groups-container .col-md-3 {
+        width: 100% !important;
+    }
+    
+    #storage-groups-container .widget-box {
+        min-height: 190px;
+    }
+    
+    .dynamic-height-widget,
+    .dynamic-height-widget2 {
+        min-height: 480px !important;
+    }
+    .dynamic-height-widget3 {
+        min-height: 260px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dynamic-height-widget,
+    .dynamic-height-widget2 {
+        min-height: 420px !important;
+    }
+    .dynamic-height-widget3 {
+        min-height: 260px !important;
+    }
+    
+    #storage-groups-container .widget-box {
+        min-height: 190px;
+    }
+}
+
+.widget-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.widget-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.storage-pie-container {
+    position: relative;
+    width: 130px;
+    height: 100px;
+    margin: 0 auto 15px;
+}
+
+.storage-pie-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1));
+}
+
+.storage-pie-svg:hover {
+    transform: scale(1.02);
+    filter: drop-shadow(3px 6px 8px rgba(0,0,0,0.15));
+}
+
+.storage-pie-container .chart-inner-text {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+    width: 100%;
+    pointer-events: none;
+    font-weight: bold;
+    color: #333;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+.storage-tooltip-simple {
+    position: fixed;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    animation: fadeIn 0.2s;
+    max-width: 150px;
+    text-align: center;
+    z-index: 9999;
+}
+.storage-tooltip-simple .tooltip-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #333;
+}
+
+.storage-tooltip-simple .tooltip-text {
+    white-space: nowrap;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
