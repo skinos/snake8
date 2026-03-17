@@ -110,7 +110,7 @@ const chartManager = {
         if (!config) return false;
         
         // 检查接口状态
-        if (!value || value.status === "down" || value.status === "nodevice") {
+        if (!value || value.status === "down" || value.status === "nodevice" || value.status === "register") {
             this.hideChart(ifname);
             return false;
         }
@@ -121,8 +121,10 @@ const chartManager = {
         // 获取当前图表是否可见的状态
         const wasVisible = this.chartStates[ifname].visible;
 
-        // 显示图表
-        this.showChart(ifname);
+        if( value.status === "up"){
+            // 显示图表
+            this.showChart(ifname);
+        }
 
         // 如果图表之前已经可见，直接绘制
         if (wasVisible) {

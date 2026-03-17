@@ -20,7 +20,7 @@ function adjustBoxLayout() {
             'layout-6-last layout-7-last layout-8-last layout-9 layout-10-last'
         );
 
-        if(windowWidth > 1400){
+        if(windowWidth > 1450){
         // 根据可见数量添加对应的类
         if (count === 1) {
             visibleBoxes.addClass('layout-1');
@@ -49,7 +49,7 @@ function adjustBoxLayout() {
             visibleBoxes.slice(0, 9).addClass('layout-9');
             visibleBoxes.slice(9).addClass('layout-10-last');
         }
-    }else if (windowWidth > 850 && windowWidth <= 1400) {
+    }else if (windowWidth > 950 && windowWidth <= 1450) {
             if (count === 1) {
                 visibleBoxes.addClass('layout-1');
             } else if (count % 2 === 0) { // 偶数个
@@ -59,7 +59,7 @@ function adjustBoxLayout() {
                 visibleBoxes.slice(count - 1).addClass('layout-1');
             }
         }
-        else if(windowWidth < 850){
+        else if(windowWidth <= 950){
             visibleBoxes.addClass('layout-1');
         }
 
