@@ -24,12 +24,7 @@
             "cn":"2.4G热点",
             "en":"2.4G SSID",
             "page":"radio.html",
-            "object":"wifi@n",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@n"
         },
         "nmssid":
         {
@@ -37,12 +32,7 @@
             "cn":"2.4G多SSID",
             "en":"2.4G MSSID",
             "page":"mssid.html",
-            "object":"wifi@n",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@n"
         },
         "nstation":
         {
@@ -50,21 +40,7 @@
             "cn":"2.4G网卡",
             "en":"2.4G ApClient",
             "page":"sta.html",
-            "object":"wifi@nsta",
-            "mode":
-            {
-                "default":"enable",
-                "gateway":"enable",
-                "dgateway":"enable",
-                "misp":"enable",
-                "nmisp":"enable",
-                "dmisp":"enable"
-            },
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@nsta"
         },
         "nclient":
         {
@@ -72,12 +48,7 @@
             "cn":"2.4G客户端",
             "en":"2.4G Clients",
             "page":"client.html",
-            "object":"wifi@n",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@n"
         },
 
         "aradio":
@@ -86,12 +57,7 @@
             "cn":"5.8G热点",
             "en":"5.8G SSID",
             "page":"radio.html",
-            "object":"wifi@a",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@a"
         },
         "amssid":
         {
@@ -99,12 +65,7 @@
             "cn":"5.8G多SSID",
             "en":"5.8G MSSID",
             "page":"mssid.html",
-            "object":"wifi@a",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@a"
         },
         "astation":
         {
@@ -112,21 +73,7 @@
             "cn":"5.8G网卡",
             "en":"5.8G ApClient",
             "page":"sta.html",
-            "object":"wifi@asta",
-            "mode":
-            {
-                "default":"enable",
-                "gateway":"enable",
-                "dgateway":"enable",
-                "misp":"enable",
-                "nmisp":"enable",
-                "dmisp":"enable"
-            },
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@asta"
         },
         "aclient":
         {
@@ -134,12 +81,7 @@
             "cn":"5.8G客户端",
             "en":"5.8G Clients",
             "page":"client.html",
-            "object":"wifi@a",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "object":"wifi@a"
         }
 
     }

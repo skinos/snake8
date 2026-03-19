@@ -18,7 +18,7 @@ $(eval $(call Package/Define))
 
 # menuconfig的选项的位置及说明
 define Package/$(PKG_NAME)
-  CATEGORY:=Skin system
+  CATEGORY:=Skin Application
   TITLE:=$(INTRO_STR)
   DEPENDS:=+skinos_land +proftpd
 endef

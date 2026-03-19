@@ -36,12 +36,7 @@
             "en":"Telnet Server",
             "cn":"Telnet服务器",
             "page":"telnet.html",
-            "config":"tui@telnet",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "config":"tui@telnet"
         },
         "ssh":
         {
@@ -49,12 +44,7 @@
             "en":"SSH Server",
             "cn":"SSH服务器",
             "page":"ssh.html",
-            "config":"tui@ssh",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "config":"tui@ssh"
         }
     }
 }

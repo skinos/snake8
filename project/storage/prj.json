@@ -24,12 +24,7 @@
             "menu":"System",
             "en": "File Server",
             "cn": "文件服务器",
-            "page": "storage.html",
-            "lang":
-            {
-                "cn": "cn.json",
-                "en": "en.json"
-            }
+            "page": "storage.html"
         }
     }
 }
