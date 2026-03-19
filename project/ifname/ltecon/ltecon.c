@@ -362,22 +362,28 @@ boole_t _service( obj_t this, param_t param )
 	/***** get the connect mode **************/
 	/*****************************************/
 	mode = json_string( cfg, "mode" );
-	if ( mode == NULL || *mode == '\0' )
-	{
-		mode = "dhcpc";
-	}
 	method = json_string( cfg, "method" );
 	if ( method == NULL || *method == '\0' )
 	{
 		method = "disable";
 	}
-	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
+	/* 5g default dhcp and 4g default ppp */
+	i = reg_sint( ifdev, "na" );
+    if ( i > 0 )
+    {
+		if ( mode == NULL || *mode == '\0' )
+		{
+			mode = "dhcpc";
+		}
+    }
+	else
 	{
-		method = "disable";
+		if ( mode == NULL || *mode == '\0' )
+		{
+			mode = "ppp";
+		}
 	}
-	/* set the mode */
-	reg_set_string( this, "mode", mode );
-	reg_set_string( this, "method", method );
+	/* no netdev to ppp */
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
@@ -386,6 +392,14 @@ boole_t _service( obj_t this, param_t param )
 		method = "disable";
 		json_set_string( cfg, "mode", "ppp" );
     }
+	/* ppp mode no ipv6 */
+	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
+	{
+		method = "disable";
+	}
+	/* set the mode */
+	reg_set_string( this, "mode", mode );
+	reg_set_string( this, "method", method );
 
 
 
@@ -572,8 +586,8 @@ simagain:
 	/*****************************************/
 	plmn_string[0] = signal_string[0] = '\0';
     ifname_info( obj, "%s plmn or signal detection", object );
-	failed_threshold = 60;       // 60
-	failed_threshold2 = 180;     // 300
+	failed_threshold = 120;      // 120
+	failed_threshold2 = 300;     // 300
 	failed_threshold3 = 600;     // 600
 	failed_everytime = 1800;     // 1800
 	ptr = json_string( cfg, "signal_failed_threshold" );
