@@ -26,12 +26,7 @@
             "cn":"WEB服务器",
             "en":"Web Server",
             "page":"admin.html",
-            "config":"wui@admin",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "config":"wui@admin"
         }
     }
     
