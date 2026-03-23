@@ -1,7 +1,7 @@
 
 ***
 ## System restart Plan Management   
-The management system restarts automatically, and it restarts the system at a specified time
+Manages system restarts automatically, and restarts the system at a specified time
 
 #### Configuration( clock@restart )   
 ```json
@@ -11,7 +11,7 @@ The management system restarts automatically, and it restarts the system at a sp
                                                          // "disable": disable restart auto
                                                          // "age": maximum runtime to restart
                                                          // "point": fixed-point to restart
-                                                         // "idle": idle specifie period to restart
+                                                         // "idle": idle specified period to restart
     "delay":"delay some second to work",               // [ number ], The unit is seconds, valid for all mode
 
     "age":"The maximum runtime",                               // [ number ], The unit is seconds, valid for "mode" is "age"
@@ -21,14 +21,14 @@ The management system restarts automatically, and it restarts the system at a sp
     "point_minute":"Specifies when minute of hour to restart", // [ number ], valid for "mode" is "point"
 
     "idle_start":"Start runtime",                              // [ number ], valid for "mode" is "idle"
-    "idle_wireless_time":"Idle time",                          // [ number ], valid for "mode" is "idle"
+    "idle_time":"Idle time",                                   // [ number ], valid for "mode" is "idle"
     "idle_hour":"Specifies when hour to restart",              // [ number ], valid for "mode" is "idle"
     "idle_minute":"Specifies when minute of hour to restart",  // [ number ], valid for "mode" is "idle"
     "idle_age":"The maximum runtime"                           // [ number ], valid for "mode" is "idle"
 }
 ```   
 
-Example show the configure that is age mode, the will restart auto at system run 2880 second
+Example showing the configuration for age mode, it will automatically restart when system runs for 2880 seconds
 ```shell
 clock@restart
 {
@@ -37,7 +37,7 @@ clock@restart
 }
 ```   
 
-Example show the configure that is point mode, the will restart at 23:45
+Example showing the configuration for point mode, it will restart at 23:45
 ```shell
 clock@restart
 {
@@ -54,13 +54,13 @@ clock@restart:mode=disable
 ttrue
 ```   
 
-Example set will restart auto at system run 3600 second
+Example: set to automatically restart when system runs for 3600 seconds
 ```shell
 clock@restart|{"mode":"age","age":"3600"}
 ttrue
 ```   
 
-Example set will restart auto at 03:30
+Example: set to automatically restart at 03:30
 ```shell
 clock@restart|{"mode":"point","point_hour":"03","point_minute":"30"}
 ttrue

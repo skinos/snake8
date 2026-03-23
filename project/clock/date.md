@@ -1,12 +1,12 @@
 ***
 ## Manage System Date   
-Manage system date
+Manage system date and time, including timezone setting and NTP synchronization
 
 ### Configuration( clock@date )   
 ```json
 // Attributes introduction
 {
-    "timezone":"time zone",                             // [ number ], -12 to 12, West 12 to East 12
+    "timezone":"time zone",                             // [ number ], -12 to 12, West 12 to East 12, support half time zone like 3:30, -3:30
     "ntpclient":"whether to start the NTP client",      // [ "disable", "enable" ]
     "ntpserver":"NTP Server",                           // [ string ]
     "ntpserver2":"NTP Server 2",                        // [ string ]
@@ -20,7 +20,7 @@ Example, show all the configure
 clock@date
 {
     "timezone":"8",                   # time zone is East 8, china
-    "ntpclient":"enable",             # enable the NTP client to synchronization with NTP server
+    "ntpclient":"enable",             # enable the NTP client to synchronize with NTP server
     "ntpserver":"ntp1.aliyun.com",    # ntp1.aliyun.com, ntp2.aliyun.com, ntp3.aliyun.com, Try in turn until you succeed
     "ntpserver2":"ntp2.aliyun.com",
     "ntpserver3":"ntp3.aliyun.com",
@@ -41,10 +41,10 @@ ttrue
 
 
 ### **API**   
-+ `status[]` **get the date infomation**
++ `status[]` **get the date information**
     - return NULL when failed
     - return terror when error
-    - return json to describes date infomation when succeed
+    - return json to describe date information when succeed
     ```json
     // Attributes introduction of json by the API return
     {
@@ -55,7 +55,7 @@ ttrue
                                                              // lte: indicates source LTE time 
                                                              // gps: indicates source GPS time 
                                                              // An empty or none of this node indicates that it has not been set
-        "current":"current date",                         // [ string ], format is hour:minuti:second:month:day:year
+        "current":"current date",                         // [ string ], format is hour:minute:second:month:day:year
         "livetime":"system live time",                    // [ string ], format is hour:minute:second:day
         "uptime":"system uptime in second"                // [ number ]
     }    
@@ -65,7 +65,7 @@ ttrue
     ```shell
     clock@date.status
     {
-        "current":"12:29:41:05:10:2022",         # current is 12:29:41, On May 10, in 2022
+        "current":"12:29:41:05:10:2022",         # current is 12:29:41 on May 10, 2022
         "livetime":"00:01:58:0",                 # system run 1 minute and 58 second
         "uptime":"118"                           # system run 118 second
     }
@@ -73,17 +73,17 @@ ttrue
 
 
 + `current[ [current date], [time zone] ]` **set current date or get current time**
-    - [current date] ------ [ string ], format is hour:minuti:second:month:day:year
-    - [time zone] --------- [ number ], -12 to 12, West 12 to East 12
+    - [current date] ------ [ string ], format is hour:minute:second:month:day:year
+    - [time zone] --------- [ number ], -12 to 12, West 12 to East 12, support half time zone like 3:30, -3:30
     - return ttrue for succeed when set the current date or time zone
     - return tfalse for failed when set the current date or time zone 
-    - return NULL for failed when no argument to get current time
-    - return json to describes current time when no argument
+    - return json to describes current time when no argument and succeed
+    - return NULL when no argument and failed to get current time
     ```json
     {
         "sec":"The number of seconds since 1970.01.01:00:00:00",  // [ number ]
         "usec":"current microsecond",                             // [ number ] 
-        "minuteswest":"How many minutes is greenwich time",       // [ number ]
+        "minuteswest":"Minutes west of Greenwich",                // [ number ]
         "dsttime":"type of DST correction"                        // [ number ]
     }
     ```   

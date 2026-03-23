@@ -1,12 +1,13 @@
 ***
 ## NTP Server management
-The management NTP Server
+Manage the NTP Server
 
 #### Configuration( clock@ntps )
 ```json
 // attribute introduction
 {
-    "status":"NTP server status"       // [ "disable", "enable"]
+    "status":"NTP server status",      // [ "disable", "enable"]
+    "local":"local network interface"  // [ "ifname@lan", "ifname@lan2", ... ], network ifname name for NTP server to bind, auto-detect if not set
 }
 ```
 
