@@ -4,7 +4,7 @@
 /**
  * @file skinhead.h
  * @author dimmalex@gmail.com
- * @version 7.0
+ * @version 8.0
  * @date 20220219
  * @brief skinos system commom macro
  * @details define the marco for common length/file/type/mode/project/components, include the skin system header file
@@ -14,19 +14,19 @@
 
 
 
-/// identify max length macro
+/// Maximum identifier name length (256 characters)
 #ifndef NAME_MAX
 #define NAME_MAX          (256)
 #endif
-/// pathname max length macro
+/// Maximum file path length (512 characters)
 #ifndef PATH_MAX
 #define PATH_MAX          (512)
 #endif
-/// command line max length macro
+/// Maximum command line length (1024 characters)
 #ifndef LINE_MAX
 #define LINE_MAX          (1024)
 #endif
-/// he command line max length macro for
+/// he Maximum command line length (1024 characters) for
 #define JSON_LINE_MAX   (63335)
 
 /// default file mode
@@ -37,9 +37,9 @@
 
 
 
-/// define additional error type
+/// Additional error code: process was killed (133)
 #define EBYKILLED         (133)
-/// define additional exit type
+/// Exit codes mapping to talk_t special values
 #define EXIT_tnull     	  (100)
 #define EXIT_ttrue     	  (101)
 #define EXIT_tfalse       (102)
@@ -62,13 +62,13 @@ typedef int boole;
 
 
 
-/// define project and component gap
+/// Project and component separator (e.g., "land@machine")
 #define PROJECT_OBJECT_GAPS   "@"
 #define PROJECT_OBJECT_GAPC   '@'
-/// define project and file gap
+/// Project and file path separator (e.g., "land/file.conf")
 #define PROJECT_FILE_GAPS     "/"
 #define PROJECT_FILE_GAPC     '/'
-/// define component and configure/database gap
+/// Component and config attribute separator (e.g., "eth0:ip")
 #define OBJECT_CONFIG_GAPS    ":"
 #define OBJECT_CONFIG_GAPC    ':'
 #define CONFIG_CONFIG_GAPS    "/"
@@ -77,7 +77,7 @@ typedef int boole;
 #define CONFIG_SET_GAPS       "="
 #define CONFIG_OR_GAPC        '|'
 #define CONFIG_OR_GAPS        "|"
-/// define component and interface gap
+/// Component and API method separator (e.g., "eth0.status")
 #define OBJECT_API_GAPS       "."
 #define OBJECT_API_GAPC       '.'
 #define API_PARAM_STARTS      "["

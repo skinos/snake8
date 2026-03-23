@@ -41,7 +41,7 @@ extern "C"
 #define JSON_MAX_STRING_LENGTH SIZE_MAX-1
 
 /**
-The descriptions of the json_value node type
+JSON value type enumeration (JSON_STRING, JSON_NUMBER, JSON_OBJECT, etc.)
 **/
 	enum json_value_type
 	{ JSON_STRING = 0,
@@ -58,7 +58,7 @@ The descriptions of the json_value node type
 	};
 
 /**
-String implementation
+Internal resizable string implementation (used by JSON parser)
 **/
 	struct rui_cstring
 	{
@@ -70,7 +70,7 @@ String implementation
 	typedef struct rui_cstring rcstring;
 
 /**
-The error messages produced by the JSON parsers
+JSON parser error codes (check against JSON_OK)
 **/
 	enum json_error
 	{

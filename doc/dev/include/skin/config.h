@@ -13,12 +13,16 @@
 
 /**
  * @brief get the configure of the object
- * @param[in] com, a object pointer or string description for object
- * @param[in] attr, a attribute or string description for attribute
+ * @param[in] com a object pointer (e.g., obj_create("land@machine")) or string description (e.g., "land@machine")
+ * @param[in] attr a attribute pointer or string description for attribute path (e.g., "wan/ip")
  * @return talk for value or NULL
- *		@retval talk for value
- *		@retval NULL for none value, the errno code maybe sets when error
- *		@retval tpanic for calling error, and errno code will be sets
+ * @retval talk for value, must be freed with talk_free() after use
+ * @retval NULL for none value, errno may be set when error
+ * @retval tpanic for calling error, errno will be set
+ * @note The returned talk_t is dynamically allocated and must be freed
+ * @note Use config_gets/config_sgets for printf-style attribute paths
+ * @see config_gets, config_sgets, config_get_string for string return
+ * @note Difference from dbs_fetch: config_get reads config, dbs_fetch reads from persistent database
  */
 talk_t		config_get( obj_t com, attr_t attr );
 talk_t		config_gets( obj_t com, const char *attr, ... );
@@ -26,10 +30,10 @@ talk_t		config_sget( const char *com, attr_t attr );
 talk_t		config_sgets( const char *com, const char *attr, ... );
 /**
  * @brief get the configure value of the object
- * @param[out] buffer, the value will be store here when succeed
- * @param[in] buflen, size of buffer
- * @param[in] com, a object pointer or string description for object
- * @param[in] attr, a attribute or string description for attribute
+ * @param[out] buffer buffer to store value
+ * @param[in] buflen buffer size
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] attr attribute path (e.g., "wan/ip")
  * @return string for value or NULL
  *		@retval string for succeed
  *		@retval NULL for none value, the errno code maybe sets when error
@@ -41,13 +45,29 @@ const char *config_sgets_string( char *buffer, int buflen, const char *com, cons
 
 
 /**
- * @brief set the value of configure of the object
- * @param[in] com, a object pointer or string description for object
- * @param[in] value, a json or string
- * @param[in] attr, a attribute or string for description of which attribute
- * @return the operation is succeed or failed
+ * @brief set the configuration value of the object
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] v the value to set (talk_t/json type), will be copied internally
+ * @param[in] attr attribute path (e.g., attr_create("wan/ip") or "network/config")
+ * @return operation result
  * 		@retval true for succeed
- *  	@retval false for failed, and errno code will be sets
+ *  	@retval false for failed, errno will be set
+ * @note This sets configuration
+ * @note The value v is copied internally, caller retains ownership
+ * @note Difference from dbs_save: config_set save to configuration, dbs_save persists to database
+ * @note Example:
+ * @code
+ * // Set configure IP address
+ * obj_t obj = obj_create("network@eth0");
+ * talk_t v = string2x("192.168.1.1");
+ * attr_t a = attr_create("ip");
+ * config_set(obj, v, a);
+ * obj_free(obj);
+ * talk_free(v);
+ * attr_free(a);
+ * @endcode
+ * @see config_get for reading configuration
+ * @see dbs_save for persistent storage
  */
 boole config_set( obj_t com,                     talk_t v, attr_t attr );
 boole config_sets( obj_t com,                    talk_t v, const char *attr, ... );
@@ -61,21 +81,21 @@ boole config_ssets_string( const char *com, const char *string, const char *attr
 
 /**
  * @brief get the configure list of the object or entire system
- * @param[in] project, project name( return configure list for entire system when NULL)
+ * @param[in] project project name (NULL for all projects)
  * @return talk for configure list
  *		@retval talk for succeed
- *		@retval NULL for failed, and errno code will be sets
+ *		@retval NULL for failed, errno will be set
  */
 talk_t      config_list(   const char *project );
 /**
  * @brief get the configure pathname
- * @param[out] buffer, the configure pathname will be store here when succeed
- * @param[in] buflen, size of buffer
- * @param[in] project, project name
- * @param[in] filename, configure file name( return configure directory when NULL )
+ * @param[out] buffer buffer to store pathname
+ * @param[in] buflen buffer size
+ * @param[in] project project name
+ * @param[in] filename configuration filename (NULL for directory)
  * @return string for configure pathname
  *		@retval string for succeed
- *		@retval NULL for failed, and errno code will be sets
+ *		@retval NULL for failed, errno will be set
  */
 const char *config_path(    char *buffer, int buflen, const char *project, const char *filename, ... );
 

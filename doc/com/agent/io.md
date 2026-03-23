@@ -1,291 +1,350 @@
 ***
-## IO Agent
-manage IO
+## IO Agent -- GPIO and Network IO Management
+Manage device GPIO input/output, support IO state monitoring, trigger actions on state changes, and report IO state to remote servers via TCP/UDP/MQTT clients and servers
 
-#### **Configuration( agent@io )** 
-
+#### Configuration( agent@io )
 ```json
-// Attributes introduction 
 {
-    // IO Initial Configuration, set the IO state at the system boot
-    "init":
+    "status":"io agent service status",                    // [ "disable", "enable" ]
+
+    // GPIO initialization map
+    "init":                                                // define initial state for each GPIO
     {
-        "io number":"IO state"        // [ "g1", "g2", "g3", ... ]: [ "0f", "0r", "0b", "10", "11", "2-x-y" ]
-                                        // io number can be "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", ...
-                                        // IO state can be: "0f" for input mode and the tigger by falling
-                                        //                  "0r" for input mode and the tigger by rising
-                                        //                  "0b" for input mode and the tigger by rising and falling
-                                        //                  "10" for output low
-                                        //                  "11" for output high
-                                        //                  "2-x-y" for output cyclic timer, x for high, y for low, 
-                                        //                          ex. "2-100-200" will outputs a cyclic timer of 100ms high and 200ms low
-        // ... more io state init
+        "g1":"gpio 1 initial state",                       // [ "00", "01", "02", "0f", "0r", "0b", "10", "11", "2N-ON-OFF" ]
+                                                              // "00" or "0f": input falling edge trigger
+                                                              // "01" or "0r": input rising edge trigger
+                                                              // "02" or "0b": input both edge trigger
+                                                              // "10": output low
+                                                              // "11": output high
+                                                              // "2N-ON-OFF": output timer, N is mode, ON is high duration(ms), OFF is low duration(ms)
+        "g2":"gpio 2 initial state"
+        // ... more GPIOs (up to g20)
     },
 
-    // IO trigger Configuration
-    "trigger":
+    // GPIO trigger actions
+    "trigger":                                             // define actions when GPIO state changes
     {
-        "io number":                    // [ "g1", "g2", "g3", ... ]:{}
+        "g1":                                              // trigger config for gpio 1
         {
-            "io state":                        // [ "falling", "rising", "both" ]:{}
+            "rising":                                      // actions on rising edge (0->1)
             {
-                "cmd name":                          // [ string ]:{}
-                {
-                    "obj":"object name",                 // [ string ]
-                    "op":"object API",                   // [ string ]
-                    "1":"first parameter",               // [ string ]
-                    "2":"second parameter"               // [ string ]
-                    // ... more parameter
-                }
-                // ... more operation
+                "1":"command to execute",                  // string command format: "agent@io.modify[g2,11]"
+                "2":{"obj":"agent@io","op":"call","m":"modify","p":"g3,10"}  // JSON command format
+            },
+            "falling":                                     // actions on falling edge (1->0)
+            {
+                "1":"command to execute"
+            },
+            "both":                                        // actions on any edge change
+            {
+                "1":"command to execute"
             }
-            // ... more io state
         }
+        // ... more GPIO triggers
     },
 
-    // first client, default is TCP/UDP client configure
+    // TCP/UDP client (up to 9: client, client2, client3, ... client9)
     "client":
     {
-        "status":"client status",               // [ "disable", "enable" ]
-        
-        "server":"server address",              // [ string ]
-        "proto":"client protocol",              // [ "tcp", "udp" ]
-        "port":"server port",                   // [ number ]
-        "interval":"connect failed interval",   // [ number ], the unit is second
-
-        "id":"custom the identify",             // [ string ]
-        "user":"custom the username",           // [ string ]
-        "vcode":"custom the vocde"              // [ string ]
+        "status":"client status",                          // [ "disable", "enable" ]
+        "proto":"transport protocol",                      // [ "tcp", "udp" ]
+        "server":"remote server address",                  // [ string ], domain name or ip address
+        "port":"remote server port",                       // [ number ]
+        "interval":"reconnect interval in seconds",        // [ number ], default 10
+        "id":"device identify for registration",           // [ string ], optional
+        "user":"username for registration",                // [ string ], optional
+        "vcode":"verification code for registration"       // [ string ], optional
     },
 
-    // second client, default is MQTT Client configure
+    // MQTT client (up to 9: mqtt, mqtt2, mqtt3, ... mqtt9)
     "mqtt":
     {
-        "status":"client status",               // [ "disable", "enable" ]
-        "server":"server address",              // [ string ]
-        "port":"server port",                   // [ number ]
-
-        "mqtt_id":"device identify",            // [ string ]
-        "mqtt_username":"mqtt username",        // [ string ]
-        "mqtt_password":"mqtt password",        // [ string ]
-        "mqtt_interval":"mqtt connect interval",// [ nubmer ], the unit is second
-        "mqtt_keepalive":"mqtt keepalive",      // [ number ], the unit is second
-        "mqtt_publish":"mqtt publish topic",    // [ string ]
-        "mqtt_publish_qos":"mqtt publish qos",  // [ number ]
-        "mqtt_subscribe":
+        "status":"mqtt client status",                     // [ "disable", "enable" ]
+        "server":"MQTT broker address",                    // [ string ], domain name or ip address
+        "port":"MQTT broker port",                         // [ number ], default 1883
+        "mqtt_id":"MQTT client id",                        // [ string ], default is device macid
+                                                              // set to "NULL" for random id with clean session
+        "mqtt_username":"MQTT username",                   // [ string ], optional
+        "mqtt_password":"MQTT password",                   // [ string ], optional
+        "mqtt_keepalive":"MQTT keepalive in seconds",      // [ number ], default 60
+        "mqtt_interval":"reconnect interval in seconds",   // [ number ], default 10
+        "mqtt_publish":"MQTT publish topic",               // [ string ], topic for publishing IO state
+        "mqtt_publish_qos":"MQTT publish QoS level",       // [ number ], 0, 1 or 2, default 0
+        "mqtt_subscribe":                                  // MQTT subscribe topics
         {
-            "subscribe topic":"topic qos",
-            "subscribe topic2":"topic2 qos",
-            "subscribe topic3":"topic3 qos",
-            // "subscribe topic":"topic qos"     How many subscribe topic need setting save how many properties
+            "topic/name":"qos level"                       // [ "0", "1", "2" ]
         }
     },
 
-    // server,  TCP/UDP server configure
+    // TCP/UDP server (up to 9: server, server2, server3, ... server9)
     "server":
     {
-        "status":"client status",               // [ "disable", "enable" ]
-        "proto":"client protocol",              // [ "tcp", "udp" ]
-        "port":"server port",                   // [ number ]
-        "interval":"connect failed interval",   // [ number ], the unit is second
-        "timeout":"connect idle timeout"        // [ number ], the unit is second
+        "status":"server status",                          // [ "disable", "enable" ]
+        "proto":"transport protocol",                      // [ "tcp", "udp" ]
+        "port":"listen port",                              // [ number ]
+        "timeout":"client connection timeout in seconds",  // [ number ], 0 for no timeout
+        "interval":"retry interval in seconds",            // [ number ], default 10
+        "limit":"max TCP connections (tcp server only)",   // [ number ]
+        "id":"device identify",                            // [ string ], optional
+        "user":"username",                                 // [ string ], optional
+        "vcode":"verification code"                        // [ string ], optional
     }
-
 }
 ```
 
-Example, show all the io agnet configure
+Example, show all the configure
 ```shell
 agent@io
 {
+    "status":"enable",
     "init":
     {
-        "g1":"10",               # init the g1 output low
-        "g2":"11",               # init the g2 output high
-        "g3":"0b",               # init the g3 input mode, and trigger by falling and rising
-        "g4":"2-200-300"         # init the g4 output a cyclic timer, 200ms high, 300ms low
+        "g1":"0b",                                         # gpio1 input both edge
+        "g2":"11",                                         # gpio2 output high
+        "g3":"10"                                          # gpio3 output low
     },
     "trigger":
     {
-        "g3":
+        "g1":
         {
+            "rising":
+            {
+                "1":"agent@io.modify[g2,11]"               # when g1 rising, set g2 high
+            },
             "falling":
             {
-                "sms send":                 # send sms "G3 Low" to 8717688704240 when g3 falling(high to low)
-                {
-                    "obj":"modem@lte",
-                    "op":"sms_send",
-                    "1":"8717688704240",
-                    "2":"G3 Low"
-                },
-                "io2 op":                   # out low to g2 when g3 falling(high to low)
-                {
-                    "obj":"agent@io",
-                    "op":"modify",
-                    "1":"g2",
-                    "2":"10"
-                }
-            },
-            "rising":                       # send sms "G3 High" to 8717688704240 when g3 rising(low to high)
-            {
-                "sms send":
-                {
-                    "obj":"modem@lte",
-                    "op":"sms_send",
-                    "1":"8717688704240",
-                    "2":"G3 High"
-                }            
-            },
-            "both":
-            {
-                "io3 op":                   # out high to g1 when g3 falling or rising
-                {
-                    "obj":"agent@io",
-                    "op":"modify",
-                    "1":"g1",
-                    "2":"11"
-                }            
+                "1":"agent@io.modify[g2,10]"               # when g1 falling, set g2 low
             }
         }
-    },    
+    },
     "client":
     {
-        "status":"enable",           # enable the tcp client
-        "proto":"tcp",               # protocol is tcp
-        "server":"io.wmdevice.com",  # sever is io.wmdevice.com
-        "port":"9000",               # port is 9000
-        "id":"B3223",                # id is B3223, when no settings default is device MAC
-        "user":"dimmalex",           # mqtt username is dimmalex
-        "vcode":"0815"               # mqtt pasword is 0815
+        "status":"enable",
+        "proto":"tcp",
+        "server":"192.168.8.100",
+        "port":"8899"
     },
     "mqtt":
     {
-        "status":"enable",            # enable the mqtt client
-        "server":"mqtt.wmdevice.com", # server is mqtt.wmdevice.com
-        "port":"1883",                # port is 1883
-        "mqtt_id":"",                 # default is device MAC
-        "mqtt_username":"dimmalex",   # mqtt username is dimmalex
-        "mqtt_password":"0815",       # mqtt pasword is 0815
-        "mqtt_keepalive":"10",        # mqtt keeplive is 10 sec
-        "mqtt_interval":"5",          # mqtt connect interval is 5 sec
-        "mqtt_publish":"d218/io",     # mqtt publish topic is d218/io
-        "mqtt_publish_qos":"1",       # mqtt publish qos is 1
+        "status":"enable",
+        "server":"mqtt.example.com",
+        "port":"1883",
+        "mqtt_id":"mydevice001",
+        "mqtt_username":"user1",
+        "mqtt_password":"pass1",
+        "mqtt_publish":"device/io/state",
+        "mqtt_publish_qos":"1",
         "mqtt_subscribe":
         {
-            "d218/order":"2",         # mqtt subscribe d218/order topic, qos is 2
-            "route/order":"2"         # mqtt also subscribe route/order topic, qos is 2
+            "device/io/control":"1"
         }
     }
 }
-```  
+```
 
-Example, disable mqtt client
+Example, enable io agent with gpio1 as input and gpio2 as output
 ```shell
-agent@io:mqtt/status=disable
+agent@io={"status":"enable","init":{"g1":"0b","g2":"10"}}
 ttrue
-```  
+```
 
-Example, modify the tcp/udp client server
+Example, configure a TCP client to report IO state
 ```shell
-agent@io:client/server=new.wmdevice.com
+agent@io:client={"status":"enable","proto":"tcp","server":"192.168.8.100","port":"8899"}
 ttrue
-```  
+```
+
+Example, configure MQTT client
+```shell
+agent@io:mqtt={"status":"enable","server":"mqtt.example.com","port":"1883","mqtt_publish":"device/io/state","mqtt_subscribe":{"device/io/cmd":"1"}}
+ttrue
+```
 
 
 
-#### **API(agent@io)**
+#### **API**
 
-+ `status[]` **get the io agent status**   
-    - failed return NULL   
-    - succeed return json to describes   
++ `setup[]` **setup the io agent, start the service**
+    setup will read the configuration, check if init map has any GPIO defined and status is not "disable", then start the background service process
+    - succeed return ttrue
+    - failed return tfalse
+
+    Example, setup the io agent
+    ```shell
+    agent@io.setup
+    ttrue
+    ```
+
++ `shut[]` **shutdown the io agent service**
+    - succeed return ttrue
+    - failed return tfalse
+
+    Example, shutdown the io agent
+    ```shell
+    agent@io.shut
+    ttrue
+    ```
+
++ `status[]` **get all GPIO output and input state**
+    - failed return NULL, the service is not running
+    - succeed return json with current GPIO states
     ```json
-    // Attributes introduction of talk by the method return
+    // Attributes introduction of talk by the API return
     {
-        "io name":"IO state", // [ "g1", "g2", "g3", ... ]: [ string ]
-                                            // IO state, can be 00 for input low
-                                                     //  can be 01 for input high
-                                                     //  can be 10 for output low
-                                                     //  can be 11 for output high
-                                                     //  can be 12 for output a cyclic timer
-        // ... more the io name
+        "g1":"IO state code",                // state code format: first digit is mode, second is state
+                                                // "00": input low
+                                                // "01": input high
+                                                // "10": output low
+                                                // "11": output high
+                                                // "12": output timer mode
+        "g2":"IO state code"
+        // ... more GPIOs
     }
     ```
 
+    Example, get all GPIO status
     ```shell
-    # examples, get the io agent status
     agent@io.status
     {
-        "g1":"10",      # g1 output low
-        "g2":"11",      # g2 output high
-        "g3":"01",      # g3 input high
-        "g4":"00"       # g4 input low
-        "g5":"12"       # g5 output a cyclic timer
+        "g1":"01",                                # gpio1 input, current state high
+        "g2":"11",                                # gpio2 output high
+        "g3":"10"                                 # gpio3 output low
     }
     ```
 
-+ `current[]` **get the io agent line status**   
-    - failed return NULL   
-    - succeed return string to describes   
-    ```json
-    // Attributes introduction of string by the method return
-    current all IO state // [ string ]
-                         // format is "g1=xx;g2=xx;g3=xx;..."
-                         // "g1", "g2", "g3" is the io name 
-                         // "xx" is the state, can be "00" for input low
-                                           //  can be "01" for input high
-                                           //  can be "10" for output low
-                                           //  can be "11" for output high
-                                           //  can be "12" for output a cyclic timer
-    ```    
++ `current[]` **get current IO state as a string line**
+    - failed return NULL, the service is not running
+    - succeed return string with IO state line in format "gN=STATE;"
 
+    Example, get current IO state line
     ```shell
-    # examples, get the io agent line status
     agent@io.current
-    g1=10;g2=11;g3=01;g4=00;g5=12     # g1 output low, g2 output high, g3 input high, g4 input low, g5 output a cyclic timer
+    g1=01;g2=11;g3=10;
     ```
 
-+ `list[]` **get the client/mqtt/serverstatus**   
-    - failed return NULL   
-    - succeed return json to describes   
++ `dump[]` **get all GPIO state including cached input state**
+    similar to status but uses cached input state instead of reading from hardware
+    - failed return NULL, the service is not running
+    - succeed return json with GPIO states
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "client":                    // Client status, have this when client enable
-        {
-            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
-            "tx":"send bytes",            // [ number ]
-            "rx":"recv bytes"             // [ number ]
-        },
-        "mqtt":                      // MQTT status, have this when MQTT enable
-        {
-            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
-            "tx":"send bytes",            // [ number ]
-            "rx":"recv bytes"             // [ number ]
-        },
-        "server:ip:port":            // Server status, have this when the client of other device connected in
-        {
-            "connect":"connect state",    // [ "ok" ], have this when connect succeed 
-            "tx":"send bytes",            // [ number ]
-            "rx":"recv bytes"             // [ number ]
-        }
-        // ... more the client of server
+        "g1":"IO state code",                // "00": input low, "01": input high, "0x": input unknown
+                                                // "10": output low, "11": output high, "12": output timer
+        "g2":"IO state code"
     }
     ```
 
+    Example, dump all GPIO state
+    ```shell
+    agent@io.dump
+    {
+        "g1":"01",
+        "g2":"11",
+        "g3":"0x"                                 # gpio3 input state unknown
+    }
+    ```
 
-+ `modify[ io, state ]` **modify the io state**   
-    - io ----------- [ "g1", "g2", "g3", ... ] the IO name
-    - state -------- [ "0f", "0r", "0b", "10", "11", "2-x-y" ]
-        - "0f" for input mode and the tigger by falling
-        - "0r" for input mode and the tigger by frising
-        - "0b" for input mode and the tigger by frising and falling
-        - "10" for output low
-        - "11" for output high
-        - "2-x-y" for output timer, x for high, y for low, ex. "2-100-200" will outputs a cyclic timer of 100ms high and 200ms low
-    - failed return tfalse   
++ `list[]` **get all network connection status**
+    - failed return NULL, the service is not running
+    - succeed return json with all client/server connection info
+    ```json
+    // Attributes introduction of talk by the API return
+    {
+        "connection name":
+        {
+            "rx":"total bytes received",           // [ number ]
+            "tx":"total bytes sent",               // [ number ]
+            "ip":"peer ip address",                // [ ip address ], only for client connections
+            "connect":"connection state"            // [ "ok" ], present when connected
+        }
+        // ... more connections
+    }
+    ```
+
+    Example, list all connections
+    ```shell
+    agent@io.list
+    {
+        "client":
+        {
+            "rx":"1024",
+            "tx":"512",
+            "ip":"192.168.8.100",
+            "connect":"ok"
+        },
+        "mqtt":
+        {
+            "rx":"2048",
+            "tx":"1024",
+            "connect":"ok"
+        }
+    }
+    ```
+
++ `modify[ io name, value ]` **modify a GPIO state at runtime**
+    - io name ---- [ string ], GPIO name like "g1", "g2"
+    - value ------ [ string ], target state code
+        - "0b" or "02": switch to input both edge
+        - "0f" or "00": switch to input falling edge
+        - "0r" or "01": switch to input rising edge
+        - "10": switch to output low
+        - "11": switch to output high
+        - "2N-ON-OFF": switch to output timer, ON=high duration(ms), OFF=low duration(ms)
     - succeed return ttrue
+    - failed return tfalse
 
-+ `report[]` **report io state to client/mqtt/client right now**   
-    - failed return tfalse   
-    - succeed return ttrue
+    Example, set gpio2 to output high
+    ```shell
+    agent@io.modify[g2,11]
+    ttrue
+    ```
 
+    Example, set gpio1 to input both edge
+    ```shell
+    agent@io.modify[g1,0b]
+    ttrue
+    ```
+
+    Example, set gpio3 to timer mode (500ms on, 500ms off)
+    ```shell
+    agent@io.modify[g3,2-500-500]
+    ttrue
+    ```
+
++ `report[]` **trigger an immediate IO state report to all connections**
+    send SIGUSR1 signal to the service to report current IO state to all connected TCP/UDP/MQTT peers
+    - succeed return ttrue, signal sent
+    - failed return tfalse, service is not running
+
+    Example, trigger immediate report
+    ```shell
+    agent@io.report
+    ttrue
+    ```
+
++ `service[]` **internal background service (not called directly)**
+    this is the main event-driven service started by setup, it handles:
+    1. Initialize GPIO according to init map (set input/output mode)
+    2. Initialize libevent and mosquitto library
+    3. Register signal handlers (SIGINT/SIGTERM for exit, SIGWINCH for IO change, SIGUSR1 for report)
+    4. Create UNIX domain socket control interface for inter-process communication
+    5. Create MQTT clients (mqtt, mqtt2, ... mqtt9) from configuration
+    6. Create TCP/UDP clients (client, client2, ... client9) from configuration
+    7. Create TCP/UDP servers (server, server2, ... server9) from configuration
+    8. Run event loop to handle all IO events
+
+    **IO state report protocol (TCP/UDP):**
+    - Format: `gN=STATE;gN=STATE;...`
+    - Example: `g1=01;g2=11;g3=10;`
+
+    **IO remote control protocol (TCP/UDP):**
+    - Format: `gN=STATE;gN=STATE;...` (same as report, must end with semicolon)
+    - Example: `g1=10;g2=11;` (set g1 output low, g2 output high)
+
+    **TCP/UDP client registration packet:**
+    - Format: `macid=<macid>;id=<id>;user=<user>;vcode=<vcode>;`
+
+    **MQTT client:**
+    - Publish IO state to configured topic
+    - Subscribe to configured topics for remote control
+    - Support TLS with CA/cert/key files at: `<config_path>/io-<name>.ca`, `io-<name>.crt`, `io-<name>.key`

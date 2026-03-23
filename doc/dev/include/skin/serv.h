@@ -11,18 +11,28 @@
 
 
 
-/// talk to service management
+/**
+ * @brief send a command to the service management daemon and get response
+ * @param[in] cmd service management command string (e.g., "list", "info", "stop")
+ * @param[in] v talk_t parameter for the command (ownership transferred, will be freed internally)
+ * @param[in] timeout timeout in seconds for waiting response
+ * @return talk_t response from service management daemon
+ * 		@retval talk_t json for succeed - caller must free with talk_free()
+ * 		@retval ttrue for succeed with no data
+ * 		@retval terror for invalid arguments (NULL cmd), errno will be set
+ * 		@retval tpanic for timeout or communication error, errno will be set
+ */
 talk_t serv_call( const char *cmd, talk_t v, int timeout );
 
 
 
 /**
- * @brief register a service, stop and delete a same name service first
- * @param[in] delay, delay some second to run
- * @param[in] com, a object or string description for object
- * @param[in] method, method name
- * @param[in] param, a pointer of parameter structure
- * @param[in] nameformat, string for service name
+ * @brief register and start a service (stops and deletes existing service with same name first)
+ * @param[in] delay delay in seconds before running
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] param parameter structure
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -30,13 +40,13 @@ talk_t serv_call( const char *cmd, talk_t v, int timeout );
 boole srun( int delay, const char *com, const char *api, param_t param, const char *nameformat, ...	);
 boole crun( int delay, obj_t com, const char *api, param_t param, const char *nameformat, ... );
 /**
- * @brief register a service, stop and delete a same name service first
- * @param[in] delay, delay some second to run
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] json, a pointer of talk for first parameter
- * @param[in] json2, a pointer of talk for second parameter
- * @param[in] nameformat, string for service name
+ * @brief register and start a service (stops and deletes existing service with same name first)
+ * @param[in] delay delay in seconds before running
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] json talk_t parameter
+ * @param[in] json2 second talk_t parameter
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -46,12 +56,12 @@ boole crunt( int delay, obj_t com, const char *api, talk_t json, const char *nam
 boole srun2t( int delay, const char *com, const char *api, talk_t json, talk_t json2, const char *nameformat, ...  );
 boole crun2t( int delay, obj_t com, const char *api, talk_t json, talk_t json2, const char *nameformat, ... );
 /**
- * @brief register a service, stop and delete a same name service first
- * @param[in] delay, delay some second to run
- * @param[in] name, string for service name
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] paramformat, string for parameter list( option1,option2,option3,... )
+ * @brief register and start a service (stops and deletes existing service with same name first)
+ * @param[in] delay delay in seconds before running
+ * @param[in] name service name
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] paramformat parameter format string (e.g., "opt1,opt2,opt3")
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -62,11 +72,11 @@ boole cruns( int delay, const char *name, obj_t com, const char *api, const char
 
 
 /**
- * @brief reset a service or start a service, register the service when service noexist
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] param, a pointer of parameter structure
- * @param[in] nameformat, string for service name
+ * @brief reset or start a service (registers if not exists, restarts if exists)
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] param parameter structure
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -74,12 +84,12 @@ boole cruns( int delay, const char *name, obj_t com, const char *api, const char
 boole sreset( const char *com, const char *api, param_t param, const char *nameformat, ...	);
 boole creset( obj_t com, const char *api, param_t param, const char *nameformat, ... );
 /**
- * @brief reset a service or start a service, register the service when service noexist
- * @param[in] com, a pointer of object structure of component
- * @param[in] api, method name
- * @param[in] json, a pointer of talk for first parameter
- * @param[in] json2, a pointer of talk for second parameter
- * @param[in] nameformat, string for service name
+ * @brief reset or start a service (registers if not exists, restarts if exists)
+ * @param[in] com object pointer
+ * @param[in] api API method name
+ * @param[in] json talk_t parameter
+ * @param[in] json2 second talk_t parameter
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -89,11 +99,11 @@ boole cresett( obj_t com, const char *api, talk_t json, const char *nameformat, 
 boole sreset2t( const char *com, const char *api, talk_t json, talk_t json2, const char *nameformat, ...  );
 boole creset2t( obj_t com, const char *api, talk_t json, talk_t json2, const char *nameformat, ... );
 /**
- * @brief reset a service or start a service, register the service when service noexist
- * @param[in] name, string for service name
- * @param[in] com, a object or string description for object
+ * @brief reset or start a service (registers if not exists, restarts if exists)
+ * @param[in] name service name
+ * @param[in] com object pointer or string (e.g., "land@machine")
  * @param[in] api method name
- * @param[in] paramformat, string for parameter list( option1,option2,option3,... )
+ * @param[in] paramformat parameter format string (e.g., "opt1,opt2,opt3")
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -104,11 +114,11 @@ boole cresets( const char *name, obj_t com, const char *api, const char *paramfo
 
 
 /**
- * @brief start a service
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] param, a pointer of parameter structure
- * @param[in] nameformat, string for service name
+ * @brief start a service (only starts if not already running)
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] param parameter structure
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -116,12 +126,12 @@ boole cresets( const char *name, obj_t com, const char *api, const char *paramfo
 boole sstart( const char *com, const char *api, param_t param, const char *nameformat, ...	);
 boole cstart( obj_t com, const char *api, param_t param, const char *nameformat, ... );
 /**
- * @brief start a service
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] json, a pointer of talk for first parameter
- * @param[in] json2, a pointer of talk for second parameter
- * @param[in] nameformat, string for service name
+ * @brief start a service (only starts if not already running)
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] json talk_t parameter
+ * @param[in] json2 second talk_t parameter
+ * @param[in] nameformat service name format string
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -133,11 +143,11 @@ boole cstart2t( obj_t com, const char *api, talk_t json, talk_t json2, const cha
 boole sstartst( const char *com, const char *api, const char *json, talk_t json2, const char *nameformat, ...  );
 boole cstartst( obj_t com, const char *api, const char *json, talk_t json2, const char *nameformat, ...  );
 /**
- * @brief start a service
- * @param[in] name, string for service name
- * @param[in] com, a object or string description for object
- * @param[in] api, method name
- * @param[in] paramformat, string for parameter list( option1,option2,option3,... )
+ * @brief start a service (only starts if not already running)
+ * @param[in] name service name
+ * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] api API method name
+ * @param[in] paramformat parameter format string (e.g., "opt1,opt2,opt3")
  * @return succeed or failed
  *		@retval true for succeed
  *		@retval false for failed
@@ -147,60 +157,67 @@ boole cstarts( const char *name, obj_t com, const char *api, const char *paramfo
 
 
 
-/*
+/**
 * @brief delete a service
-* @param[in] nameformat, string for service name
+* @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed
 *	   @retval false for failed
 */
 boole sdelete( const char *nameformat, ... );
-/*
+/**
 * @brief stop a service
-* @param[in] nameformat, string for service name
+* @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed
 *	   @retval false for failed
 */
 boole sstop( const char *nameformat, ... );
-/*
-* @brief take off a service
-* @param[in] nameformat, string for service name
+/**
+* @brief pause a service (keeps registered but stops execution)
+* @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed
 *	   @retval false for failed
 */
 boole soff( const char *nameformat, ... );
-/*
-* @brief take off and delete a service
-* @param[in] nameformat, string for service name
+/**
+* @brief pause and delete a service (stops execution and removes registration)
+* @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed
 *	   @retval false for failed
 */
 boole soffdel( const char *nameformat, ... );
-/*
+/**
 * @brief get a service pid
-* @param[in] nameformat, string for service name
+* @param[in] nameformat service name format string
 * @return service pid
 *	   @retval >=0 for succeed
 *	   @retval <0 for failed
 */
 pid_t spid( const char *nameformat, ... );
-/*
-* @brief get a service infomation
-* @param[in] nameformat, string for service name
-* @return succeed or failed
-*	   @retval true for succeed
-*	   @retval false for failed
+/**
+* @brief get a service information
+* @param[in] nameformat service name format string
+* @return talk_t with service information
+*	   @retval talk_t json for succeed - caller must free with talk_free()
+*	   @retval NULL for failed or service not found
 */
 talk_t sinfo( const char *nameformat, ... );
+/**
+ * @brief get a service detailed dump information
+ * @param[in] nameformat service name format string
+ * @return talk_t with detailed service dump information
+ *	   @retval talk_t json for succeed - caller must free with talk_free()
+ *	   @retval NULL for failed or service not found
+ */
 talk_t sdump( const char *nameformat, ... );
-/*
+/**
 * @brief get all service list
-* @return service list
-*	   @retval talk for succeed
-*	   @retval NULL for failed
+* @return talk_t json containing all registered services
+*	   @retval talk_t json for succeed - caller must free with talk_free()
+*	   @retval NULL for failed or no services
 */
 talk_t slist( void );
 

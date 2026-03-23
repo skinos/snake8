@@ -6,12 +6,12 @@
  * @author dimmalex@gmail.com
  * @version 7.5
  * @date 20240903
- * @brief include the std header file
+ * @brief Include standard C library and system headers
  */
 
 
 
-/// include std libc header file
+/// Standard C library headers (stdio, stdlib, string, etc.)
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -49,7 +49,7 @@
 #endif
 #include <termios.h>
 #include <pthread.h>
-/// event loop header file
+/// Event loop library (libevent) headers
 #include <event.h>
 #include <event2/event.h>
 #include <assert.h>

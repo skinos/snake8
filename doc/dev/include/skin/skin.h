@@ -6,18 +6,18 @@
  * @author dimmalex@gmail.com
  * @version 7.5
  * @date 20240903
- * @brief include the std and skinos header file
- * @details include this header file if you want talk to skin system
+ * @brief Master header file including all SkinOS and standard headers
+ * @details Include this file to use SkinOS API in your component
  * @see all api header include at the skinhead.h
  */
 
 
 
-/// include std libc header file
+/// Standard C library headers
 #include "stdhead.h"
-/// include skin header file
+/// SkinOS core definitions and macros
 #include "skinhead.h"
-/// include skin api file
+/// SkinOS convenience API macros
 #include "skinapi.h"
 
 

@@ -11,32 +11,49 @@
 
 
 
-/// log line lenght
+/// log line length
 #define LANDLOG_LINE_MAX            4096
 /// log file name
 #define LANDLOG_FILENAME            "landlog.txt"
 
-/// log level                      
+/**
+ * @brief log level constants (bits 0-7 of flags)
+ * @details Log levels control message severity filtering. Multiple levels can be OR'd together.
+ * Levels from most severe to least severe:
+ *   - LANDLOG_FAULT:   Critical errors that may cause system instability (always logged)
+ *   - LANDLOG_WARN:    Warning conditions that should be investigated
+ *   - LANDLOG_INFO:    Normal operational messages (status changes, connections, etc.)
+ *   - LANDLOG_DEBUG:   Detailed diagnostic information for development
+ *   - LANDLOG_VERBOSE: Extremely detailed trace information (high volume)
+ */
 #define LANDLOG_LEVEL_OFFSET        (0)                            /* MASK               ( 0000 0000 0000 0000 0000 0000 1111 1111 ) */
 #define LANDLOG_LEVEL_MASK          (0xFF<<LANDLOG_LEVEL_OFFSET)
-#define LANDLOG_FAULT               (1<<LANDLOG_LEVEL_OFFSET)       /* FAULT */
-#define LANDLOG_WARN                (2<<LANDLOG_LEVEL_OFFSET)       /* WARNNING */
-#define LANDLOG_INFO                (4<<LANDLOG_LEVEL_OFFSET)       /* INFOMATION */
-#define LANDLOG_DEBUG               (8<<LANDLOG_LEVEL_OFFSET)       /* DEBUG */
-#define LANDLOG_VERBOSE             (16<<LANDLOG_LEVEL_OFFSET)      /* VERBOSE */
-/// log options
+#define LANDLOG_FAULT               (1<<LANDLOG_LEVEL_OFFSET)       /* Critical error: system instability, unrecoverable failures */
+#define LANDLOG_WARN                (2<<LANDLOG_LEVEL_OFFSET)       /* Warning: abnormal condition that should be investigated */
+#define LANDLOG_INFO                (4<<LANDLOG_LEVEL_OFFSET)       /* Informational: normal operational status messages */
+#define LANDLOG_DEBUG               (8<<LANDLOG_LEVEL_OFFSET)       /* Debug: detailed diagnostic information for development */
+#define LANDLOG_VERBOSE             (16<<LANDLOG_LEVEL_OFFSET)      /* Verbose: extremely detailed trace information */
+/**
+ * @brief log option constants (bits 8-15 of flags)
+ * @details Log options control output destination and behavior. Can be OR'd with log levels.
+ *   - LANDLOG_TUI:     Output to terminal user interface (stdout/stderr)
+ *   - LANDLOG_SYSLOG:  Output to system syslog daemon
+ *   - LANDLOG_FILE:    Output to log file (LANDLOG_FILENAME)
+ *   - LANDLOG_TRACE:   Include call stack trace information in the log output
+ *   - LANDLOG_ERRNO:   Automatically append strerror(errno) to the log message
+ */
 #define LANDLOG_OPTION_OFFSET       (8)                            /* MASK               ( 0000 0000 0000 0000 1111 1111 0000 0000 ) */
 #define LANDLOG_OPTION_MASK         (0xFF<<LANDLOG_OPTION_OFFSET)
-#define LANDLOG_TUI                 (1<<LANDLOG_OPTION_OFFSET)      /* output to tui */
-#define LANDLOG_SYSLOG              (2<<LANDLOG_OPTION_OFFSET)      /* output to syslog */
-#define LANDLOG_FILE                (4<<LANDLOG_OPTION_OFFSET)      /* output to file */
-#define LANDLOG_TRACE               (8<<LANDLOG_OPTION_OFFSET)      /* output trace */
+#define LANDLOG_TUI                 (1<<LANDLOG_OPTION_OFFSET)      /* output to terminal user interface */
+#define LANDLOG_SYSLOG              (2<<LANDLOG_OPTION_OFFSET)      /* output to syslog daemon */
+#define LANDLOG_FILE                (4<<LANDLOG_OPTION_OFFSET)      /* output to log file */
+#define LANDLOG_TRACE               (8<<LANDLOG_OPTION_OFFSET)      /* include call stack trace information */
 #define LANDLOG_OUTPUT_MASK         (0xF<<LANDLOG_OPTION_OFFSET)
-#define LANDLOG_ERRNO               (16<<LANDLOG_OPTION_OFFSET)      /* ERRNO */
-/// log type
+#define LANDLOG_ERRNO               (16<<LANDLOG_OPTION_OFFSET)     /* append strerror(errno) to message */
+/// log type (bits 16-23 of flags): identifies the subsystem/module generating the log
 #define LANDLOG_TYPE_OFFSET         (16)                             /* MASK             ( 0000 0000 1111 1111 0000 0000 0000 0000 ) */
 #define LANDLOG_TYPE_MASK           (0xFF<<LANDLOG_TYPE_OFFSET)
-/// log subtype
+/// log subtype (bits 24-31 of flags): identifies the specific sub-module within a type
 #define LANDLOG_SUBTYPE_OFFSET      (24)                             /* MASK             ( 1111 1111 0000 0000 0000 0000 0000 0000 ) */
 #define LANDLOG_SUBTYPE_MASK        (0xFF<<LANDLOG_SUBTYPE_OFFSET)
 
@@ -157,19 +174,63 @@
 
 /**
  * @brief Internal actual logging function
- * @param[in] flags The identifier for this log
+ * @param[in] flags log level and type flags (combine LANDLOG_* constants)
  * @param[in] filename Name of the current log file
  * @param[in] line The line number of the current logging code
- * @param[in] format log contents
+ * @param[in] format printf-style format string
  * @return none
  */
 void landlog( unsigned int flags, const char *filename, int line, const char *format, ... );
-/* record a log with flags */
+/**
+ * @brief record a log entry with custom flags
+ * @param[in] flags combined flags of level|option|type|subtype (e.g., LANDLOG_FAULT|LANDLOG_ERRNO|(LANDLOG_NETWORK<<LANDLOG_TYPE_OFFSET))
+ * @param[in] ... printf-style format string and arguments
+ * @return none
+ * @note Automatically inserts __FILE__ and __LINE__ from the calling location
+ * @note Example:
+ * @code
+ * // Log a network warning with errno info
+ * journal( (LANDLOG_NETWORK<<LANDLOG_TYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO, "connection timeout on %s", ifname );
+ * @endcode
+ * @see landlog for the underlying function
+ */
 #define journal( flags, ... )     landlog( (flags), (__FILE__), (__LINE__), __VA_ARGS__ )
 
 
 
-/* defalut log function */
+/**
+ * @brief Convenience log macros for each subsystem
+ * @details Each subsystem provides a family of log macros with the following suffixes:
+ *   - _verbose(...): log at VERBOSE level (most detailed, for tracing execution flow)
+ *   - _debug(...):   log at DEBUG level (development/diagnostic info)
+ *   - _info(...):    log at INFO level (normal operational status)
+ *   - _warn(...):    log at WARN level (abnormal but recoverable conditions)
+ *   - _warning(...): log at WARN level + automatically append strerror(errno) to message
+ *   - _fault(...):   log at FAULT level (critical/unrecoverable errors)
+ *   - _faulting(...): log at FAULT level + automatically append strerror(errno) to message
+ *
+ * @note The difference between _warn and _warning (and _fault vs _faulting):
+ *   - _warn/_fault: logs the message as-is
+ *   - _warning/_faulting: logs the message AND appends the current errno string (via LANDLOG_ERRNO flag)
+ *     Use _warning/_faulting after system calls that set errno (open, read, write, malloc, etc.)
+ *
+ * @note All macros accept printf-style format string and arguments: macro("format %s %d", str, num)
+ * @note File name and line number are automatically captured
+ *
+ * @code
+ * // Normal info message
+ * default_info("Service %s started successfully", name);
+ *
+ * // Warning with errno info (after a failed system call)
+ * if (open(path, O_RDONLY) < 0)
+ *     default_warning("Failed to open config file %s", path);
+ *
+ * // Critical fault with errno
+ * if (mmap(...) == MAP_FAILED)
+ *     default_faulting("Failed to mmap register file");
+ * @endcode
+ */
+/* default log function */
 #define default_verbose( ... )      landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define default_debug( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define default_info( ... )         landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -196,7 +257,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* land defalut log function */
+/* land default log function */
 #define land_verbose( ... )      landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define land_debug( ... )        landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define land_info( ... )         landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -239,7 +300,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* arch defalut log function */
+/* arch default log function */
 #define arch_verbose( ... )      landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define arch_debug( ... )        landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define arch_info( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -295,7 +356,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define sdio_warning( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define sdio_fault( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define sdio_faulting( ... )      landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_SDIO<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-/* pci arch type log function */
+/* wifi arch type log function */
 #define wifi_verbose( ... )       landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_WIFI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define wifi_debug( ... )         landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_WIFI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define wifi_info( ... )          landlog( ((LANDLOG_ARCH<<LANDLOG_TYPE_OFFSET)|(LANDLOG_ARCH_WIFI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -314,7 +375,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* network defalut log function */
+/* network default log function */
 #define network_verbose( ... )   landlog( ((LANDLOG_NETWORK<<LANDLOG_TYPE_OFFSET)|(LANDLOG_NETWORK_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define network_debug( ... )     landlog( ((LANDLOG_NETWORK<<LANDLOG_TYPE_OFFSET)|(LANDLOG_NETWORK_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define network_info( ... )      landlog( ((LANDLOG_NETWORK<<LANDLOG_TYPE_OFFSET)|(LANDLOG_NETWORK_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -368,7 +429,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* client defalut log function */
+/* client default log function */
 #define client_verbose( ... )   landlog( ((LANDLOG_CLIENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CLIENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define client_debug( ... )     landlog( ((LANDLOG_CLIENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CLIENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define client_info( ... )      landlog( ((LANDLOG_CLIENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CLIENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -395,7 +456,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* agent defalut log function */
+/* agent default log function */
 #define agent_verbose( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define agent_debug( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define agent_info( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -454,7 +515,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* center defalut log function */
+/* center default log function */
 #define center_verbose( ... )   landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define center_debug( ... )     landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define center_info( ... )      landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -497,7 +558,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* vpn defalut log function */
+/* vpn default log function */
 #define vpn_verbose( ... )   landlog( ((LANDLOG_VPN<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPN_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define vpn_debug( ... )     landlog( ((LANDLOG_VPN<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPN_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define vpn_info( ... )      landlog( ((LANDLOG_VPN<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPN_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -516,7 +577,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* vpns defalut log function */
+/* vpns default log function */
 #define vpns_verbose( ... )   landlog( ((LANDLOG_VPNS<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPNS_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define vpns_debug( ... )     landlog( ((LANDLOG_VPNS<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPNS_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define vpns_info( ... )      landlog( ((LANDLOG_VPNS<<LANDLOG_TYPE_OFFSET)|(LANDLOG_VPNS_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -535,7 +596,7 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
-/* app defalut log function */
+/* app default log function */
 #define app_verbose( ... )   landlog( ((LANDLOG_APP<<LANDLOG_TYPE_OFFSET)|(LANDLOG_APP_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define app_debug( ... )     landlog( ((LANDLOG_APP<<LANDLOG_TYPE_OFFSET)|(LANDLOG_APP_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define app_info( ... )      landlog( ((LANDLOG_APP<<LANDLOG_TYPE_OFFSET)|(LANDLOG_APP_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
