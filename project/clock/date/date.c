@@ -70,6 +70,17 @@ static boole time_setting( const char *tt, const char *zone )
 	                &(tm_current.tm_sec), &(tm_current.tm_mon), &(tm_current.tm_mday), &(tm_current.tm_year) );
 	    if ( i == 6 )
 	    {
+			/* validate time fields */
+			if ( tm_current.tm_hour < 0 || tm_current.tm_hour > 23 ||
+			     tm_current.tm_min < 0 || tm_current.tm_min > 59 ||
+			     tm_current.tm_sec < 0 || tm_current.tm_sec > 59 ||
+			     tm_current.tm_mon < 1 || tm_current.tm_mon > 12 ||
+			     tm_current.tm_mday < 1 || tm_current.tm_mday > 31 ||
+			     tm_current.tm_year < 1970 || tm_current.tm_year > 2100 )
+			{
+				default_fault( COM_IDPATH" invalid time format: %s", tt );
+				return false;
+			}
 			/* set the time */
 			tm_current.tm_year -= 1900;
 			tm_current.tm_mon--;

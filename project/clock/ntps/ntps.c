@@ -111,6 +111,7 @@ boole_t _service( obj_t this, param_t param )
 		execlp( "ntpd", "ntpd", "-c", NTPSERVER_CONFIG_FILE, "-n", "-I", netdev, (char*)0 );
 		default_faulting( "execlp the ntpd(%s) error" , "ntpd" );
 	}
+	talk_free( cfg );
 	return tfalse;
 }
 

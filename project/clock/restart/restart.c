@@ -219,7 +219,7 @@ boole_t _service( obj_t this, param_t param )
 		ptime = localtime( &now );
 		default_info( "current %u:%u delay %d restart at %u:%u and max runtime %d( idle=%d )", ptime->tm_hour, ptime->tm_min, start, hour, minute, age, idle );
         if ( start >= 300 && idle > 0 && start < age )
-        {
+        
             start -= pass;
             age -= pass;
             if ( start > 0 )
@@ -274,7 +274,7 @@ boole_t _service( obj_t this, param_t param )
             }
             else
             {
-                default_info( "restart the system by %s for %s mode station age(%s)", COM_IDPATH, mode, ptr );
+                default_info( "restart the system by %s for %s mode station age(%u)", COM_IDPATH, mode, age );
             }
 			machine_restart( 5, "restart" );
             return ttrue;
