@@ -26,214 +26,241 @@ static int dbm2signal( int rssi )
 	}
     return 0;
 }
-static talk_t station_dev_aplist( const char *netdev, const char *ssid, const char *bssid, const char *ssid2, const char *ssid3, boole good )
+static boole station_dev_apscan( const char *netdev )
 {
-    int i;
-    FILE *fp;
-	int signal;
-    char *ptr;
-	talk_t x;
-	talk_t ret;
-    talk_t tree;
-    talk_t child;
-    talk_t value;
-	const char *s;
-	const char *peermac;
-    char path[1024];
-    char readbuf[1024];
+	char path[1024];
 
-	ifconfig( "%s up", netdev );
-    snprintf( path, sizeof(path), "/tmp/.iwinfo_scan_%s", netdev );
-    shell( "iwinfo %s scan > %s", netdev, path );
-    fp = fopen( path, "r");
-    if( fp == NULL )
+    if ( netdev_flags( netdev, IFF_UP ) <= 0 )
     {
-    	return NULL;
+        ifconfig( "%s up", netdev );
     }
+	snprintf( path, sizeof(path), "/tmp/.iwinfo_scan_%s", netdev );
+	shell( "iwinfo %s scan > %s", netdev, path );
+    return true;
+}
+static talk_t station_dev_apresult( const char *netdev )
+{
+	int i;
+	FILE *fp;
+	talk_t x;
+	char *ptr;
+	talk_t result;
+	const char *s;
+	char path[1024];
+	char readbuf[1024];
 
-    ret = tree = x = NULL;
-	tree = json_create( NULL );
-    while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
-    {
-        if ( strncmp( readbuf, "Cell", 4 ) == 0 )
-        {
-            ptr = readbuf+19;
-            *(ptr+17) = '\0';
-            low2upp( ptr );
+	snprintf( path, sizeof(path), "/tmp/.iwinfo_scan_%s", netdev );
+	/* parse */
+	fp = fopen( path, "r");
+	if( fp == NULL )
+	{
+		return NULL;
+	}
+	x = NULL;
+	result = json_create( NULL );
+	while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+	{
+		if ( strncmp( readbuf, "Cell", 4 ) == 0 )
+		{
+			ptr = readbuf+19;
+			*(ptr+17) = '\0';
+			low2upp( ptr );
 			x = json_create( NULL );
-			json_set_json( tree, ptr, x );
-        }
-        else if ( x != NULL )
-        {
-            ptr = strstr( readbuf, "ESSID: \"" );
-            if ( ptr != NULL )
-            {
-                ptr += 8;
-                i = strlen(ptr);
-                ptr[i-2] = '\0';
-                if ( *ptr != '\0' )
-                {
+			json_set_json( result, ptr, x );
+		}
+		else if ( x != NULL )
+		{
+			ptr = strstr( readbuf, "ESSID: \"" );
+			if ( ptr != NULL )
+			{
+				ptr += 8;
+				i = strlen(ptr);
+				ptr[i-2] = '\0';
+				if ( *ptr != '\0' )
+				{
 					json_set_string( x, "ssid", ptr );
-                }
-                continue;
-            }
+				}
+				continue;
+			}
 			s = strstr( readbuf, "Mode:" );
-            ptr = strstr( readbuf, "Channel:" );
-            if ( s != NULL && ptr != NULL )
-            {
-                if ( sscanf( ptr, "%*[^:]: %d", &i ) == 1 )
-                {
+			ptr = strstr( readbuf, "Channel:" );
+			if ( s != NULL && ptr != NULL )
+			{
+				if ( sscanf( ptr, "%*[^:]: %d", &i ) == 1 )
+				{
 					json_set_number( x, "channel", i );
-                }
-                continue;
-            }
-            ptr = strstr( readbuf, "Signal:" );
-            if ( ptr != NULL )
-            {
-                if ( sscanf( readbuf, "%*[^:]: %d", &i ) == 1 )
-                {
+				}
+				continue;
+			}
+			ptr = strstr( readbuf, "Signal:" );
+			if ( ptr != NULL )
+			{
+				if ( sscanf( readbuf, "%*[^:]: %d", &i ) == 1 )
+				{
 					json_set_number( x, "rssi", i );
 					i = dbm2signal( i );
 					json_set_number( x, "signal", i );
-                }
-                continue;
-            }
-            ptr = strstr( readbuf, "Encryption:" );
-            if ( ptr != NULL )
-            {
-                /* NONE */
-                if ( strstr( readbuf, "none" ) != NULL )
-                {
+				}
+				continue;
+			}
+			ptr = strstr( readbuf, "Encryption:" );
+			if ( ptr != NULL )
+			{
+				/* NONE */
+				if ( strstr( readbuf, "none" ) != NULL )
+				{
 					json_set_string( x, "secure", "disable" );
-                }
-                /* wpapsk aes */
-                else if ( strstr( readbuf, "WPA PSK (CCMP)" ) != NULL )
-                {
+				}
+				/* wpapsk aes */
+				else if ( strstr( readbuf, "WPA PSK (CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapsk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
-                }
-                /* wpapsk tkip */
-                else if ( strstr( readbuf, "WPA PSK (TKIP)" ) != NULL )
-                {
+				}
+				/* wpapsk tkip */
+				else if ( strstr( readbuf, "WPA PSK (TKIP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapsk" );
 					json_set_string( x, "wpa_encrypt", "tkip" );
-                }
-                /* wpapsk tkipaes */
-                else if ( strstr( readbuf, "WPA PSK (TKIP, CCMP)" ) != NULL )
-                {
+				}
+				/* wpapsk tkipaes */
+				else if ( strstr( readbuf, "WPA PSK (TKIP, CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapsk" );
 					json_set_string( x, "wpa_encrypt", "tkipaes" );
-                }
-                /* wpa2psk aes */
-                else if ( strstr( readbuf, "WPA2 PSK (CCMP)" ) != NULL )
-                {
+				}
+				/* wpa2psk aes */
+				else if ( strstr( readbuf, "WPA2 PSK (CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpa2psk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
-                }
-                /* wpa2psk tkip */
-                else if ( strstr( readbuf, "WPA2 PSK (TKIP)" ) != NULL )
-                {
+				}
+				/* wpa2psk tkip */
+				else if ( strstr( readbuf, "WPA2 PSK (TKIP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkip" );
-                }
-                /* wpa2psk tkipaes */
-                else if ( strstr( readbuf, "WPA2 PSK (TKIP, CCMP)" ) != NULL )
-                {
+				}
+				/* wpa2psk tkipaes */
+				else if ( strstr( readbuf, "WPA2 PSK (TKIP, CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkipaes" );
-                }
-                /* wpa3psk aes */
-                else if ( strstr( readbuf, "WPA3 SAE (CCMP)" ) != NULL )
-                {
+				}
+				/* wpa3psk aes */
+				else if ( strstr( readbuf, "WPA3 SAE (CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpa3psk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
-                }
-                /* wpapskwpa2psk aes */
-                else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP)" ) != NULL )
-                {
+				}
+				/* wpapskwpa2psk aes */
+				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapskwpa2psk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
-                }
-                /* wpapskwpa2psk tkip */
-                else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (CCMP)" ) != NULL )
-                {
+				}
+				/* wpapskwpa2psk tkip */
+				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapskwpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkip" );
-                }
-                /* wpapskwpa2psk tkipaes */
-                else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP, CCMP)" ) != NULL )
-                {
+				}
+				/* wpapskwpa2psk tkipaes */
+				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP, CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpapskwpa2psk" );
 					json_set_string( x, "wpa_encrypt", "tkipaes" );
-                }
-                /* wpa2pskwpa3psk aes */
-                else if ( strstr( readbuf, "mixed WPA2/WPA3 PSK/SAE (CCMP)" ) != NULL )
-                {
+				}
+				/* wpa2pskwpa3psk aes */
+				else if ( strstr( readbuf, "mixed WPA2/WPA3 PSK/SAE (CCMP)" ) != NULL )
+				{
 					json_set_string( x, "secure", "wpa2pskwpa3psk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
-                }
-                continue;
-            }
-        }
-    }
-    fclose( fp );
+				}
+				continue;
+			}
+		}
+	}
+	fclose( fp );
+	/* save the scanning */
+	var2path( path, sizeof(path), "%s.apresult", netdev );
+	json2file( result, path );
+	return result;
+}
+static talk_t station_dev_appick( talk_t result, const char *ssid, const char *bssid, const char *ssid2, const char *ssid3 )
+{
+	int last;
+	int rssp;
+    talk_t v;
+    talk_t axp;
+	const char *ptr;
+    const char *peermac;
 
-    /* find your need ssid */
     if ( bssid != NULL && *bssid != '\0' )
     {
-        child = json_cut_value( tree, bssid );
-        talk_free( tree );
-        ret = child;
-    }
-    else if ( ssid == NULL )
-    {
-        ret = tree;
-    }
-    else
-    {
-    	signal = 0;
-        child = NULL;
-		peermac = NULL;
-        while( NULL != ( child = json_next( tree, child ) ) )
+        v = json_cut_value( result, bssid );
+        if ( json_number( v, "rssi" ) > 0 )
         {
-        	value = axp_json( child );
-            s = json_string( value, "ssid" );
-            if ( s == NULL )
-            {
-                continue;
-            }
-            if ( 0 == strcmp( ssid, s ) || 0 == strcmp( ssid2, s ) || 0 == strcmp( ssid3, s ) )
-            {
-            	if ( good == true )
-				{
-					s = json_string( value, "sig" );
-					if ( s != NULL )
-					{
-						i = atoi( s );
-						if ( i > signal )
-						{
-							signal = i;
-							peermac = axp_name( child );
-							json_set_string( value, "peermac", peermac );
-						}
-					}
-				}
-				else
-				{
-					peermac = axp_name( child );
-				}
-            }
+			return v;
         }
-		if ( peermac != NULL )
-		{
-			ret = json_cut_value( tree, peermac );
-		}
-		talk_free( tree );
+		talk_free( v );
+		return NULL;
     }
 
-	return ret;
+	last = 0;
+	peermac = NULL;
+    axp = NULL;
+    while( NULL != ( axp = json_next( result, axp ) ) )
+    {
+    	v = axp_json( axp );
+        ptr = json_string( v, "ssid" );
+        if ( ptr == NULL )
+        {
+            continue;
+        }
+        if ( ( ssid != NULL && 0 == strcmp( ssid, ptr ) ) || ( ssid2 != NULL && 0 == strcmp( ssid2, ptr ) ) || ( ssid3 != NULL && 0 == strcmp( ssid3, ptr ) ) )
+        {
+			rssp = json_number( v, "rssi" );
+			if ( rssp > last )
+			{
+				last = rssp;
+				peermac = axp_name( axp );
+				json_set_string( v, "peermac", peermac );
+			}
+        }
+    }
+	if ( peermac != NULL )
+	{
+		return json_cut_value( result, peermac );
+	}
+	return NULL;
 }
-static int station_dev_connected( const char *object, const char *netdev )
+static talk_t station_dev_aplist( const char *netdev, const char *ssid, const char *bssid, const char *ssid2, const char *ssid3 )
+{
+	int times;
+	talk_t pick;
+	talk_t result;
+
+	// mark scan
+	times = 1;
+	reg_sset_int( netdev, "scan", times );
+	// start scan
+    station_dev_apscan( netdev );
+	// get the scan result
+    result = station_dev_apresult( netdev );
+	// unmark scan
+	times = 0;
+	reg_sset_int( netdev, "scan", times );
+	// pick the peer
+	if ( ssid != NULL || bssid != NULL || ssid2 != NULL || ssid3 != NULL )
+	{
+		pick = station_dev_appick( result, ssid, bssid, ssid2, ssid3 );
+		talk_free( result );
+		return pick;
+	}
+	return result;
+}
+static int station_dev_connected( obj_t this, const char *netdev )
 {
 	int ret;
 	FILE *fp;
@@ -346,9 +373,7 @@ boole_t _up( obj_t this, param_t param )
 	const char *peer3;
 	const char *peermac;
 	const char *peermode;
-	const char *strong;
 	const char *channel;
-	const char *chext;
 	const char *nossid;
 	const char *secure;
 	const char *wpa_encrypt;
@@ -385,6 +410,7 @@ boole_t _up( obj_t this, param_t param )
 	wifi_info( "%s(%s) up", object, netdev );
 
 	/* get the configure */
+	status = NULL;
 	peer = peer2 = peer3 = peermac = NULL;
 	opt = param_talk( param, 1 );
 	if ( opt != NULL )
@@ -395,7 +421,10 @@ boole_t _up( obj_t this, param_t param )
 		peermac = json_string( opt, "peermac" );
 	}
 	v = NULL;
-	if ( peer != NULL || peer2 != NULL || peer2 != NULL || peermac != NULL )
+	if ( (peer != NULL && *peer != '\0')
+		|| (peer2 != NULL && *peer != '\0')
+		|| (peer2 != NULL && *peer != '\0')
+		|| (peermac != NULL && *peer != '\0') )
 	{
 		v = opt;
 	}
@@ -406,15 +435,7 @@ boole_t _up( obj_t this, param_t param )
 		peer2 = json_string( cfg, "peer2" );
 		peer3 = json_string( cfg, "peer3" );
 		peermac = json_string( cfg, "peermac" );
-		/* status[enable/disable] */
 		status = json_string( v, "status" );
-		if ( status != NULL && 0 == strcmp( status, "disable" ) )
-		{
-			talk_free( cfg );
-			lock_close( fd );
-			unlink( path );
-			return ttrue;
-		}
 	}
 
 	/* keeplive stop */
@@ -423,6 +444,16 @@ boole_t _up( obj_t this, param_t param )
 	sstop( "%s-relayd", netdev );
 	/* wpa_supplicant stop */
 	sstop( "%s-wpa", netdev );
+
+	/* status[enable/disable] */
+	if ( status != NULL && 0 == strcmp( status, "disable" ) )
+	{
+		talk_free( cfg );
+		lock_close( fd );
+		unlink( path );
+		return ttrue;
+	}
+	/* peer */
 	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
 	{
 		talk_free( cfg );
@@ -434,9 +465,7 @@ boole_t _up( obj_t this, param_t param )
 	/* get all configure */
 	ifname = json_string( v, "ifname" );
 	peermode = json_string( v, "peermode" );
-	strong = json_string( v, "strong" );
 	channel = json_string( v, "channel" );
-	chext = json_string( v, "chext" );
 	nossid = json_string( v, "nossid" );
 	/* save peer configure */
 	secure = json_string( v, "secure" );
@@ -466,9 +495,7 @@ boole_t _up( obj_t this, param_t param )
 	reg_set_string( this, "peermac", peermac );
 	reg_set_string( this, "ifname", ifname );
 	reg_set_string( this, "peermode", peermode );
-	reg_set_string( this, "strong", strong );
 	reg_set_string( this, "channel", channel );
-	reg_set_string( this, "chext", chext );
 	reg_set_string( this, "nossid", nossid );
 
 	/* up the device */
@@ -493,10 +520,8 @@ boole_t _connect( obj_t this, param_t param )
 boole_t _connected( obj_t this, param_t param )
 {
 	talk_t ret;
-	const char *object;
 	const char *netdev;
 
-	object = obj_name( this );
 	/* get the netdev */
 	netdev = reg_string( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
@@ -506,7 +531,7 @@ boole_t _connected( obj_t this, param_t param )
 
 	/* test the connected */
 	ret = tfalse;
-	if ( station_dev_connected( object, netdev ) == 0 )
+	if ( station_dev_connected( this, netdev ) == 0 )
 	{
 		ret = ttrue;
 	}
@@ -515,7 +540,6 @@ boole_t _connected( obj_t this, param_t param )
 }
 boole_t _down( obj_t this, param_t param )
 {
-	talk_t ret;
 	const char *object;
 	const char *netdev;
     char path[PATH_MAX];
@@ -534,18 +558,16 @@ boole_t _down( obj_t this, param_t param )
 	/* delete wpa_supplicant */
 	sdelete( "%s-wpa", netdev );
     /* down the deivce */
-	ret = tfalse;
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
-		wifi_info( "%s(%s) down", object, netdev );
+		wifi_debug( "%s(%s) down", object, netdev );
 		//ifconfig( "%s down", netdev );
-		ret = ttrue;
 	}
 	/* delete the mark file */
 	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
 	unlink( path );
 
-	return ret;
+	return ttrue;
 }
 
 
@@ -774,7 +796,7 @@ boole_t _offline( obj_t this, param_t param )
 	ifname = param_string( param, 1 );
 	if ( ifname != NULL && strstr( ifname, LAN_COM ) != NULL )
 	{
-		sdelete( "%s-keeplive", netdev );
+		sdelete( "%s-relayd", netdev );
 	}
 	return ttrue;
 }
@@ -784,14 +806,12 @@ boole_t _offline( obj_t this, param_t param )
 talk_t _aplist( obj_t this, param_t param )
 {
 	talk_t ret;
-	boole good;
     const char *radio;
 	const char *netdev;
 	const char *peer;
 	const char *peer2;
 	const char *peer3;
 	const char *peermac;
-	const char *strong;
 
 	radio = reg_string( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
@@ -805,28 +825,47 @@ talk_t _aplist( obj_t this, param_t param )
 	}
 
 	/* get the paramter */
-	good = false;
 	peer = param_string( param, 1 );
 	peermac = param_string( param, 2 );
 	peer2 = param_string( param, 3 );
 	peer3 = param_string( param, 4 );
-	strong = param_string( param, 5 );
-	if ( strong != NULL && 0 == strcmp( strong, "enable" ) )
-	{
-		good = true;
-	}
 
 	/* stop the hostapd to update the channel */
 	//sstop( "%s-hostapd", radio );
 
 	/* scanning */
-	ret = station_dev_aplist( netdev, peer, peermac, peer2, peer3, good );
+	ret = station_dev_aplist( netdev, peer, peermac, peer2, peer3 );
 
 	/* start the hostapd */
 	//sstart( NULL, "NULL", NULL, "%s-hostapd", radio );
 
 	return ret;
 }
+talk_t _chlist( obj_t this, param_t param )
+{
+	const char *radio;
+
+	radio = reg_string( this, "radio" );
+	if ( radio == NULL || *radio == '\0' )
+	{
+		return NULL;
+	}
+	return scall( radio, "chlist", param );
+}
+talk_t _securelist( obj_t this, param_t param )
+{
+	const char *radio;
+
+	radio = reg_string( this, "radio" );
+	if ( radio == NULL || *radio == '\0' )
+	{
+		return NULL;
+	}
+	return scall( radio, "securelist", param );
+}
+
+
+
 boole_t _wpa( obj_t this, param_t param )
 {
 	FILE *fp;
@@ -1152,7 +1191,7 @@ boole_t _keeplive( obj_t this, param_t param )
     wifi_debug( "check %s(%s) connect state", object, netdev );
     for ( i=0; i<90; i++ )
     {
-        if ( station_dev_connected( object, netdev ) == 0 )
+        if ( station_dev_connected( this, netdev ) == 0 )
         {
             break;
         }
@@ -1187,7 +1226,7 @@ boole_t _keeplive( obj_t this, param_t param )
 	/* check and check forever */
 	while( 1 )
 	{
-		if ( station_dev_connected( object, netdev ) == 0 )
+		if ( station_dev_connected( this, netdev ) == 0 )
 		{
 			sleep( 5 );
 		}
@@ -1195,31 +1234,31 @@ boole_t _keeplive( obj_t this, param_t param )
 		{
 			wifi_info( "%s(%s) connection lost 1 time", object, netdev );
 			sleep( 2 );
-			if ( station_dev_connected( object, netdev ) == 0 )
+			if ( station_dev_connected( this, netdev ) == 0 )
 			{
 				continue;
 			}
 			wifi_info( "%s(%s) connection lost 2 time", object, netdev );
 			sleep( 2 );
-			if ( station_dev_connected( object, netdev ) == 0 )
+			if ( station_dev_connected( this, netdev ) == 0 )
 			{
 				continue;
 			}
 			wifi_info( "%s(%s) connection lost 3 time", object, netdev );
 			sleep( 2 );
-			if ( station_dev_connected( object, netdev ) == 0 )
+			if ( station_dev_connected( this, netdev ) == 0 )
 			{
 				continue;
 			}
 			wifi_info( "%s(%s) connection lost 4 time", object, netdev );
 			sleep( 2 );
-			if ( station_dev_connected( object, netdev ) == 0 )
+			if ( station_dev_connected( this, netdev ) == 0 )
 			{
 				continue;
 			}
 			wifi_info( "%s(%s) connection lost 4 time", object, netdev );
 			sleep( 2 );
-			if ( station_dev_connected( object, netdev ) == 0 )
+			if ( station_dev_connected( this, netdev ) == 0 )
 			{
 				continue;
 			}
