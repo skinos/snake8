@@ -338,13 +338,13 @@ boole_t _service( obj_t this, param_t param )
 	ifdev = register_pointer( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
-		ifname_fault( obj, "%s cannot found ifdev", object );
+		ifname_fault( obj, "%s cannot find ifdev", object );
 		sleep( 5 );
         return tfalse;
     }
 	if ( com_sexist( ifdev, NULL ) == false )
 	{
-		ifname_fault( obj, "%s ifdev %s inexistence", object, ifdev );
+		ifname_fault( obj, "%s ifdev %s does not exist", object, ifdev );
 		sleep( 5 );
         return tfalse;
 	}
@@ -352,7 +352,7 @@ boole_t _service( obj_t this, param_t param )
     cfg = config_get( this, NULL ); 
     if ( cfg == NULL )
     {
-		ifname_fault( obj, "%s cannot found configure", object );
+		ifname_fault( obj, "%s cannot find configuration", object );
     	return terror;
     }
     /* get the ifdev reset times */
@@ -694,7 +694,7 @@ simagain:
 				}
 				ifname_info( obj, "%s plmn failed %d", object, check );
 			}
-			else if ( i == 0xb10 )
+			else if ( i == 0b10 )
 			{
 				ret = scall( ifdev, "signal", NULL );
 				if ( ret == ttrue )
@@ -1059,7 +1059,7 @@ simagain:
 			if ( ptr == NULL || *ptr == '\0' )
 			{
 				ret = terror;
-				ifname_faulting( obj, "%s cannot found %s mtty port", object ); 
+				ifname_faulting( obj, "%s cannot find mtty port", object ); 
 			}
 			else
 			{
@@ -1768,7 +1768,7 @@ boole_t _keepoff( obj_t this, param_t param )
 		i = uptime_int();
 		if ( i < 180 )
 		{
-		    keeplive_warn( "%s keeplive check failed, reset connectionn instead of reboot system when uptime(%d) to small", object, i );
+		    keeplive_warn( "%s keeplive check failed, reset connection instead of rebooting system when uptime (%d) is too low", object, i );
 			sreset( NULL, NULL, NULL, object );
 		}
 		else
