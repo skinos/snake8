@@ -143,12 +143,16 @@ boole_t _connect( obj_t this, param_t param )
 	talk_t cfg;
 	const char *ptr;
 
-	ret = tfalse;
 	cfg = config_get( this, NULL );
-	ptr = json_string( cfg, "status" );
-	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	if ( cfg == NULL )
 	{
-		ret = ttrue;
+		return tfalse;
+	}
+	ret = ttrue;
+	ptr = json_string( cfg, "status" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
+	{
+		ret = tfalse;
 	}
 
 	talk_free( cfg );
@@ -217,12 +221,14 @@ talk_t _status( obj_t this, param_t param )
 	if ( netdev_flags( netdev, IFF_BROADCAST ) <= 0 )
 	{
 		json_set_string( ret, "status", "nodevice" );
+		talk_free( cfg );
 		return ret;
 	}
 	/* state get */
 	if ( netdev_flags( netdev, IFF_UP ) <= 0 )
 	{
 		json_set_string( ret, "status", "down" );
+		talk_free( cfg );
 		return ret;
 	}
 	json_set_string( ret, "status", "up" );
@@ -271,8 +277,11 @@ talk_t _status( obj_t this, param_t param )
 		snprintf( path, sizeof(path), "iw dev %s info", netdev );
 		fp = popen( path, "r" );
 		memset( readbuf, 0, sizeof(readbuf) );
-		fread( readbuf, sizeof(readbuf), 1, fp );
-		pclose( fp );
+		if ( fp != NULL )
+		{
+			fread( readbuf, sizeof(readbuf), 1, fp );
+			pclose( fp );
+		}
 		ssid = strstr( readbuf, "ssid " );
 		bssid = strstr( readbuf, "addr " );
 		channel = strstr( readbuf, "channel " );
@@ -358,7 +367,11 @@ talk_t _stalist( obj_t this, param_t param )
         if ( strncmp( readbuf, "Station", 7 ) == 0 )
         {
             ptr = readbuf+8;
-            *(ptr+17) = '\0';
+            if ( strlen( ptr ) < 17 )
+            {
+            	continue;
+            }
+            ptr[17] = '\0';
             low2upp( ptr );
 			x = json_create( NULL );
 			json_set_json( ret, ptr, x );

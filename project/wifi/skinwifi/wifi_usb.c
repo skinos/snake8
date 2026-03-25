@@ -28,7 +28,7 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 	{
 		return NULL;
 	}
-	if ( buf == NULL || buflen < 0 )
+	if ( buf == NULL || buflen <= 0 )
 	{
 		buf = buffer;
 		buflen = sizeof(buffer);
@@ -44,11 +44,12 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 	axp = NULL;
 	while( NULL != ( axp = json_next( cfg, axp ) ) )
 	{
-		id = axp_name( axp );
+		object = axp_name( axp );
 		string = axp_string( axp );
 		if ( 0 == strcmp( string, syspath ) )
 		{
-			strncpy( buf, id, buflen );
+			strncpy( buf, object, buflen-1 );
+			buf[buflen-1] = '\0';
 			talk_free( cfg );
 			return buf;
 		}
@@ -60,6 +61,10 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 	{
 		object = axp_name( axp );
 		v = axp_json( axp );
+		if( v == NULL )
+		{
+			continue;
+		}
 		laxp = NULL;
 		while( NULL != ( laxp = json_next( v, laxp ) ) )
 		{
@@ -69,7 +74,8 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 				json_set_string( cfg, object, syspath );
 				json2file( cfg, path );
 				talk_free( cfg );
-				strncpy( buf, object, buflen );
+				strncpy( buf, object, buflen-1 );
+				buf[buflen-1] = '\0';
 				return buf;
 			}
 		}
@@ -98,6 +104,11 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 		while( NULL != ( axp = json_next( matchcfg, axp ) ) )
 		{
 			object = axp_name( axp );
+			v = axp_json( axp );
+			if( v == NULL )
+			{
+				continue;
+			}
 			if ( object != NULL && 0 == strcmp( object, name ) )
 			{
 				break;
@@ -111,7 +122,8 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 		json_set_string( cfg, name, syspath );
 		json2file( cfg, path );
 		talk_free( cfg );
-		strncpy( buf, name, buflen );
+		strncpy( buf, name, buflen-1 );
+		buf[buflen-1] = '\0';
 		return buf;
 	}
 
@@ -126,6 +138,10 @@ void        wifia_free( const char *object )
 
 	var2path( path, sizeof(path), "name" );
 	cfg = file2json( path );
+	if ( cfg == NULL )
+	{
+		return;
+	}
 	if ( json_delete_axp ( cfg, object ) == true )
 	{
 		json2file( cfg, path );

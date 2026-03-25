@@ -30,6 +30,11 @@ static boole station_dev_apscan( const char *netdev )
 {
 	char path[1024];
 
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return false;
+	}
+
     if ( netdev_flags( netdev, IFF_UP ) <= 0 )
     {
         ifconfig( "%s up", netdev );
@@ -63,7 +68,11 @@ static talk_t station_dev_apresult( const char *netdev )
 		if ( strncmp( readbuf, "Cell", 4 ) == 0 )
 		{
 			ptr = readbuf+19;
-			*(ptr+17) = '\0';
+			if ( strlen( ptr ) < 17 )
+			{
+				continue;
+			}
+			ptr[17] = '\0';
 			low2upp( ptr );
 			x = json_create( NULL );
 			json_set_json( result, ptr, x );
@@ -75,7 +84,10 @@ static talk_t station_dev_apresult( const char *netdev )
 			{
 				ptr += 8;
 				i = strlen(ptr);
-				ptr[i-2] = '\0';
+				if ( i >= 2 )
+				{
+					ptr[i-2] = '\0';
+				}
 				if ( *ptr != '\0' )
 				{
 					json_set_string( x, "ssid", ptr );
@@ -199,11 +211,14 @@ static talk_t station_dev_appick( talk_t result, const char *ssid, const char *b
     if ( bssid != NULL && *bssid != '\0' )
     {
         v = json_cut_value( result, bssid );
-        if ( json_number( v, "rssi" ) > 0 )
-        {
-			return v;
-        }
-		talk_free( v );
+		if ( v != NULL )
+		{
+			if ( json_number( v, "rssi" ) != 0 )
+			{
+				return v;
+			}
+			talk_free( v );
+		}
 		return NULL;
     }
 
@@ -254,6 +269,10 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 	// pick the peer
 	if ( ssid != NULL || bssid != NULL || ssid2 != NULL || ssid3 != NULL )
 	{
+		if ( result == NULL )
+		{
+			return NULL;
+		}
 		pick = station_dev_appick( result, ssid, bssid, ssid2, ssid3 );
 		talk_free( result );
 		return pick;
@@ -422,9 +441,9 @@ boole_t _up( obj_t this, param_t param )
 	}
 	v = NULL;
 	if ( (peer != NULL && *peer != '\0')
-		|| (peer2 != NULL && *peer != '\0')
-		|| (peer2 != NULL && *peer != '\0')
-		|| (peermac != NULL && *peer != '\0') )
+		|| (peer2 != NULL && *peer2 != '\0')
+		|| (peer3 != NULL && *peer3 != '\0')
+		|| (peermac != NULL && *peermac != '\0') )
 	{
 		v = opt;
 	}
@@ -454,7 +473,7 @@ boole_t _up( obj_t this, param_t param )
 		return ttrue;
 	}
 	/* peer */
-	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
+	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer3 == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
 	{
 		talk_free( cfg );
 		lock_close( fd );
@@ -669,7 +688,10 @@ talk_t _status( obj_t this, param_t param )
 			while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
 			{
 				i = strlen( readbuf );
-				readbuf[i-1] = '\0';
+				if ( i > 0 && readbuf[i-1] == '\n' )
+				{
+					readbuf[i-1] = '\0';
+				}
 				if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
 				{
 					ptr = readbuf+10;
@@ -967,7 +989,7 @@ boole_t _wpa( obj_t this, param_t param )
 	    fprintf( fp, "\t\t");
 	    fprintf( fp, "scan_ssid=1\n" );
 	    fprintf( fp, "\t\t");
-	    fprintf( fp, "ssid=\"%s\"\n", peer3 );
+	    fprintf( fp, "ssid=\"%s\"\n", peer2 );
 		if ( peermac != NULL && *peermac != '\0' )
 		{
 			fprintf( fp, "\t\t");
@@ -1209,12 +1231,15 @@ boole_t _keeplive( obj_t this, param_t param )
 
 	/* get the channel */
 	v = _status( this, param );
-	channel = json_string( v, "channel" );
-	if ( channel != NULL )
+	if ( v != NULL )
 	{
-		reg_sset_string( radio, "channel", channel );
+		channel = json_string( v, "channel" );
+		if ( channel != NULL )
+		{
+			reg_sset_string( radio, "channel", channel );
+		}
+		talk_free( v );
 	}
-	talk_free( v );
 
 	/* start the hostapd */
 	if ( nossid == NULL || 0 != strcmp( nossid, "enable" ) )
