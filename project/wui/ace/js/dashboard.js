@@ -1,69 +1,151 @@
-/* flush interval */
 var flush_interval = 2;
 
 function adjustBoxLayout() {
     var containers = $('.responsive-flex-container');
-    var windowWidth = window.innerWidth;
+
+    var greenGradient = [
+        "rgb(59, 138, 72)",
+        "rgb(64, 154, 79)",
+        "rgb(67, 169, 84)",
+        "rgb(71, 187, 90)",
+        "rgb(77, 189, 95)",
+        "rgb(86, 197, 104)",
+        "rgb(97, 209, 114)",
+        "rgb(108, 220, 123)",
+        "rgb(118, 224, 134)",
+        "rgb(128, 232, 144)"
+    ];
 
     containers.each(function() {
         var container = $(this);
+        var containerPadding = 10
+        var availableWidth = container.width() - containerPadding;
 
+        // 在线图表排列顺序规则
+        var boxes = container.find('.pricing-box').get();
+        boxes.sort(function(a, b) {
+            var aOnline = $(a).attr('or-online') === 'true' ? 1 : 0;
+            var bOnline = $(b).attr('or-online') === 'true' ? 1 : 0;
+            return bOnline - aOnline; 
+        });
+        $.each(boxes, function(i, box) { 
+            container.append(box);
+            $(box).find('.widget-box, .widget-header').css({
+                'border-color': '',
+                'background-color': '',
+                'border-bottom-color': ''
+            }); 
+        });
+
+        // 在线可见的图表 重置框架颜色 绿色
+        var onlineBoxes = container.find('.pricing-box[or-online="true"]:visible');
+        onlineBoxes.each(function(index) {
+            var color = (index < greenGradient.length) ? greenGradient[index] : greenGradient[9];
+
+            var $widget = $(this).find('.widget-box');
+            var $header = $(this).find('.widget-header');
+
+            // 使用 style.setProperty 来强制覆盖CSS里的 !important
+            $widget[0].style.setProperty('border-color', color, 'important');
+            $header[0].style.setProperty('background-color', color, 'important');
+            $header[0].style.setProperty('border-bottom-color', color, 'important');
+        });
+
+        // 获取可见图表
         var visibleBoxes = container.find('.pricing-box').filter(function() {
             return $(this).css('display') !== 'none';
         });
-        
         var count = visibleBoxes.length;
-        
-        // 移除当前容器内所有已有的布局类
-        container.find('.pricing-box').removeClass(
+        if (count === 0) return;
+
+        visibleBoxes.removeClass(
             'layout-1 layout-2 layout-3 layout-4-last layout-5-last ' +
             'layout-6-last layout-7-last layout-8-last layout-9 layout-10-last'
         );
+        
+        // 找到所有可见图表中 内部表格最宽的那一个作为基准
+        var maxRequiredWidth = 0;
+        visibleBoxes.each(function() {
+            var table = $(this).find('table')[0];
+            if (table) {
+                // scrollWidth 代表内容的真实宽度 即使被溢出隐藏
+                if (table.scrollWidth > maxRequiredWidth) {
+                    maxRequiredWidth = table.scrollWidth;
+                }
+            }
+        });
 
-        if(windowWidth > 1450){
-        // 根据可见数量添加对应的类
-        if (count === 1) {
-            visibleBoxes.addClass('layout-1');
-        } else if (count === 2) {
-            visibleBoxes.addClass('layout-2');
-        } else if (count === 3) {
-            visibleBoxes.addClass('layout-3');
-        } else if (count === 4) {
-            visibleBoxes.slice(0, 3).addClass('layout-3');
-            visibleBoxes.slice(3).addClass('layout-4-last');
-        } else if (count === 5) {
-            visibleBoxes.slice(0, 3).addClass('layout-3');
-            visibleBoxes.slice(3).addClass('layout-5-last');
-        } else if (count === 6) {
-            visibleBoxes.addClass('layout-3');
-            visibleBoxes.slice(3).addClass('layout-6-last');
-        } else if (count === 7) {
-            visibleBoxes.slice(0, 6).addClass('layout-3');
-            visibleBoxes.slice(6).addClass('layout-7-last');
-        } else if (count === 8) {
-            visibleBoxes.slice(0, 6).addClass('layout-3');
-            visibleBoxes.slice(6).addClass('layout-8-last');
-        } else if (count === 9) {
-            visibleBoxes.addClass('layout-9');
-        } else if (count === 10) {
-            visibleBoxes.slice(0, 9).addClass('layout-9');
-            visibleBoxes.slice(9).addClass('layout-10-last');
+        // 设定一个保底的最小宽度 防止没有数据时计算出错
+        maxRequiredWidth = Math.max(maxRequiredWidth, 380); 
+
+       // 动态决定排列几行 增强响应性能 不写死window width
+        var finalCols = 1;
+        if (availableWidth / 3 >= maxRequiredWidth) {
+            finalCols = 3;
+        } else if (availableWidth / 2 >= maxRequiredWidth) {
+            finalCols = 2;
+        } else {
+            finalCols = 1;
         }
-    }else if (windowWidth > 950 && windowWidth <= 1450) {
+
+        if (finalCols === 3) {
+            apply3ColumnLogic(visibleBoxes, count);
+        } else if (finalCols === 2) {
             if (count === 1) {
                 visibleBoxes.addClass('layout-1');
-            } else if (count % 2 === 0) { // 偶数个
+            } else if (count % 2 === 0) {
                 visibleBoxes.addClass('layout-2');
-            } else { // 奇数个
+            } else {
                 visibleBoxes.slice(0, count - 1).addClass('layout-2');
                 visibleBoxes.slice(count - 1).addClass('layout-1');
             }
-        }
-        else if(windowWidth <= 950){
+        } else {
             visibleBoxes.addClass('layout-1');
         }
-
     });
+}
+
+// 默认图表三列布局
+function apply3ColumnLogic(visibleBoxes, count) {
+    if (count === 1) {
+        visibleBoxes.addClass('layout-1');
+    } else if (count === 2) {
+        visibleBoxes.addClass('layout-2');
+    } else if (count === 3) {
+        visibleBoxes.addClass('layout-3');
+    } else if (count === 4) {
+        visibleBoxes.slice(0, 3).addClass('layout-3');
+        visibleBoxes.slice(3).addClass('layout-4-last');
+    } else if (count === 5) {
+        visibleBoxes.slice(0, 3).addClass('layout-3');
+        visibleBoxes.slice(3).addClass('layout-5-last');
+    } else if (count === 6) {
+        visibleBoxes.addClass('layout-3');
+        visibleBoxes.slice(3).addClass('layout-6-last');
+    } else if (count === 7) {
+        visibleBoxes.slice(0, 6).addClass('layout-3');
+        visibleBoxes.slice(6).addClass('layout-7-last');
+    } else if (count === 8) {
+        visibleBoxes.slice(0, 6).addClass('layout-3');
+        visibleBoxes.slice(6).addClass('layout-8-last');
+    } else if (count === 9) {
+        visibleBoxes.addClass('layout-3');
+    } else if (count >= 10) {
+        visibleBoxes.slice(0, 9).addClass('layout-3');
+        visibleBoxes.slice(9).addClass('layout-10-last');
+    }
+}
+
+// 监听容器大小 解决图表框架压缩显示
+if (window.ResizeObserver) {
+    const ro = new ResizeObserver(entries => {
+        window.requestAnimationFrame(() => {
+            adjustBoxLayout();
+        });
+    });
+    $('.responsive-flex-container').each(function() { ro.observe(this); });
+} else {
+    $(window).on('resize', adjustBoxLayout);
 }
 
 function showChart(id) {
@@ -73,17 +155,22 @@ function showChart(id) {
 
 function lte_show(info, id) {
     if (!info) {
-        $(id).hide();
+        $(id).hide().attr('or-online', 'false'); // 隐藏并标记非在线;
         return;
     }
-    
+    var isOnline = (info.status === "up");
+    $(id).attr('or-online', isOnline ? 'true' : 'false');
+
     // 状态和按钮
     if (info.status) {
         showChart(id);
         $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
-        if (info.status === "up" || info.status === "uping" || info.status === "connect") {
+        if (info.status === "up" || 
+            info.status === "uping" || 
+            info.status === "connect" || 
+            info.status === "connecting") {
             // 状态正常
         } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
@@ -186,7 +273,13 @@ function lte_show(info, id) {
     $(id + "_lac").text(info.lac || "");
     $(id + "_ci").text(info.ci || "");
     $(id + "_arfcn").text(info.arfcn || "");
-    
+
+    if( info.lac && info.ci ){
+        $(id + "_separator").show();
+    }else{
+        $(id + "_separator").hide();
+    }
+
     // IPv4
     $(id + "_ip").text(info.ip || ' ');
     $(id + "_mask").text(info.mask || ' ');
@@ -350,17 +443,22 @@ function lte_show(info, id) {
 
 function wan_show(info, id) {
     if (!info) {
-        $(id).hide();
+        $(id).hide().attr('or-online', 'false');
         return;
     }
-    
+    var isOnline = (info.status === "up");
+    $(id).attr('or-online', isOnline ? 'true' : 'false');
+
     // 状态和按钮
     if (info.status) {
         showChart(id);
         $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
-        if (info.status === "uping") {
+        if (info.status === "up" || 
+            info.status === "uping" || 
+            info.status === "connect" || 
+            info.status === "connecting") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
@@ -541,17 +639,22 @@ function lan_show(info, id) {
 
 function wisp_show(info, id) {
     if (!info) {
-        $(id).hide();
+        $(id).hide().attr('or-online', 'false');
         return;
     }
-    
+    var isOnline = (info.status === "up");
+    $(id).attr('or-online', isOnline ? 'true' : 'false');
+
     // 状态和按钮
     if (info.status) {
         showChart(id);
         $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
-        if (info.status === "uping") {
+        if (info.status === "up" || 
+            info.status === "uping" || 
+            info.status === "connect" || 
+            info.status === "connecting") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
@@ -825,7 +928,7 @@ function interface_load() {
             lte_show(data['ifname@lte4'], "#lte4");
         }
         
-         // WISP
+        // WISP
         if (window.ifdev && window.ifdev["wifi@n"] === true && data['ifname@wisp']) {
             wisp_show(data['ifname@wisp'], "#wisp");
         }
@@ -1010,5 +1113,3 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     });
     
 });
-
-

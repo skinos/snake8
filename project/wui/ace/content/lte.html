@@ -1,12 +1,35 @@
-
 <!-- ajax layout which only needs content area -->
 <div class="row" id="page-modes">
-  <div class="col-xs-12 form-btn-wrapper">
-    <!-- PAGE CONTENT BEGINS -->
-    <div class="form-horizontal" role="form">
+  <div class="col-xs-12">
+    <!-- 标签页导航 -->
+    <ul class="nav nav-tabs" id="lteTabs" role="tablist">
+      <li class="active">
+        <a href="#lte" data-i18n="Basic Info"></a>
+      </li>
+      <li>
+        <a href="#lteat" data-i18n="Custom AT"></a>
+      </li>
+      <li>
+        <a href="#ltesms" data-i18n="SMS Settings"></a>
+      </li>
+      <li>
+        <a href="#ltemodem" data-i18n="Modem Settings"></a>
+      </li>
+      <li style="display: none;">
+        <a href="#atproxy" data-i18n="AT Proxy"></a>
+      </li>
+      <li style="display: none;">
+        <a href="#simcard" data-i18n="SIM Card Settings"></a>
+      </li>
+    </ul>
 
-        <!-- 连接状态 -->
-        <table class="table table-bordered table-striped">
+    <div class="tab-content">
+      
+      <div class="tab-pane active" id="lte">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="form-horizontal" role="form" style="margin-top: 20px;">
+          <!-- 连接状态 -->
+          <table class="table table-bordered table-striped">
         <tbody>
             <tr>
                 <th data-i18n="Status"></th>
@@ -38,8 +61,6 @@
             </tr>
         </tbody>
         </table>            
-
-
 
         <!-- APN自定义 -->
         <div class="form-group">
@@ -463,62 +484,47 @@
 
         </div> <!-- status_config -->
 
-
-        <div class="hr hr32 hr-dotted"></div>
-        <!-- 模块设置 -->
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right"></label>
-            <div class="col-sm-9">
-              <div class="btn-group">
-                <div class="btn-group">
-                  <a class="btn btn-warning" data-i18n="Modem Settings" id="modem_set" href="#"></a>
-                  &nbsp;&nbsp;&nbsp;<a class="btn btn-second" data-i18n="SMS Settings" id="sms_set" href="#"></a>
-                </div>
-              </div>
-            </div>
-        </div>
-
-        <!-- 双SIM卡设置 -->
-        <div class="form-group" style="display: none;" >
-          <label class="col-sm-3 control-label no-padding-right"></label>
-            <div class="col-sm-9">
-              <div class="btn-group">
-                <div class="btn-group">
-                  <a class="btn btn-warning" data-i18n="SIM card Settings" id="simcard_set" href="#"></a>
-                </div>
-              </div>
-            </div>
-        </div>
-        <!-- 模块AT指令代理 -->
-        <div class="form-group" style="display: none;" >
-          <label class="col-sm-3 control-label no-padding-right"></label>
-            <div class="col-sm-9">
-              <div class="btn-group">
-                <div class="btn-group">
-                  <a class="btn btn-warning" data-i18n="AT Proxy" id="atproxy_set" href="#"></a>
-                </div>
-              </div>
-            </div>
-        </div>
-
-
-
       <div class="clearfix form-actions">
-        <div class="col-md-offset-3 col-md-9">
-          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
-          &nbsp; &nbsp; &nbsp;
-          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+            <div class="col-md-offset-3 col-md-9">
+              <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+              &nbsp; &nbsp; &nbsp;
+              <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+            </div>
+          </div>
         </div>
+        <!-- PAGE CONTENT ENDS -->
       </div>
 
-
-
-    </div>
-    <!-- PAGE CONTENT ENDS -->
+      <div class="tab-pane" id="lteat"></div>
+      <div class="tab-pane" id="ltemodem"></div>
+      <div class="tab-pane" id="ltesms"></div>
+      
+      <div class="tab-pane" id="atproxy"></div>
+      <div class="tab-pane" id="simcard"></div>
+      
+    </div> <!-- tab-content 结束 -->
   </div><!-- /.col -->
 </div><!-- /.row -->
 
 <script src="/js/lte.js"></script>
+
+<style>
+.tab-content {
+    background-color: transparent !important; /* 设为透明 */
+    border: none !important;
+    padding: 0 !important;
+    min-height: 1px;
+}
+
+.tab-pane {
+    background-color: transparent !important;
+}
+
+.tab-pane.fade {
+    opacity: 1 !important;
+    transition: none !important;
+}
+</style>
 
 
 

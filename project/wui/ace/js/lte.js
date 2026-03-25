@@ -1,22 +1,79 @@
+window.LteConfigManager = {
+    cache: {},
+    // 只负责拿数据
+    loadStatus: function(targetObject, forceRefresh) {
+        var self = this;
+        if (!forceRefresh && self.cache[targetObject]) {
+            return Promise.resolve(self.cache[targetObject]);
+        }
+        return he.load([
+            targetObject,
+            targetObject + ".ifdev",
+            targetObject + ".operator",
+            targetObject + ".status",
+            targetObject + ".smslist",
+        ]).then(function(v) {
+          v = v || [];
+          for (var i = 0; i <= 4; i++) {
+              if (typeof v[i] === 'undefined' || v[i] === null) {
+                  v[i] = (i >= 3) ? "" : {};
+              }
+          }
+          self.cache[targetObject] = v;
+          return v;
+        });
+    },
 
-/* get the object */
+    loadSettings: function(modem, ifname, forceRefresh) {
+        var self = this;
+        var cacheKey = modem + "_" + ifname; // 组合 Key
+        if (!forceRefresh && self.cache[cacheKey]) {
+            return Promise.resolve(self.cache[cacheKey]);
+        }
+        return he.load([
+            modem,
+            ifname,           
+            ifname + ".status",
+            ifname + ".custom_set",
+            ifname + ".custom_watch",
+            ifname + ".lock_imei",
+            ifname + ".lock_imsi"
+        ]).then(function(v) {
+            v = v || [];
+            for (var i = 0; i <= 6; i++) {
+                if (typeof v[i] === 'undefined' || v[i] === null) {
+                    v[i] = (i >= 5) ? "" : {};
+                }
+            }
+            self.cache[cacheKey] = v;
+            return v;
+        });
+    }
+};
+
 var state;
-var config;
+var config;// 方便config_save调用v[0]
+var modem;
+var operator;
 var object = "ifname@lte";
-var index = page.param( 'object', location.hash );
-if ( index )
-{
-    object = index;
-}
 
-
+function config_load() {  
+    window.LteConfigManager.loadStatus(object, true).then(function(v) {  
+        if (!v) {    
+            return; 
+        }  
+        lte_basic(v);  
+        status_load(v[3] || {}); 
+    });  
+};
 
 /* load the status */
-function status_load()
+function status_load(info)
 {
-  he.bkload( [ object+".status" ] ).then( function(v){
-      state = v[0];
-      var info = state;
+      if(!info){
+        info = {};
+      }
+
       var id = "#lte";
       /* status end btn */
       if ( info.status )
@@ -123,14 +180,15 @@ function status_load()
 	  $(id+"_ip").text( info.ip||' ' );
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
-  })
 }
 
 /* load the configure on the input */
-function config_load()
+function lte_basic(v)
 {
-  he.load( [ object, object+".ifdev", object+".operator" ] ).then( function(v){
     config = v[0];
+    if(!config){
+      config = {}
+    }
 
     /* init the network mode select */
     $("#mode").empty();
@@ -158,7 +216,10 @@ function config_load()
     }
     else
     {
-		var operator = v[2];
+    operator = v[2];
+    if(!operator){
+      operator = {};
+    }
 		if ( operator )
 		{
 			$('#dial').val(operator.dial);
@@ -187,12 +248,12 @@ function config_load()
 		}
       }
     }).trigger('change');
-	/* bind the button */
-	var modem = v[1];
-	$('#modem_set').attr( "href", "#ltemodem?modem="+modem+"&ifname="+object );
-	$('#sms_set').attr( "href", "#ltesms?modem="+modem+"&ifname="+object );
-	$('#atproxy_set').attr( "href", "#lteat?modem="+modem+"&ifname="+object );
-	$('#simcard_set').attr( "href", "#ltesim?modem="+modem+"&ifname="+object );
+	
+    modem = v[1];
+    if(!modem){
+      modem = {};
+    }
+    window.modem = modem;
 
     /* status */
     if ( config.status && config.status == "disable" )
@@ -412,315 +473,160 @@ function config_load()
             break;
       }
     }).trigger('change');
-
-  })
+  
 }
 
 /* save the configure */
-function config_save()
-{
-  if ( config == null )
-  {
-    return;
-  }
-  var copy = JSON.parse(JSON.stringify(config));;
+function config_save() {
+    if (!config) return;
 
-  /* profile */
-  config.profile = boole2able( $('#profile').prop('checked') );
-  if ( config.profile == "enable" )
-  {
-    if ( !config.profile_cfg )
-    {
-      config.profile_cfg = {};
+    var copy = JSON.parse(JSON.stringify(config));
+
+    // 获取值并校验 失败则抛出异常停止执行
+    var getAndValidate = function(selector, label, type, required) {
+        var val = $(selector).val();
+        if (required && (!val || val.trim() === "")) {
+            page.alert({ message: $.i18n(label) + " " + $.i18n('Can not be empty') });
+            throw "VALIDATION_FAILED"; // 抛出异常直接中断整个函数
+        }
+        if (val) {
+            var isOk = true;
+            if (type === 'ip') isOk = check.ip(val);
+            else if (type === 'ipv6') isOk = check.ipv6(val);
+            else if (type === 'num') isOk = check.number(val);
+            
+            if (!isOk) {
+                page.alert({ message: $.i18n(label) + " " + $.i18n('is invalid') });
+                throw "VALIDATION_FAILED";
+            }
+        }
+        return val;
+    };
+
+    try {
+        // Profile
+        config.profile = boole2able($('#profile').prop('checked'));
+        if (config.profile === "enable") {
+            config.profile_cfg = config.profile_cfg || {};
+            var p = config.profile_cfg;
+            ['dial', 'apn', 'user', 'passwd', 'type', 'auth'].forEach(function(k) {
+                p[k] = $('#' + k).val();
+            });
+        }
+
+        // Status
+        if (!$('#status').prop('checked')) {
+            config.status = "disable";
+        } else {
+            config.status = (config.status && config.status !== "enable") ? "enable" : config.status || "enable";
+
+            // IPv4
+            config.mode = $('#mode').val();
+            if (config.mode === "ppp") {
+                config.ppp = config.ppp || {};
+                config.ppp.custom_dns = boole2able($('#custom_dns').prop('checked'));
+                if (config.ppp.custom_dns === "enable") {
+                    config.ppp.dns = getAndValidate('#cdns', 'DNS', 'ip', true);
+                    config.ppp.dns2 = getAndValidate('#cdns2', 'DNS2', 'ip');
+                }
+                config.ppp.lcp_echo_interval = getAndValidate('#lcp_echo_interval', 'LCP Echo Interval', 'num', true);
+                config.ppp.lcp_echo_failure = getAndValidate('#lcp_echo_failure', 'LCP Echo Times', 'num', true);
+                config.ppp.pppopt = $('#pppopt').val();
+            } 
+            else if (config.mode === "dhcpc") {
+                config.dhcpc = config.dhcpc || {};
+                config.dhcpc.routeopt = boole2able($('#routeopt').prop('checked'));
+                config.dhcpc.custom_dns = boole2able($('#custom_dns').prop('checked'));
+                if (config.dhcpc.custom_dns === "enable") {
+                    config.dhcpc.dns = getAndValidate('#cdns', 'DNS', 'ip', true);
+                    config.dhcpc.dns2 = getAndValidate('#cdns2', 'DNS2', 'ip');
+                }
+            } 
+            else if (config.mode === "static") {
+                config.static = config.static || {};
+                var s = config.static;
+                s.ip = getAndValidate('#ip', 'IPv4 Address', 'ip', true);
+                s.mask = getAndValidate('#mask', 'Subnet Mask', 'ip', true);
+                s.gw = getAndValidate('#gw', 'Gateway', 'ip');
+                s.dns = getAndValidate('#dns', 'DNS', 'ip');
+                s.dns2 = getAndValidate('#dns2', 'DNS2', 'ip');
+            }
+
+            config.masq = boole2able($('#masq').prop('checked'));
+            config.mtu = getAndValidate('#mtu', 'MTU', 'num');
+
+            // IPv6
+            if (config.method) {
+                config.method = $('#method').val();
+                if (config.method === "manual") {
+                    config.manual = config.manual || {};
+                    var m = config.manual;
+                    m.addr = getAndValidate('#addr', 'IPv6 Address', 'ipv6', true);
+                    m.prefix = $('#prefix').val();
+                    if (m.prefix && (m.prefix < 0 || m.prefix > 128)) {
+                        page.alert({ message: $.i18n('Subnet Prefix') + " (0-128)" });
+                        throw "VALIDATION_FAILED";
+                    }
+                    m.hop = getAndValidate('#hop', 'Next Hop', 'ipv6');
+                    m.resolve = getAndValidate('#resolve', 'DNS', 'ipv6');
+                    m.resolve2 = getAndValidate('#resolve2', 'DNS2', 'ipv6');
+                }else if ( config.method === "slaac" )
+                  {
+                  }
+                  else if ( config.method === "automatic" )
+                  {
+                  }
+            }
+
+            // Keeplive
+            config.keeplive = config.keeplive || {};
+            var kl = config.keeplive;
+            kl.type = $('#keeplive').val();
+            kl.action = $('#action').val();
+
+            if (kl.type === "icmp") {
+                kl.icmp = kl.icmp || { dest: {} };
+                kl.icmp.dest = kl.icmp.dest || {};
+                kl.icmp.dest.test = getAndValidate('#icmp_test', 'Test Address', '', true);
+                kl.icmp.dest.test2 = $('#icmp_test2').val();
+                kl.icmp.dest.test3 = $('#icmp_test3').val();
+                kl.icmp.timeout = getAndValidate('#icmp_timeout', 'Each Query Timeout(sec)', 'num');
+                kl.icmp.failed = getAndValidate('#icmp_failed', 'Test Times', 'num');
+                kl.icmp.interval = getAndValidate('#icmp_interval', 'Test Interval(sec)', 'num');
+            } 
+            else if (kl.type === "dns" || kl.type === "recv" || kl.type === "auto") {
+                var types = (kl.type === "auto") ? ["dns", "recv"] : [kl.type];
+                types.forEach(function(t) {
+                    kl[t] = kl[t] || {};
+                    kl[t].timeout = getAndValidate('#' + t + '_timeout', 'Each Query Timeout(sec)', 'num', true);
+                    kl[t].failed = getAndValidate('#' + t + '_failed', 'Query Times', 'num', true);
+                    var lastField = (t === "dns") ? "interval" : "packets";
+                    kl[t][lastField] = getAndValidate('#' + t + '_' + lastField, lastField, 'num', true);
+                });
+            }
+        }
+
+        if (ocompare(config, copy)) {
+            page.alert({ message: $.i18n('Settings unchanged') });
+            return;
+        }
+
+        var msg = $.i18n('The LTE connection will be disconneted because of the change of configuration');
+        page.confirm({ message: msg }).then(function(result) {
+            if (!result) return location.reload();
+            he.exec([object + "=" + JSON.stringify(config)]).then(function() {
+                page.hint2succeed($.i18n('Modify successfully'));
+                config_load();
+            });
+        });
+
+    } catch (e) {
+        if (e === "VALIDATION_FAILED") {
+            // 验证失败 代码通过page.alert提示 直接捕获并中断
+            console.log("Validation interrupted.");
+        }
     }
-    config.profile_cfg.dial = $('#dial').val();
-    config.profile_cfg.apn = $('#apn').val();
-    config.profile_cfg.user = $('#user').val();
-    config.profile_cfg.passwd = $('#passwd').val();
-    config.profile_cfg.type = $('#type').val();
-    config.profile_cfg.auth = $('#auth').val();
-  }
-
-  /* status */
-  if ( $('#status').prop('checked') == false )
-  {
-      config.status = "disable";
-  }
-  else
-  {
-      if ( config.status && config.status != "enable" )
-      {
-        config.status = "enable";
-      }
-      /* IPV4 */
-      config.mode = $('#mode').val();
-      if ( config.mode == "ppp" )
-      {
-        if ( !config.ppp )
-        {
-          config.ppp = {};
-        }
-        config.ppp.custom_dns = boole2able( $('#custom_dns').prop('checked') );
-        if ( config.ppp.custom_dns == "enable" )
-        {
-          config.ppp.dns = $('#cdns').val();
-          if ( config.ppp.dns && check.ip(config.ppp.dns) == false )
-          {
-              page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-              return;
-          }
-          config.ppp.dns2 = $('#cdns2').val();
-          if ( config.ppp.dns2 && check.ip(config.ppp.dns) == false )
-          {
-              page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-              return;
-          }
-        }
-        config.ppp.lcp_echo_interval = $('#lcp_echo_interval').val();
-        if ( config.ppp.lcp_echo_interval && check.number(config.ppp.lcp_echo_interval) == false )
-        {
-            page.alert( { message: $.i18n('LCP Echo Interval')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.ppp.lcp_echo_failure = $('#lcp_echo_failure').val();
-        if ( config.ppp.lcp_echo_failure && check.number(config.ppp.lcp_echo_failure) == false )
-        {
-            page.alert( { message: $.i18n('LCP Echo Times')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.ppp.pppopt = $('#pppopt').val();
-      }
-      else if ( config.mode == "dhcpc" )
-      {
-        if ( !config.dhcpc )
-        {
-          config.dhcpc = {};
-        }
-        config.dhcpc.routeopt = boole2able( $('#routeopt').prop('checked') );
-        config.dhcpc.custom_dns = boole2able( $('#custom_dns').prop('checked') );
-        if ( config.dhcpc.custom_dns == "enable" )
-        {
-          config.dhcpc.dns = $('#cdns').val();
-          if ( config.dhcpc.dns && check.ip(config.dhcpc.dns) == false )
-          {
-              page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-              return;
-          }
-          config.dhcpc.dns2 = $('#cdns2').val();
-          if ( config.dhcpc.dns2 && check.ip(config.dhcpc.dns2) == false )
-          {
-              page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
-              return;
-          }
-        }
-      }
-      else if ( config.mode == "static" )
-      {
-        if ( !config.static )
-        {
-            config.static = {};
-        }
-        config.static.ip = $('#ip').val();
-        if ( config.static.ip && check.ip(config.static.ip) == false )
-        {
-            page.alert( { message: $.i18n('IPv4 Address')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        config.static.mask = $('#mask').val();
-        if ( config.static.mask && check.ip(config.static.mask) == false )
-        {
-            page.alert( { message: $.i18n('Subnet Mask')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        config.static.gw = $('#gw').val();
-        if ( config.static.gw && check.ip(config.static.gw) == false )
-        {
-            page.alert( { message: $.i18n('Gateway')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        config.static.dns = $('#dns').val();
-        if ( config.static.dns && check.ip(config.static.dns) == false )
-        {
-            page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-        config.static.dns2 = $('#dns2').val();
-        if ( config.static.dns2 && check.ip(config.static.dns2) == false )
-        {
-            page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IP address') } );
-            return;
-        }
-      }
-      config.masq = boole2able( $('#masq').prop('checked') );
-      config.mtu = $('#mtu').val();
-      if ( config.mtu && check.number(config.mtu) == false )
-      {
-         page.alert( { message: $.i18n('MTU')+" "+$.i18n('must be a valid number') } );
-         return;
-      }
-      /* IPV6 */
-      if ( config.method )
-      {
-          config.method = $('#method').val();
-          if ( config.method == "manual" )
-          {
-            if ( !config.manual )
-            {
-                config.manual = {};
-            }
-            config.manual.addr = $('#addr').val();
-            if ( check.ipv6(config.manual.addr) == false )
-            {
-                page.alert( { message: $.i18n('IPv6 Address')+" "+$.i18n('must be a valid IPv6 address') } );
-                return;
-            }
-            config.manual.prefix = $('#prefix').val();
-            if ( config.manual.prefix && ( config.manual.prefix < 0 || config.manual.prefix > 128 ) )
-            {
-                page.alert( { message: $.i18n('Subnet Prefix')+" "+$.i18n('must be a number(0-128)') } );
-                return;
-            }
-            config.manual.hop = $('#hop').val();
-            if ( config.manual.hop && check.ipv6(config.manual.hop) == false )
-            {
-                page.alert( { message: $.i18n('Next Hop')+" "+$.i18n('must be a valid IPv6 address') } );
-                return;
-            }
-            config.manual.resolve = $('#resolve').val();
-            if ( config.manual.resolve && check.ipv6(config.manual.resolve) == false )
-            {
-                page.alert( { message: $.i18n('DNS')+" "+$.i18n('must be a valid IPv6 address') } );
-                return;
-            }
-            config.manual.resolve2 = $('#resolve2').val();
-            if ( config.manual.resolve2 && check.ipv6(config.manual.resolve2) == false )
-            {
-                page.alert( { message: $.i18n('DNS2')+" "+$.i18n('must be a valid IPv6 address') } );
-                return;
-            }
-          }
-          else if ( config.method == "slaac" )
-          {
-          }
-          else if ( config.method == "automatic" )
-          {
-          }
-      }
-      /* Keeplive */
-      if ( !config.keeplive )
-      {
-        config.keeplive = {};
-      }
-      config.keeplive.type = $('#keeplive').val();
-      if ( config.keeplive.type == "icmp" )
-      {
-        if ( !config.keeplive.icmp )
-        {
-          config.keeplive.icmp = {};
-        }
-        if ( !config.keeplive.icmp.dest )
-        {
-          config.keeplive.icmp.dest = {};
-        }
-        config.keeplive.icmp.dest.test = $('#icmp_test').val();
-        if ( !config.keeplive.icmp.dest.test )
-        {
-            page.alert( { message: $.i18n('Test Address')+" "+$.i18n('Can not be empty') } );
-            return;
-        }
-        config.keeplive.icmp.dest.test2 = $('#icmp_test2').val();
-        config.keeplive.icmp.dest.test3 = $('#icmp_test3').val();
-        config.keeplive.icmp.timeout = $('#icmp_timeout').val();
-        if ( check.number(config.keeplive.icmp.timeout) == false )
-        {
-            page.alert( { message: $.i18n('Each Query Timeout(sec)')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.icmp.failed = $('#icmp_failed').val();
-        if ( check.number(config.keeplive.icmp.failed) == false )
-        {
-            page.alert( { message: $.i18n('Test Times')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.icmp.interval = $('#icmp_interval').val();
-        if ( check.number(config.keeplive.icmp.interval) == false )
-        {
-            page.alert( { message: $.i18n('Test Interval(sec)')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.action = $('#action').val();
-      }
-      if ( config.keeplive.type == "dns" || config.keeplive.type == "auto" )
-      {
-        if ( !config.keeplive.dns )
-        {
-          config.keeplive.dns = {};
-        }
-        config.keeplive.dns.timeout = $('#dns_timeout').val();
-        if ( check.number(config.keeplive.dns.timeout) == false )
-        {
-            page.alert( { message: $.i18n('Each Query Timeout(sec)')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.dns.failed = $('#dns_failed').val();
-        if ( check.number(config.keeplive.dns.failed) == false )
-        {
-            page.alert( { message: $.i18n('Query Times')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.dns.interval = $('#dns_interval').val();
-        if ( check.number(config.keeplive.dns.interval) == false )
-        {
-            page.alert( { message: $.i18n('Query Interval(sec)')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.action = $('#action').val();
-      }
-      if ( config.keeplive.type == "recv" || config.keeplive.type == "auto" )
-      {
-        if ( !config.keeplive.recv )
-        {
-          config.keeplive.recv = {};
-        }
-        config.keeplive.recv.timeout = $('#recv_timeout').val();
-        if ( check.number(config.keeplive.recv.timeout) == false )
-        {
-            page.alert( { message: $.i18n('Count Duration(sec)')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.recv.failed = $('#recv_failed').val();
-        if ( check.number(config.keeplive.recv.failed) == false )
-        {
-            page.alert( { message: $.i18n('Count Times')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.recv.packets = $('#recv_packets').val();
-        if ( check.number(config.keeplive.recv.packets) == false )
-        {
-            page.alert( { message: $.i18n('Received Packets')+" "+$.i18n('must be a valid number') } );
-            return;
-        }
-        config.keeplive.action = $('#action').val();
-      }
-  }
-
-  if ( ocompare( config, copy ) )
-  {
-      page.alert( { message: $.i18n('Settings unchanged') } );
-      return;
-  }
-  page.confirm( { message: $.i18n('The LTE connection will be disconneted because of the change of configuration') } ).then( function(result){
-    if ( result )
-    {
-      he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
-        config_load();
-      });
-    }
-  });
 }
-
-
 
 /* init */
 page.password('passwd', 'password-icon' );
@@ -729,7 +635,6 @@ $.i18n().load( page.lang('lte') ).then( function () {
     $.i18n().locale = lang; $('body').i18n();
 
     /* load the configure */
-    status_load();
     config_load();
 
     /* bind the button */
@@ -761,6 +666,130 @@ $.i18n().load( page.lang('lte') ).then( function () {
     $('#apply').on(ace.click_event, function () {
         config_save();
     });
+});
+
+// 点击标签页 动态加载html内容 不刷新页面
+$(document).ready(function() {    
+    var TabManager = {    
+        // 记录进入页面时的主路径 获取#lte
+        // 在ace-admin框架下直接使用#ltemodem或是#ltesms 会导致直接页面html 而不保持标签页状态
+        // 编写新hash解决问题
+        mainRoute: window.location.hash.split('?')[0],   
+
+        // 新增标签页直接增加tabs内容以及html代码段即可
+        tabs: {    
+            ltemodem: { htmlUrl: '/content/ltemodem.html'},    
+            ltesms:   { htmlUrl: '/content/ltesms.html'},    
+            lteat:  { htmlUrl: '/content/lteat.html'},    
+            simcard:  { htmlUrl: '/content/ltesim.html'}    
+        },    
+        
+        // 初始化
+        init: function() {    
+            this.syncParams();   
+            
+            $('#lteTabs a').off('click').on('click', this.handleTabClick.bind(this));    
+
+            this.restoreState();   
+        },   
+
+        // 同步url参数
+        syncParams: function() {   
+            var currentHash = window.location.hash;
+            
+            // 获取参数
+            var urlModem  = page.param('modem', currentHash);
+            var urlObject = page.param('object', currentHash);
+            var urlTab    = page.param('tab', currentHash);
+
+            window.modem = urlModem || window.modem || 'modem@lte';   
+            window.object = urlObject ||  window.object || 'ifname@lte';   
+            
+            // 存入session sessionStorage 跳转标签页时保存具体状态
+            // 否则默认第一个标签页
+
+            var tabId = urlTab || 'lte';
+
+            if (!urlModem || !urlObject || !urlTab) {
+                this.updateUrl(tabId, true); 
+            }
+        },   
+
+        // 更新url
+        updateUrl: function(tabId) {
+            var newHash = this.mainRoute + '?tab=' + tabId + 
+                          '&modem=' + encodeURIComponent(window.modem) + 
+                          '&object=' + encodeURIComponent(window.object);
+            
+            if (window.location.hash === newHash) return;
+            history.replaceState(null, '', window.location.pathname + newHash);
+        },
+
+        handleTabClick: function(e) {    
+            e.preventDefault();    
+            var tabId = $(e.currentTarget).attr('href').substring(1);    
+
+            this.updateUrl(tabId, false);// 更新地址栏 
+            this.switchToTab(tabId);// 切换标签页显示内容
+        },    
+
+        restoreState: function() {   
+            var currentHash = window.location.hash;
+            var tabId = page.param('tab', currentHash) || sessionStorage.getItem('lte_active_tab') || 'lte';   
+            this.switchToTab(tabId);   
+        },   
+            
+        switchToTab: function(tabId) {   
+          var self = this;
+          var $tabContent = $('.tab-content');
+          var $newPane = $('#' + tabId);
+          var $oldPane = $('.tab-pane.active');
+
+          // 仅更新标签页按钮的高亮 不切内容
+          $('#lteTabs li').removeClass('active');      
+          $('#lteTabs a[href="#' + tabId + '"]').parent().addClass('active');      
+
+          // 锁定当前高度 防止大变小时高度塌陷导
+          // 只有在切换时才锁定，并在完成后释放
+          var currentHeight = $oldPane.outerHeight();
+          if(currentHeight > 0) {
+              $tabContent.css('min-height', currentHeight + 'px');
+          }
+
+          // 首页逻辑 静态内容直接切
+          if (tabId === 'lte') {      
+              $('.tab-pane').removeClass('active');
+              $('#lte').addClass('active');
+              $tabContent.css('min-height', ''); // 释放高度
+              if (typeof config_load === 'function') config_load();      
+              return;
+          }
+
+          // 加载完内容后 再把旧的隐 新的显
+          var tab = this.tabs[tabId];
+          $.ajax({
+              url: tab.htmlUrl,
+              type: 'GET',
+              dataType: 'html',
+              success: function(data) {
+                  // 先往隐藏的 $newPane 里填内容
+                  $newPane.html(data);
+
+                  // 此时才执行切换
+                  // 旧的移除 active 新的添加 active 高度锁定了 不会闪
+                  $oldPane.removeClass('active');
+                  $newPane.addClass('active');
+
+                  // 延迟释放高度锁定 给浏览器渲染 HTML 留出大概 100ms 的吞吐时间
+                  setTimeout(function() {
+                      $tabContent.css('min-height', '');
+                  }, 100);
+              }
+          });
+      },    
+    };    
+    
+    TabManager.init();    
 });
 
 

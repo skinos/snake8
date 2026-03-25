@@ -1,96 +1,56 @@
-/* get the object */
-var state;
-var config;
-var object = "modem@lte";
-var ifcfg;
-var ifname = "ifname@lte";
-var index = page.param( 'object', location.hash );
-if ( index )
-{
-    object = index;
-}
-var index = page.param( 'ifname', location.hash );
-if ( index )
-{
-	ifname = index;
-}
-var smslist_table = '#smslist-grid-table';
-var smslist_pager = '#smslist-grid-pager';
+var lte;
 
+var smslist_table = '#smslist-grid-table';  
+var smslist_pager = '#smslist-grid-pager';  
+var obj = window.object || page.param('object', location.hash);
 
-
-/* load the configure on the input */
-function config_load()
-{
-  he.load( [ object ] ).then( function(v){
+function lte_sms() {
+    window.LteConfigManager.loadStatus(obj, true).then(function(v) {
     lte = v[0];
-    if ( !lte )
-    {
-        lte = {};
-    }
-    if ( lte.sms == "enable" )
-    {
-        $('#sms').prop('checked', true );
-    }
-    else
-    {
-        $('#sms').prop('checked', false );
-    }
-    $('#sms').unbind('change').change(function () {
-      if ($(this).prop('checked'))
-      {
-        var containerWidth = $('#sms_cfg').parent().width() || 
-                           $(window).width() - 100; // 估算
-        
-        // 设置表格宽度后再显示
-        if ($(smslist_table).hasClass('ui-jqgrid-btable')) {
-            $(smslist_table).jqGrid('setGridWidth', containerWidth);
-        }
 
-        $('#sms_cfg').show();
-      } 
-      else
-      {
-        $('#sms_cfg').hide();
-      }
-    }).trigger('change');
+    $('#sms').prop('checked', lte.sms === "enable");  
 
-    if ( lte.sms_cfg )
-    {
-        $('#he_contact').val( lte.sms_cfg.he_contact||'' );
-        $('#he_prefix').val( lte.sms_cfg.he_prefix||'' );
-        if ( lte.sms_cfg.he == "enable" )
-        {
-            $('#he').prop('checked', true );
-        }
-        else
-        {
-            $('#he').prop('checked', false );
-        }
+    // 根据开关状态来调整表格宽度 需要处理好表格还没有正式渲染好的处理
+    $('#sms').off('change').on('change', function () {  
+        if ($(this).prop('checked')) {  
+            // 计算容器宽度并调整 jqGrid (防止表格错位)
+            var containerWidth = $('#sms_cfg').parent().width() || $(window).width() - 100;  
+            // if ($(smslist_table).hasClass('ui-jqgrid-btable')) {  
+            //     $(smslist_table).jqGrid('setGridWidth', containerWidth);  
+            // }  
+            // 修改判断逻辑
+            if ($(smslist_table)[0].grid) { 
+                $(smslist_table).jqGrid('setGridWidth', containerWidth);
+            }
+            $('#sms_cfg').show();  
+        } else {  
+            $('#sms_cfg').hide();  
+        }  
+    }).trigger('change');  
+
+    if (lte.sms_cfg) {  
+        $('#he_contact').val(lte.sms_cfg.he_contact || '');  
+        $('#he_prefix').val(lte.sms_cfg.he_prefix || '');  
+        $('#he').prop('checked', lte.sms_cfg.he === "enable");  
+    } else {
+        $('#he').prop('checked', false);
     }
-    $('#he').unbind('change').change(function () {
-      if ($(this).prop('checked'))
-      {
-        $('#he_cfg').show();
-      } 
-      else
-      {
-        $('#he_cfg').hide();
-      }
-    }).trigger('change');
 
-  })
+    $('#he').off('change').on('change', function () {  
+        $(this).prop('checked') ? $('#he_cfg').show() : $('#he_cfg').hide();  
+    }).trigger('change');  
+    });
 }
 
 function smslist_load()
 {
-  he.bkload( [ object+".smslist" ] ).then( function(v){
-    var count = 0;
-    var list = v[0];
-    if ( !list )
-    {
-        return;
+  window.LteConfigManager.loadStatus(obj, true).then(function(v) {
+    var list = v[4];
+    if (!list) {
+        list = {};
     }
+    
+    var count = 0;
     var rows = [];
     for ( var id in list )
     {
@@ -99,7 +59,7 @@ function smslist_load()
         count++;
     }
     // 表头设置为在线客户端的数量
-    $(smslist_table).jqGrid( "setCaption", $.i18n('SMS List') + '(' + count + ')' );
+    $(smslist_table).jqGrid("setCaption", $.i18n('SMS List') + '(' + count + ')' );
     // 记住滚动条的位置
     var scrollPos = jqtable.getScrollPos();
     // 给表格设置数据
@@ -127,7 +87,7 @@ function delete_smss( indexStr )
     // 执行删除
     he.exec( cmds ).then(function (){
         // 重新加载数据
-        return route_load();
+        return smslist_load();
     }).then(function (){
         // 提示成功
         page.hint2succeed( $.i18n('Delete successfully') );
@@ -136,7 +96,7 @@ function delete_smss( indexStr )
 
 
 /* save the configure */
-function config_save()
+function sms_save()
 {
   if ( lte == null )
   {
@@ -168,22 +128,31 @@ function config_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
-    if ( result )
-    {
-      he.save( [ object+"="+JSON.stringify(lte)] ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
-        config_load();
-      });
-    }
+
+  var msg = $.i18n('The LTE connecttion will be disconneted because of the change of configuration');
+  page.confirm( { message: msg } ).then( function(result){
+    if (!result) return location.reload();
+    
+    var cmds = [ object+"="+JSON.stringify(lte) ];
+    he.exec(cmds).then( function(){
+      page.hint2succeed( $.i18n('Modify successfully') );
+      lte_sms();
+    });
+    
   });
 }
 
-/* init */
-page.password('passwd', 'password-icon' );
-$.i18n().load( page.lang('lte') ).then( function () {
-  /* init the langauage */
-  $.i18n().locale = lang; $('body').i18n();
+function init_sms(){
+  var $smslistTable = $(smslist_table);
+  // 调试bug通过
+  if ($smslistTable.length === 0) {
+      //console.warn("Table elements not found, skipping init_at.");
+      return false; 
+  }
+
+  if ($smslistTable[0].grid) {
+      return true; 
+  }
 
   //初始化表格
   jqtable.create( smslist_table, smslist_pager,
@@ -252,12 +221,38 @@ $.i18n().load( page.lang('lte') ).then( function () {
         var newRowNum = parseInt($(this).val(),10);
         $(smslist_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
     });
+    //console.log("初始化成功啦")
+    return true;
+}
 
-    /* load the configure */
-    config_load();
+/* init */
+page.password('passwd', 'password-icon' );
+$.i18n().load( page.lang('lte') ).then( function () {
+  /* init the langauage */
+  $.i18n().locale = lang; $('body').i18n();
+  /* init the table */
+  //init_sms();
+
+  /* load the configure */
+  //lte_sms();
 
   // 设置定时器
-  smslist_load();
+  //smslist_load();
+  function safeStart() {
+        if (init_sms()) {
+            // 只有表格初始化成功了 才加载配置和数据
+            lte_sms();
+            smslist_load();
+            //console.log("LTE SMS Page Initialized Successfully.");
+        } else {
+            // 如果init_sms失败 找不到元素 说明DOM还没渲染完 100ms 后重试
+            //console.log("DOM not ready, retrying in 100ms...");
+            setTimeout(safeStart, 100);
+        }
+    }
+
+    safeStart();
+
   //page.timing({
   //  refresh: function ()
   //  {
@@ -267,12 +262,12 @@ $.i18n().load( page.lang('lte') ).then( function () {
   //});
 
   /* bind the refresh */
-  $('#refresh').on(ace.click_event, function () {
+  $('#sms_refresh').on(ace.click_event, function () {
     location.reload();
   });
   /* bind the apply */
-  $('#apply').on(ace.click_event, function () {
-    config_save();
-  });
+  $('#sms_apply').off('click').on('click', function() {
+        sms_save();
+    });
 });
 

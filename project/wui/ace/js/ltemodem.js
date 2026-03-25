@@ -3,25 +3,13 @@
 var state;
 var mconfig;
 var iconfig;
-var modem = "modem@lte";
-var ifname = "ifname@lte";
-var index = page.param( 'modem', location.hash );
-if ( index )
-{
-	modem = index;
-}
-var index = page.param( 'ifname', location.hash );
-if ( index )
-{
-	ifname = index;
-}
-
-
+var modem = page.param('modem', location.hash);   
+var ifname = page.param('object', location.hash);
 
 /* load the configure on the input */
-function config_load()
-{
-	he.load( [ modem, ifname, ifname+".status", ifname+".custom_set", ifname+".custom_watch", ifname+".lock_imei", ifname+".lock_imsi" ] ).then( function(v){
+function lte_modem()
+{   
+	window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
 		mconfig = v[0];
         if ( !mconfig )
         {
@@ -85,56 +73,7 @@ function config_load()
             $('#lock_imsi').text( $.i18n("Unlocked" ) );
             $('#imsi_lock').show();
         }
-		// custom set
-        if ( iconfig.custom_set )
-        {
-            var s = v[3];
-            var c = iconfig.custom_set;
-            var rows = [];
-            for ( var id in c )
-            {
-                var cmd = c[id];
-                if ( !cmd )
-                {
-                    continue;
-                }
-                var st = "";
-                if ( s )
-                {
-                    st = s[id];
-                }
-                var row = { name:id, at:cmd, result:st };
-                rows.push( row );
-            }
-            var scrollPos = jqtable.getScrollPos();
-            $("#set-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
-            jqtable.setScrollPos(scrollPos);
-        }
-		// custom watch
-        if ( iconfig.custom_watch )
-        {
-            var s = v[4];
-            var c = iconfig.custom_watch;
-            var rows = [];
-            for ( var id in c )
-            {
-                var cmd = c[id];
-                if ( !cmd )
-                {
-                    continue;
-                }
-                var st = "";
-                if ( s )
-                {
-                    st = s[id];
-                }
-                var row = { name:id, at:cmd, result:st };
-                rows.push( row );
-            }
-            var scrollPos = jqtable.getScrollPos();
-            $("#watch-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
-            jqtable.setScrollPos(scrollPos);
-        }
+		
 		// watch interval
         $('#watch_interval').val( iconfig.watch_interval||'' );
 
@@ -179,106 +118,61 @@ function config_load()
         $('#failed_threshold2').val( iconfig.failed_threshold2||'' );
         $('#failed_threshold3').val( iconfig.failed_threshold3||'' );
         $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
-
       })
 }
 
 /* save the configure */
-function config_save()
-{
-	var cmds = [];
-	var needsave = false;
-	if ( iconfig == null )
-	{
-		return;
-	}
-	var icopy = JSON.parse(JSON.stringify(iconfig));;
+function modem_save() {
+    if (!iconfig) return;
 
-	// config
-	iconfig.gnss = boole2able( $('#gnss').prop('checked') );
-	iconfig.lock_nettype = $('#lock_nettype').val();
-	iconfig.lock_pin = $('#lock_pin').val();
-	var data = {};
-	var rows = $("#set-grid-table").jqGrid('getDataIDs');
-	for ( var i = 0; i < rows.length; i++ )
-	{
-		var row = $("#set-grid-table").jqGrid('getRowData', rows[i] );
-		data[row.name] = row.at;
-	}
-	if ( rows.length > 0 )
-	{
-		iconfig.custom_set = data;
-	}
-	else
-	{
-		delete iconfig.custom_set;
-	}
-	var data = {};
-	var rows = $("#watch-grid-table").jqGrid('getDataIDs');
-	for ( var i = 0; i < rows.length; i++ )
-	{
-		var row = $("#watch-grid-table").jqGrid('getRowData', rows[i] );
-		data[row.name] = row.at;
-	}
-	if ( rows.length > 0 )
-	{
-		iconfig.custom_watch = data;
-	}
-	else
-	{
-		delete iconfig.custom_watch;
-	}
-	iconfig.watch_interval = $('#watch_interval').val();
-	iconfig.need_simcard = boole2able( $('#need_simcard').prop('checked') );
-	iconfig.simcard_failed_threshold = $('#simcard_failed_threshold').val();
-	iconfig.simcard_failed_threshold2 = $('#simcard_failed_threshold2').val();
-	iconfig.simcard_failed_threshold3 = $('#simcard_failed_threshold3').val();
-	iconfig.simcard_failed_everytime = $('#simcard_failed_everytime').val();
-	iconfig.need_plmn = boole2able( $('#need_plmn').prop('checked') );
-	iconfig.need_signal = boole2able( $('#need_signal').prop('checked') );
-	iconfig.signal_failed_threshold = $('#signal_failed_threshold').val();
-	iconfig.signal_failed_threshold2 = $('#signal_failed_threshold2').val();
-	iconfig.signal_failed_threshold3 = $('#signal_failed_threshold3').val();
-	iconfig.signal_failed_everytime = $('#signal_failed_everytime').val();
-	iconfig.need_attach = boole2able( $('#need_attach').prop('checked') );
-	iconfig.attach_failed_threshold = $('#attach_failed_threshold').val();
-	iconfig.attach_failed_threshold2 = $('#attach_failed_threshold2').val();
-	iconfig.attach_failed_threshold3 = $('#attach_failed_threshold3').val();
-	iconfig.attach_failed_everytime = $('#attach_failed_everytime').val();
-	iconfig.failed_threshold = $('#failed_threshold').val();
-	iconfig.failed_threshold2 = $('#failed_threshold2').val();
-	iconfig.failed_threshold3 = $('#failed_threshold3').val();
-	iconfig.failed_everytime = $('#failed_everytime').val();
-	for ( var id in iconfig )
-	{
-		if ( iconfig[id] == "" )
-		{
-			delete iconfig[id];
-		}
-	}
+    // 克隆旧配置用于对比
+    var icopy = JSON.parse(JSON.stringify(iconfig));
 
-	// compare
-	if ( !ocompare( iconfig, icopy ) )
-	{
-		cmds.push( ifname+"="+JSON.stringify(iconfig) );
-		needsave = true;
-	}
-	if ( needsave == false )
-	{
-		page.alert( { message: $.i18n('Settings unchanged') } );
-		return;
-	}
+    // 定义字段映射
+    var fields = {
+        checkbox: [
+            'gnss', 'need_simcard', 'need_plmn', 'need_signal', 'need_attach'
+        ],
+        text: [
+            'lock_nettype', 'lock_pin', 'watch_interval',
+            'simcard_failed_everytime', 'signal_failed_everytime', 'attach_failed_everytime', 'failed_everytime'
+        ]
+    };
 
-	// save
-	page.confirm( { message: $.i18n('The LTE connecttion will be disconneted because of the change of configuration') } ).then( function(result){
-		if ( result )
-		{
-			he.exec( cmds ).then( function(){
-				page.hint2succeed( $.i18n('Modify successfully') );
-				config_load();
-			});
-		}
-	});
+    var categories = ['simcard_failed', 'signal_failed', 'attach_failed', 'failed'];
+    categories.forEach(function(cat) {
+        fields.text.push(cat + '_threshold', cat + '_threshold2', cat + '_threshold3');
+    });
+
+    // 抓取数据
+    fields.checkbox.forEach(function(id) {
+        iconfig[id] = boole2able($('#' + id).prop('checked'));
+    });
+
+    fields.text.forEach(function(id) {
+        var val = $('#' + id).val();
+        // 如果值为空 直接删除该键值 否则赋值
+        if (val === "") {
+            delete iconfig[id];
+        } else {
+            iconfig[id] = val;
+        }
+    });
+
+    if (ocompare(iconfig, icopy)) {
+        return page.alert({ message: $.i18n('Settings unchanged') });
+    }
+
+    var msg = $.i18n('The LTE connecttion will be disconneted because of the change of configuration');
+    page.confirm({ message: msg }).then(function(result) {
+        if (!result) return location.reload();
+
+        var cmds = [ ifname + "=" + JSON.stringify(iconfig) ];
+        he.exec(cmds).then(function() {
+            page.hint2succeed($.i18n('Modify successfully'));
+            lte_modem();
+        });
+    });
 }
 
 
@@ -289,176 +183,11 @@ $.i18n().load( page.lang('lte') ).then( function () {
 	/* init the langauage */
 	$.i18n().locale = lang; $('body').i18n();
 
-	/* init the table */
-	jqtable.create( "#set-grid-table", "set-grid-pager",
-	{
-		caption: $.i18n("Custom setting AT"),
-		toolbar: [true, "top"],
-		colNames: [ $.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return') ],
-		colModel: [
-			{
-				name:'name', width:100,
-				editable: true,
-				editrules:{ required: true }
-			},
-			{
-				name: 'at', width: 250,
-				editable: true,
-				editrules: { required: true }
-			},
-			{
-				name: 'result', width: 400,
-				editable: false
-			}
-		],
-		pager: '#set-grid-pager',
-		rowNum: 10,
-		viewrecords: true,
-
-		pgbuttons: true,
-		pagerpos:'center',
-		pginput:true,
-
-		autowidth:true,
-		loadonce:true,
-		shrinkToFit:true,
-		responsive:true,
-		
-	} ).jqGrid(
-		'navGrid', "#set-grid-pager",
-		$.extend(true, {}, jqtable.navOptions, 
-			{
-				add: true,addicon : 'ace-icon fa fa-plus-circle purple',
-				del: true,delicon : 'ace-icon fa fa-trash-o red',
-				edit: true,editicon : 'ace-icon fa fa-pencil blue',
-				search: false, refresh: false, view: false
-			}
-		),
-		jqtable.editOptions,
-		//jqtable.addOptions,
-		$.extend(true, {}, jqtable.addOptions, 
-		{
-			afterShowForm:function(form){
-			// 添加自定义样式和提示
-				$("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-				$("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-			
-				var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
-					'<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
-					'</div>';
-				
-				$("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-				// 设置 placeholder
-				$("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
-				$("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
-		}
-		}),
-		jqtable.deleteOptions
-	);
-	jqtable.create( "#watch-grid-table", "watch-grid-pager",
-	{
-		caption: $.i18n("Custom watching AT"),
-		toolbar: [true, "top"],
-		colNames: [ $.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return') ],
-		colModel: [
-			{
-				name:'name', width:200,
-				editable: true,
-				editrules:{ required: true }
-			},
-			{
-				name: 'at', width: 300,
-				editable: true,
-				editrules: { required: true }
-			},
-			{
-				name: 'result', width: 300,
-				editable: false
-			}
-		],
-		pager: '#watch-grid-pager',
-        rowNum: 10,
-        viewrecords: true,
-
-		pgbuttons: true,
-		pagerpos:'center',
-		pginput:true,
-
-		autowidth:true,
-		loadonce:true,
-		shrinkToFit:true,
-		responsive:true,
-		
-	} ).jqGrid(
-		'navGrid', "#watch-grid-pager",
-			$.extend(true, {}, jqtable.navOptions, 
-			{
-				add: true,addicon : 'ace-icon fa fa-plus-circle purple',
-				del: true,delicon : 'ace-icon fa fa-trash-o red',
-				edit: true,editicon : 'ace-icon fa fa-pencil blue',
-				search: false, refresh: false, view: false
-			}
-		),
-		jqtable.editOptions,
-		//jqtable.addOptions,
-		$.extend(true, {}, jqtable.addOptions, 
-		{
-			afterShowForm:function(form){
-			// 添加自定义样式和提示
-				$("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-				$("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-			
-				var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
-					'<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
-					'</div>';
-				
-				$("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-				// 设置 placeholder
-				$("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
-				$("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
-		}
-		}),
-		jqtable.deleteOptions
-	);
-
-	var $toolbar = $("#t_" + "set-grid-table");
-	$toolbar.append($('#grid-controls').children());
-	$toolbar.css({
-		'display': 'flex',
-		'justify-content': 'space-between', // 撑开两端
-		'align-items': 'center',            // 垂直居中
-		'background': '#f5f5f5',
-		'padding': '8px 10px',
-		'height': 'auto',                   // 覆盖默认高度
-		//'border-bottom': '1px solid #e1e1e1' // 加个分割线
-	});
-
-	var $toolbar = $("#t_" + "watch-grid-table");
-	$toolbar.append($('#grid-controls2').children());
-	$toolbar.css({
-		'display': 'flex',
-		'justify-content': 'space-between', // 撑开两端
-		'align-items': 'center',            // 垂直居中
-		'background': '#f5f5f5',
-		'padding': '8px 10px',
-		'height': 'auto',                   // 覆盖默认高度
-		//'border-bottom': '1px solid #e1e1e1' // 加个分割线
-	});
-
-	$('#rowNums').on('change',function(){
-			var newRowNum = parseInt($(this).val(),10);
-			$('#set-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
-	});
-
-	$('#rowNums').on('change',function(){
-			var newRowNum = parseInt($(this).val(),10);
-			$('#watch-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
-	});
 	/* load the configure */
-	config_load();
+	lte_modem();
 
 	// 锁IMEI
-	$('#imei_lock').on(ace.click_event, function () {
+	$('#imei_lock').off('click').on('click', function () {
 		page.confirm( { message: $.i18n('Once locked cannot be undone'), callback:function(result){
 			if ( result )
 			{ 
@@ -474,7 +203,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 		} } );
 	});
 	// 锁IMSI
-	$('#imsi_lock').on(ace.click_event, function () {
+	$('#imsi_lock').off('click').on('click', function () {
 		page.confirm( { message: $.i18n('Once locked cannot be undone'), callback:function(result){
 			if ( result )
 			{ 
@@ -491,12 +220,12 @@ $.i18n().load( page.lang('lte') ).then( function () {
 	});
 
 	/* bind the refresh */
-	$('#refresh').on(ace.click_event, function () {
+	$('#modem_refresh').on(ace.click_event, function () {
 		location.reload();
 	});
 	/* bind the apply */
-	$('#apply').on(ace.click_event, function () {
-		config_save();
-	});
+	$('#modem_apply').off('click').on('click', function() {
+        modem_save();
+    });
 });
 
