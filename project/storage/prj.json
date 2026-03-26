@@ -7,7 +7,7 @@
     "author":"dimmalex@gmail.com",
     "com":
     {
-        "ftp":"ftp procotol server"
+        "ftp":"FTP server (ProFTPD)"
     },
     "init":
     {

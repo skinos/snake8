@@ -1,13 +1,35 @@
 /*
- *  Description:  dropbear server management
- *       Author:  dimmalex (dim), dimmalex@gmail.com
- *      Company:  ASHYELF
+ * SSH server component using Dropbear (skinos / tui@ssh).
+ *
+ * Manages dropbear: host keys under /etc/dropbear, optional iptables
+ * access control (same pattern as telnet), and a supervised child process.
+ * This is not OpenSSH sshd.
+ *
+ * Filter chain name: PROJECT_ID_COM_ID  ->  e.g. tui_ssh
+ *
+ * Author: dimmalex (dim), dimmalex@gmail.com
+ * Company: ASHYELF
  */
 
 #include "skin/skin.h"
 
-
-
+/*
+ * _setup -- Apply configuration and start or refresh Dropbear.
+ *
+ * Called at boot (prj.json init) and after successful _set().
+ *
+ * Order of work:
+ *  1) Skip on OpenWrt "wrt" scope or "slave" platform (no SSH by design).
+ *  2) Require dropbear in PATH; otherwise fail setup.
+ *  3) Load config; missing config -> succeed without doing more.
+ *  4) If status != "enable", free config and succeed without starting dropbear.
+ *  5) Ensure /etc/dropbear; copy DSS/RSA host keys from project config if present;
+ *     run dropbearkey.sh when shipped with the package to generate missing keys.
+ *  6) If manager list is non-empty, same iptables pattern as telnet (chain tui_ssh).
+ *  7) Start/restart supervised service (child runs dropbear).
+ *
+ * Returns ttrue on success (including no-op paths), tfalse if dropbear is missing.
+ */
 boole_t _setup( obj_t this, param_t param )
 {
     talk_t v;
@@ -23,7 +45,7 @@ boole_t _setup( obj_t this, param_t param )
 	struct in_addr iptest;
     const char *test_file = "/tmp/.dropbear_exsit";
 
-	/************************ slave or wrt **************************/
+	/* --- Platform gate: SSH disabled on wrt scope or slave --- */
 	scope = reg_string( NULL, "scope" );
 	platform = reg_string( NULL, "platform" );
 	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
@@ -32,26 +54,30 @@ boole_t _setup( obj_t this, param_t param )
 		default_debug( "no ssh function on %s or %s", platform, scope );
 		return ttrue;
 	}
-	/************************ slave or wrt **************************/
 
-    /* test the dropbear have */
+    /* --- Require dropbear binary in PATH --- */
     shell( "which dropbear > %s", test_file );
     ptr = file2string( test_file, NULL, 0 );
     if ( ptr == NULL || strlen( ptr ) < 8 )
     {
+        unlink( test_file );
         return tfalse;
     }
     unlink( test_file );
 
-    /* get the configure */
     cfg = config_get( this, NULL );
+    if ( cfg == NULL )
+    {
+        return ttrue;
+    }
     ptr = json_string( cfg, "status" );
     if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
     {
         talk_free( cfg );
         return ttrue;
     }
-	/* key preset */
+
+	/* --- Host key material for Dropbear --- */
 	shell( "mkdir -p /etc/dropbear" );
 	if ( config_path( path, sizeof(path), PROJECT_ID, "dsskey"CONFIG_FILE_POSTFIX ) != NULL )
 	{
@@ -62,14 +88,19 @@ boole_t _setup( obj_t this, param_t param )
 		shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
 	}
 	ptr = exe2path( NULL, 0, "dropbearkey.sh" );
-	if ( stat( ptr, &st ) == 0 )
+	if ( ptr != NULL && stat( ptr, &st ) == 0 )
 	{
 		shell( ptr );
 	}
-    /* get the manager */
+
+    /* --- Listen port; empty -> SSH default 22 --- */
 	axp = NULL;
 	manager_init = false;
 	port = json_string( cfg, "port" );
+	if ( port == NULL || *port == '\0' )
+	{
+		port = "22";
+	}
     v = json_value( cfg, "manager" );
 	if ( json_check( v ) == true )
 	{
@@ -135,7 +166,11 @@ boole_t _setup( obj_t this, param_t param )
 					iptables( "-A %s_%s -m mac --mac-source %s -j ACCEPT", PROJECT_ID, COM_ID, tok );
 				}
 
-				tok = tokkey+1;
+				if ( tokkey == NULL )
+				{
+					break;
+				}
+				tok = tokkey + 1;
 			}
 		}
 
@@ -146,12 +181,16 @@ boole_t _setup( obj_t this, param_t param )
 		iptables( "-A %s_%s -j DROP", PROJECT_ID, COM_ID );
 	}
 
-    /* start the service */
     cstart( this, "service", NULL, COM_IDPATH );
 
     talk_free( cfg );
     return ttrue;
 }
+
+/*
+ * _shut -- Remove iptables chain and stop supervised Dropbear.
+ * INPUT rule is deleted by jump target (see telnet.c) for correct _set() ordering.
+ */
 boole_t _shut( obj_t this, param_t param )
 {
     iptables( "-t filter -F %s_%s", PROJECT_ID, COM_ID );
@@ -160,13 +199,17 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( COM_IDPATH );
     return ttrue;
 }
+
+/*
+ * _set -- Persist config, restart service, refresh firewall.
+ * Blocked on wrt/slave; otherwise same sequence as telnet component.
+ */
 boole _set( obj_t this, talk_t v, attr_t path )
 {
     boole ret;
 	const char *scope;
 	const char *platform;
 
-	/************************ slave or wrt **************************/
 	scope = reg_string( NULL, "scope" );
 	platform = reg_string( NULL, "platform" );
 	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
@@ -175,23 +218,26 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		default_debug( "no ssh function on %s or %s", platform, scope );
 		return false;
 	}
-	/************************ slave or wrt **************************/
 
     ret = config_set( this, v, path );
     if ( ret == true )
     {
         _shut( this, NULL );
         _setup( this, NULL );
+		scalls( FIREWALL_COM, "setup", NULL );
     }
     return ret;
 }
+
 talk_t _get( obj_t this, attr_t path )
 {
     return config_get( this, path );
 }
 
-
-
+/*
+ * _service -- Child process: exec dropbear foreground on configured port.
+ * -F: do not fork; -K 300: keepalive interval in seconds.
+ */
 boole_t _service( obj_t this, param_t param )
 {
     talk_t cfg;
@@ -202,20 +248,16 @@ boole_t _service( obj_t this, param_t param )
     {
         return terror;
     }
-    /* get the port */
     port = json_string( cfg, "port" );
     if ( port == NULL || *port == '\0' )
     {
         port = "22";
     }
     default_debug( "dropbear -F -p %s", port );
-    /* execl */
     execlp( "dropbear", "dropbear", "-F", "-p", port, "-K", "300", (char*)0 );
 
     default_faulting( "exec the dropbear error" );
     talk_free( cfg );
     return tfalse;
 }
-
-
 

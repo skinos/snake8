@@ -1,13 +1,34 @@
 /*
- *    Description:  telnet server management
- *          Author:  dimmalex (dim), dimmalex@gmail.com
- *      Company:  HP
+ * Telnet server component (skinos / tui@telnet).
+ *
+ * Manages BusyBox or system telnetd: persistent configuration, optional
+ * per-source iptables access control, and a supervised child process.
+ *
+ * Filter chain name: PROJECT_ID_COM_ID  ->  e.g. tui_telnet
+ *
+ * Author: dimmalex (dim), dimmalex@gmail.com
+ * Company: HP
  */
 
 #include "skin/skin.h"
 
-
-
+/*
+ * _setup -- Apply configuration and start or refresh the telnet service.
+ *
+ * Called at boot (prj.json init) and after successful _set().
+ *
+ * Order of work:
+ *  1) Skip entirely on OpenWrt scope or slave platform (no telnet by design).
+ *  2) Require telnetd in PATH; otherwise fail setup.
+ *  3) Load config; missing config -> succeed without doing more.
+ *  4) If status != "enable", free config and succeed without starting telnetd.
+ *  5) If manager list is non-empty, install iptables: INPUT -> custom chain,
+ *     ACCEPT for each allowed IPv4 or MAC, final DROP in chain.
+ *  6) Start/restart supervised service (child runs telnetd).
+ *
+ * Returns ttrue on success (including intentional no-op paths), tfalse if
+ * telnetd binary is missing.
+ */
 boole_t _setup( obj_t this, param_t param )
 {
     talk_t v;
@@ -21,7 +42,7 @@ boole_t _setup( obj_t this, param_t param )
 	struct in_addr iptest;
     const char *test_file = "/tmp/.telnetd_exsit";
 
-	/************************ slave or wrt **************************/
+	/* --- Platform gate: telnet disabled on OpenWrt "wrt" scope or "slave" --- */
 	scope = reg_string( NULL, "scope" );
 	platform = reg_string( NULL, "platform" );
 	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
@@ -30,30 +51,39 @@ boole_t _setup( obj_t this, param_t param )
 		default_debug( "no telnet function on %s or %s", platform, scope );
 		return ttrue;
 	}
-	/************************ slave or wrt **************************/
 
-    /* test the telnetd have */
+    /* --- Locate telnetd: write "which" output to temp file and read it back --- */
     shell( "which telnetd > %s", test_file );
     ptr = file2string( test_file, NULL, 0 );
     if ( ptr == NULL || strlen( ptr ) < 8 )
     {
+        unlink( test_file );
         return tfalse;
     }
     unlink( test_file );
 
-    /* get the configure */
+    /* --- Load full component configuration object --- */
     cfg = config_get( this, NULL );
-    /* get the status */
+    if ( cfg == NULL )
+    {
+        return ttrue;
+    }
+    /* --- Only run service and firewall hooks when explicitly enabled --- */
     ptr = json_string( cfg, "status" );
     if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
     {
         talk_free( cfg );
         return ttrue;
     }
-    /* get the manager */
+    /* --- Listen port for iptables and child; empty -> standard telnet 23 --- */
 	axp = NULL;
 	manager_init = false;
 	port = json_string( cfg, "port" );
+	if ( port == NULL || *port == '\0' )
+	{
+		port = "23";
+	}
+    /* --- manager: either JSON object (iterate keys) or legacy ";"-separated string --- */
     v = json_value( cfg, "manager" );
 	if ( json_check( v ) == true )
 	{
@@ -64,6 +94,7 @@ boole_t _setup( obj_t this, param_t param )
 			{
 				continue;
 			}
+			/* First allowed client: create chain, wire INPUT dport -> chain */
 			if ( manager_init == false )
 			{
 				manager_init = true;
@@ -72,6 +103,7 @@ boole_t _setup( obj_t this, param_t param )
 				iptables( "-t filter -D INPUT -p tcp --dport %s -j %s_%s", port, PROJECT_ID, COM_ID );
 				iptables( "-t filter -A INPUT -p tcp --dport %s -j %s_%s", port, PROJECT_ID, COM_ID );
 			}
+			/* Valid IPv4 -> match source IP; else treat token as MAC for layer-2 match */
 			if ( inet_pton( AF_INET, ptr, &iptest ) == 1 )
 			{
 				iptables( "-A %s_%s -s %s -j ACCEPT", PROJECT_ID, COM_ID, ptr );
@@ -119,23 +151,37 @@ boole_t _setup( obj_t this, param_t param )
 					iptables( "-A %s_%s -m mac --mac-source %s -j ACCEPT", PROJECT_ID, COM_ID, tok );
 				}
 
-				tok = tokkey+1;
+				if ( tokkey == NULL )
+				{
+					break;
+				}
+				tok = tokkey + 1;
 			}
 		}
 
 	}
+	/* --- After all ACCEPT rules, default deny inside the custom chain --- */
 	if ( manager_init == true )
 	{
 		iptables( "-D %s_%s -j DROP", PROJECT_ID, COM_ID );
 		iptables( "-A %s_%s -j DROP", PROJECT_ID, COM_ID );
 	}
 
-    /* start the service */
+    /* --- Fork supervised child that execs telnetd (see _service) --- */
     cstart( this, "service", NULL, COM_IDPATH );
 
     talk_free( cfg );
     return ttrue;
 }
+
+/*
+ * _shut -- Tear down iptables rules and stop the supervised service.
+ *
+ * Deletes the custom filter chain and INPUT jump by target name (not by port)
+ * so _set() can still remove the old jump after config_set() wrote a new port.
+ *
+ * Then removes the service supervisor entry for this component.
+ */
 boole_t _shut( obj_t this, param_t param )
 {
     iptables( "-t filter -F %s_%s", PROJECT_ID, COM_ID );
@@ -144,13 +190,19 @@ boole_t _shut( obj_t this, param_t param )
     sdelete( COM_IDPATH );
     return ttrue;
 }
+
+/*
+ * _set -- Persist configuration changes and re-apply runtime state.
+ *
+ * Refused on wrt/slave (same as _setup gate). On success: write config,
+ * shut down old instance, setup again, then refresh global firewall component.
+ */
 boole _set( obj_t this, talk_t v, attr_t path )
 {
     boole ret;
 	const char *scope;
 	const char *platform;
 
-	/************************ slave or wrt **************************/
 	scope = reg_string( NULL, "scope" );
 	platform = reg_string( NULL, "platform" );
 	if ( ( scope != NULL && 0 == strcmp( scope , "wrt" ) )
@@ -159,7 +211,6 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		default_debug( "no telnet function on %s or %s", platform, scope );
 		return false;
 	}
-	/************************ slave or wrt **************************/
 
     ret = config_set( this, v, path );
     if ( ret == true )
@@ -170,13 +221,20 @@ boole _set( obj_t this, talk_t v, attr_t path )
     }
     return ret;
 }
+
+/* _get -- Return configuration (whole object or subtree by path). */
 talk_t _get( obj_t this, attr_t path )
 {
     return config_get( this, path );
 }
 
-
-
+/*
+ * _service -- Service entry point executed in the child after cstart().
+ *
+ * Replaces this process with telnetd in foreground (-F) on the configured
+ * port (default 23). Never returns on success; on exec failure logs and
+ * returns tfalse after freeing config.
+ */
 boole_t _service( obj_t this, param_t param )
 {
     talk_t cfg;
@@ -187,7 +245,6 @@ boole_t _service( obj_t this, param_t param )
     {
         return terror;
     }
-    /* get the port */
     port = json_string( cfg, "port" );
     if ( port == NULL || *port == '\0' )
     {
@@ -195,13 +252,10 @@ boole_t _service( obj_t this, param_t param )
     }
 
 	default_debug( "telnetd -F -p %s", port );
-    /* execl */
 	execlp( "telnetd", "telnetd", "-F", "-p", port, (char*)0 );
 
     default_faulting( "exec the telnetd error" );
     talk_free( cfg );
     return tfalse;
 }
-
-
 
