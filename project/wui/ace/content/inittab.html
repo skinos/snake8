@@ -55,7 +55,7 @@
     /* load the configure on the input */
     function rule_load()
     {
-      he.load( [ 'land@init' ] ).then( function(v){
+      he.load( [ 'land@init:list' ] ).then( function(v){
         rule_status = v[0];
         if ( !rule_status )
         {

@@ -89,6 +89,7 @@
 	"Auto":"自动",
 	"aes":"AES",
 	"tkip":"TKIP",
+	"auto":"自动",
 	"tkipaes":"自动",
 	"Password":"密码",
 	"Hidden SSID":"隐藏的SSID",

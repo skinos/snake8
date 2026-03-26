@@ -14,6 +14,7 @@
 	"wpa2pskwpa3psk":"WPA2/WPA3 Mixed",
 	"aes":"AES",
 	"tkip":"TKIP",
+	"auto":"Auto",
 	"tkipaes":"TKIP&AES",
 
 	"wifi@nsta":"Client(2.4G)",

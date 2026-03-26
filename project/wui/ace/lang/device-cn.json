@@ -1,6 +1,6 @@
 {
 	"Device Name":"设备名称",
-	"Modify":"修改",
+	"Modify Name ":"修改名称",
 	"Input new device name":"输入新的设备名称",
 
 	"Model":"硬件型号",
@@ -9,7 +9,7 @@
 	"MAC Address":"MAC地址",
 
 	"Current Time":"当前时间",
-	"Copy from computer":"与电脑对时",
+	"PC Time Sync":"电脑对时",
 	"Time Source":"时间来源",
 	"ntp":"NTP对时",
 	"rtc":"RTC",
@@ -19,7 +19,7 @@
 	"sourcenull":"无有效来源",
 	"Run Time":"运行时长",
 
-	"System Reboot":"系统重启",
+	"Sys Reboot  ":"系统重启",
 	"Are you sure you want to restart":"确定重启系统",
 	"Restarting...":"重启中...",
 
@@ -36,6 +36,7 @@
 	"misp":"4G网关",
 	"nmisp":"4G/5G网关",
 	"dmisp":"双4G5G网关",
+	"tmisp":"三4G5G网关",
 	"mwm":"多种无线连网网关",
 	"mix":"混合",
 	"parasite":"寄生",
@@ -85,7 +86,7 @@
 	"UTC+13(PSTC - Pacific Ocean Standard Time C)": "UTC+13(PSTC - 太平洋标准时间C)",
 	"UTC+14(PSTD - Pacific Ocean Standard Time D)": "UTC+14(PSTD - 太平洋标准时间D)",
 	"NTP":"NTP自动对时",
-	"Sync":"立即对时",
+	"Sync Now    ":"立即对时",
 	"NTP Server":"NTP服务器",
 	"NTP Server2":"NTP服务器2",
 	"NTP Server3":"NTP服务器3",

@@ -274,8 +274,8 @@ function config_load()
     $('#peer2').val( config.peer2 || '' );
     $('#peer3').val( config.peer3 || '' );
     $('#peermac').val( config.peermac || '' );
+    $('#nossid').prop( 'checked', config.nossid=="enable" );
     $('#wpa_key').val( config.wpa_key || '' );
-    $('#ssid_disable').prop( 'checked', config.ssid_disable=="enable" );
     var securelist = v[2];
 	if ( securelist )
 	{
@@ -659,7 +659,7 @@ function config_save()
           return;
       }
   }
-  config.ssid_disable = boole2able( $('#ssid_disable').prop('checked') );
+  config.nossid = boole2able( $('#nossid').prop('checked') );
   delete config.peermode;
   delete config.channel;
   if ( $('#hidden').prop('checked') )

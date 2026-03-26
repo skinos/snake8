@@ -8,9 +8,6 @@
 	"connecting":"正在连接",
 	"connected":"正在连接",
 	"up":"连接成功",	
-    "China Mobile":"中国移动",
-    "China Unicom":"中国联通",
-    "China Telecom":"中国电信",
 	"nodevice":"无基带",
 	"noimei":"IMEI错误",
 	"noimsi":"IMSI错误",
@@ -29,6 +26,9 @@
 	"register":"正在注册",
 	"ready":"基带正常",
 	"reset":"重启基带",
+    "China Mobile":"中国移动",
+    "China Unicom":"中国联通",
+    "China Telecom":"中国电信",
 
 	"Network":"网络",
 	"unspecified":"未指定",
@@ -36,10 +36,25 @@
 	"Online Time":"在线时长",
 	"Rx/Tx":"收/发(字节)",
 
+	"Delay":"延迟",
+	"failed":"访问失败",
+	"block":"暂未通信",
+	"Mode":"模式",
+	"dhcpc":"自动获取",
+	"pppoec":"PPPOE宽带拨号",
+	"static":"手动设置",
+	"Mode":"模式",
+	"dhcpc":"自动获取",
+	"pppoec":"PPPOE宽带拨号",
+	"static":"手动设置",
+	"IPv6 Mode":"IPV6模式",
+	"slaac":"自动配置",
+	"automatic":"自动获取",
+	"manual":"手动设置",
+
 
 
 	"Modem Settings":"模块设置",
-
 
 	"Backup Simcard":"备用SIM卡",
 	"Backup Simcard Settings":"备用SIM卡设置",

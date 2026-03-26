@@ -283,7 +283,7 @@ function init_at() {
     return true;
 }
 
-$.i18n().load( page.lang('lte') ).then( function () {
+$.i18n().load( page.lang('lteat') ).then( function () {
 	/* init the langauage */
 	$.i18n().locale = lang; $('body').i18n();
 

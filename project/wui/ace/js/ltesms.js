@@ -227,7 +227,7 @@ function init_sms(){
 
 /* init */
 page.password('passwd', 'password-icon' );
-$.i18n().load( page.lang('lte') ).then( function () {
+$.i18n().load( page.lang('ltesms') ).then( function () {
   /* init the langauage */
   $.i18n().locale = lang; $('body').i18n();
   /* init the table */

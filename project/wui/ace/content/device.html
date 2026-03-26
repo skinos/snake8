@@ -4,14 +4,14 @@
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
-
-
     <!-- 设备名称 -->
     <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Device Name"></label>
         <div class="col-sm-9">
-          <div id="name_string" class="col-xs-7 col-sm-3 form-right-text"></div>
-          <button class="btn btn-main btn-mini" id="name_modify" data-i18n="Modify"></button>
+          <div class="form-input-with-btn">
+            <div id="name_string" class="col-xs-7 col-sm-3 form-right-text"></div>
+            <button class="btn btn-main btn-mini align-btn" id="name_modify" data-i18n="Modify Name "></button>
+          </div>
         </div>
     </div>
     <!-- 设备型号 -->
@@ -41,8 +41,10 @@
 	    <div class="form-group">
 	        <label class="col-sm-3 control-label no-padding-right" data-i18n="Current Time"></label>
 	        <div class="col-sm-9">
-	          <div class="col-xs-7 col-sm-3 form-right-text" id="current"></div>
-	          <button class="btn btn-main btn-mini" id="copy" data-i18n="Copy from computer"></button>
+	          <div class="form-input-with-btn">
+	            <div class="col-xs-7 col-sm-3 form-right-text" id="current"></div>
+	            <button class="btn btn-main btn-mini align-btn" id="copy" data-i18n="PC Time Sync"></button>
+	          </div>
 	        </div>
 	    </div>
 	    <!-- 时间来源 -->
@@ -56,21 +58,12 @@
 	    <div class="form-group">
 	        <label class="col-sm-3 control-label no-padding-right" data-i18n="Run Time"></label>
 	        <div class="col-sm-9">
-	          <div class="col-xs-10 col-sm-5 form-right-text" id="livetime"></div>
+	          <div class="form-input-with-btn">
+	            <div class="col-xs-10 col-sm-5 form-right-text" id="livetime"></div>
+              <button class="btn btn-warning btn-mini align-btn" data-i18n="Sys Reboot  " id="reboot"></button>
+	          </div>
 	        </div>
 	    </div>
-    </div>
-
-	<!-- 系统重启 -->
-    <div class="form-horizontal" role="form">
-      <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right"></label>
-        <div class="col-sm-9">
-          <div class="btn-group">
-            <button class="btn btn-warning" data-i18n="System Reboot" id="reboot"></button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="hr hr32 hr-dotted"></div>
@@ -97,12 +90,15 @@
         <!-- NTP客户端状态 -->
         <div class="form-group">
             <label class="col-sm-3 control-label no-padding-right" data-i18n="NTP"></label>
-            <div class="col-sm-9">
-              <label>
-                <input id="ntpclient" class="ace ace-switch ace-switch-6" type="checkbox" />
-                <span class="lbl"></span>
-              </label>&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;
-              <button class="btn btn-main btn-mini" id="sync" data-i18n="Sync"></button>
+            <div class="col-sm-9" style="display: flex; align-items: center;">
+                <div class="form-input-with-btn">
+                  <label style="margin: 0; display: flex; align-items: center;">
+                      <input id="ntpclient" class="ace ace-switch ace-switch-6" type="checkbox" />
+                      <span class="lbl"></span>
+                  </label>
+                  <button class="btn btn-main btn-mini align-btn" id="sync" data-i18n="Sync Now    ">
+                  </button>
+                </div>
             </div>
         </div>
         <div id="ntpc_cfg">
@@ -152,15 +148,73 @@
       </div>
     </div>
 
-
-
-
-
     </div>
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
 </div><!-- /.row -->
 
 <script src="/js/device.js"></script>
+
+<style>
+.form-input-with-btn {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 41.6667%; /* 与 col-sm-5 的宽度相同 (5/12 = 41.6667%) */
+}
+
+/* 对齐按钮位置 */
+.align-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0 !important;
+}
+
+.form-input-with-btn > .form-right-text,
+.form-input-with-btn > label {
+  width: 100% !important;
+  padding-right: 70px !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.form-input-with-btn > label {
+  display: block !important;
+}
+
+@media (max-width: 767px) {
+  .form-input-with-btn {
+    max-width: 83.3333%; /* 与 col-xs-10 的宽度相同 (10/12 = 83.3333%) */
+  }
+  
+  .form-input-with-btn > .form-right-text,
+  .form-input-with-btn > label {
+    padding-right: 60px !important;
+  }
+  
+  .align-btn {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+  }
+}
+
+.col-xs-10.col-sm-5,
+.col-xs-7.col-sm-3 {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.col-sm-9 > .col-xs-10.col-sm-5:not(.form-input-with-btn) > .form-right-text,
+.col-sm-9 > .col-xs-7.col-sm-3:not(.form-input-with-btn) > .form-right-text {
+  padding-right: 12px !important;
+}
+
+.align-btn {
+  height: 34px;
+  line-height: 26px;
+}
+</style>
 
 
