@@ -16,6 +16,7 @@
 static boole project_create_json( const char *name, const char *apppath )
 {
 	talk_t v;
+	size_t n;
 	char intro[LINE_MAX+1];
 	char prjpath[PATH_MAX+1];
 	char prjinfo[PATH_MAX+1];
@@ -54,7 +55,11 @@ static boole project_create_json( const char *name, const char *apppath )
     printf( "project %s introduction: ", name );
     fflush( stdout );
     fgets( intro, sizeof(intro), stdin );
-    intro[strlen(intro)-1] ='\0';
+	n = strlen( intro );
+	if ( n > 0 && ( intro[n-1] == '\n' || intro[n-1] == '\r' ) )
+	{
+		intro[n-1] = '\0';
+	}
 	/* create the project info */
 	v = file2json( prjinfo );
 	if ( v == NULL )
@@ -63,7 +68,7 @@ static boole project_create_json( const char *name, const char *apppath )
 	}
 	json_set_string( v, "name", name );
 	json_set_string( v, "version", PROJECT_DEFAULT_VERSION );
-	json_set_string( v, "author", "fpktools" );
+	json_set_string( v, "author", "tmptools" );
 	json_set_string( v, "intro", intro );
 	// open file
 	if ( json_save( v, prjinfo ) == false )
@@ -80,6 +85,7 @@ static boole project_create_json( const char *name, const char *apppath )
 
 static boole project_create_wui( const char *name, const char *prjpath, const char *wuiname )
 {
+	size_t n;
 	talk_t v;
 	talk_t cfg;
 	talk_t app;
@@ -107,10 +113,10 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 		v = json_create( NULL );
 		json_set_json( cfg, "wui", v );
 	}
-	/* add the wui */
-	json_delete_axp( v, name );
+	/* add the wui (key is the page id, e.g. testcom — not the project name) */
+	json_delete_axp( v, wuiname );
 	app = json_create( NULL );
-	json_set_json( v, name, app );
+	json_set_json( v, wuiname, app );
 	/* html */
 	json_set_string( app, "page", page );
 	/* lang */
@@ -122,7 +128,6 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	/* make the html file */
 	snprintf( page, sizeof(page), "%s/%s.html", prjpath, wuiname );
 	{
-		int i;
 		FILE *fp;
 		char buf[LINE_MAX];
 
@@ -131,8 +136,7 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 		fp = fopen( TEMPLATE_PATH"/"TEMPLATE_HTML_FILE, "r" );
 		if ( fp != NULL )
 		{
-			i = 0;
-			while( NULL != fgets( buf, sizeof(buf)-1, fp ) )
+			while ( NULL != fgets( buf, sizeof(buf)-1, fp ) )
 			{
 				if ( NULL != strstr( buf, TEMPLATE_HTML_FILE_KEY ) )
 				{
@@ -142,7 +146,6 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 				{
 					string3file( page, buf );
 				}
-				i++;
 			}
 			fclose( fp );
 		}
@@ -156,13 +159,21 @@ static boole project_create_wui( const char *name, const char *prjpath, const ch
 	printf( "web menu title(Chinese): " );
 	fflush( stdout );
 	fgets( page, sizeof(page), stdin );
-	page[strlen(page)-1] ='\0';
+	n = strlen( page );
+	if ( n > 0 && ( page[n-1] == '\n' || page[n-1] == '\r' ) )
+	{
+		page[n-1] = '\0';
+	}
 	json_set_string( app, "cn", page );
 	/* get the english menu title */
 	printf( "web menu name(English): " );
 	fflush( stdout );
 	fgets( page, sizeof(page), stdin );
-	page[strlen(page)-1] ='\0';
+	n = strlen( page );
+	if ( n > 0 && ( page[n-1] == '\n' || page[n-1] == '\r' ) )
+	{
+		page[n-1] = '\0';
+	}
 	json_set_string( app, "en", page );
 
 	/* write the PROJECT_INFOFILE */
@@ -185,8 +196,8 @@ static const char *helpstr = \
 "      prj add_uninit  project_name uninit_level com_api  register a component api at system shutdown call\n"\
 "      prj add_joint   project_name joint_event  com_api  register a component api at joint cast\n"\
 "      prj add_object  project_name object_name com_name  create a dynamic component depend on exist component\n"\
-"      prj add_wui     project_name wui_name              create a ace web page template for project\n"\
-"      prj check       project_name                       check the a project json format\n"\
+"      prj add_wui     project_name wui_name              create a Web UI (WUI) page template for project\n"\
+"      prj check       project_name                       check project prj.json format\n"\
 "      prj pack        project_name                       pack the project into fpk\n";
 
 int main( int argc, const char **argv )
@@ -252,9 +263,10 @@ int main( int argc, const char **argv )
 			fprintf( stderr, "error: %s no exist\n", name );
 			return -1;
 		}
+		/* refuse to pack trees that live under read-only / system project dir (see PROJECT_DIR in skinhead.h) */
 		if ( strncmp( path, PROJECT_DIR, strlen(PROJECT_DIR) ) == 0 )
 		{
-			fprintf( stderr, "error: %s no exist\n", name );
+			fprintf( stderr, "error: project %s path is under %s; pack expects a writable app tree (e.g. under %s)\n", name, PROJECT_DIR, PROJECT_APP_DIR );
 			return -1;
 		}
 		hardware = reg_string( NULL, "hardware" );
@@ -329,6 +341,11 @@ int main( int argc, const char **argv )
     /* create the project init */
     else if ( 0 == strcmp( type, "add_init" ) )
     {
+		if ( argc < 5 || argv[3] == NULL || argv[4] == NULL )
+		{
+			fprintf( stderr, "%s", helpstr );
+			return -1;
+		}
         snprintf( prjpath, sizeof(prjpath), PROJECT_APP_DIR"/%s", name );
 		if ( project_add_init( name, prjpath, argv[3], argv[4] ) == false )
 		{
@@ -339,6 +356,11 @@ int main( int argc, const char **argv )
     /* create the project uninit */
     else if ( 0 == strcmp( type, "add_uninit" ) )
     {
+		if ( argc < 5 || argv[3] == NULL || argv[4] == NULL )
+		{
+			fprintf( stderr, "%s", helpstr );
+			return -1;
+		}
         snprintf( prjpath, sizeof(prjpath), PROJECT_APP_DIR"/%s", name );
 		if ( project_add_uninit( name, prjpath, argv[3], argv[4] ) == false )
 		{
@@ -349,6 +371,11 @@ int main( int argc, const char **argv )
     /* create the project joint */
     else if ( 0 == strcmp( type, "add_joint" ) )
     {
+		if ( argc < 5 || argv[3] == NULL || argv[4] == NULL )
+		{
+			fprintf( stderr, "%s", helpstr );
+			return -1;
+		}
         snprintf( prjpath, sizeof(prjpath), PROJECT_APP_DIR"/%s", name );
 		if ( project_add_joint( name, prjpath, argv[3], argv[4] ) == false )
 		{
@@ -359,6 +386,11 @@ int main( int argc, const char **argv )
     /* create the project object */
     else if ( 0 == strcmp( type, "add_object" ) )
     {
+		if ( argc < 5 || argv[3] == NULL || argv[4] == NULL )
+		{
+			fprintf( stderr, "%s", helpstr );
+			return -1;
+		}
         snprintf( prjpath, sizeof(prjpath), PROJECT_APP_DIR"/%s", name );
 		if ( project_add_object( name, prjpath, argv[3], argv[4] ) == false )
 		{

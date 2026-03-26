@@ -65,20 +65,20 @@ boole_t _setup( obj_t this, param_t param )
     cfg = config_get( this, NULL );
     if ( cfg == NULL )
     {
-		app_warn( "%s: setup faild when no configure [version: %s]", object, COMPONENT_VERSION );
+		app_warn( "%s: setup failed when no configure [version: %s]", object, COMPONENT_VERSION );
         return tfalse;
     }
     /* Get the status attribute value */
     ptr = json_string( cfg, "status" );
     if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
     {
-		app_info( "%s: setup start the servcie [version: %s]", object, COMPONENT_VERSION );
+		app_info( "%s: setup start the service [version: %s]", object, COMPONENT_VERSION );
         /* Start the service for this component */
         cstart( this, "service", NULL, object );
     }
 	else
 	{
-		app_info( "%s: setup no servcie start when configure disable [version: %s]", object, COMPONENT_VERSION );
+		app_info( "%s: setup no service start when configure disable [version: %s]", object, COMPONENT_VERSION );
 	}
 
     /* Free the component configure */
@@ -117,6 +117,11 @@ boole_t _service( obj_t this, param_t param )
     app_info( "%s: service started [version: %s]", object, COMPONENT_VERSION );
     /* Get the component configure */
     cfg = config_get( this, NULL );
+    if ( cfg == NULL )
+    {
+        app_fault( "%s: service cannot load config [version: %s]", object, COMPONENT_VERSION );
+        return terror;
+    }
     /* Get the name attribute value */
     ptr = json_string( cfg, CFG_KEY_PROPERTY );
 
@@ -125,7 +130,7 @@ boole_t _service( obj_t this, param_t param )
     /***********************************************/
     for ( i = 0; i < 10; i++ )
     {
-        app_info( "%s: this is the %d time print name value %s", object, i+1, ptr?:"" );
+        app_info( "%s: this is the %d time print name value %s", object, i+1, ptr != NULL ? ptr : "" );
         sleep( 1 );
     }
 
@@ -141,10 +146,10 @@ boole_t _service( obj_t this, param_t param )
     /*********************************************/
     /* then execl the testexe that loop and log  */
     /*********************************************/
-	execl( path, TESTEXE_NAME, NULL, (char*)0 );
+	execl( path, TESTEXE_NAME, NULL );
 
 	/* Failed to log */
-    app_fault( "%s: execlp %s error [version: %s]", object, COMPONENT_VERSION );
+    app_fault( "%s: execl %s failed [version: %s]", object, path, COMPONENT_VERSION );
 	talk_free( cfg );
     return tfalse;
 }
@@ -177,7 +182,7 @@ talk_t _status( obj_t this, param_t param )
 		i = reg_int( this, REG_KEY_NAME );
 		if ( i > 0 )
 		{
-			// set the loop value */
+			/* set the loop value */
         	json_set_number( ret, "loop", i );
 		}
     }
@@ -221,7 +226,7 @@ talk_t _modify( obj_t this, param_t param )
 
     /* Get the component name */
 	object = obj_name( this );
-    app_warn( "%s: modify the loop to %s", object );
+    app_warn( "%s: modify the loop to %d", object, i );
 	/* set the register */
 	reg_set_int( this, REG_KEY_NAME, i );
 
@@ -272,10 +277,10 @@ talk_t _on( obj_t this, param_t param )
     event = param_string( param, 1 );
 	/* Get the event info */
 	v = param_talk( param, 2 );
-	/* Get the event ifnmae */
-	ifname = json_string( v, "ifname" );
+	/* Get the event ifname */
+	ifname = ( v != NULL ) ? json_string( v, "ifname" ) : NULL;
 	/* Log */
-	app_warn( "%s: detected local %s event %s", object, ifname?:"", event );
+	app_warn( "%s: detected local %s event %s", object, ifname != NULL ? ifname : "", event != NULL ? event : "" );
 	return ttrue;
 }
 /* Typically used for extern network on process */
@@ -292,10 +297,10 @@ talk_t _onextern( obj_t this, param_t param )
     event = param_string( param, 1 );
 	/* Get the event info */
 	v = param_talk( param, 2 );
-	/* Get the event ifnmae */
-	ifname = json_string( v, "ifname" );
+	/* Get the event ifname */
+	ifname = ( v != NULL ) ? json_string( v, "ifname" ) : NULL;
 	/* Log */
-	app_warn( "%s: detected extern %s event %s, restarting service", object, ifname?:"", event );
+	app_warn( "%s: detected extern %s event %s, restarting service", object, ifname != NULL ? ifname : "", event != NULL ? event : "" );
 	return ttrue;
 }
 /* Typically used for internet network on process */
@@ -312,10 +317,10 @@ talk_t _online( obj_t this, param_t param )
     event = param_string( param, 1 );
 	/* Get the event info */
 	v = param_talk( param, 2 );
-	/* Get the event ifnmae */
-	ifname = json_string( v, "ifname" );
+	/* Get the event ifname */
+	ifname = ( v != NULL ) ? json_string( v, "ifname" ) : NULL;
 	/* Log */
-	app_warn( "%s: detected internet %s event %s, restarting service", object, ifname?:"", event );
+	app_warn( "%s: detected internet %s event %s, restarting service", object, ifname != NULL ? ifname : "", event != NULL ? event : "" );
 	/* Reset the service */
 	creset( this, "service", NULL, object );
 	return ttrue;

@@ -1,6 +1,6 @@
 /*
  *    Description:  executable program template
- *         Author:  fpktools, zxx@ashyelf.com
+ *         Author:  tmptools, zxx@ashyelf.com
  *        Company:  ashyelf
  */
 
@@ -62,6 +62,9 @@ int main( int argc, const char **argv )
 	obj_t objst;
     const char *ptr;
 
+	(void)argc;
+	(void)argv;
+
     /* Log version for debugging */
     app_info( "%s: process started [version: %s]", EXE_IDPATH, PROGRAM_VERSION );
 
@@ -69,28 +72,36 @@ int main( int argc, const char **argv )
 	objst = obj_create( TESTCOM_COM );
     /* Get the component configure */
 	cfg = config_get( objst, NULL );
+	if ( cfg == NULL )
+	{
+		app_fault( "%s: no config for %s", EXE_IDPATH, TESTCOM_COM );
+		obj_free( objst );
+		return -1;
+	}
     /* Get the name attribute value */
 	ptr = json_string( cfg, CFG_KEY_PROPERTY );
 
 	/* make a register named "loop", initialized to 1, the register can be modified in real time by other components */
 	i = 1;
 	pi = reg_set_int( objst, REG_KEY_NAME, i );
+	if ( pi == NULL )
+	{
+		app_fault( "%s: reg_set_int(%s) failed", EXE_IDPATH, REG_KEY_NAME );
+		talk_free( cfg );
+		obj_free( objst );
+		return -1;
+	}
 
     /* Loop times, print log every second */
 	while( 1 )
     {
 		// log
-        app_info( "%s: this is the %d time print name vlaue %s", EXE_IDPATH, *pi, ptr );
+        app_info( "%s: this is the %d time print name value %s", EXE_IDPATH, *pi, ptr != NULL ? ptr : "" );
 		// register+1
 		*pi = *pi+1;
 		// sleep
         sleep( 3 );
     }
-    app_fault( "%s: process completed [version: %s]", EXE_IDPATH, PROGRAM_VERSION );
-
-	talk_free( cfg );
-	obj_free( objst );
-    return 0;
 }
 
 

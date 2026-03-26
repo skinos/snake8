@@ -1,126 +1,148 @@
 /*
- *    Description:  component template
- *         Author:  tmptools, zxx@ashyelf.com
- *        Company:  ashyelf
+ * ============================================================================
+ * Skinos — component template (copy directory → rename → register in prj.json)
+ * ============================================================================
+ *
+ * What a component is
+ *   One management unit: PROJECT_ID@COM_ID.  It can own JSON configuration,
+ *   optional long-running service(s), and C callbacks invoked via HE / serv.
+ *
+ * Build provides (macros — do not #define yourself)
+ *   PROJECT_ID   project name from prj.json
+ *   COM_ID       this directory name
+ *   COM_IDPATH   "PROJECT_ID@COM_ID"
+ *   gPLATFORM, HARDWARE, gCUSTOM, gPLATFORM__*, gHARDWARE__*, gCUSTOM__*
+ *
+ * Typical copy workflow
+ *   1) Copy this folder to <your_project>/<com_id>/
+ *   2) Add "com": { "<com_id>": "description" } in prj.json
+ *   3) Register APIs in skin/skinapi (or your project's registration layer)
+ *   4) Keep only the callbacks you need; remove or stub the rest
+ *
+ * HE examples (replace myproj / mycom)
+ *   myproj@mycom              → _get()
+ *   myproj@mycom:attr=value   → _set()
+ *   myproj@mycom.setup        → _setup()
+ *   myproj@mycom.shut         → _shut()
+ *
+ * Useful headers (via skin/skin.h or add in mconfig)
+ *   config.h   config_get / config_set
+ *   com.h      cstart, creset, scall, …
+ *   serv.h     service helpers
+ *   register.h cross-process register values
+ *   See land/skin/*.h and land documentation for full API lists.
+ * ============================================================================
  */
 
 #include "skin/skin.h"
 
-/* Usable macro 
-gPLATFORM             String, the platform on which it is compiled, such as MTK platform is "MTK" (this macro is defined in the top Makefile of the SDK)
-HARDWARE              String, compiled hardware (chip), MT7628 chip is "MT7628" (this macro is defined in the top Makefile of SDK)
-gCUSTOM               String, the compiled product model, such as D218, is "D218" (this macro is defined in the top Makefile of the SDK) 
-gPLATFORM__XXXX       Such as MTK platform will have gPLATFORM MTK macro definition
-gHARDWARE__XXXX       Such as MT7628 chip hardware will have gHARDWARE__mt7628 macro definition
-gCUSTOM__XXXX         Such as D218 products will have ggCUSTOM D218 macro definition
-PROJECT_ID            String, is the project name
-COM_ID                String, component name, Name of the directory where this component resides
-COM_IDPATH            String, Full name of a component in the system, PROJECT_ID@COM_ID
-*/
+/* -------------------------------------------------------------------------- */
+/* Lifecycle                                                                  */
+/* -------------------------------------------------------------------------- */
 
-/* Available skin interfaces (specific headers are in the top /doc/ API directory) 
-link.h				implementation of general linker list
-log.h	    		log call implementation
-talk.h				implementation of common communication data types
-param.h 			implementation of parameter structure and related functions
-path.h				implementation of structure and related functions for object path and attribute path
-utility.h   		miscellaneous function implementation
-register.h			global register variable implementation
-config.h			implementation function to get/set/list the config
-project.h			provide unified project information operation interface for the system
-com.h				implementation communication to other component function use talk structure or parameter structure
-he2com.h			invokes the function implementation
-serv.h		    	service call implementation
-skinapi.h			define all the general component api
-*/
-
-/* Available Linux interfaces and macros
- * As normal programs under LINUX can call all Linux supported functions
- * If you want to use additional header files and libraries please give the location of header files and link libraries in mconfig under this directory
- * you can see the mconfig example for details of include additional header files and libraries
+/**
+ * Called when the component is brought up (e.g. init registration in prj.json).
+ * HE: project@component.setup
  */
-
-
-
-/* usually used to initialize or deploy the component, is also usually registered in the project information file to be called at startup
- * This function can be called by the user at the he terminal, project@component.setup to call this function */
 boole_t _setup( obj_t this, param_t param )
 {
-	app_info( "the %s setup has be called", COM_IDPATH );
-	printf( "the %s setup has be called\n", COM_IDPATH );
-    return ttrue;
+	(void)param;
+	app_info( "%s: _setup", COM_IDPATH );
+	printf( "%s: _setup\n", COM_IDPATH );
+	return ttrue;
 }
 
-/* Typically used to shut down or exit this component, this method is called when the system shuts down, which can be registered in the project information file
- * This function can be called by the user at the he terminal, project@component.shut to call this function */
+/**
+ * Called on shutdown path for this component.
+ * HE: project@component.shut
+ */
 boole_t _shut( obj_t this, param_t param )
 {
-	app_info( "the %s shut has be called", COM_IDPATH );
-	printf( "the %s shut has be called\n", COM_IDPATH );
-    return ttrue;
+	(void)param;
+	app_info( "%s: _shut", COM_IDPATH );
+	printf( "%s: _shut\n", COM_IDPATH );
+	return ttrue;
 }
 
-/* Functions that are triggered when viewing a component configuration are usually used to obtain the actual configuration and then calibrate and then return
- * This function can be called by the user at the he terminal, project@component to call this function */
+/* -------------------------------------------------------------------------- */
+/* Configuration                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Return configuration (whole object or subtree when path is set).
+ * HE: project@component  or  project@component:attr/path
+ */
 talk_t _get( obj_t this, attr_t path )
 {
-    talk_t cfg;
+	talk_t cfg;
 
-    /* gets the configuration parameters for the component */
-    cfg = config_get( this, path );
-
-	app_info( "returns the configuration of the %s", COM_IDPATH );
-    return cfg;
+	cfg = config_get( this, path );
+	app_info( "%s: _get", COM_IDPATH );
+	return cfg;
 }
-/* When you set a component parameter, you will be triggered to call this function, usually filtered by this function and then stored in the actual configuration
- * This function can be called by the user at the he terminal, project@component= to call this function */
+
+/**
+ * Persist configuration; on success this template restarts via _shut + _setup.
+ * HE: project@component=...  or  project@component:attr=value
+ *
+ * Customize: remove the restart pair if your component does not need it.
+ */
 boole _set( obj_t this, talk_t v, attr_t path )
 {
-    boole ret;
+	boole ret;
 
-    /* directly save the set parameters into the flash */
-    ret = config_set( this, v, path );
-    /* if the flash is successfully saved, the call is called by calling first _shut closing and then calling the _setup to restart the corresponding service */
-    if ( ret == true )
-    {
-		app_info( "save the configuration of the %s and reset it", COM_IDPATH );
-        _shut( this, NULL );
-        _setup( this, NULL );
-    }
-    return ret;
+	ret = config_set( this, v, path );
+	if ( ret == true )
+	{
+		app_info( "%s: _set saved, restarting (_shut → _setup)", COM_IDPATH );
+		_shut( this, NULL );
+		_setup( this, NULL );
+	}
+	return ret;
 }
 
-/* Usually it is started as a service process in other functions, so it will always run, and if it exits the system it will restart it */
+/* -------------------------------------------------------------------------- */
+/* Optional: long-running service                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Often registered as a supervised service (survives until exit).
+ * Replace pause() with your loop; return value affects serv policy.
+ */
 boole_t _service( obj_t this, param_t param )
 {
-	app_info( "the %s service has be ran", COM_IDPATH );
+	(void)this;
+	(void)param;
+	app_info( "%s: _service (blocked on pause() — replace with real work)", COM_IDPATH );
 	pause();
-    return tfalse;
+	return tfalse;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Optional: joint / network event (example)                                  */
+/* -------------------------------------------------------------------------- */
 
-
-/* Typically used for online event process */
+/**
+ * Example joint handler.  param: (1) event name string, (2) payload talk_t.
+ * Keep short — do not block the joint dispatcher.
+ */
 boole_t _online( obj_t this, param_t param )
 {
-    talk_t ms;
-	char *ptr;
+	talk_t ms;
+	char *payload_txt;
 	const char *event;
 
-	/* get the joint event name */
+	(void)this;
 	event = param_string( param, 1 );
-	/* get the information that the joint event carries */
 	ms = param_talk( param, 2 );
-	/* converts the event information to a string */
 
-	/* logger the joint event */
-	ptr = json2string( ms );
-	app_info( "receive a event, name is %s, carry message is %s", event, ptr );
-	/* free the string */
-	free( ptr );
-	/* To exit, remember to quit immediately after running, if you do not exit may cause the entire event handling to freeze here */
-    return ttrue;
+	payload_txt = json2string( ms );
+	app_info( "%s: joint event=%s payload=%s", COM_IDPATH,
+			event != NULL ? event : "(null)",
+			payload_txt != NULL ? payload_txt : "(null)" );
+	if ( payload_txt != NULL )
+	{
+		free( payload_txt );
+	}
+	return ttrue;
 }
-
-
-

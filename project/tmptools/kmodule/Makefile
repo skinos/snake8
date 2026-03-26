@@ -1,11 +1,18 @@
+# =============================================================================
+# Kbuild fragment — build mod.ko from module.c
+# =============================================================================
+# Usage (typical out-of-tree, from kernel build docs):
+#   make -C $(KERNEL_SRC) M=$(PWD) modules
+#
+# To ship as mydriver.ko instead of mod.ko:
+#   obj-m           := mydriver.o
+#   mydriver-objs   := module.o
+#   (or rename module.c → mydriver.c and set obj-m := mydriver.o)
+# =============================================================================
 
-### List all file
-OBJS := function.o module.o
+OBJS := module.o
 
-### Add the C flags
 EXTRA_CFLAGS +=
 
-### Make the all .c to ko file
-mod-objs := ${OBJS}
+mod-objs := $(OBJS)
 obj-m := mod.o
-

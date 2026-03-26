@@ -1,12 +1,14 @@
+# =============================================================================
+# mconfig — local compile/link knobs for this directory (Skinos build reads this)
+# =============================================================================
+# CFLAGS    extra -I / -D for this target only
+# LDFLAGS   extra link flags
+# LIBA_ADDIN / LIBSO_ADDIN  static (.a) or shared (.so) libs to link
+# =============================================================================
 
-# Compile-time increment CFLAGS
 CFLAGS += -I../
 
-# Compile-time increment LDFLAGS
 LDFLAGS +=
 
-# The library file that links to the.a or.so added at compile time
 LIBA_ADDIN :=
 LIBSO_ADDIN :=
-
-

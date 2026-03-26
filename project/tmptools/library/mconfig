@@ -1,12 +1,12 @@
+# =============================================================================
+# mconfig — local compile/link knobs for this shared/static library template
+# =============================================================================
+# Consumers link this library via their own mconfig LIBA_ADDIN / LIBSO_ADDIN.
+# =============================================================================
 
-# Compile-time increment CFLAGS
 CFLAGS += -I../
 
-# Compile-time increment LDFLAGS
 LDFLAGS +=
 
-# The library file that links to the.a or.so added at compile time
 LIBA_ADDIN :=
 LIBSO_ADDIN :=
-
-

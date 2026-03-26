@@ -1,0 +1,10 @@
+# =============================================================================
+# mconfig — local compile/link knobs for this executable template
+# =============================================================================
+
+CFLAGS += -I../
+
+LDFLAGS +=
+
+LIBA_ADDIN :=
+LIBSO_ADDIN :=
