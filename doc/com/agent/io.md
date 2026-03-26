@@ -1,8 +1,8 @@
-***
 ## IO Agent -- GPIO and Network IO Management
 Manage device GPIO input/output, support IO state monitoring, trigger actions on state changes, and report IO state to remote servers via TCP/UDP/MQTT clients and servers
 
-#### Configuration( agent@io )
+### **Configuration( `agent@io` )**
+
 ```json
 {
     "status":"io agent service status",                    // [ "disable", "enable" ]
@@ -61,7 +61,7 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
     {
         "status":"mqtt client status",                     // [ "disable", "enable" ]
         "server":"MQTT broker address",                    // [ string ], domain name or ip address
-        "port":"MQTT broker port",                         // [ number ], default 1883
+        "port":"MQTT broker port",                         // [ number ], required; typical value 1883 (not defaulted if omitted)
         "mqtt_id":"MQTT client id",                        // [ string ], default is device macid
                                                               // set to "NULL" for random id with clean session
         "mqtt_username":"MQTT username",                   // [ string ], optional
@@ -162,8 +162,9 @@ ttrue
 
 
 
-#### **API**
+### **Component API**
 
+**Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the io agent, start the service**
     setup will read the configuration, check if init map has any GPIO defined and status is not "disable", then start the background service process
     - succeed return ttrue
@@ -244,9 +245,11 @@ ttrue
     }
     ```
 
-+ `list[]` **get all network connection status**
++ `list[]` **get network connection status for active peers (see notes below)**
     - failed return NULL, the service is not running
-    - succeed return json with all client/server connection info
+    - succeed return json; each key is a **connection name** from configuration (e.g. `client`, `client2`, `mqtt`, `server:peer-ip:peer-port` for UDP server)
+    - **Not included:** TCP **listen** server units (`proto` TCP server) are skipped by implementation — only clients, MQTT clients, and UDP server child sockets appear
+    - **UDP server:** entries use a composite key: `<server-name>:<peer-ip>:<peer-port>` instead of the bare server name
     ```json
     // Attributes introduction of talk by the API return
     {
@@ -348,3 +351,41 @@ ttrue
     - Publish IO state to configured topic
     - Subscribe to configured topics for remote control
     - Support TLS with CA/cert/key files at: `<config_path>/io-<name>.ca`, `io-<name>.crt`, `io-<name>.key`
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — **when implemented** for **`agent@io`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
++
+
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_io(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@io", "status") == NULL)
+        return -1;
+    return ssets_string("agent@io", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@io", "list", NULL); talk_free if JSON */
+```
+

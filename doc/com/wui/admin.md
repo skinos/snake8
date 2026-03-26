@@ -1,31 +1,32 @@
-
-***
 ## Administrator WEB Server Management
-Administration of equipment Management web page
+Administration of equipment Management web page. The admin web stack is configured as **`wui@admin`**; the attributes below apply to that object after the service is bound to it.
 
-#### Configuration( wui@admin )
+### **Configuration( `wui@admin` )**
+
 
 ```json
 // Attributes introduction 
 {
-    "status":"start at system startup",     // [ disable, enable ]
+    "status":"start at system startup",     // [ disable, enable ] — only disable skips starting the service on setup
 
-    "port":"service port",                  // [ number ], 1-65535, default is 80
-    "sslport":"https port",                 // [ number ], 1-65535, default is 443
+    "port":"service port",                  // [ number ], 1-65535; omit or 0 = no plain HTTP listener
+    "sslport":"https port",                 // [ number ], 1-65535; omit or 0 = no HTTPS listener
     "termport":"Terminal port",             // [ number ], 1-65535, default is 81
-    "session_timeout":"session timeout",    // [ number ]
-    "talk_timeout":"talk timeout",          // [ number ]
-    "key_lifetime":"key life time",         // [ number ]
-    "auth_object":"auth object",            // [ string ]
-    "auth_api":"auth api",                  // [ string ]
+    "session_timeout":"session timeout",    // [ number ] seconds (evhttp idle); typical default 300
+    "talk_timeout":"talk timeout",          // [ number ] seconds for /public, /he, /upload, /download; typical default 61
+    "key_lifetime":"key life time",         // [ number ] seconds for session key validity; typical default 600
+    "auth_object":"auth object",            // [ string ] — object used to verify login; platform default if omitted
+    "auth_api":"auth api",                  // [ string ], default "match"
 
-    "publist":                   // vaild public command list
+    "webpage_path":"document root",         // [ string ], optional; if unset, webpath uses project default misc path
+
+    "publist":                   // valid public command list; if omitted, a built-in default allow list may apply
     {
-        "command match":"compare type"     // [ string ]: [ "start", "sub", "equal" ]
+        "command match":"compare type"     // [ string ]: "sub" = substring, "equal" = full match, any other value = prefix match
     },
-    "helist":                   // vaild he command list
+    "helist":                   // valid he command list (same compare rules as publist)
     {
-        "command match":"compare type"     // [ string ]: [ "start", "sub", "equal" ]
+        "command match":"compare type"
         // ... more the command match
     },
 
@@ -79,6 +80,9 @@ Administration of equipment Management web page
 }
 ```
 
+
+HTTPS uses certificate files named for the component, e.g. **`<component>.ca`**, **`<component>.crt`**, **`<component>.key`** in project configuration, when **`sslport`** is non-zero.
+
 Example, show all the configure
 ```shell
 wui@admin
@@ -105,45 +109,68 @@ wui@admin:status=disable
 ttrue
 ```  
 
-
-
-#### **Javascript API**
-
-1. include the js for he API
-
-```html
-<script src="/api/he.js"></script>
+Examples, change several attributes at once (**merge**)
+```shell
+wui@admin|{"status":"enable","port":"80","sslport":"443"}
+ttrue
 ```
 
-2. /api/he.js API
+### **Component API**
 
-```html
-<script>
++ `setup[]` **apply saved `wui@admin` configuration and start or skip the admin web service**, *succeed return ttrue*
+    - If **`status`** is **`disable`**, the HTTP/HTTPS service is not started.
+    - Otherwise starts the long-running **`service`** (static pages and `/auth`, `/he`, `/public`, `/upload`, `/download`, etc.).
 
-he.cmd( he command array, loading object for show, func call when return );
+    Example, run setup manually
+    ```shell
+    wui@admin.setup
+    ttrue
+    ```
 
-he.load( he command array, loading object for show );
-he.exec( he command array, loading object for show );
++ `shut[]` **stop the admin web service**, *succeed return ttrue*
+    - Stops the service instance registered for this object (same name as **`wui@admin`**).
 
-// exec the he command in background
-he.bkload( he command array );
-he.bkexec( he command array );
+    Example, shut down admin web
+    ```shell
+    wui@admin.shut
+    ttrue
+    ```
 
-</script>
+### **Lifecycle API**
+
++ `setup[]` — runs during **`init` → `app`** as **`wui@admin.setup`** in the default package.
+
++ `shut[]` — runs during **`uninit` → `app`** as **`wui@admin.shut`** in the default package.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_wui_admin(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "wui@admin", "status") == NULL)
+        return -1;
+    ok = ssets_string("wui@admin", "value", "status");
+    return ok ? 0 : -1;
+}
 ```
 
-3. The example gets a json from call the API status of object land@machine in background, the he command is "land@machine.status"
+**Call component methods**
 
-```html
-<script>
+```c
+#include "skin/skin.h"
 
-he.bkload( [ "land@machine.status" ] ).then( function(v){
-    
-    // the machines is a json that return by land@machine.status
-    var machines = v[0];
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
 
-});
-
-</script>
-
+/* Example: scall("wui@admin", "status", NULL); then talk_free if JSON */
 ```

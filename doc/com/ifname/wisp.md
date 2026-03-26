@@ -1,9 +1,9 @@
-***
 ## WISP Network Management
-Manage WISP network. This component must depend on wireless station interface and network Management Framework project  
-Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP network in the system, ifname@wisp2 will be the second WISP(5.8G) network, and increase by degress
+Manage WISP networks. This component depends on a wireless station interface (**`wifi`** `sta` / **`arch`** radio BSP) and the **network** project ([`../network/frame.md`](../network/frame.md)).  
+Usually ifname@wisp is the first WISP (2.4G) network. If there are multiple WISP networks in the system, ifname@wisp2 is the second WISP (5.8G) network, and numbering increases sequentially.
 
-#### **configuration( ifname@wisp )**   
+### **Configuration( `ifname@wisp` )**
+
 **ifname@wisp** is first WISP(2.4G) network   
 **ifname@wisp2** is second WISP(5.8G) network   
 
@@ -18,11 +18,11 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
     // Wireless connect
     "peer":"SSID to connect",              // [ string ]
     "peermac":"BSSID to connect",          // [ mac address ]
-    "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
+    "peermode":"mode of connection",       // [ "hidden" ] peer AP does not broadcast SSID; channel must be set in hidden mode  
     "channel":"wireless channel",          // [ number ], 0-165, 0 for auto
     "nossid":"disable the ssid",           // [ "disable", "enable" ], disable the local ssid when connected
     "secure":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                            // [ disable ] for no securiyt
+                                                            // [ disable ] for no security
                                                             // [ wpapsk ]  for WPAPSK
                                                             // [ wpa2psk ]  for WPA2PSK
                                                             // [ wpapskwpa2psk ] for WPA Mix
@@ -35,8 +35,8 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
     // IPv4
     "tid":"table identify number",         // [ number ] exclusive route table ID, only for multiple WAN
     "metric":"default route metric",       // [ number  ]
-    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
-    "static":                                 // detial configure for "mode" is "static"
+    "mode":"IPV4 address mode",            // [ "dhcpc" ] DHCP client mode, [ "static" ] manual setting, [ "pppoec" ] PPPoE dial
+    "static":                                 // detail configuration for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
         "mask":"IPv4 netmask",                      // < ipv4 netmask >
@@ -44,7 +44,7 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
         "dns":"IPv4 DNS",                           // [ ipv4 address ]
         "dns2":"IPv4 DNS"                           // [ ipv4 address ]
     },
-    "dhcpc":                                  // detial configure for "mode" is "dhcpc"
+    "dhcpc":                                  // detail configuration for "mode" is "dhcpc"
     {
         "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ]
         "routeopt":"dhcp option static route",                     // [ "disable", "enable" ]
@@ -52,7 +52,7 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
         "dns":"Custom DNS1",                                       // [ ip address ], This is valid when "custom_dns" is "enable"
         "dns2":"Custom DNS2"                                       // [ ip address ], This is valid when "custom_dns" is "enable"
     },
-    "pppoe":                                    // detial configure for "mode" is "pppoe"
+    "pppoec":                                   // detail configuration for "mode" is "pppoec"
     {
         "username":"PPPOE username",                     // [ string ]
         "password":"PPPOE password",                     // [ string ]
@@ -71,11 +71,11 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
 
     // IPv6
     "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "slaac" ]
-                                                    // "disable" is not use ipv6
-                                                    // "manual" for manual setting
-                                                    // "automatic" for DHCPv6
-                                                    // "slaac" for Stateless address autoconfiguration
-    "manual":                                 // detial configure for "method" is "manual"
+                                                    // "disable" means IPv6 is disabled
+                                                    // "manual" means static IPv6 settings
+                                                    // "automatic" means DHCPv6
+                                                    // "slaac" means Stateless Address Autoconfiguration
+    "manual":                                 // detail configuration for "method" is "manual"
     {
         "addr":"IPv6 address",                      // < ipv6 address >
         "prefix":"IPv6 prefix",                     // < number >, 1-128
@@ -83,7 +83,7 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
         "resolve":"IPv6 DNS",                       // [ ipv6 address ]
         "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
     },
-    "automatic":                             // detial configure for "method" is "automatic"
+    "automatic":                             // detail configuration for "method" is "automatic"
     {
         "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
         "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
@@ -102,10 +102,10 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
                                   // [ "recv" ] for count receive packet to keeplive
                                   // [ "auto" ] for count receive packet to keeplive when test the dns response failed
 
-        "action":"failed to do",  // [ "reboot" ] reboot the system
-                                  // [ "reset" ] reset the band
-                                  // [ ] other redial the connetion
-        "icmp":                                                   // detial configure for "type" is "icmp"
+        "action":"action when keeplive fails",  // [ "reboot" ] reboot the system
+                                                // [ "reset" ] reset the interface device
+                                                // [ others ] redial the connection
+        "icmp":                                                   // detail configuration for "type" is "icmp"
         {
             "dest":                                                         // destination address for ICMP keeplive
             {
@@ -116,13 +116,13 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
             "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "dns":                                                   // detial configure for "type" is "icmp"
+        "dns":                                                   // detail configuration for "type" is "icmp"
         {
             "timeout":"Maximum time to wait for the return of a dns resolve packet",   // [ number ], The unit is in seconds
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
             "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "recv":                                                  // detial configure for "type" is "recv"
+        "recv":                                                  // detail configuration for "type" is "recv"
         {
             "timeout":"How many seconds did not receive a packet considered a failure",// [ number ], The unit is in seconds
             "packets":"How many packets",                                              // [ number ]
@@ -138,7 +138,7 @@ Usually ifname@wisp is the first WISP(2.4G) network. If there are multiple WISP 
 }
 ```   
 
-Example, show first WISP(2.4G) all configure
+Example, show all configuration of first WISP (2.4G)
 ```shell
 ifname@wisp
 {
@@ -190,12 +190,12 @@ ifname@wisp:keeplive/icmp/dest/test2=8.8.4.4           # modify the icmp keepliv
 ttrue
 ifname@wisp:keeplive/icmp/dest/test3=114.114.114.114   # modify the icmp keeplive third destination address to 114.114.114.114
 ttrue
-# You can also use one command to complete the operation of the above three command
+# You can also complete the above three commands with one JSON update
 ifname@wisp:keeplive/icmp/dest|{"test":"8.8.8.8", "test2":"8.8.4.4", "test3":"114.114.114.114"}
 ttrue
 ```   
 
-Example, modify the SSID for first WISP(2.4G) connect
+Example, modify SSID and security for the first WISP (2.4G) connection
 ```shell
 ifname@wisp:peer=Myhotpot
 ttrue
@@ -205,7 +205,7 @@ ifname@wisp:wpa_key=88888888
 ttrue
 ```   
 
-You can also use one command to complete the operation of the above three command
+You can also complete the above commands with one JSON update
 ```shell
 ifname@wisp|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
 ttrue
@@ -237,26 +237,29 @@ ttrue
 
 
 
-#### **API**   
-**ifname@wisp** is first WISP network   
-**ifname@wisp2** is second WISP network   
+### **Component API**
 
-+ `status[]` **get the WISP infomation**   
-    - failed return NULL
-    - error return terror   
-    - succeed return json to describes infomation   
+**Directly callable** APIs: `ifname@wisp.method`, `ifname@wisp2.method`, …
+
+**ifname@wisp** is first WISP network  
+**ifname@wisp2** is second WISP network
+
++ `status[]` **get WISP information**   
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return JSON status information   
     ```json
     // Attributes introduction of talk by the method return
     {
         "status":"Current state",        // [ "uping", "scanning", "block", "up", "failed", "down" ]
                                              // "uping" for connecting
                                              // "scanning" for scanning the AP
-                                             // "block" for wait keeplive succeed
-                                             // "up" for the network is connect succeed
+                                             // "block" means waiting for keeplive checks to recover
+                                             // "up" means network is connected
                                              // "failed" for keeplive failed
                                              // "down" for the ifname is down
 
-        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoec" ] for PPPoE dial
         "netdev":"netdev name",         // [ string ]
         "ifdev":"ifdev name",           // [ string ], Optional
         "gw":"gateway ip address",      // [ ip address ]
@@ -284,14 +287,14 @@ ttrue
         "peer":"Peer SSID",              // [ string ]
         "peermac":"Peer BSSID",          // [ MAC address ]
         "channel":"Peer channel",        // [ 1- 165 ]
-        "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+        "signal":"signal level",         // [ 0, 1, 2, 3, 4 ], 0 is no signal, 1 is weakest, 4 is strongest
         "rate":"connect rate",           // [ number ], Optional, the unit is M
         "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
         "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %
     }
     ```   
 
-    Example, get the first WISP network infomation
+    Example, get the first WISP network information
     ```shell
     ifname@wisp.status
     {
@@ -324,9 +327,9 @@ ttrue
     ```   
 
 + `netdev[]` **get the WISP netdev**   
-    - failed return NULL
-    - error return terror       
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`       
+    - success: return netdev string  
 
     Example, get the first WISP netdev
     ```shell
@@ -335,20 +338,20 @@ ttrue
     ```   
 
 + `ifdev[]` **get the ifdev**
-    - failed return NULL
-    - error return terror   
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return ifdev component name  
 
     Example, get the first WISP network ifdev
     ```shell
-    ifname@wan.ifdev
+    ifname@wisp.ifdev
     wifi@nsta
     ```   
 
-+ `chlist[]` **get the WISP channal list*   
-    - failed return NULL
-    - error return terror   
-    - succeed return json to describes infomation   
++ `chlist[]` **get the WISP channel list**   
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return channel list in JSON   
 
     ```json
     // Attributes introduction of talk by the method return
@@ -376,10 +379,34 @@ ttrue
     }
     ```
 
-+ `aplist[]` **use the WISP scan the surrounding AP**   
-    - failed return NULL
-    - error return terror   
-    - succeed return json to describes infomation   
++ `securelist[]` **get supported security modes**
+    - failed: return `NULL`
+    - error: return `terror`
+    - success: return security mode list in JSON
+
+    ```json
+    // Attributes introduction of talk by the method return
+    {
+        "secure mode":{}       // [ string ]:{}
+        // ... more secure modes
+    }
+    ```
+
+    Example, get supported security modes of first WISP
+    ```shell
+    ifname@wisp.securelist
+    {
+        "disable":{},
+        "wpapsk":{},
+        "wpa2psk":{},
+        "wpapskwpa2psk":{}
+    }
+    ```
+
++ `aplist[]` **scan surrounding APs with WISP**   
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return scanned AP information in JSON   
 
     ```json
     // Attributes introduction of talk by the method return
@@ -389,7 +416,7 @@ ttrue
             "ssid":"SSID name",                           // [ string ]
             "channel":"channel number",                   // [ number ], 0-165, 0 for auto
             "secure":"mode of security",                  // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                                 // "disable" for no securiyt
+                                                                 // "disable" for no security
                                                                  // "wpapsk"  for WPAPSK
                                                                  // "wpa2psk"  for WPA2PSK
                                                                  // "wpapskwpa2psk" for WPA Mix
@@ -412,7 +439,7 @@ ttrue
     {
         "80:EA:07:15:0E:E6":                    # first AP by scanning
         {
-            "ssid":"1411",                                 # frist AP SSID
+            "ssid":"1411",                                 # first AP SSID
             "channel":"6",                                 # first AP channel
             "secure":"wpapskwpa2psk",                      # secure mode is WPA mix
             "wpa_encrypt":"aes",                           # encrypt type is AES
@@ -447,11 +474,11 @@ ttrue
     ```   
 
 + `shut[]` **shutdown the WISP network**   
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
-    Example, shutdown the frist WISP network
+    Example, shutdown the first WISP network
     ```shell
     ifname@wisp.shut
     ttrue
@@ -463,11 +490,11 @@ ttrue
     ```   
 
 + `setup[]` **setup the WISP network**   
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
-    Example, setup the frist WISP network
+    Example, setup the first WISP network
     ```shell
     ifname@wisp.setup
     ttrue
@@ -476,7 +503,67 @@ ttrue
     ```shell
     ifname@wisp2.setup
     ttrue
+    ```
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@wisp`**.
+
+### **Joint handlers**
+
++ `keepon[]` **clear the connect failed counter**   
+    - success: return `ttrue`
+    - called when network connection is confirmed alive
+    - resets the internal `connect_failed` counter to prevent unnecessary device reset
+
+    Example, clear the connect failed counter for first WAN network
+    ```shell
+    ifname@wisp.keepon
+    ttrue
     ```   
 
++ `keepoff[]` **handle keeplive check failure**   
+    - success: return `ttrue`
+    - performs configured action when keeplive check fails
+    - action depends on `keeplive/action` configuration:
+      - `"reboot"`: reboot the system (if uptime > 180s)
+      - `"reset"`: reset the interface device
+      - others: reset the connection
 
+    Example, handle keeplive failure for first WAN network
+    ```shell
+    ifname@wisp.keepoff
+    ttrue
+    ```   
 
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_ifname_wisp(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "ifname@wisp", "status") == NULL)
+        return -1;
+    ok = ssets_string("ifname@wisp", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("ifname@wisp", "status", NULL); then talk_free if JSON */
+```

@@ -1,19 +1,20 @@
-***
 ## Management of System Firewall
-Management of firewall for limit access from extern inteface( internet )
+Management of firewall for limit access from external **ifname** (internet)
 
-#### Configuration( forward@firewall )   
+### **Configuration( `forward@firewall` )**
+
+
 ```json
 // Attributes introduction 
 {
-    "extern interface name":       // [ "ifname@lte", "ifname@lte2", "ifname@wan", ... ], above rules set at this interface name
+    "ifname@…":                  // [ "ifname@lte", "ifname@lte2", "ifname@wan", ... ], firewall for this external ifname
     {
         "status":"disable or enable the firewall",          // [ "enable", "disable" ]
         "default":"action for default access",              // [ "drop", "accept" ]
 
         "icmp_access":"ICMP protocol access",        // [ "disable", "enable" ]
         "espah_access":"ESP/AH protocol access",     // [ "disable", "enable" ]
-        "elnet_access":"TELNET Server access",       // [ "disable", "enable" ]
+        "telnet_access":"TELNET Server access",      // [ "disable", "enable" ]
         "ssh_access":"SSH Server access",            // [ "disable", "enable" ]
         "wui_access":"WEB Server access",            // [ "disable", "enable" ]
 
@@ -30,7 +31,7 @@ Management of firewall for limit access from extern inteface( internet )
                                                                                   // single IP: 192.168.8.222
                                                                                   // multiple IP: 192.168.8.2,192.168.8.3,192.168.8.4
                                                                                   // range of IP: 192.168.8.2-192.168.8.4
-                                                                                  // signal MAC: 00:23:43:13:34:40
+                                                                                  // single MAC: 00:23:43:13:34:40
                                                                                   // space for all ip address
                 "srcport":"source port",                                 // [ number ]: valid when "proto" be "tcp" or "udp"
                                                                                   // single port: 8080
@@ -54,7 +55,7 @@ Management of firewall for limit access from extern inteface( internet )
             // ... more rule
         }
     }
-    // ... more extern interface
+    // ... more ifname
 }
 ```  
 
@@ -123,3 +124,61 @@ Example, delete the rule named webpass for ifname@lte
 forward@firewall:ifname@lte/rule/webpass=
 ttrue
 ```
+
+Examples, change several attributes at once (**merge**)
+```shell
+forward@firewall|{"ifname@lte":{"status":"enable","default":"drop"}}
+ttrue
+```
+
+### **Component API**
+
+Use standard **`forward@firewall`** get/set/merge for configuration.
+
++ `on[]` **refresh inbound firewall rules for an external ifname**, *succeed return ttrue*
+    - Parameter **2** carries **`ifname`**; the firewall for that **ifname** is rebuilt from saved configuration (skips in **default** / **parasite** network modes).
+
++ `off[]` **tear down firewall for an ifname**
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — **not** wired in the default **init** / **uninit** schedule for this component; use **`on[]`** / **`off[]`**.
+
+### **Joint handlers**
+
+| Joint key | Method |
+|-----------|--------|
+| `network/onextern` | `forward@firewall.on` |
+| `network/onvpn` | `forward@firewall.on` |
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_forward_firewall(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "forward@firewall", "status") == NULL)
+        return -1;
+    return ssets_string("forward@firewall", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("forward@firewall", "list", NULL); talk_free if JSON */
+```
+

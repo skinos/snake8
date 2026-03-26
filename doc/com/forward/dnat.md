@@ -1,13 +1,13 @@
-***
 ## Management of destination NAT
 Management of destination NAT to proxy internet port on gateway for local client access
 
-#### Configuration( forward@dnat )
+### **Configuration( `forward@dnat` )**
+
 ```json
 // Attributes introduction 
 {
 
-    "local interface name":       // [ "ifname@lan", "ifname@lan2", "ifname@lan3", ... ], above rules set at this interface name
+    "ifname@…":                   // [ "ifname@lan", "ifname@lan2", "ifname@lan3", ... ], proxy rules for this LAN ifname
     {
         "rule name":                    // [ string ], user can custom the rule name
         {
@@ -21,7 +21,7 @@ Management of destination NAT to proxy internet port on gateway for local client
         },
         // ... more rule
     }
-    // ... more local ifname
+    // ... more ifname
 }
 ```
 
@@ -29,24 +29,24 @@ Example, show current all of dnat rule
 ```shell
 forward@dnat
 {
-    "ifname@lan":                       # for the LAN
+    "ifname@lan":                       // for the LAN
     {
-        "proxy1":                          # rule name is proxy1
+        "proxy1":                          // rule name is proxy1
         {
-            "destip":"29.23.11.35",        # internet server ip is 29.23.11.35
-            "destport":"28-90",            # internet server port is start 28, end at 90 
-            "protocol":"tcpudp",           # proxy tcp and udp
-            "targetport":"100"             # proxy the server on port 100 at local interface of LAN
+            "destip":"29.23.11.35",        // internet server ip is 29.23.11.35
+            "destport":"28-90",            // internet server port is start 28, end at 90 
+            "protocol":"tcpudp",           // proxy tcp and udp
+            "targetport":"100"             // proxy the server on port 100 on this LAN ifname
         }
     },
-    "ifname@lan2":                      # for the LAN2
+    "ifname@lan2":                      // for the LAN2
     {
-        "forweb":                          # rule name is proxy1
+        "forweb":                          // rule name is forweb
         {
-            "destip":"129.232.91.5",       # internet server ip is 129.232.91.5
-            "destport":"80",               # internet server port is 80
-            "protocol":"tcp",              # proxy tcp
-            "targetport":"8000"            # proxy the server on port 8000 at local interface of LAN2
+            "destip":"129.232.91.5",       // internet server ip is 129.232.91.5
+            "destport":"80",               // internet server port is 80
+            "protocol":"tcp",              // proxy tcp
+            "targetport":"8000"            // proxy the server on port 8000 on this LAN ifname
         }
     }    
 }
@@ -69,3 +69,60 @@ Example, delete a rule named proxy2 from ifname@lan
 forward@dnat:ifname@lan/proxy2=
 ttrue
 ```   
+
+Examples, change several attributes at once (**merge**)
+```shell
+forward@dnat|{"ifname@lan":{"proxy1":{"destip":"1.2.3.4","destport":"80","protocol":"tcp","targetport":"8080"}}}
+ttrue
+```
+
+### **Component API**
+
+Use standard **`forward@dnat`** get/set/merge for configuration (see above).
+
++ `on[]` **refresh destination-NAT proxy rules for a LAN ifname**, *succeed return ttrue*
+    - Parameter **2** carries **`ifname`**; rules for that **ifname** are rebuilt from saved configuration (skips in **default** / **parasite** network modes).
+
++ `off[]` **tear down DNAT rules for an ifname**
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — **not** wired in the default **init** / **uninit** schedule for this component; refresh via **`on[]`** / **`off[]`**.
+
+### **Joint handlers**
+
+| Joint key | Method |
+|-----------|--------|
+| `network/on` | `forward@dnat.on` |
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_forward_dnat(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "forward@dnat", "status") == NULL)
+        return -1;
+    return ssets_string("forward@dnat", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("forward@dnat", "list", NULL); talk_free if JSON */
+```
+

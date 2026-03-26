@@ -52,6 +52,82 @@ typedef boole  (*comsave_t)( obj_t, attr_t, talk_t, attr_t );
  */
 typedef void*  (*comapi_t)( obj_t, param_t );
 
+/**
+ * @brief One row in the executable (COM_FILE_EXECUTE) API dispatch table: method name → handler.
+ * @see MAIN2API
+ */
+typedef struct eapi_table_st
+{
+	const char *name;
+	comapi_t    fn;
+} eapi_table_t;
+
+/**
+ * @brief Define main() for a standalone executable: read shell context, dispatch by API name, exit.
+ * @param table Array of eapi_table_t. Must be an array identifier (e.g. static const eapi_table_t foo[]),
+ *              not a pointer, so sizeof(table)/sizeof((table)[0]) yields the entry count.
+ * @note Expects shell_object / shell_param / shell_api / shell_pipe; maps return like ccall peers.
+ */
+#define MAIN2API( table ) \
+int main( int argc, const char **argv ) \
+{ \
+	int exit_code; \
+	int pipe_fd; \
+	talk_t ret; \
+	obj_t this; \
+	param_t param; \
+	const char *api; \
+	size_t i; \
+	(void)argc; \
+	(void)argv; \
+	this = shell_object(); \
+	param = shell_param(); \
+	api = shell_api(); \
+	pipe_fd = shell_pipe(); \
+	ret = tfalse; \
+	if ( api != NULL ) \
+	{ \
+		for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
+		{ \
+			if ( 0 == strcmp( api, (table)[i].name ) ) \
+			{ \
+				ret = (talk_t)( (table)[i].fn( this, param ) ); \
+				break; \
+			} \
+		} \
+	} \
+	exit_code = EXIT_EFUNC; \
+	if ( ret > tpanic ) \
+	{ \
+		exit_code = 0; \
+	} \
+	if ( ret == ttrue ) \
+	{ \
+		exit_code = EXIT_ttrue; \
+	} \
+	else if ( ret == tfalse ) \
+	{ \
+		exit_code = EXIT_tfalse; \
+	} \
+	else if ( ret == tnull ) \
+	{ \
+		exit_code = EXIT_tnull; \
+	} \
+	else \
+	{ \
+		exit_code = EXIT_terror; \
+	} \
+	if ( pipe_fd > 0 ) \
+	{ \
+		talk2fd( pipe_fd, ret, errno ); \
+		close( pipe_fd ); \
+	} \
+	param_free( param ); \
+	obj_free( this ); \
+	talk_free( ret ); \
+	return exit_code; \
+}
+
 /// Prefix for component API function symbol names (e.g., function "status" is exported as "_status")
 #define COM_API_PREFIX "_"
 /// Macro to declare a component API function returning talk_t

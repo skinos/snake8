@@ -1,13 +1,12 @@
-***
-## Gateway to Gateway -- WireGuard Mesh Network
-Create and manage WireGuard-based mesh VPN networks between multiple devices. Support endpoint discovery, automatic master election, branch/leaf topology, NAT traversal via ICMP/UDP raw packets, and dynamic peer management
+## Gateway to gateway (GTOG) — mesh VPN
+Manages multiple **WireGuard**-based mesh VPNs (**`agent@net`**, **`agent@net2`**, …): register networks, push endpoint lists, and add **branch** (relay-capable) or **leaf** peers. Topology and reachability follow each device’s NAT characteristics and configured preference.
 
-#### Configuration( agent@gtog )
+### **Configuration( `agent@gtog` )**
+
 ```json
 {
-    "net_max":"maximum number of gtog networks",           // [ number ], default GTOG_NET_MAX
-    "port_start":"starting local port for networks"        // [ number ], default GTOG_LOCAL_PORT
-                                                              // each network uses port_start + (index-1)
+    "net_max":"maximum number of gtog networks",           // [ number ], product default
+    "port_start":"starting local UDP port for networks"    // [ number ], product default; successive nets use incrementing ports
 }
 ```
 
@@ -30,6 +29,9 @@ ttrue
 
 #### **Network Configuration( agent@net )**
 Each registered network has its own configuration object (agent@net for the first, agent@net2 for the second, etc.)
+
+> **Full field list:** `server`, `extern`, `key`, `lport`, DNS, routing, `mtu`, etc. are documented in **`net.md`** (Network Client). The table below is a minimal summary; use **`net.md`** as the authoritative reference for per-network options.
+
 ```json
 {
     "port":"network server port",                              // [ number ]
@@ -59,11 +61,7 @@ agent@net
 #### **API( agent@gtog )**
 
 + `setup[]` **setup all gtog network infrastructure**
-    setup will read the gtog configuration, then for each registered network:
-    1. Ensure local port is assigned
-    2. Register network interface with network@frame
-    3. Register setup command with init system for delayed start
-    4. Register setup on network online event
+    Reads **`agent@gtog`** limits, wires each registered **`agent@net*`** into **`network@frame`**, and hooks **init** / **`network/online`** so instances can start in order.
     - succeed return ttrue
     - failed return tfalse
 
@@ -74,11 +72,7 @@ agent@net
     ```
 
 + `shut[]` **shutdown all gtog network clients**
-    shut will for each registered network:
-    1. Stop the service process
-    2. Unregister from init system
-    3. Unregister from network online event
-    4. Unregister network interface from network@frame
+    Stops each **`agent@net*`** service and removes **`network@frame`** / event hooks installed by **`setup[]`**.
     - succeed return ttrue
     - failed return tfalse
 
@@ -177,10 +171,8 @@ agent@net
             "ip":"device public ip address",              // [ ip address ]
             "port":"device public port",                  // [ number ]
             "pubkey":"device WireGuard public key",       // [ string ]
-            "nattype":"device NAT type",                  // [ "1", "2" ]
-                                                             // "1": full cone NAT, can be branch (relay node)
-                                                             // "2": restricted NAT, can only be leaf
-            "pref":"master preference value",             // [ number ], higher value = higher priority to become master
+            "nattype":"device NAT type",                  // [ "1", "2" ], affects whether the node may act as relay vs leaf-only
+            "pref":"master preference value",             // [ number ], higher = stronger candidate to coordinate the mesh
 
             "point":"endpoint VPN ip address",            // [ ip address ], assigned IP within the VPN network
             "extend":"endpoint local network"             // [ string ], local network to route through this endpoint
@@ -196,7 +188,7 @@ agent@net
     ```
 
 + `branch[ netid, {branch information} ]` **add a branch (relay) node to the network**
-    add a branch node that this device should connect to as a relay point. Branch nodes have full cone NAT and can relay traffic
+    Registers a relay-capable peer this device should use when **`nattype`** allows branch topology.
     - netid -------------------- [ string ], network identifier
     - {branch information} ----- json
     ```json
@@ -220,7 +212,7 @@ agent@net
     ```
 
 + `leaf[ netid, {leaf information} ]` **add a leaf node to the network**
-    add a leaf node as a WireGuard peer. Leaf nodes connect through branches and cannot relay traffic
+    Registers a peer that participates as **leaf** (no relay role for that endpoint).
     - netid ------------------ [ string ], network identifier
     - {leaf information} ----- json
     ```json
@@ -241,42 +233,43 @@ agent@net
     ttrue
     ```
 
-+ `online[]` **internal: handle network online event**
-    called when the network comes online, reads the gateway IP for NAT traversal
-    - succeed return ttrue
++ `online[]` **internal**
+    Invoked when **`network/online`** fires so the instance can refresh reachability context (e.g. gateway) before continuing bring-up.
 
-+ `service[]` **internal background service for each network (not called directly)**
-    this is the main service loop for each individual network (agent@net, agent@net2, etc.), it handles:
-    1. Read network configuration (netid, network address, keepalive settings)
-    2. Generate WireGuard key pair if not exists
-    3. Create WireGuard interface and configure IP address
-    4. Open raw UDP socket for NAT traversal probing
-    5. Open ICMP socket for NAT type detection
-    6. Main keepalive loop:
-       - If role is ENDPOINT: send keepalive to server, receive endpoint/branch/leaf commands
-       - If role is BRANCH: keepalive to both server and master, relay traffic
-       - If role is LEAF: keepalive to master only
-    7. Handle master election based on preference values and NAT types
-    8. Manage WireGuard peers dynamically
++ `service[]` **internal (not called via HE)**
+    Per-**`agent@net*`** worker: applies saved VPN settings, owns the WireGuard interface and peer set, exchanges keepalives with the mesh coordinator according to the current role (**master / branch / leaf**), and adjusts peers when **`endpoint` / `branch` / `leaf`** APIs update the topology. **Config errors** typically stop without auto-restart; **transient link loss** is retried.
 
-    The service will exit and return different values based on the situation:
-    - return terror: configuration error (missing netid, etc.), will not auto-restart
-    - return tfalse: connection failed, will auto-retry
-    - return ttrue: network not ready, will auto-retry
+### **Lifecycle API**
 
-    **NAT traversal mechanism:**
-    - Raw UDP packets are used to probe and maintain NAT mappings
-    - ICMP echo requests are used to detect NAT type (full cone vs restricted)
-    - Packet format: custom UDP payload containing network identifier for peer discovery
++ `setup[]` / `shut[]` — **when implemented** for **`agent@gtog`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-    **Master election:**
-    - Each endpoint has a preference value (pref)
-    - Endpoints with nattype="1" (full cone NAT) can become branch/master
-    - The endpoint with the highest pref and nattype="1" becomes the master
-    - Other endpoints connect as leaf nodes through the master or branches
+### **C Code Example**
 
-    **WireGuard management:**
-    - Key pair stored in registry: `<object>.pub` and `<object>.piv`
-    - Interface created with: `ip link add <netdev> type wireguard`
-    - Peers added/removed dynamically based on endpoint list updates
-    - Allowed IPs configured based on point (VPN IP) and extend (routed network)
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_gtog(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@gtog", "status") == NULL)
+        return -1;
+    return ssets_string("agent@gtog", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@gtog", "list", NULL); talk_free if JSON */
+```
+

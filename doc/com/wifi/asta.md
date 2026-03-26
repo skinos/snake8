@@ -1,9 +1,8 @@
-***
 ## 5.8G Station Management   
 Manage 5.8G Station
 
 
-#### Configuration( wifi@asta )   
+### **Configuration( `wifi@asta` )**
 
 ```json
 // Attribute introduction
@@ -50,7 +49,7 @@ ttrue
 wifi@asta:wpa_key=88888888
 ttrue
 # You can also use one command to complete the operation of the above three command
-iwifi@asta|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
+wifi@asta|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
 ttrue
 ```
 
@@ -68,7 +67,9 @@ ttrue
 
 
 
-#### **API**   
+### **Component API**
+
+**Directly callable** APIs: `wifi@asta.method`, `wifi@asta2.method`, … (HE / eline / HTTP `/he`).
 
 + `status[]` **get the 5.8G Station infomation**   
     - failed return NULL
@@ -209,3 +210,39 @@ ttrue
     ttrue
     ```
 
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_wifi_asta(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "wifi@asta", "status") == NULL)
+        return -1;
+    ok = ssets_string("wifi@asta", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("wifi@asta", "status", NULL); then talk_free if JSON */
+```

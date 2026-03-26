@@ -1,9 +1,9 @@
-***
 ## 5.8G SSID Management
 Manage 5.8G SSID
 Usually wifi@assid is the first 5.8G SSID. If there are multiple 5.8G SSID in the system, wifi@assid2 will be the second 5.8G SSID, and increase by degress
 
-#### Configuration( wifi@assid )   
+### **Configuration( `wifi@assid` )**
+
 **wifi@assid** is first 5.8G SSID   
 **wifi@assid2** is second 5.8G SSID   
 
@@ -108,9 +108,12 @@ wifi@assid2:status=disable
 ttrue
 ```
 
-#### **API**   
-**wifi@assid** is first 5.8G SSID   
-**wifi@assid2** is second 5.8G SSID   
+### **Component API**
+
+**Directly callable** APIs: `wifi@assid.method`, `wifi@assid2.method`, … (HE / eline / HTTP `/he`).
+
+**wifi@assid** is first 5.8G SSID  
+**wifi@assid2** is second 5.8G SSID
 
 + `status[]` **get the SSID infomation**   
     - failed return NULL
@@ -220,3 +223,39 @@ ttrue
     ttrue
     ```
 
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_wifi_assid(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "wifi@assid", "status") == NULL)
+        return -1;
+    ok = ssets_string("wifi@assid", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("wifi@assid", "status", NULL); then talk_free if JSON */
+```

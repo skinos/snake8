@@ -1,675 +1,539 @@
-***
-## Network frame management 
-Network management framework, define external connections and data scheduling when multiple external connections coexist
+# Network Frame Management
 
-#### **Configuration( network@frame )**
+## Overview
+
+The **network frame** component (`network@frame`) is the hub for LAN/WAN/VPN registration, routing policy, and firewall hooks. When several **uplinks** exist, it works with the **multi-link scheduler service** to pick the active default route using numbered **priority slots** (`"1"`…`"10"`). Supported policies include **cold backup**, **hot backup**, and **lazy hot backup** (no automatic fail-back until the current uplink fails).
+
+### Architecture
+
+The frame component consists of two main parts:
+
+1. **frame** - The main network frame component that manages network infrastructure
+2. **connect** - A service process that handles multi-link connection management and switching
+
+### Dependencies (conceptual)
+
+- **Land platform** — component model, configuration, and inter-component calls used by every Skinos root.
+- **Network helper library** — shared utilities for interface logging, routing, firewall helpers, and dial/DHCP-style bring-up (consumed by both **network@frame** and **ifname@…** docs).
+
+Multi-uplink scheduling operates on **logical interfaces** (`ifname@wan`, `ifname@lte`, …) that have been registered with **network@frame**; see **ifname** documentation for each role’s JSON model.
+
+---
+
+### **Configuration( `network@frame` )**
+
+#### Configuration attributes
 
 ```json
 // Attribute introduction
 {
-    "type":"Multiple link connect type",                          // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5", "dbdc", "dbdc2", "dbdc3", "dbdc4", "dbdc5" ]
-                                                                                // "clod" for clod backup at the connection 1, 2, 3, 4, 5, 6
-                                                                                // "hot" for hot backup at the connection 1, 2, 3, 4, 5, 6
-                                                                                // "lazy" for hot backup at the connection 1, 2, 3, 4, 5, 6
-                                                                                // "dhdc" for load balancing at the connection 1, 2, 3, 4, 5, 6
-    "concom":"Multiple link connection management components",    // [ string ], You can customize the data scheduling component to implement more personalized requirements
+    "type": "Multiple link connect type",                          // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5" ]
+                                                                   // "cold" / "hot" / "lazy" use priority slots "1".."10" (smaller number = higher priority)
+                                                                   // "hotN" / "lazyN" (N=2..5): only slots "1".."N" participate in scheduler decisions; higher slots may still exist but are outside that policy
+    "concom": "Multiple link connection management components",    // [ string ], You can customize the data scheduling component to implement more personalized requirements
 
-    "1":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
+    "1": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
+    "2": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "3": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "4": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "5": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
+    "6": "ifname object of extern",          // [ "ifname@wan", ... ]
+    "7": "ifname object of extern",          // optional; same conventions as "1".."6" (system supports up to slot "10")
+    "8": "ifname object of extern",
+    "9": "ifname object of extern",
+    "10": "ifname object of extern",
 
-    "2":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-
-    "3":"ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-
-    "4":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-
-    "5":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-
-    "6":"ifname object of extern",       // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-
-    // Configure parameters of the delay switchover function, only in dbdc mode, the function can control the data via low delay connection
-    "delay_count":"Statistical delay times of last",   // [ number ]
-    "delay_divide":"delay divide line",                // [ number ], the unit is ms
-    "delay_diff":"Delay differential",                 // [ number ], the unit is ms
+    // Configure parameters of the delay switchover function, only use in dbdc mode(reserved), the function can control the data via low delay connection
+    "delay_count": "Statistical delay times of last",   // [ number ]
+    "delay_divide": "delay divide line",                // [ number ], the unit is ms
+    "delay_diff": "Delay differential",                 // [ number ], the unit is ms
 
     // DNS custom when Multiple DNS
-    "custom_dns":"Custom DNS",                       // [ "disable", "enable", "ifname@lte", "ifname@lte2", ... ]
-    "dns":"Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
-    "dns2":"Custom DNS2"                             // [ ip address ], This is valid when "custom_dns" is "enable"
-}
-// Examples
-{
-    "type":"dbdc",                  // dhdc for load balancing on ifname@lte, ifname@lte2, ifname@wan, ifname@wisp
-    "1":"ifname@lte",
-    "2":"ifname@lte2",
-    "3":"ifname@wan",
-    "4":"ifname@wisp",
-    "delay_count":"10",             // Collect statistics on the latest 10 delays and schedule traffic based on the delay
-    "delay_divide":"150", 
-    "delay_diff":"100"
+    "custom_dns": "Custom DNS",                       // [ "disable", "enable", "ifname@lte", "ifname@lte2", ... ]
+    "dns": "Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
+    "dns2": "Custom DNS2"                             // [ ip address ], This is valid when "custom_dns" is "enable"
 }
 ```
 
+### Connection Types
 
-#### **API( network@frame )**
+| Type | Description | Priority slots considered by the scheduler |
+|------|-------------|-----------------------------------------------|
+| `cold` | Cold backup — only one uplink active at a time; others are brought down | `"1"` .. `"10"` |
+| `hot` | Hot backup — several uplinks may stay up; default route prefers the smallest-numbered online slot | `"1"` .. `"10"` |
+| `hot2` | Hot backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
+| `hot3` | Hot backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
+| `hot4` | Hot backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
+| `hot5` | Hot backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
+| `lazy` | Lazy hot backup — after a switch to a backup, it does not move back to a higher-priority link until that backup fails | `"1"` .. `"10"` |
+| `lazy2` | Lazy backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
+| `lazy3` | Lazy backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
+| `lazy4` | Lazy backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
+| `lazy5` | Lazy backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
 
-+ `status[]` **show external connections status when multiple external connections coexist**
-    - failed return NULL
-    - error return terror, Like in the wrong mode of operation, only work in the muliti-connection mode
-    - return json to describes the network infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":            // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]:{}
-        {
-            "status":"Whether online",    // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "reset", "down" ], "up" for online
-                                             // "nodevice" for the corresponding module could not be found
-                                             // "reset" for reset the device
-                                             // "setup" for setup the connection
-                                             // "register" for register to peer
-                                             // "uping" for connecting
-                                             // "scanning" for scanning the peer
-                                             // "block" for wait keeplive succeed
-                                             // "up" for ready to connect to internet, hint signal/network/simcard all ok
-                                             // "failed" for keeplive failed
-                                             // "down" for the ifname is down
+### Configuration Example
 
-            "inuse":"Whether used"        // [ disable, enable ], enable for in used, disable for not used
-        },
-        //"ifname object":{ ... }     How many extern connections how many properties show
+```json
+{
+    "type": "hot4",                  // multi-link scheduling on 4 extern connections
+    "1": "ifname@lte",
+    "2": "ifname@lte2",
+    "3": "ifname@wan",
+    "4": "ifname@wisp",
+    "delay_count": "10",             // Collect statistics on the latest 10 delays and schedule traffic based on the delay
+    "delay_divide": "150", 
+    "delay_diff": "100"
+}
+```
+
+---
+
+## API Reference
+
+### Management APIs
+
+#### `setup[]` - Setup network infrastructure
+- Prepares the network framework (routing policy, firewall hooks, registration of local and external logical interfaces).
+- When multi-link settings exist for the current device mode, starts the **multi-link scheduler service** in the background.
+
+#### `shut[]` - Shutdown network infrastructure
+- Stops the multi-link scheduler (if running), tears down registrations, and clears framework-managed firewall state as appropriate.
+
+#### `service[]` - Start multi-link scheduler
+- Used internally to launch the scheduler executable that performs uplink selection; ordinary administration goes through `network@frame` and configuration.
+
+### Query APIs
+
+#### `status[]` - Show external connections status
+
+Returns the status of external connections when multiple external connections coexist.
+
+**Returns:**
+- `NULL` - Failed
+- `terror` - Error (e.g., wrong mode of operation, only works in multi-connection mode)
+- JSON object describing network information
+
+```json
+// Attributes introduction of talk by the method return
+{
+    "ifname object": {           // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
+        "status": "Whether online",    // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "down" ], "up" for online
+        "inuse": "Whether used"        // [ "disable", "enable" ], enable for in used, disable for not used
     }
-    ```
+}
+```
 
-    Example, get external connections status
-    ```shell
-    network@frame.status
-    {
-        "ifname@lte":                   # ifname@lte status is online and inuse current
-        {
-            "status":"up",
-            "inuse":"enable"
-        },
-        "ifname@lte2":                  # ifname@lte2 status is offline and not use current
-        {
-            "status":"down",
-            "inuse":"disable"
-        }
+**Status Values:**
+- `nodevice` - Corresponding module could not be found
+- `reset` - Reset the device
+- `setup` - Setup the connection
+- `register` - Register to peer
+- `uping` - Connecting
+- `scanning` - Scanning the peer
+- `block` - Wait keeplive succeed
+- `up` - Ready to connect to internet (signal/network/simcard all ok)
+- `failed` - Keeplive failed
+- `down` - The ifname is down
+
+**Example:**
+```shell
+network@frame.status
+{
+    "ifname@lte": {
+        "status": "up",
+        "inuse": "enable"
+    },
+    "ifname@lte2": {
+        "status": "down",
+        "inuse": "disable"
     }
-    ```
+}
+```
 
-+ `list[]` **list all connections**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":"The corresponding ifdev object",    // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]: [ string ]
-        //"ifname object":{ ... }     How many extern connections how many properties show
+#### `list[]` - List all connections
+
+Returns a list of all registered connections.
+
+```json
+// Attributes introduction of talk by the method return
+{
+    "ifname object": "The corresponding ifdev object"    // [ "ifname@wan", ... ]: [ string ]
+}
+```
+
+**Example:**
+```shell
+network@frame.list
+{
+    "ifname@lan": "bridge@lan",
+    "ifname@lte": "modem@lte",
+    "ifname@lte2": "modem@lte2"
+}
+```
+
+#### `local[]` - List all local connections and information
+
+Returns detailed information about local (LAN) connections.
+
+```json
+// Attributes introduction of talk by the method return
+{
+    "ifname object": {
+        "status": "Current state",        // [ "uping", "down", "up" ]
+        "mode": "IPV4 address mode",      // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
+        "netdev": "netdev name",          // [ string ]
+        "ifdev": "ifdev name",            // [ string ], Optional
+        "gw": "gateway ip address",       // [ ip address ], Optional
+        "dns": "dns ip address",          // [ ip address ], Optional
+        "dns2": "dns2 ip address",        // [ ip address ], Optional
+        "ip": "ip address",               // [ ip address ]
+        "mask": "network mask",           // [ ip address ]
+        "ontime": "online uptime",        // [ string ], Optional, online system uptime
+        "livetime": "online time",        // [ string ], format is hour:minute:second:day
+        "rx_bytes": "received bytes",     // [ number ]
+        "rx_packets": "received packets", // [ number ]
+        "tx_bytes": "transmitted bytes",  // [ number ]
+        "tx_packets": "transmitted packets",// [ number ]
+        "mac": "MAC address",             // [ mac address ]
+        "method": "IPv6 address mode",    // [ "manual", "automatic", "slaac" ], Optional
+        "addr": "IPv6 address",           // [ ipv6 address ], Optional
+        "addr2": "IPv6 address2",         // [ ipv6 address ], Optional
+        "addr3": "IPv6 address3"          // [ ipv6 address ], Optional
     }
-    ``` 
+}
+```
 
-    Example, get all connections
-    ```shell
-    network@frame.list
-    {
-        "ifname@lan":"bridge@lan",              # local connection named ifname@lan
-        "ifname@lte":"modem@lte",               # extern connection named ifname@lte
-        "ifname@lte2":"modem@lte2"              # extern connection named ifname@lte2
-    }
-    ```
+#### `extern[]` - List all extern connections and information
 
-+ `local[]` **list all local connections and infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":            // [ "ifname@lan", "ifname@lan2", "ifname@lan3", "ifname@lan4" ]:{}
-        {                           // return by API "status" of ifname object
-            "status":"Current state",        // [ "uping", "down", "up" ]
-                                                // "uping" for connecting
-                                                // "down" for the ifname is down
-                                                // "up" for the network is connect succeed
+Returns detailed information about external (WAN) connections.
 
-            "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
-            "netdev":"netdev name",         // [ string ]
-            "ifdev":"ifdev name",           // [ string ], Optional
-            "gw":"gateway ip address",      // [ ip address ], Optional
-            "dns":"dns ip address",         // [ ip address ], Optional
-            "dns2":"dns2 ip address",       // [ ip address ], Optional
-            "ip":"ip address",              // [ ip address ]
-            "mask":"network mask",          // [ ip address ]
-            "ontime":"online uptime",       // [ string ], Optional, online system uptime
-            "livetime":"online time",       // [ string ], format is hour:minute:second:day
-            "rx_bytes":"send bytes",        // [ number ]
-            "rx_packets":"send packets",    // [ number ]
-            "tx_bytes":"receive bytes",     // [ number ]
-            "tx_packets":"receive packets", // [ number ]
-            "mac":"MAC address",            // [ mac address ]
-
-            "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
-                                                // "manual" for manual setting
-                                                // "automatic" for DHCPv6
-                                                // "slaac" for Stateless address autoconfiguration
-            "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-            "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-            "addr3":"IPv6 address3"         // [ ipv6 address ], Optional, exist when IPV6 enable
-        }
-        //"ifname object":{ ... }     How many local connections how many properties show
-    }
-    ```
-
-    Example, get all the local connections infomation
-    ```shell
-    network@frame.local
-    {
-        "ifname@lan":                           # local connection named ifname@lan
-        {
-            "mode":"static",
-            "ifname":"ifname@lan",
-            "ifdev":"bridge@lan",
-            "netdev":"lan",
-            "ontime":"00:00:23:0",
-            "status":"up",
-            "ip":"192.168.8.1",
-            "mask":"255.255.255.0",
-            "livetime":"02:52:37:0",
-            "rx_bytes":"348892",
-            "rx_packets":"5923",
-            "tx_bytes":"280817",
-            "tx_packets":"335",
-            "mac":"00:03:7F:12:72:06"
-        }
-    }
-    ```
-
-+ `extern[]` **list all extern connections and infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":          // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]:{}
-        {                         // return by API "status" of ifname object
-            "status":"Current state",        // [ "uping", "down", "up" ]
-                                                // "uping" for connecting
-                                                // "down" for the ifname is down
-                                                // "block" for wait keeplive return
-                                                // "failed" for keeplive failed
-                                                // "up" for the network is connect succeed
-
-            "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
-            "netdev":"netdev name",         // [ string ]
-            "ifdev":"ifdev name",           // [ string ], Optional
-            "gw":"gateway ip address",      // [ ip address ]
-            "dns":"dns ip address",         // [ ip address ]
-            "dns2":"dns2 ip address",       // [ ip address ]
-            "ip":"ip address",              // [ ip address ]
-            "mask":"network mask",          // [ ip address ]
-            "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
-            "ontime":"online uptime",       // [ string ], Optional, online system uptime
-            "livetime":"online time",       // [ string ], format is hour:minute:second:day
-            "rx_bytes":"send bytes",        // [ number ]
-            "rx_packets":"send packets",    // [ number ]
-            "tx_bytes":"receive bytes",     // [ number ]
-            "tx_packets":"receive packets", // [ number ]
-            "mac":"MAC address",            // [ mac address ]
-
-            "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
-                                                // "manual" for manual setting
-                                                // "automatic" for DHCPv6
-                                                // "slaac" for Stateless address autoconfiguration
-            "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-            "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-            "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+```json
+// Attributes introduction of talk by the method return
+{
+    "ifname object": {
+        "status": "Current state",
+        "mode": "IPV4 address mode",      // [ "dhcpc", "static", "pppoe" ]
+        "netdev": "netdev name",
+        "ifdev": "ifdev name",
+        "gw": "gateway ip address",
+        "dns": "dns ip address",
+        "dns2": "dns2 ip address",
+        "ip": "ip address",
+        "mask": "network mask",
+        "delay": "delay time",            // [ "failed", "block", number ]
+        "ontime": "online uptime",
+        "livetime": "online time",
+        "rx_bytes": "received bytes",
+        "rx_packets": "received packets",
+        "tx_bytes": "transmitted bytes",
+        "tx_packets": "transmitted packets",
+        "mac": "MAC address",
+        "method": "IPv6 address mode",
+        "addr": "IPv6 address",
         
-                ////////////////////////////////////////////////////////////////////////////////////////////
-                // show this attr when "ifname object" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
-                ////////////////////////////////////////////////////////////////////////////////////////////
-                "imei":"IMEI numer",            // [ string ]
-                "imsi":"IMSI number",           // [ string ]
-                "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
-                                                        // number for iccid
-                                                        // "nosim" for cannot found the simcard
-                                                        // "pin" for the simcard need PIN code
-                                                        // "puk" for the simcard pin error
-                "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
-                                                        // number for MCC and MNC
-                                                        // "noreg" for cannot register to opeartor
-                                                        // "unreg" for cannot register to opeartor
-                                                        // "dereg" for register to operator be refused
-                "name":"modem name",             // [ string ], lte modem model or name
-                "operator":"operator name",      // [ string ]
-                "nettype":"network type",        // The format varies depending on the module
-                                                // 2G usually shows GSM, GPRS, EDGE, CDMA
-                                                // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
-                                                // 4G usually shows LTE, FDD, TDD
-                "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
-                "rssi":"signal intensity",       // [ number ], the unit is dBm
-                "csq":"CSQ number",              // [ number ], Optional
-                "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
-                "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
-                "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
-                "band":"current band",           // [ string ], Optional, The format varies depending on the module
-                "ci":"cell identity",            // [ string ], Optional
-                "lac":"location area code",      // [ string ], Optional
-                "channel":"location area code",  // [ string ], Optional    
-
-                //////////////////////////////////////////////////////////////////
-                // show this attr when "ifname object" be "ifname@wisp" "ifname@wisp2" //
-                //////////////////////////////////////////////////////////////////
-                "peer":"Peer SSID",              // [ string ]
-                "peermac":"Peer BSSID",          // [ MAC address ]
-                "channel":"Peer channel",        // [ 1- 165 ]
-                "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
-                "rate":"connect rate",           // [ number ], Optional, the unit is M
-                "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
-                "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
-
-        }
-        //"ifname object":{ ... }     How many extern connections how many properties show
+        // LTE specific attributes (for ifname@lte, ifname@lte2, etc.)
+        "imei": "IMEI number",
+        "imsi": "IMSI number",
+        "iccid": "ICCID number",          // [ number, "nosim", "pin", "puk" ]
+        "plmn": "MCC and MNC",            // [ number, "noreg", "dereg" ]
+        "name": "modem name",
+        "operator": "operator name",
+        "nettype": "network type",
+        "signal": "signal level",         // [ "0", "1", "2", "3", "4" ]
+        "rssi": "signal intensity",
+        "csq": "CSQ number",
+        "rsrp": "RSRP value",
+        "rsrq": "RSRQ value",
+        "sinr": "sinr value",
+        "band": "current band",
+        "ci": "cell identity",
+        "lac": "location area code",
+        "channel": "channel",
+        
+        // WISP specific attributes (for ifname@wisp, ifname@wisp2)
+        "peer": "Peer SSID",
+        "peermac": "Peer BSSID",
+        "rate": "connect rate",
+        "rssp": "Peer signal percentage"
     }
-    ```
+}
+```
 
-    Example, get all the extern connections infomation
-    ```shell
-    network@frame.extern
-    {
-        "ifname@lte":
-        {
-            "mode":"dhcpc",                    # IPv4 connect mode is DHCP
-            "netdev":"usb1",                   # netdev is usb1
-            "gw":"10.84.136.246",
-            "dns":"120.80.80.80",
-            "dns2":"221.5.88.88",
-            "ifdev":"modem@lte",
-            "ontime":"28826",
-            "status":"up",                     # connect is succeed
-            "delay":"26",
-            "ip":"10.84.136.245",
-            "mask":"255.255.255.252",
-            "livetime":"00:31:58:0",
-            "rx_bytes":"4407784",
-            "rx_packets":"34234",
-            "tx_bytes":"4440236",
-            "tx_packets":"47893",
-            "mac":"02:50:F4:00:00:00",
-            "imei":"868186042111714",
-            "ci":"4A37D91",
-            "lac":"25E3",
-            "plmn":"46001",
-            "csq":"23",
-            "nettype":"FDD LTE",
-            "rsrp":"-97",
-            "rssi":"-66",
-            "rsrq":"-9",
-            "sinr":"-18",
-            "band":"LTE BAND 1",
-            "channel":"100",
-            "signal":"4",
-            "operator":"China Unicom",
-            "imsi":"460018708133639",
-            "iccid":"8986012580155265717",
-            "name":"Quectel-EC2X"
-        },
-        "ifname@wisp":
-        {
-            "status":"up",                     # connect is succeed
-            "mode":"dhcpc",                    # IPv4 connect mode is DHCP
-            "netdev":"ath11",                  # netdev is ath11
-            "gw":"192.168.10.254",             # gateway is 192.168.10.254
-            "dns":"114.114.114.114",           # dns is 114.114.114.114
-            "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
-            "ip":"192.168.10.1",               # ip address is 192.168.1.1
-            "mask":"255.255.255.0",            # network mask is 255.255.255.0
-            "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
-            "rx_bytes":"1256",                 # receive 1256 bytes
-            "rx_packets":"4",                  # receive 4 packets
-            "tx_bytes":"1320",                 # send 1320 bytes
-            "tx_packets":"4",                  # send 4 packets
-            "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
-            "method":"slaac",                  # IPv6 address mode is slaac
-            "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
-            "peer":"TP-link-2231",            # peer is TP-link-2231
-            "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
-            "channel":"10",                   # channel is 10
-            "rate":"270",                     # rate is 270M
-            "rssi":"-41",                     # rssi is -41dBm
-            "signal":"3"                      # signal level is 3
-        },
-        "ifname@wan":
-        {
-            "status":"up",                     # connect is succeed
-            "mode":"static",                   # IPv4 connect mode is static
-            "netdev":"wan",                    # netdev is lan
-            "gw":"192.168.10.254",             # gateway is 192.168.10.254
-            "dns":"114.114.114.114",           # dns is 114.114.114.114
-            "dns2":"221.5.88.88",              # backup dns is 221.5.88.88
-            "ip":"192.168.10.1",               # ip address is 192.168.1.1
-            "mask":"255.255.255.0",            # network mask is 255.255.255.0
-            "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
-            "rx_bytes":"1256",                 # receive 1256 bytes
-            "rx_packets":"4",                  # receive 4 packets
-            "tx_bytes":"1320",                 # send 1320 bytes
-            "tx_packets":"4",                  # send 4 packets
-            "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
-            "method":"slaac",                  # IPv6 address mode is slaac
-            "addr":"fe80::50:f4ff:fe00:0"      # local IPv6 address is fe80::50:f4ff:fe00:0
-        }        
+#### `vpn[]` - List all VPN connections and information
+
+Returns information about VPN connections.
+
+```json
+{
+    "ifname object": {
+        "mode": "current mode",
+        "status": "current state",
+        "ifdev": "corresponding ifdev object",
+        "netdev": "netdev name of linux",
+        "ip": "IP address",
+        "rx_bytes": "received bytes",
+        "rx_packets": "received packets",
+        "tx_bytes": "transmitted bytes",
+        "tx_packets": "transmitted packets",
+        "mac": "MAC address"
     }
-    ```
+}
+```
 
-+ `vpn[]` **list all vpn connections and infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":              // [ string ]:{}, VPN ifname object name
-        {                             // return by API "status" of ifname object
-            "mode":"current mode",
-            "status":"current state",
-            "ifdev":"corresponding ifdev object",
-            "netdev":"netdev name of linux",
-            "ip":"IP address",
-            "rx_bytes":"receive bytes",
-            "rx_packets":"receive packets",
-            "tx_bytes":"tx bytes",
-            "tx_packets":"tx packets",
-            "mac":"MAC address"            
-            //... more the attr return by API "status" of ifname object
-        }
-        //"ifname object":{ ... }     How many extern connections how many properties show
-    }
-    ```
+#### `outer[]` - List all extern and VPN connections
 
-    Example, get all the vpn connections infomation
-    ```shell
-    network@frame.vpn
-    {
-        "ovpn@client":
-        {
-            ...
-        },
-        "vpnc@pptp":
-        {
-            ...
-        }
-    }    
-    ```
+Combines extern and VPN connection information.
 
-+ `outer[]` **list all extern and vpn ifname and its infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {
-        "ifname object":              // [ string ]:{}, VPN and extern ifname object name
-        {                             // return by API "status" of ifname object
-            "mode":"current mode",
-            "status":"current state",
-            "ifdev":"corresponding ifdev object",
-            "netdev":"netdev name of linux",
-            "ip":"IP address",
-            "rx_bytes":"receive bytes",
-            "rx_packets":"receive packets",
-            "tx_bytes":"tx bytes",
-            "tx_packets":"tx packets",
-            "mac":"MAC address"            
-            //... more the attr return by API "status" of ifname object
-        }
-        //"ifname object":{ ... }     How many extern connections how many properties show
-    }
-    ```
+#### `default[]` - Get current default connection
 
-    Example, get all the extern and vpn connections infomation
-    ```shell
-    network@frame.outer
-    {
-        "ifname@wan":
-        {
-            ...
-        },    
-        "ifname@wisp":
-        {
-            ...
-        },          
-        "ovpn@client":
-        {
-            ...
-        },
-        "vpnc@pptp":
-        {
-            ...
-        }
-    }        
-    ```
+Returns the current default gateway connection information.
 
-+ `default[]` **get current default connection and infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {                                // return by API "status" of ifname object
-        "ifname":"ifname object",       // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
-        "status":"Current state",       // [ "uping", "down", "up" ]
-                                            // "uping" for connecting
-                                            // "down" for the ifname is down
-                                            // "block" for wait keeplive return
-                                            // "failed" for keeplive failed
-                                            // "up" for the network is connect succeed
+- Call without arguments: return JSON with connection info
+- Call with one argument (ifname): return `ttrue` when matched, otherwise `tfalse`
 
-        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
-        "netdev":"netdev name",         // [ string ]
-        "ifdev":"ifdev name",           // [ string ], Optional
-        "gw":"gateway ip address",      // [ ip address ]
-        "dns":"dns ip address",         // [ ip address ]
-        "dns2":"dns2 ip address",       // [ ip address ]
-        "ip":"ip address",              // [ ip address ]
-        "mask":"network mask",          // [ ip address ]
-        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
-        "ontime":"online uptime",       // [ string ], Optional, online system uptime
-        "livetime":"online time",       // [ string ], format is hour:minute:second:day
-        "rx_bytes":"send bytes",        // [ number ]
-        "rx_packets":"send packets",    // [ number ]
-        "tx_bytes":"receive bytes",     // [ number ]
-        "tx_packets":"receive packets", // [ number ]
-        "mac":"MAC address",            // [ mac address ]
+#### `gateway[]` - Get current gateway connection
 
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
-                                            // "manual" for manual setting
-                                            // "automatic" for DHCPv6
-                                            // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
-    
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            // show this attr when "ifname" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            "imei":"IMEI numer",            // [ string ]
-            "imsi":"IMSI number",           // [ string ]
-            "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
-                                                    // number for iccid
-                                                    // "nosim" for cannot found the simcard
-                                                    // "pin" for the simcard need PIN code
-                                                    // "puk" for the simcard pin error
-            "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
-                                                    // number for MCC and MNC
-                                                    // "noreg" for cannot register to opeartor
-                                                    // "unreg" for cannot register to opeartor
-                                                    // "dereg" for register to operator be refused
-            "name":"modem name",             // [ string ], lte modem model or name
-            "operator":"operator name",      // [ string ]
-            "nettype":"network type",        // The format varies depending on the module
-                                            // 2G usually shows GSM, GPRS, EDGE, CDMA
-                                            // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
-                                            // 4G usually shows LTE, FDD, TDD
-            "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
-            "rssi":"signal intensity",       // [ number ], the unit is dBm
-            "csq":"CSQ number",              // [ number ], Optional
-            "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
-            "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
-            "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
-            "band":"current band",           // [ string ], Optional, The format varies depending on the module
-            "ci":"cell identity",            // [ string ], Optional
-            "lac":"location area code",      // [ string ], Optional
-            "channel":"location area code",  // [ string ], Optional    
+Returns the current gateway connection information (similar to `default[]`).
 
-            //////////////////////////////////////////////////////////////////
-            // show this attr when "ifname" be "ifname@wisp" "ifname@wisp2" //
-            //////////////////////////////////////////////////////////////////
-            "peer":"Peer SSID",              // [ string ]
-            "peermac":"Peer BSSID",          // [ MAC address ]
-            "channel":"Peer channel",        // [ 1- 165 ]
-            "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
-            "rate":"connect rate",           // [ number ], Optional, the unit is M
-            "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
-            "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
-    }
-    ```
+### Interface Management APIs
 
-    Example, get current default connection infomation
-    ```shell
-    network@frame.default
-    {
-        "ifname":"ifname@lte2",              # current default connetion is ifname@lte2, and the above is the infomation
-        "mode":"dhcpc",
-        "netdev":"usb0",
-        "gw":"10.232.185.157",
-        "dns":"120.80.80.80",
-        "dns2":"221.5.88.88",
-        "ontime":"02:22:47:0",
-        "status":"up",
-        "ip":"10.232.185.158",
-        "mask":"255.255.255.252",
-        "delay":"186",
-        "livetime":"03:08:57:0",
-        "rx_bytes":"142658",
-        "rx_packets":"1671",
-        "tx_bytes":"168684",
-        "tx_packets":"1808",
-        "mac":"02:50:F4:00:00:00",
-        "name":"Quectel-RG500Q",
-        "imei":"869710030002905",
-        "imsi":"460015356123463",
-        "iccid":"89860121801097564807",
-        "state":"connect",
-        "rssi":"-75",
-        "signal":"4"
-    }    
-    ```
+#### `register[ifname,concom,ifdev,type]` - Register an interface
 
-+ `gateway[]` **get current gateway connection and infomation**
-    - failed return NULL
-    - return json to describes the infomation  
-    ```json
-    // Attributes introduction of talk by the method return
-    {                                // return by API "status" of ifname object
-        "ifname":"ifname object",       // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
-        "status":"Current state",       // [ "uping", "down", "up" ]
-                                            // "uping" for connecting
-                                            // "down" for the ifname is down
-                                            // "block" for wait keeplive return
-                                            // "failed" for keeplive failed
-                                            // "up" for the network is connect succeed
+Registers a network interface with the frame.
 
-        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
-        "netdev":"netdev name",         // [ string ]
-        "ifdev":"ifdev name",           // [ string ], Optional
-        "gw":"gateway ip address",      // [ ip address ]
-        "dns":"dns ip address",         // [ ip address ]
-        "dns2":"dns2 ip address",       // [ ip address ]
-        "ip":"ip address",              // [ ip address ]
-        "mask":"network mask",          // [ ip address ]
-        "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
-        "ontime":"online uptime",       // [ string ], Optional, online system uptime
-        "livetime":"online time",       // [ string ], format is hour:minute:second:day
-        "rx_bytes":"send bytes",        // [ number ]
-        "rx_packets":"send packets",    // [ number ]
-        "tx_bytes":"receive bytes",     // [ number ]
-        "tx_packets":"receive packets", // [ number ]
-        "mac":"MAC address",            // [ mac address ]
+**Parameters:**
+- `ifname` - Interface name (e.g., "ifname@lte")
+- `concom` - Connection component name
+- `ifdev` - Interface device name
+- `type` - Interface type ("local", "extern", "vpn")
 
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
-                                            // "manual" for manual setting
-                                            // "automatic" for DHCPv6
-                                            // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
-    
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            // show this attr when "ifname" be "ifname@lte" "ifname@lte2" "ifname@lte3" "ifname@lte4" // 
-            ////////////////////////////////////////////////////////////////////////////////////////////
-            "imei":"IMEI numer",            // [ string ]
-            "imsi":"IMSI number",           // [ string ]
-            "iccid":"ICCID number",         // [ number, "nosim", "pin", "puk" ]
-                                                    // number for iccid
-                                                    // "nosim" for cannot found the simcard
-                                                    // "pin" for the simcard need PIN code
-                                                    // "puk" for the simcard pin error
-            "plmn":"MCC and MNC",           // [ number, "noreg", "dereg" ]
-                                                    // number for MCC and MNC
-                                                    // "noreg" for cannot register to opeartor
-                                                    // "unreg" for cannot register to opeartor
-                                                    // "dereg" for register to operator be refused
-            "name":"modem name",             // [ string ], lte modem model or name
-            "operator":"operator name",      // [ string ]
-            "nettype":"network type",        // The format varies depending on the module
-                                            // 2G usually shows GSM, GPRS, EDGE, CDMA
-                                            // 3G usually shows WCDMA, EVDO, TDSCDMA, HSPA, HSDPA, HSUPA
-                                            // 4G usually shows LTE, FDD, TDD
-            "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], "0" for no signal, "1" for weakest signal , "4" for strongest signal
-            "rssi":"signal intensity",       // [ number ], the unit is dBm
-            "csq":"CSQ number",              // [ number ], Optional
-            "rsrp":"RSRP value",             // [ string ], Optional, The format varies depending on the module
-            "rsrq":"RSRQ value",             // [ string ], Optional, The format varies depending on the module
-            "sinr":"sinr value",             // [ string ], Optional, The format varies depending on the module  
-            "band":"current band",           // [ string ], Optional, The format varies depending on the module
-            "ci":"cell identity",            // [ string ], Optional
-            "lac":"location area code",      // [ string ], Optional
-            "channel":"location area code",  // [ string ], Optional    
+#### `unregister[ifname,type]` - Unregister an interface
 
-            //////////////////////////////////////////////////////////////////
-            // show this attr when "ifname" be "ifname@wisp" "ifname@wisp2" //
-            //////////////////////////////////////////////////////////////////
-            "peer":"Peer SSID",              // [ string ]
-            "peermac":"Peer BSSID",          // [ MAC address ]
-            "channel":"Peer channel",        // [ 1- 165 ]
-            "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
-            "rate":"connect rate",           // [ number ], Optional, the unit is M
-            "rssi":"Peer RSSI",              // [ number ], Optional, the unit is dBm
-            "rssp":"Peer signal percentage"  // [ number ], Optional, the unit is %    
-    }
-    ```
+Unregisters a network interface from the frame.
 
-    Example, get current gateway connection infomation
-    ```shell
-    network@frame.gateway
-    {
-        "ifname":"ifname@lte2",              # current default connetion is ifname@lte2, and the above is the infomation
-        "mode":"dhcpc",
-        "netdev":"usb0",
-        "gw":"10.232.185.157",
-        "dns":"120.80.80.80",
-        "dns2":"221.5.88.88",
-        "ontime":"02:22:47:0",
-        "status":"up",
-        "ip":"10.232.185.158",
-        "mask":"255.255.255.252",
-        "delay":"186",
-        "livetime":"03:08:57:0",
-        "rx_bytes":"142658",
-        "rx_packets":"1671",
-        "tx_bytes":"168684",
-        "tx_packets":"1808",
-        "mac":"02:50:F4:00:00:00",
-        "name":"Quectel-RG500Q",
-        "imei":"869710030002905",
-        "imsi":"460015356123463",
-        "iccid":"89860121801097564807",
-        "state":"connect",
-        "rssi":"-75",
-        "signal":"4"
-    }    
-    ```
+#### `add[ifdev,netdev]` - Add a device
+
+Adds a network device to the frame (VLAN or Bridge).
+
+#### `delete[ifdev]` - Delete a device
+
+Removes a network device from the frame.
+
+### Online/Offline APIs
+
+#### `online[info]` - IPv4 online notification
+
+Called when an interface comes online (IPv4).
+
+**Info JSON structure:**
+```json
+{
+    "ifname": "interface name",
+    "ifdev": "device name",
+    "netdev": "network device",
+    "ip": "IP address",
+    "mask": "network mask",
+    "gw": "gateway",
+    "dns": "DNS server",
+    "dns2": "backup DNS"
+}
+```
+
+#### `offline[ifname]` - IPv4 offline notification
+
+Called when an interface goes offline (IPv4).
+
+#### `upline[info]` - IPv6 online notification
+
+Called when an interface comes online (IPv6).
+
+#### `downline[ifname]` - IPv6 offline notification
+
+Called when an interface goes offline (IPv6).
+
+---
+
+## Connect Service
+
+The connect service is a separate process that manages multi-link connections. It is started by the frame component when multi-link mode is configured.
+
+### Features
+
+1. **Cold backup**
+   - Only one uplink is active at a time; lower-priority links are taken down when a higher-priority one is used.
+   - When the default route changes, existing connection tracking may be cleared so sessions are not stuck on the old path.
+
+2. **Hot backup**
+   - Multiple uplinks may remain up; the **default route** tracks the best available slot (smallest index that is online).
+   - If the preferred uplink fails, traffic moves to the next eligible slot automatically.
+
+3. **Lazy backup**
+   - Like hot backup, but after failing over it **does not move back** to a higher-priority uplink when that uplink recovers, until the current uplink fails again — reducing flip-flop between links.
+
+For `hot2`…`hot5` and `lazy2`…`lazy5`, only the first *N* numbered slots participate in **scheduler decisions**; additional slots may still appear in configuration but are outside that policy’s scan (see the table above).
+
+### Signals
+
+The connect service responds to the following signals:
+
+- `SIGHUP` - Refresh connections
+- `SIGTERM` / `SIGINT` - Graceful shutdown
+- `SIGPIPE` - Ignored (prevents crash on broken pipe)
+
+### Control Interface
+
+On systems that ship the maintenance CLI, you can signal the scheduler with:
+
+```shell
+# Exit the connect service
+connect exit
+
+# Refresh connections
+connect flush
+```
+
+### Status Query
+
+```shell
+# Query connect service status
+network@frame.status
+```
+
+---
+
+## Deployment notes
+
+### Paths and storage
+
+Install layout (where libraries, the scheduler binary, runtime sockets, and registration files live) is decided by the **firmware image** and project packaging. Operators should use **`he`**, the Web UI, or product-specific tools — not hard-coded paths.
+
+### Firewall and policy routing
+
+The framework creates the **iptables/nftables structures** needed for outbound NAT, policy routing marks, and shunting. Exact chain names visible on the device may vary by product line.
+
+### Routing Tables
+
+- Default table preference: 100
+- Default table name: "default"
+
+---
+
+#### **Joint Events**
+
+The following joint events are published (JSON on the joint bus) when network interface state changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
+
+| Event | Description |
+|-------|-------------|
+| `network/on` | Sent when a local interface (LAN) comes up with IPv4 connectivity. Triggered after the interface obtains an IP address and is ready for local network communication. |
+| `network/off` | Sent when a local interface (LAN) goes down or loses IPv4 connectivity. Triggered when the interface is disabled or the connection is lost. |
+| `network/up` | Sent when a local interface (LAN) comes up with IPv6 connectivity. Triggered after the interface obtains an IPv6 address. |
+| `network/down` | Sent when a local interface (LAN) goes down or loses IPv6 connectivity. |
+| `network/onextern` | Sent when an external interface (WAN/LTE/WiFi ISP) comes up with IPv4 connectivity. Triggered after successful connection establishment to the internet service provider. This event precedes `network/online` for external connections. |
+| `network/offextern` | Sent when an external interface (WAN/LTE/WiFi ISP) goes down or loses IPv4 connectivity. Triggered when the ISP connection is lost. |
+| `network/upextern` | Sent when an external interface (WAN/LTE/WiFi ISP) comes up with IPv6 connectivity. |
+| `network/downextern` | Sent when an external interface (WAN/LTE/WiFi ISP) goes down or loses IPv6 connectivity. |
+| `network/onvpn` | Sent when a VPN interface comes up with IPv4 connectivity. Triggered after the VPN tunnel is successfully established. |
+| `network/offvpn` | Sent when a VPN interface goes down or loses IPv4 connectivity. Triggered when the VPN tunnel is closed or interrupted. |
+| `network/upvpn` | Sent when a VPN interface comes up with IPv6 connectivity. |
+| `network/downvpn` | Sent when a VPN interface goes down or loses IPv6 connectivity. |
+| `network/online` | Sent when the system establishes a default route to the internet (IPv4). Triggered after an external interface comes up and the routing table is updated. This indicates the device has full internet access. |
+| `network/offline` | Sent when the system loses its default route to the internet (IPv4). Triggered when all external interfaces are down or when the primary connection fails. |
+| `network/upline` | Sent when the system establishes IPv6 internet connectivity via an external interface or VPN. |
+| `network/downline` | Sent when the system loses IPv6 internet connectivity. |
+
+---
+
+## Examples
+
+### Basic Multi-WAN Setup
+
+```shell
+# Configure 4 external connections in hot backup mode
+config network@frame hot4
+set type=hot4
+set 1=ifname@wan
+set 2=ifname@lte
+set 3=ifname@wisp
+set 4=ifname@lte2
+commit
+```
+
+### Custom DNS Configuration
+
+```shell
+# Configure custom DNS for multi-WAN
+config network@frame hot4
+set type=hot4
+set custom_dns=enable
+set dns=8.8.8.8
+set dns2=8.8.4.4
+commit
+```
+
+### Query Connection Status
+
+```shell
+# Get all extern connection status
+network@frame.extern
+
+# Get current default gateway
+network@frame.default
+
+# Check if specific interface is default
+network@frame.default[ifname@lte]
+```
+
+### Manual Connection Control
+
+```shell
+# Refresh connections (trigger re-evaluation)
+connect flush
+
+# Stop connect service
+connect exit
+```
+
+---
+
+## Notes
+
+1. The **multi-link scheduler** starts only when the **merged network profile** for the current device **network mode** includes a **`connect`** section describing multi-uplink behavior (for example `type` and numbered slots). If that section is absent, only per-interface bring-up runs and no scheduler is needed.
+2. Up to **10** priority slots exist; configuration keys **`"1"` … `"10"`** refer to them in order (smaller index = higher priority).
+3. Which logical interfaces appear as **local**, **external**, or **VPN** is driven by the **network profile** for the mode, plus any dynamic registration used for disabled-link handling in multi-WAN products.
+4. DNS follows the **default uplink** when it changes, **unless** `custom_dns` is `enable` or a per-interface DNS override applies.
+5. In **cold** backup, clearing IPv4 connection tracking on default-route changes avoids stale sessions tied to the old uplink.
+
+---
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — bring up or tear down the frame service and multi-link **`connect`** integration. **`network@hosts.setup`** is scheduled under **`init` → `land`**; **`network@frame`** itself is usually started from the **`connect`** executable / platform sequence when a profile contains a **`connect`** section.
+
+
+### **Published joint events**
+
+**IPv4 / IPv6 uplink and scheduling notifications** emitted as JSON on the joint bus, including (non-exhaustive):
+
+| Event (examples) | When |
+|------------------|------|
+| `network/on`, `network/off` | Logical extern link up/down |
+| `network/onextern`, `network/offextern` | External ifname scope |
+| `network/onvpn`, `network/offvpn` | VPN scope |
+| `network/online`, `network/offline` | Post-connect / DHCP-style online |
+| `network/upline`, `network/downline`, `network/upextern`, … | IPv6 / dual-stack analogues |
+
+Payload structure follows the `talk_t` JSON built in **`_online` / `_offline` / `_upline` / `_downline`** (typically includes **`ifname`** and status fields).
+
+### **C Code Example**
+
+```c
+#include "skin/skin.h"
+
+static void example_frame_list(void)
+{
+    talk_t ret = scall("network@frame", "list", NULL);
+    if (ret > tpanic)
+        talk_free(ret);
+}
+```
+

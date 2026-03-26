@@ -1,9 +1,6 @@
-
-***
-
 ## Management of shutdown component
 Administration of equipment shutdown task
-Each project can register its own shutdown task (either through the project production tool or directly by modifying the prj.json file), which requires the system to execute the task at specified shutdown level 
+Each FPK can register shutdown tasks through its shipped manifest; the system runs them at the configured **uninit** level 
 
 There are multiple shutdown levels at system shutdown process:
     - `delay5`     delay shutdown
@@ -23,14 +20,18 @@ There are multiple shutdown levels at system shutdown process:
     - `land`       skinos land shutdown
     - `arch`       skinos arch shutdown
 
-#### **Configuration( land@uninit )**
+### **Configuration( `land@uninit` )**
+
+The **saved configuration object** for `land@uninit` (shutdown task **list** and optional **remote**). Same cache-file behaviour as `land@init`.
 
 ```json
-// Attributes introduction 
+// Attributes introduction (same layout as land@init: list + optional remote)
 {
-    "task name":                             // [ string ], you can custom the name
+    "list":
     {
-        "level":"shutdown levels",                          // [ string ], shutdown levels 
+        "task name":                             // [ string ], you can custom the name
+        {
+            "level":"shutdown levels",                          // [ string ], shutdown levels 
                                                                 // "arch"
                                                                 // "land"
                                                                 // "bus"
@@ -46,26 +47,41 @@ There are multiple shutdown levels at system shutdown process:
                                                                 // "delay3"
                                                                 // "delay4"
                                                                 // "delay5"
-        "call":"specify component API or program"           // [ string ]
+            "call":"specify component API or program"           // [ string ]
+        }
+        // "...":{ ... }     How many shutdown task show how many properties
+    },
+    "remote":                                          // optional; read at setup for UDP notify target used by call
+    {
+        "ip":"remote ip address",                      // [ string ], empty clears remote
+        "port": "udp port"                             // [ number ], default 515 if missing or not positive
     }
-    // "...":{ ... }     How many shutdown task show how many properties
 }
 // Examples
 {
-    "tuishutdown":                               // call tui@telnet.shut at the app shutdown levels
+    "list":
     {
-        "level":"app",
-        "call":"tui@telnet.shut"
-    },
-    "sshshutdown":                               // call tui@ssh.shut at the general shutdown levels
-    {
-        "level":"general",
-        "call":"tui@ssh.shut"
+        "tuishutdown":                               // call tui@telnet.shut at the app shutdown levels
+        {
+            "level":"app",
+            "call":"tui@telnet.shut"
+        },
+        "sshshutdown":                               // call tui@ssh.shut at the general shutdown levels
+        {
+            "level":"general",
+            "call":"tui@ssh.shut"
+        }
     }
 }
 ```  
 
-#### **API( land@uninit )** 
+Examples, merge **remote** only
+```shell
+land@uninit|{"remote":{"ip":"","port":"515"}}
+ttrue
+```
+
+### **Component API**
 
 + `register[ [shutdown level], call ]` **register a shutdown task, lost when reboot**  
     - shutdown level ------- [ string ], default be "general" 
@@ -146,7 +162,7 @@ There are multiple shutdown levels at system shutdown process:
 
 
 
-+ `add[ stask name, call, [shutdown level] ]` **add a shutdown task**
++ `add[ task name, call, [shutdown level] ]` **add a shutdown task**
     - task name ------------ [ string ], task name, you can custom the name
     - call ------------------ [ string ], component API or program 
     - shutdown level -------- [ string ], default be "general"
@@ -176,4 +192,47 @@ There are multiple shutdown levels at system shutdown process:
     ttrue
     ```
 
++ `call[ shutdown level, [parameter] ]` **execute all shutdown tasks at the specified shutdown level**, *succeed return ttrue, failed return tfalse, error return terror*
+    - shutdown level ----------- [ string ], shutdown level to execute (e.g., "app", "general", "network")
+    - parameter ------- [ talk_t ], optional parameter to pass to the tasks
+    - This method is called by the system during shutdown process
+    - It executes all registered tasks for the specified level and sends UDP notification if remote logging is configured
+    - Not intended for manual invocation
+
+
+
+
+### **Lifecycle API**
+
+
++ `setup[]` **initialize the uninit component**, *succeed return ttrue, failed return tfalse, error return terror*
+    - This is a lifecycle method called automatically by the system during startup
+    - It registers all shutdown tasks from configuration and sets up remote logging if configured
+    - Not intended for manual invocation
+
++ `shut[]` **shutdown the uninit component**, *succeed return ttrue, failed return tfalse, error return terror*
+    - This is a lifecycle method called automatically by the system during shutdown
+    - Not intended for manual invocation
+
+### **Joint handlers**
+
+**None** by default for this object (product builds may add more).
+
+
+### **Published joint events**
+
+**None** beyond what is documented above in the reference package.
+
+
+### **C Code Example**
+
+```c
+#include "skin/skin.h"
+
+static void example_land_uninit(void)
+{
+    talk_t ret = scall("land@uninit", "setup", NULL);
+    (void)ret;
+}
+```
 

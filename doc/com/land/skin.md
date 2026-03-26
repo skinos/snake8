@@ -1,10 +1,12 @@
 # libskin API Documentation
 
+> **Readership:** This volume is for **embedded integration** (C-level APIs). Operators who only use **`he`** or a Web UI should start with `he.md` and per-component guides instead.
+
 ## Overview
 
-libskin is an embedded system platform providing component-based communication, configuration management, logging, service management, and other functionalities.
+**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, and related facilities.
 
-**Master header:** `#include "skin.h"` pulls in `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). For a smaller compile surface you can include only the headers you need (e.g. `talk.h` + `com.h`), but `skin.h` matches the layout in `skin/skin.h`.
+**Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to `skin/skin.h`. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
 
 ---
 

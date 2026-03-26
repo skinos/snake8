@@ -1,14 +1,15 @@
-***
 ## Local Agent -- LAN Management Service
 Provide local area network management services including JSON TCP command interface and UDP broadcast discovery/command interface for device discovery, querying and configuration on the LAN
 
-#### Configuration( agent@local )
+### **Configuration( `agent@local` )**
+
 ```json
 {
     // JSON TCP service
     "json":"JSON TCP command service",                          // [ "disable", "enable" ]
     "json_port":"JSON TCP service listen port",                 // [ number ], default 22220
     "json_command":"JSON TCP service command permission",       // [ "query", "all" ]
+                                                                   // when omitted or empty: same as "query" (not "all")
                                                                    // "query" only allow query commands (get, status, list, info)
                                                                    // "all" allow all commands including set and call
     "json_manager":"JSON TCP service access control",           // [ string or json ]
@@ -70,8 +71,9 @@ ttrue
 
 
 
-#### **API**
+### **Component API**
 
+**Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the local agent services**
     setup will read the configuration and start the enabled services:
     1. If json is "enable", setup iptables access control rules and start the JSON TCP service
@@ -196,3 +198,39 @@ ttrue
     - "query" mode (mode=1): allow GET and limited CALL operations (stat, list, info). For agent@local, factory, gpio, machine objects only CALL is allowed
     - "all" mode (mode=2): allow all operations
     - other value (mode=0): disable all command execution, only basic discovery
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — **when implemented** for **`agent@local`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
++
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_local(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@local", "status") == NULL)
+        return -1;
+    return ssets_string("agent@local", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@local", "list", NULL); talk_free if JSON */
+```
+

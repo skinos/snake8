@@ -1,161 +1,173 @@
-
-***
 ## FPK Management
-Manage system FPK(project)
+Manage system FPK projects.
 
-#### The following describes the project concept 
-* A project is a collection of programs developed for the completion of specific needs, equivalent to a Windows application, an apk in Android
-* Each project has a corresponding directory, called the project directory, stored in the ./project directory in the SDK, and the project-related source code and resource files are stored in the project directory
-* All development and programming should be in a project
-* Each project directory must include: 
+#### Project concept
+* A project is a collection of programs developed to meet specific requirements, similar to an application on Windows or Android.
+* Each project has a project directory under `./project` in the SDK. Source code and resources are stored in that directory.
+* All development work should be organized within a project.
+* Each project directory must include:
     - Project information file, named **prj.json**
-    - Projects compile Makefile, such as When using Openwrt's compilation system, Makefile uses Openwrt's format
+    - Project build Makefile. For example, when using the OpenWrt build system, the Makefile follows OpenWrt format.
 * Each project directory can contain:
-    - Executable program or executable program source code (in the SDK it will be the source code of the executable program, and only the executable program will be installed on the device)
-    - Library or library source code (in the SDK there will be the source code for the library, whereas installed to the device there will only be binaries of the library) 
-    - Kernel driver or its source code (in the SDK there will be driver source code, whereas only driver binaries will be installed on the device)  
-    - Component source code (component source code in the SDK, only component binaries installed in the device)  
-    - Default profile for component or project
-    - Webpage interface files for user Management
-    - Language files for webpage interface
+    - Executable files or executable source code (SDK contains source; device installation contains binaries only)
+    - Libraries or library source code (SDK contains source; device installation contains binaries only)
+    - Kernel drivers or driver source code (SDK contains source; device installation contains binaries only)
+    - Component source code (SDK contains source; device installation contains component binaries only)
+    - Default profiles for the component or project
+    - Web page files for user management
+    - Language files for the web page interface
     - Script files and other resource files
 
-#### The following introduces the FPK concept
-* After the project development is completed, then package into a FPK(installation package), the FPK will be installed into the system
-* FPK is equivalent to the software installation package in Windows, the apk file in Android
-* The FPK ending in .fpk
-* The FPK can be installed into the system through the webpage or command
-* Every FPK must include: 
-	- Project information file, named **prj.json**
+#### FPK concept
+* After development is complete, the project is packaged into an FPK (installation package) and installed into the system.
+* An FPK is similar to an installer package on Windows or an APK on Android.
+* The FPK filename ends with `.fpk`
+* The FPK can be installed through the web page or command line.
+* Every FPK must include:
+	- Project information file named **prj.json**
 * Each FPK can contain:
-	- library
-	- executable file
+	- Libraries
+	- Executable files
 	- Driver files
-	- .com/.ash end of the component file
-	- .cfg the end of the configuration file
-	- .html end of the webpage interface file
-	- Language file ending with .json
-	- .sh end of the SHELL script file
+	- Component files ending with `.com` / `.ash`
+	- Configuration files ending with `.cfg`
+	- Web page files ending with `.html`
+	- Language files ending with `.json`
+	- Shell script files ending with `.sh`
 	- Other resource files
-	- Library header files for development under install/include (used in SDK compilation)
-	- Libraries for development under install/lib (used in SDK compiled)
+	- Library header files for development under `install/include` (used in SDK compilation)
+	- Libraries for development under `install/lib` (used in SDK compilation)
 
+#### Runtime install paths (symbols)
 
-#### prj.json: Project information file
-It is generated automatically when the project is created, you can learn his format to judge your work on development projects
+Documentation uses **angle-bracket placeholders** instead of fixed paths. They map to **C macros** in [`land/skin/skinhead.h`](./skin/skinhead.h) (values vary by platform / product):
+
+| Symbol | Typical meaning | C macro (reference) |
+|--------|-----------------|---------------------|
+| **`⟨PRJ_ROOT⟩`** | Root directory of **installed** projects (FPK payloads) | **`PROJECT_DIR`** |
+| **`⟨PRJ_NAME⟩`** | One project’s subdirectory (same as `prj.json` → `name`) | — |
+| **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** | That project’s install prefix on the device | — |
+| **`⟨LIB_DIR⟩`** | Global shared-library directory used for symlinks | **`PROJECT_LIB_DIR`** |
+| **`⟨BIN_DIR⟩`** | Global command directory used for symlinks | **`PROJECT_BIN_DIR`** |
+| **`⟨SYS_ROOT⟩`** | Running system root (for merged `rootfs/` trees, `/etc`, …) | — |
+
+Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so they stay valid when **`PROJECT_DIR`** is changed at build time.
+
+#### prj.json: project information file
+This file is generated automatically when the project is created. Understanding its format helps validate project development output.
 ```json
-// Attributes introduction 
+// Attributes
 {
-    "name":"project(FPK) name",                    // [ string ]
-    "intro":"project(FPK) introduction",           // [ string ]
+    "name":"project (FPK) name",                   // [ string ]
+    "intro":"project (FPK) introduction",          // [ string ]
     "desc":"detailed description of the project",  // [ string ]
-    "type":"project(FPK) type",                    // [ "root" ], root indicates that the root permission is required
-    "version":"project(FPK) version",              // [ string ]
-    "author":"project(FPK) author",                // [ string ]
+    "type":"project (FPK) type",                   // [ "root" ], "root" means root permission is required
+    "version":"project (FPK) version",             // [ string ]
+    "author":"project (FPK) author",               // [ string ]
 
-    "osc":                           // all open source programs included in the project show in this attributes
+    "osc":                           // all open-source programs included in the project are shown in these attributes
     {
-        "open source program directory":"description"
-        // "...":"..." How many open source program show how many properties
+        "open-source program directory":"description"
+        // "...":"..." One property is shown for each open-source program
     },
-    "lib":                           // all libraray included in the project show in this attributes
+    "lib":                           // all libraries included in the project are shown in these attributes
     {
         "library directory":"description"
-        // "...":"..." How many library show how many properties
+        // "...":"..." One property is shown for each library
     },
-    "exe":                           // all execute program included in the project show in this attributes
+    "exe":                           // all executable programs included in the project are shown in these attributes
     {
-        "execute program directory":"description"
-        // "...":"..." How many execute program show how many properties
+        "executable program directory":"description"
+        // "...":"..." One property is shown for each executable program
     },
-    "com":                           // all component included in the project show in this attributes
+    "com":                           // all components included in the project are shown in these attributes
     {
         "component directory":"description"
-        // "...":"..." How many component show how many properties
+        // "...":"..." One property is shown for each component
     },
-    "res":                           // all resource file or directory included in the project show in this attributes
+    "res":                           // all resource files or directories included in the project are shown in these attributes
     {
         "resource file or directory":"description"
-        // "...":"..." How many resource file or directory show how many properties
+        // "...":"..." One property is shown for each resource file or directory
     },
-    "obj":                           // all object( Dynamic components ) included in the project show in this attributes
+    "obj":                           // all objects (dynamic components) included in the project are shown in these attributes
     {
         "object name":"actual components"
-        // "...":"..." How many object( Dynamic components ) show how many properties
+        // "...":"..." One property is shown for each object (dynamic component)
     },
-    "init":                           // all starting items included in the project show in this attributes
+    "init":                          // all startup items included in the project are shown in these attributes
     {
         "initialize level":"components method"
-        // "...":"..." How many starting items show how many properties
+        // "...":"..." One property is shown for each startup item
     },
-    "uninit":                           // all shutdown items included in the project show in this attributes
+    "uninit":                        // all shutdown items included in the project are shown in these attributes
     {
         "shutdown level":"components method"
-        // "...":"..." How many shutdown items show how many properties
+        // "...":"..." One property is shown for each shutdown item
     },
-    "joint":                           // all joint process items included in the project show in this attributes
+    "joint":                         // all joint process items included in the project are shown in these attributes
     {
         "joint event":"components method"
-        // "...":"..." How many joint process items show how many properties
+        // "...":"..." One property is shown for each joint process item
     }
 }
-// examples
+// Example
 {
     "name":"arch",                              // arch project
     "intro":"mtk platform layer for farm os",   // project introduction
-    "desc":"This project at MTK chip will provide a unified management or use interface to the upper layerthe proejct", 
+    "desc":"This project for MTK chips provides a unified management and usage interface for upper-layer projects",
                                                 // project description
-    "type":"root",                              // that the root permission is required
+    "type":"root",                              // indicates root permission is required
     "version":"6.0.0",                          // version is 6.0.0
     "author":"dimmalex@gmail.com",              // author is dimmalex@gmail.com
-    "osc":                                      // have 1 open source program
+    "osc":                                      // has 1 open-source program
     {
-        "ntpclient":"ntp client"                      // ntpclient, is a ntp client
+        "ntpclient":"ntp client"                      // ntpclient
     },
-    "lib":                                      // have 1 library
+    "lib":                                      // has 1 library
     {
-        "land":"core library"                         // land library, core library
+        "land":"core library"                         // land library
     },
-    "exe":                                      // have 3 execute program
+    "exe":                                      // has 2 executable programs
     {
         "daemon":"service daemon",                    // daemon, service implementation
-        "he":"tools for call all component"           // he, command tools for skinos
+        "he":"tools for calling all components"       // he command tool for skinos
     },
-    "com":                                      // have 7 execute program
+    "com":                                      // has 7 components
     {
-        "device":"device infomation",                 // device, manage all device
-        "data":"data management",                     // data, manage configure and eeprom
-        "firmware":"firmware management",             // firmware, manage firmware
-        "gpio":"register and gpio management",        // gpio, manage mtk gpio
-        "test":"test the device management",          // test, manage factory test
-        "ethernet":"ethernet switch management",      // ethernet, manage mtk switch
-        "mt7628":"802.11n wireless management"        // mt7628, manage mt7628 wireless radio
+        "device":"device information",                // device, manages all devices
+        "data":"data management",                     // data, manages configuration and EEPROM
+        "firmware":"firmware management",             // firmware
+        "gpio":"register and gpio management",        // gpio
+        "test":"test device management",              // test, manages factory tests
+        "ethernet":"ethernet switch management",      // ethernet
+        "mt7628":"802.11n wireless management"        // mt7628
     },
-    "res":                                      // have 1 resource file
+    "res":                                      // has 1 resource file
     {
-        "testpage.py":"only test"                    // testpage.py, test tools at factory
+        "testpage.py":"test only"                    // test tools for factory
     },
-    "obj":                                      // have 2 object( Dynamic components )
+    "obj":                                      // has 2 objects (dynamic components)
     {
         "wifi@nradio":"mt7628",                      // object is wifi@nradio, actual components is mt7628
         "test":"test"                                // object is test, actual components is test
     },
-    "init":                                      // have 3 starting items
+    "init":                                      // has 3 startup items
     {
-        "ethernet":"arch@ethernet.setup",            // arch@ethernet.setup call at the ethernet of initialize level
-        "nradio":"wifi@nradio.setup",                // wifi@nradio.setup call at the nradio of initialize level
-        "aradio":"wifi@aradio.setup"                 // wifi@aradio.setup call at the aradio of initialize level
+        "ethernet":"arch@ethernet.setup",            // called at initialize level ethernet
+        "nradio":"wifi@nradio.setup",                // called at initialize level nradio
+        "aradio":"wifi@aradio.setup"                 // called at initialize level aradio
     },
-    "uninit":                                      // have 2 shutdown items
+    "uninit":                                      // has 2 shutdown items
     {
-        "nradio":"wifi@nradio.shut",                 // wifi@nradio.shut call at the nradio of initialize level
-        "aradio":"wifi@aradio.shut"                  // wifi@aradio.shut call at the aradio of initialize level
+        "nradio":"wifi@nradio.shut",                 // called at shutdown level nradio
+        "aradio":"wifi@aradio.shut"                  // called at shutdown level aradio
     },
-    "joint":                                      // have 14 joint process items
+    "joint":                                      // has 14 joint process items
     {
-        "firmware/upgrading":"arch@gpio.event",  // arch@reggpio.event call when the firmware/upgrading happened
-        "firmware/upgraded":"arch@gpio.event",   // arch@reggpio.event call when the firmware/upgraded happened
-        "network/arise":"arch@gpio.event",       // arch@reggpio.event call when the firmware/arise happened
+        "firmware/upgrading":"arch@gpio.event",  // called when firmware/upgrading happens
+        "firmware/upgraded":"arch@gpio.event",   // arch@gpio.event call when firmware/upgraded happens
+        "network/arise":"arch@gpio.event",       // arch@gpio.event call when network/arise happens
         "network/ready":"arch@gpio.event",
         "network/lining":"arch@gpio.event",
         "network/online":"arch@gpio.event",
@@ -172,39 +184,47 @@ It is generated automatically when the project is created, you can learn his for
 ```  
 
 
-#### **API( land@fpk )**
+### **Configuration( `land@fpk` )**
 
-+ `register[ project directory [, ...] ]` **register project to system**, this API call at the system startup to register all project
-    - project directory ----------- [ string ], project directory  
-    - ... ------------------------- [ string ], can register many project directory 
+The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `land@fpk:path`, merge `|{json}`, etc.).
+
+
+
+`land@fpk` does **not** use a standalone JSON configuration document like feature components. Each installed project carries its own **`prj.json`** under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**. The methods below register, unregister, or inspect those projects at runtime.
+
+### **Component API**
+
++ `register[ project directory [, ...] ]` **register project(s) to the system**. This API is called at startup to register all projects.
+    - project directory ----------- [ string ], project directory
+    - ... ------------------------- [ string ], register multiple project directories
     - failed return tfalse
     - succeed return ttrue
 
-    Example, register a project
+    Example, register one project
     ```shell
-    land@fpk.register[ /usr/share/skinos/uart ]
+    land@fpk.register[ ⟨PRJ_ROOT⟩/uart ]
     ttrue
     ```
 
-+ `unregister[ <project directory> [, ...] ]` **unregister project from system**,
-    - project directory ----------- [ string ], project directory  
-    - ... ------------------------- [ string ], can unregister many project directory 
++ `unregister[ project name [, ...] ]` **unregister project(s) from the system**
+    - project name ----------- [ string ], project name
+    - ... ------------------------- [ string ], unregister multiple project names
     - failed return tfalse
     - succeed return ttrue
 
-    Example, unregister a project
+    Example, unregister one project
     ```shell
-    land@fpk.unregister[ /usr/share/skinos/uart ]
+    land@fpk.unregister[ uart ]
     ttrue
     ```
 
-+ `list[ [project] ]` **list project infomation**
-    - project ----------- [ string ], get the proejct detail when give proejct
-    - return json to describes   
++ `list[ [project] ]` **list project information**
+    - project ----------- [ string ], when provided, get details for the specified project
+    - returns JSON
 
-    Example, list ifname project infomation
+    Example, show project information for `ifname`
     ```shell
-    and@fpk.list[ifname]
+    land@fpk.list[ifname]
     {
         "name":"ifname",
         "intro":"skinos common network connection",
@@ -217,17 +237,17 @@ It is generated automatically when the project is created, you can learn his for
             "ethcon":"ethernet connect component",
             "ltecon":"lte modem connect component"
         },
-        "path":"/usr/share/skinos/ifname/",
+        "path":"⟨PRJ_ROOT⟩/ifname/",
         "size":"74923"
     }
     ```
-    Example, list all project infomation
+    Example, show all project information
     ```
-    and@fpk.list
+    land@fpk.list
     {
         "agent":
         {
-            "path":"/usr/share/skinos/agent/",
+            "path":"⟨PRJ_ROOT⟩/agent/",
             "size":"155997",
             "intro":"agent for remote or cloud control",
             "version":"7.0.0",
@@ -235,7 +255,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "arch":
         {
-            "path":"/usr/share/skinos/arch/",
+            "path":"⟨PRJ_ROOT⟩/arch/",
             "size":"289294",
             "intro":"mtk mt7981 platform layer for skinos",
             "version":"8.0.0",
@@ -243,7 +263,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "client":
         {
-            "path":"/usr/share/skinos/client/",
+            "path":"⟨PRJ_ROOT⟩/client/",
             "size":"66180",
             "intro":"Client management",
             "version":"8.0.0",
@@ -251,7 +271,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "clock":
         {
-            "path":"/usr/share/skinos/clock/",
+            "path":"⟨PRJ_ROOT⟩/clock/",
             "size":"59199",
             "intro":"System clock management",
             "version":"8.0.0",
@@ -259,7 +279,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "forward":
         {
-            "path":"/usr/share/skinos/forward/",
+            "path":"⟨PRJ_ROOT⟩/forward/",
             "size":"157035",
             "intro":"Network forward function",
             "version":"8.0.0",
@@ -267,7 +287,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "ifname":
         {
-            "path":"/usr/share/skinos/ifname/",
+            "path":"⟨PRJ_ROOT⟩/ifname/",
             "size":"74923",
             "intro":"skinos common network connection",
             "version":"8.0.0",
@@ -275,7 +295,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "land":
         {
-            "path":"/usr/share/skinos/land/",
+            "path":"⟨PRJ_ROOT⟩/land/",
             "size":"153711",
             "intro":"component infrastructure",
             "version":"8.0.0",
@@ -283,7 +303,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "modem":
         {
-            "path":"/usr/share/skinos/modem/",
+            "path":"⟨PRJ_ROOT⟩/modem/",
             "size":"185095",
             "intro":"modem management",
             "version":"8.0.0",
@@ -291,7 +311,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "network":
         {
-            "path":"/usr/share/skinos/network/",
+            "path":"⟨PRJ_ROOT⟩/network/",
             "size":"479667",
             "intro":"network infrastructure",
             "version":"8.0.0",
@@ -299,7 +319,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "pdriver":
         {
-            "path":"/usr/share/skinos/pdriver/",
+            "path":"⟨PRJ_ROOT⟩/pdriver/",
             "size":"467419",
             "intro":"Portable driver",
             "version":"6.0.0",
@@ -307,7 +327,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "tui":
         {
-            "path":"/usr/share/skinos/tui/",
+            "path":"⟨PRJ_ROOT⟩/tui/",
             "size":"37987",
             "intro":"Terminal user interface service",
             "version":"8.0.0",
@@ -315,7 +335,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "webs":
         {
-            "path":"/usr/share/skinos/webs/",
+            "path":"⟨PRJ_ROOT⟩/webs/",
             "size":"49283",
             "intro":"web server",
             "version":"8.0.0",
@@ -323,7 +343,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "wifi":
         {
-            "path":"/usr/share/skinos/wifi/",
+            "path":"⟨PRJ_ROOT⟩/wifi/",
             "size":"108456",
             "intro":"skinos wireless configure",
             "version":"8.0.0",
@@ -331,7 +351,7 @@ It is generated automatically when the project is created, you can learn his for
         },
         "wui":
         {
-            "path":"/usr/share/skinos/wui/",
+            "path":"⟨PRJ_ROOT⟩/wui/",
             "size":"20066",
             "intro":"web user interface page",
             "version":"8.0.0",
@@ -341,28 +361,102 @@ It is generated automatically when the project is created, you can learn his for
     ```
 
 
-+ `install[ FPK file [,...] ]` **install FPK to system**
-    - FPK file ----------- [ string ], FPK file  
-    - ... ---------------- [ string ], can install many FPK file 
++ `install[ FPK file [,...] ]` **install FPK package(s) to the system**
+    - FPK file ----------- [ string ], FPK file
+    - ... ---------------- [ string ], install multiple FPK files
     - failed return tfalse
     - succeed return ttrue
 
-    Example, install wui project FPK to system
+    Example, install the `wui` project FPK to the system
     ```shell
     land@fpk.install[ wui-7.0.0-x86.fpk ]
     ttrue
     ```
 
-+ `uninstall[ project name [,...] ]` **uninstall project from system**
-    - project name ----------- [ string ], project name  
-    - ... ---------------- [ string ], can uninstall many project 
++ `uninstall[ project name [,...] ]` **uninstall project(s) from the system**
+    - project name ----------- [ string ], project name
+    - ... ---------------- [ string ], uninstall multiple projects
     - failed return tfalse
     - succeed return ttrue
 
-    Example, uninstall wui project from system
+    Example, uninstall the `wui` project from the system
     ```shell
     land@fpk.uninstall[ wui ]
     ttrue
     ```
 
++ `number` **get the number of installed projects**
+    - failed return tfalse
+    - return the number of installed projects
+
+    Example, get the number of installed projects
+    ```shell
+    land@fpk.number
+    15
+    ```
+
++ `wui_menu` **get the Web UI menu structure**
+    - failed return NULL
+    - return JSON describing the Web UI menu structure
+
+    Example, get the Web UI menu
+    ```shell
+    land@fpk.wui_menu
+    {
+        "wifi_aclient":
+        {
+            "menu":"Wireless",
+            "cn":"5.8G客户端",
+            "en":"5.8G Clients",
+            "page":"/skinos/wifi/client.html",
+            "object":"wifi@a",
+            "lang":
+            {
+                "cn":"/skinos/wifi/cn",
+                "en":"/skinos/wifi/en"
+            }
+        },
+        "wui_webs":
+        {
+            "menu":"System",
+            "cn":"WEB服务器",
+            "en":"Web Server",
+            "page":"/skinos/wui/admin.html",
+            "config":"wui@admin",
+            "lang":
+            {
+                "cn":"/skinos/wui/cn",
+                "en":"/skinos/wui/en"
+            }
+        }
+    }
+    ```
+
+### **Lifecycle API**
+
++ **No** `setup[]` in the usual sense — **`land@fpk`** exposes **register/install** APIs used during boot.
++ See **Component API** for **`register[]`**, **`install[]`**, etc.
+
+
+### **Joint handlers**
+
+**None** in **`joint`** for **`land@fpk`**.
+
+
+### **Published joint events**
+
+**None**.
+
+
+### **C Code Example**
+
+```c
+#include "skin/skin.h"
+
+static void example_land_fpk(void)
+{
+    talk_t ret = scall("land@fpk", "number", NULL);
+    (void)ret;
+}
+```
 

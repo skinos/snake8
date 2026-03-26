@@ -1,8 +1,8 @@
-***
-## HE Client -- Heport Remote Management Client
-Connect to heport server via SSL/TLS, accept remote administrative control, execute commands, report device status, and manage other components
+## HE Client — Heport remote management client
+Connects to the remote Heport service for administration: remote commands, status reporting, and coordinated control of related agent components (**`agent@portc`**, **`agent@gtog`**, etc.).
 
-#### Configuration( agent@heclient )
+### **Configuration( `agent@heclient` )**
+
 ```json
 {
     // basic
@@ -72,8 +72,9 @@ ttrue
 
 
 
-#### **API**
+### **Component API**
 
+**Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the he client, start the connection service**
     setup will read the configuration, if status is "enable", start the background service process to connect to the heport server
     - succeed return ttrue
@@ -86,7 +87,7 @@ ttrue
     ```
 
 + `shut[]` **shutdown the he client and all managed components**
-    shut will stop the background service, shutdown the managed gtog(agent@gtog) and portc(agent@portc) components, and remove the adjust file
+    Stops the background client and tears down managed **`agent@gtog`** / **`agent@portc`** state as configured.
     - succeed return ttrue
     - failed return tfalse
 
@@ -155,7 +156,7 @@ ttrue
     ```
 
 + `update[]` **notify the service to re-send device information to server**
-    send SIGUSR1 signal to the service process, trigger it to re-collect and send device status (machine status, network gateway, GNSS info, sensor status) to the heport server
+    Asks the running client to refresh and upload a device snapshot (machine, gateway, optional GNSS/sensors, etc.) to the server.
     - succeed return ttrue, the service process is running and signal sent
     - failed return tfalse, the service process is not running
 
@@ -195,67 +196,49 @@ ttrue
     ttrue
     ```
 
-+ `service[]` **internal background service (not called directly)**
-    this is the main service loop started by setup, it handles:
-    1. SSL/TLS connection to heport server
-    2. Device registration (send macid, username, pubkey and device info)
-    3. Keepalive mechanism
-    4. Receiving and executing remote commands (both JSON format and string format)
-    5. Forwarding command results back to server
++ `service[]` **internal (not called via HE)**
+    Background worker started by **`setup[]`**: maintains the session to the Heport service, registers the device, keeps the link alive, executes remote **`object.method`** requests, and returns results. On **account / verification** errors the client stops without auto-restart; on **connect / timeout / extern not ready** it retries according to platform policy.
 
-    The service will exit and return different values based on the situation:
-    - return terror: username or vcode is wrong, will not auto-restart
-    - return tfalse: connection failed or timeout, will auto-retry
-    - return ttrue: extern network interface is not ready, will auto-retry
+### **Lifecycle API**
 
-    **Registration information sent to server includes:**
-    ```json
-    {
-        "type":"device type",                              // device type, e.g. "router"
-        "vcode":"verification code",                       // account verification code
-        "land@machine.status":                             // machine status information
-        {
-            "mode":"device model",
-            "name":"device name",
-            "mac":"device mac address",
-            "version":"firmware version",
-            "cfgversion":"configuration version"
-            // ... other machine status fields
-        },
-        "network@frame.gateway":                           // current network gateway information
-        {
-            "name":"gateway interface name",
-            "ip":"gateway ip address",
-            "mask":"netmask",
-            "gw":"gateway address",
-            "dns":"dns server",
-            "dns2":"secondary dns server",
-            "rx_bytes":"receive bytes",
-            "tx_bytes":"transmit bytes"
-        },
-        "gnss@nmea.info":                                  // GNSS/GPS information (if available)
-        {
-            "step":"current step",
-            "latitude":"latitude value",
-            "longitude":"longitude value",
-            "speed":"speed",
-            "elv":"elevation"
-        },
-        "<sensor_name>.status":                            // sensor status (if available, may have multiple)
-        {
-            // sensor specific status fields
-        }
-    }
-    ```
++ `setup[]` / `shut[]` — **when implemented** for **`agent@heclient`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-    **Protocol format:**
-    - Register packet: `<macid>+<user>|<pubkey>|<json>\n`
-    - Keepalive request: `<tid>+keeplive\n`
-    - Keepalive response: `<tid>-k\n`
-    - User error response: `<tid>-u...\n`
-    - Vcode error response: `<tid>-v...\n`
-    - JSON command from server: `<tid>-{ "cmd":"<object>.<method>", "cmd2":"<object2>.<method2>" }\n`
-    - JSON command response: `<tid>+{ "cmd":"<result>", "cmd2":<result2> }\n`
-    - String command from server: `<tid>-<object>.<method>\n`
-    - String command response: `<tid>+<result>\n`
-    - Update report: `<tid>+u<json>\n`
+### **Joint handlers**
+
+| Joint key | Method |
+|-----------|--------|
+| `network/online` | `agent@heclient.setup` |
+| `machine/status` | `agent@heclient.update` |
+
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_heclient(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@heclient", "status") == NULL)
+        return -1;
+    return ssets_string("agent@heclient", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@heclient", "list", NULL); talk_free if JSON */
+```
+

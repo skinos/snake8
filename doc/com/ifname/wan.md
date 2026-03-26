@@ -1,25 +1,25 @@
-***
 ## WAN Network Management
-Manage WAN network. This component must depend on WAN network interface and network Management Framework project  
-Usually ifname@wan is the first WAN network. If there are multiple WAN network in the system, ifname@wan2 will be the second WAN network, and increase by degress
+Manage WAN networks. This component depends on WAN-facing interfaces (often **`arch`** `ethernet`) and the **network** project (`network@frame`, `skinnet`, multi-link **`connect`** — see [`../network/frame.md`](../network/frame.md)).  
+Usually `ifname@wan` is the first WAN network. If there are multiple WANs, `ifname@wan2` is the second WAN network, and numbering increases sequentially.
 
-#### **configuration( ifname@wan )**   
+### **Configuration( `ifname@wan` )**
+
 **ifname@wan** is first WAN network   
 **ifname@wan2** is second WAN network   
 
 ```json
 // Attribute introduction
 {
-    "status":"start at system startup",    // [ "enable", "disable" ]
+    "status":"start at system startup",    // [ "enable", "disable" ], enable means auto-setup after boot
 
     // MAC
     "mac":"set MAC address for interface", // [ mac address ]
 
     // IPv4
-    "tid":"table identify number",         // [ number ] exclusive route table ID, only for multiple WAN
+    "tid":"table identify number",         // [ number ] policy route table ID, mainly used in multi-WAN
     "metric":"default route metric",       // [ number  ]
-    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
-    "static":                                 // detial configure for "mode" is "static"
+    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoec" ] for PPPoE dial
+    "static":                                 // detail configuration for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
         "mask":"IPv4 netmask",                      // < ipv4 netmask >
@@ -27,7 +27,7 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
         "dns":"IPv4 DNS",                           // [ ipv4 address ]
         "dns2":"IPv4 DNS"                           // [ ipv4 address ]
     },
-    "dhcpc":                                  // detial configure for "mode" is "dhcpc"
+    "dhcpc":                                  // detail configuration for "mode" is "dhcpc"
     {
         "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ]
         "routeopt":"dhcp option static route",                     // [ "disable", "enable" ]
@@ -35,7 +35,7 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
         "dns":"Custom DNS1",                                       // [ ip address ], This is valid when "custom_dns" is "enable"
         "dns2":"Custom DNS2"                                       // [ ip address ], This is valid when "custom_dns" is "enable"
     },
-    "pppoe":                                    // detial configure for "mode" is "pppoe"
+    "pppoec":                                   // detail configuration for "mode" is "pppoec"
     {
         "username":"PPPOE username",                     // [ string ]
         "password":"PPPOE password",                     // [ string ]
@@ -49,16 +49,16 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
         "dns2":"Custom DNS2",                            // [ ip address ], This is valid when "custom_dns" is "enable"
         "txqueuelen":"tx queue size"                     // [ number ]
     },
-    "masq":"out stream share the interface IPv4 address to access the Internet",  // [ "disable", "enable" ]
+    "masq":"outgoing NAT for IPv4",                                               // [ "disable", "enable" ]
     "mtu":"Maximum transmission unit",                                            // [ number ], The unit is in bytes
 
     // IPv6
     "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "slaac" ]
-                                                    // "disable" is not use ipv6
-                                                    // "manual" for manual setting
-                                                    // "automatic" for DHCPv6
-                                                    // "slaac" for Stateless address autoconfiguration
-    "manual":                                 // detial configure for "method" is "manual"
+                                                    // "disable" means IPv6 is disabled
+                                                    // "manual" means static IPv6 settings
+                                                    // "automatic" means DHCPv6
+                                                    // "slaac" means Stateless Address Autoconfiguration
+    "manual":                                 // detail configuration for "method" is "manual"
     {
         "addr":"IPv6 address",                      // < ipv6 address >
         "prefix":"IPv6 prefix",                     // < number >, 1-128
@@ -66,15 +66,15 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
         "resolve":"IPv6 DNS",                       // [ ipv6 address ]
         "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
     },
-    "automatic":                             // detial configure for "method" is "automatic"
+    "automatic":                             // detail configuration for "method" is "automatic"
     {
         "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
         "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
         "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
-        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
-        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
+        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
     },
-    "masquerade":"out stream share the interface IPv6 address to access the Internet",   // [ "disable", "enable" ]
+    "masquerade":"outgoing NAT for IPv6",                                                 // [ "disable", "enable" ]
 
     // Configure for link detection mechanism, or call it keeplive mechanism
     "keeplive":
@@ -85,10 +85,10 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
                                   // [ "recv" ] for count receive packet to keeplive
                                   // [ "auto" ] for count receive packet to keeplive when test the dns response failed
 
-        "action":"failed to do",  // [ "reboot" ] reboot the system
-                                  // [ "reset" ] reset the band
-                                  // [ ] other redial the connetion
-        "icmp":                                                   // detial configure for "type" is "icmp"
+        "action":"action when keeplive fails",  // [ "reboot" ] reboot the system
+                                                // [ "reset" ] reset the interface device
+                                                // [ others ] redial the connection
+        "icmp":                                                   // detail configuration for "type" is "icmp"
         {
             "dest":                                                         // destination address for ICMP keeplive
             {
@@ -99,13 +99,13 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
             "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "dns":                                                   // detial configure for "type" is "icmp"
+        "dns":                                                   // detail configuration for "type" is "dns"
         {
             "timeout":"Maximum time to wait for the return of a dns resolve packet",   // [ number ], The unit is in seconds
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
             "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "recv":                                                  // detial configure for "type" is "recv"
+        "recv":                                                  // detail configuration for "type" is "recv"
         {
             "timeout":"How many seconds did not receive a packet considered a failure",// [ number ], The unit is in seconds
             "packets":"How many packets",                                              // [ number ]
@@ -113,22 +113,31 @@ Usually ifname@wan is the first WAN network. If there are multiple WAN network i
         }
     },
 
-    // Configure connect failed to action
-    "failed_threshold":"first failed to reset time",                                   // [ number ]
-    "failed_threshold2":"second failed to reset time",                                 // [ number ]
-    "failed_threshold3":"third failed to reset time",                                  // [ number ]
-    "failed_everytime":"every failed to reset time"                                    // [ number ]
+    // Configure connect detection and failed action
+    "need_connect":"must connect succeed",                                             // [ "enable", "disable" ]
+                                                                                              // "enable" requires successful connection to ifdev
+                                                                                              // "disable" skips connection check
+    "connect_failed_threshold":"first failed to reset time",                           // [ number ], default 60 seconds
+    "connect_failed_threshold2":"second failed to reset time",                         // [ number ], default 180 seconds
+    "connect_failed_threshold3":"third failed to reset time",                          // [ number ], default 600 seconds
+    "connect_failed_everytime":"every failed to reset time",                           // [ number ], default 1800 seconds
+
+    // Configure general failed action (for keeplive/online failures)
+    "failed_threshold":"first failed to reset time",                                   // [ number ], default 3
+    "failed_threshold2":"second failed to reset time",                                 // [ number ], default 7
+    "failed_threshold3":"third failed to reset time",                                  // [ number ], default 15
+    "failed_everytime":"every failed to reset time"                                    // [ number ], default 37
 }
 ```   
 
-Example, show the first WAN all configure
+Example, show all configuration of the first WAN
 ```shell
 ifname@wan
 {
     "mac":"88:12:4E:23:43:12",                       # clone the MAC
 
-    "mode":"pppoe",                                  # mode is PPPOE
-    "pppoe":
+    "mode":"pppoec",                                 # mode is PPPoE client
+    "pppoec":
     {
         "username":"1923221@gd.com",                # PPPOE username is 1923221@gd.com
         "password":"FDAED13E"                       # PPPOE password is FDAED13E
@@ -175,22 +184,16 @@ ifname@wan:keeplive/icmp/dest/test2=8.8.4.4           # modify the icmp keeplive
 ttrue
 ifname@wan:keeplive/icmp/dest/test3=114.114.114.114   # modify the icmp keeplive third destination address to 114.114.114.114
 ttrue
-# You can also use one command to complete the operation of the above three command
+# You can also complete the above three commands with one JSON update
 ifname@wan:keeplive/icmp/dest|{"test":"8.8.8.8", "test2":"8.8.4.4", "test3":"114.114.114.114"}
 ttrue
 ```   
 
-Example, modify the first WAN pppoe username and password
+Example, modify the first WAN pppoec username and password
 ```shell
-ifname@wan:pppoe/username=dimmalex@ashyelf.com
+ifname@wan:pppoec/username=dimmalex@ashyelf.com
 ttrue
-ifname@wan:pppoe/password=123456
-ttrue
-```   
-
-You can also use one command to complete the operation of the above three command
-```shell
-ifname@wan:pppoe|{"username":"dimmalex@ashyelf.com", "password":"123456"}
+ifname@wan:pppoec/password=123456
 ttrue
 ```   
 
@@ -206,27 +209,41 @@ ifname@wan2:status=disable
 ttrue
 ```
 
+Examples, change several attributes at once (**merge**)
+```shell
+ifname@wan|{"status":"enable","mode":"dhcpc","masq":"enable"}
+ttrue
+```
 
+Examples, merge under one path only (subtree **`|{json}`**)
+```shell
+ifname@wan:pppoec|{"username":"user@isp","password":"secret"}
+ttrue
+```
 
-#### **Methods**   
-**ifname@wan** is first WAN network
+### **Component API**
+
+**Directly callable** APIs: `ifname@wan.method`, `ifname@wan2.method`, …
+
+**ifname@wan** is first WAN network  
 **ifname@wan2** is second WAN network
 
-+ `status[]` **get the local network infomation**   
-    - failed return NULL
-    - error return terror   
-    - succeed return json to describes infomation   
++ `status[]` **get WAN network information**
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return JSON status information   
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "block", "up", "failed", "down" ]
+        "status":"Current state",        // [ "nodevice", "uping", "block", "up", "failed", "down" ]
+                                             // "nodevice" means the underlying device is not present
                                              // "uping" for connecting
-                                             // "block" for wait keeplive succeed
-                                             // "up" for the network is connect succeed
+                                             // "block" means waiting for keeplive checks to recover
+                                             // "up" means network is connected
                                              // "failed" for keeplive failed
                                              // "down" for the ifname is down
 
-        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoe" ] for PPPOE dial
+        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting, [ "pppoec" ] for PPPoE dial
         "netdev":"netdev name",         // [ string ]
         "ifdev":"ifdev name",           // [ string ], Optional
         "gw":"gateway ip address",      // [ ip address ]
@@ -243,7 +260,7 @@ ttrue
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
 
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], optional, present when IPv6 is enabled
                                             // "manual" for manual setting
                                             // "automatic" for DHCPv6
                                             // "slaac" for Stateless address autoconfiguration
@@ -254,7 +271,7 @@ ttrue
     }
     ```   
 
-    Example, get the first WAN network infomation
+    Example, get the first WAN network information
     ```shell
     ifname@wan.status
     {
@@ -280,9 +297,9 @@ ttrue
     ```   
 
 + `netdev[]` **get the WAN netdev**   
-    - failed return NULL
-    - error return terror   
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return netdev string  
 
     Example, get the first WAN network netdev
     ```shell
@@ -291,9 +308,9 @@ ttrue
     ```   
 
 + `ifdev[]` **get the ifdev**   
-    - failed return NULL
-    - error return terror   
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return ifdev component name  
 
     Example, get the first WAN network ifdev
     ```shell
@@ -302,11 +319,11 @@ ttrue
     ```   
 
 + `shut[]` **shutdown the WAN network**   
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
-    Example, shutdown the frist WAN network
+    Example, shutdown the first WAN network
     ```shell
     ifname@wan.shut
     ttrue
@@ -318,11 +335,11 @@ ttrue
     ```   
 
 + `setup[]` **setup the WAN network**   
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
-    Example, setup the frist WAN network
+    Example, setup the first WAN network
     ```shell
     ifname@wan.setup
     ttrue
@@ -331,7 +348,68 @@ ttrue
     ```shell
     ifname@wan2.setup
     ttrue
+    ```
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@wan`**; the **network** stack, product integration, or operators call **`setup[]` / `shut[]`** when links go up or down.
+
+### **Joint handlers**
+
++ `keepon[]` **clear the connect failed counter**   
+    - success: return `ttrue`
+    - called when network connection is confirmed alive
+    - resets the internal `connect_failed` counter to prevent unnecessary device reset
+
+    Example, clear the connect failed counter for first WAN network
+    ```shell
+    ifname@wan.keepon
+    ttrue
+    ```   
+
++ `keepoff[]` **handle keeplive check failure**   
+    - success: return `ttrue`
+    - performs configured action when keeplive check fails
+    - action depends on `keeplive/action` configuration:
+      - `"reboot"`: reboot the system (if uptime > 180s)
+      - `"reset"`: reset the interface device
+      - others: reset the connection
+
+    Example, handle keeplive failure for first WAN network
+    ```shell
+    ifname@wan.keepoff
+    ttrue
     ```   
 
 
+### **C Code Example**
 
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_ifname_wan(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "ifname@wan", "status") == NULL)
+        return -1;
+    ok = ssets_string("ifname@wan", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("ifname@wan", "status", NULL); then talk_free if JSON */
+```

@@ -1,8 +1,8 @@
-***
-## Network Client -- GTOG WireGuard Network Instance
-Individual WireGuard mesh network client instance. Each network (agent@net, agent@net2, ...) represents one gtog mesh VPN network, managed by the gtog infrastructure (agent@gtog). Handles WireGuard interface lifecycle, server registration, endpoint/branch/leaf peer management, keepalive, routing, DNS, and network online/offline events
+## Network client — one GTOG VPN instance
+Each **`agent@net`**, **`agent@net2`**, … is one mesh VPN membership, usually managed by **`agent@gtog`**. Configuration covers server reachability, VPN addressing, keepalives, optional DNS/routing, and peer updates via **`endpoint` / `branch` / `leaf`**.
 
-#### Configuration( agent@net )
+### **Configuration( `agent@net` )**
+
 **agent@net** is first gtog network
 **agent@net2** is second gtog network
 
@@ -12,7 +12,7 @@ Individual WireGuard mesh network client instance. Each network (agent@net, agen
     "server":"gtog network server address",                    // [ string ], domain name or ip address
                                                                   // if not set, use heclient's server
     "port":"gtog network server port",                         // [ number ], default 20002
-    "key":"encryption key for server communication",           // [ string ], default "NPORT-UDP@ashyelf.com"
+    "key":"shared key for traffic with the mesh coordinator", // [ string ], product default if omitted
 
     // bindding extern network
     "extern":"bindding extern ifname to connect server",       // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], optional
@@ -84,7 +84,9 @@ ttrue
 
 
 
-#### **API**
+### **Component API**
+
+**Directly callable** APIs from HE / eline / HTTP `/he`.
 **agent@net** is first gtog network
 **agent@net2** is second gtog network
 
@@ -117,11 +119,7 @@ ttrue
     // Attributes introduction of talk by the API return
     {
         "status":"current status",             // [ "uping", "down", "up", "failed", "block" ]
-                                                  // "uping" for service running but not connected
-                                                  // "down" for service is not running
-                                                  // "up" for connected and keeplive ok
-                                                  // "failed" for keeplive failed (master_delay < 0)
-                                                  // "block" for keeplive blocked (master_delay == 0)
+                                                  // "uping" starting; "down" stopped; "up" healthy; "failed"/"block" keepalive problems
         "delay":"keeplive round-trip delay",   // [ number ], in milliseconds, only when status is "up"
         "ip":"local VPN ip address",           // [ ip address ], only when interface is up
         "mask":"VPN netmask",                  // [ mask ], only when interface is up
@@ -133,11 +131,7 @@ ttrue
         "tx_packets":"total sent packets",     // [ number ]
         "server":"gtog server address",        // [ string ]
         "pref":"self preference value",        // [ number ]
-        "mode":"current node mode",            // [ number ]
-                                                  // 1: NOMASTER (no master available)
-                                                  // 2: LEAF (connected as leaf node)
-                                                  // 3: BRANCH (connected as branch/relay node)
-                                                  // 4: MASTER (self is master)
+        "mode":"current node mode",            // [ number ] 1=no coordinator yet, 2=leaf, 3=branch, 4=this device is coordinator
         "mip":"master VPN ip address",         // [ ip address ], current master's VPN ip
         "mmacid":"master mac identify",        // [ string ], current master's macid
         "mpref":"master preference value",     // [ number ], current master's pref
@@ -214,8 +208,8 @@ ttrue
             "point":"endpoint VPN ip address",         // [ ip address ]
             "extend":"endpoint local network",         // [ network address ]
             "pubkey":"WireGuard public key",           // [ string ]
-            "nattype":"NAT type",                      // [ "1", "2" ], "1" for full cone (can be branch), "2" for restricted (leaf only)
-            "pref":"master preference value",          // [ number ], higher = higher priority to become master
+            "nattype":"NAT type",                      // [ "1", "2" ], influences relay vs leaf-only role
+            "pref":"coordinator preference",           // [ number ], higher = stronger candidate
             "ip":"public internet ip address",         // [ ip address ]
             "port":"public internet port",             // [ number ]
             "macid":"device mac identify"              // [ string ]
@@ -264,8 +258,8 @@ ttrue
             "ip":"device public ip address",              // [ ip address ]
             "port":"device public port",                  // [ number ]
             "pubkey":"device WireGuard public key",       // [ string ]
-            "nattype":"device NAT type",                  // [ "1", "2" ], "1" for full cone (can be branch), "2" for restricted (leaf only)
-            "pref":"device master preference",            // [ number ]
+            "nattype":"device NAT type",                  // [ "1", "2" ]
+            "pref":"coordinator preference",              // [ number ]
 
             "point":"endpoint VPN ip address",            // [ ip address ]
             "extend":"endpoint local network"             // [ network address ]
@@ -274,11 +268,7 @@ ttrue
     }
     ```
 
-    **Role determination after endpoint update:**
-    - If self nattype is "1" (full cone) and no higher-pref master exists: become **MASTER**
-    - If self nattype is "1" and higher-pref master exists: become **BRANCH**
-    - If self nattype is "2" (restricted) and master exists: become **LEAF**
-    - If self nattype is "2" and no master exists: become **NOMASTER**
+    After the list changes, each device picks **master / branch / leaf** from **`nattype`**, **`pref`**, and peer visibility (same rules as **`agent@gtog.endpoint`**).
 
     Example, update endpoint list
     ```shell
@@ -287,12 +277,7 @@ ttrue
     ```
 
 + `branch[ {branch information} ]` **add or update a branch (relay) node**
-    add a branch node as a WireGuard peer. If the branch has higher pref than current master, it becomes the new master, and the old master is demoted to branch
-
-    **Behavior depends on current node mode:**
-    - **MASTER mode**: if branch pref > self pref, branch becomes master and self becomes BRANCH. Otherwise add as branch peer
-    - **NOMASTER mode**: branch becomes master, self becomes LEAF
-    - **BRANCH/LEAF mode**: if branch pref > current master pref, branch becomes new master, old master demoted to branch. Otherwise add as branch peer
+    Adds or refreshes a relay-capable peer; coordinator role may move to the stronger **`pref`** when topology allows.
 
     - {branch information} ------ json
     ```json
@@ -317,12 +302,7 @@ ttrue
     ```
 
 + `leaf[ {leaf information} ]` **add or update a leaf node**
-    add a leaf node as a WireGuard peer
-
-    **Behavior depends on current node mode:**
-    - **MASTER/BRANCH mode**: add leaf as WireGuard peer with allowed IPs
-    - **LEAF mode**: extend routing to the new leaf via master (since leaf cannot directly relay, route through master)
-    - **NOMASTER mode**: record the leaf only (no WireGuard peer added, no route to master)
+    Adds or refreshes a non-relay peer; routing follows the current coordinator path.
 
     - {leaf information} ------ json
     ```json
@@ -344,8 +324,8 @@ ttrue
     ttrue
     ```
 
-+ `online[ {network information} ]` **handle network online event (internal)**
-    called when the network becomes online, configure DNS, routing, NAT masquerade, and MTU
++ `online[ {network information} ]` **internal — link came up**
+    Applies DNS, policy routes, masquerade, and MTU from configuration and the supplied snapshot.
     - {network information} ------ json
     ```json
     {
@@ -360,48 +340,44 @@ ttrue
     ```
     - succeed return ttrue
 
-+ `offline[]` **handle network offline event (internal)**
-    called when the network goes offline, clean up DNS file, NAT masquerade rules, and TCP MSS clamping
++ `offline[]` **internal — link went down**
+    Reverts **`online[]`** side effects (DNS, NAT/MSS tweaks, etc.).
     - succeed return ttrue
 
-+ `service[]` **internal background service (not called directly)**
-    this is the main service loop for each network instance, it handles:
-    1. Load WireGuard kernel module if not loaded
-    2. Read configuration (server, netid, network, keepalive settings)
-    3. Determine local IP address (from extern interface or default gateway)
-    4. Create WireGuard interface and generate key pair
-    5. Create raw UDP socket for server communication
-    6. Register with server (send macid, netid, pubkey)
-    7. Receive network configuration from server (network address, keepalive tuning)
-    8. Request endpoint list by sending trigger to server
-    9. Enter keepalive loop based on assigned role:
-       - **MASTER/NOMASTER**: keepalive to server via raw UDP
-       - **BRANCH**: keepalive to both server (raw UDP) and master (ICMP)
-       - **LEAF**: keepalive to master via ICMP only
++ `service[]` **internal (not called via HE)**
+    Background worker for this **`agent@net*`** object: brings up WireGuard, registers with the mesh coordinator, syncs tunables (**`network`**, keepalive fields, …), maintains reachability for the current role (**master / branch / leaf**), and drives **`online[]` / `offline[]`** when the tunnel state changes. **Hard config / disable** errors stop without auto-restart; **link / socket** issues and **extern not ready** are retried.
 
-    The service will exit and return different values based on the situation:
-    - return terror: configuration error (missing netid, server disable order), will not auto-restart
-    - return tfalse: connection or socket error, will auto-retry
-    - return ttrue: extern network interface is not ready, will auto-retry
+### **Lifecycle API**
 
-    **Server registration protocol:**
-    - Send: `<macid>;<netid>;<pubkey>;<uptime>;` (encrypted)
-    - Response types:
-      - `t;<netid>;` - registration acknowledged, branch capability confirmed
-      - `u;<netid>;{json}` - network configuration update (network, keepintval, etc.)
-      - `r;<netid>;` - reset order, service will restart
-      - `d;<netid>;` - disable order, service will exit with error
++ `setup[]` / `shut[]` — **when implemented** for **`agent@net`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-    **Endpoint trigger protocol:**
-    - Send: `<macid>;<netid>;<b|l>;<uptime>;` (encrypted, b=branch capable, l=leaf only)
-    - Server responds by calling endpoint/branch/leaf APIs on this device
+### **C Code Example**
 
-    **Server keepalive protocol:**
-    - Send: `<macid>;<netid>;k;<uptime>;` (encrypted)
-    - Response: `k;<netid>;` for success, `r;` for reset order
-    - Returns round-trip delay in milliseconds
+**Read and update configuration**
 
-    **Master keepalive protocol:**
-    - Send ICMP echo request to all endpoint VPN IPs (except self)
-    - Wait for ICMP echo reply from master
-    - Returns round-trip delay in milliseconds
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_net(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@net", "status") == NULL)
+        return -1;
+    return ssets_string("agent@net", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@net", "list", NULL); talk_free if JSON */
+```
+

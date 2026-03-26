@@ -1,8 +1,9 @@
-***
-## Port Client -- Port Proxy Client
-Connect to port proxy server to provide remote TCP/UDP/serial port forwarding. Maintains a pool of persistent connections to the server, ready to proxy traffic when a remote client initiates a connection
+## Port client — remote port proxy
+Connects to the port-proxy service so remote sessions can reach local **TCP**, **UDP**, or **serial** targets. Keeps standby links to the server so new proxy requests can be served quickly.
 
-#### Configuration( agent@portc )
+### **Configuration( `agent@portc` )**
+
+
 ```json
 {
     // server connection
@@ -62,8 +63,9 @@ ttrue
 
 
 
-#### **API**
+### **Component API**
 
+**Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the port client, start the connection service**
     start the background service process to connect to the port proxy server
     - succeed return ttrue
@@ -189,35 +191,40 @@ ttrue
     }
     ```
 
-+ `service[]` **internal background service (not called directly)**
-    this is the main event-driven service started by setup, it handles:
-    1. Read configuration (server, port, user, vcode from config or heclient)
-    2. Check network connectivity (extern interface or default gateway)
-    3. Create libevent base and register signal handlers
-    4. Create UNIX domain socket control interface
-    5. Create initial connection pool to server
-    6. Periodically check and maintain the connection pool
-    7. Handle proxy mate requests from server
++ `service[]` **internal (not called via HE)**
+    Background worker started by **`setup[]`**: uses **`agent@heclient`** (or local fields) for server identity when unset, keeps a pool of **`pond`** idle server links, renews them as proxies attach/detach, and applies the timeout fields from configuration. **Auth errors** stop without auto-restart; **network / socket** issues and **extern not ready** are retried.
 
-    The service will exit and return different values based on the situation:
-    - return terror: username or vcode is wrong, will not auto-restart
-    - return tfalse: connection or socket error, will auto-retry
-    - return ttrue: extern network interface is not ready, will auto-retry
+### **Lifecycle API**
 
-    **Connection pool behavior:**
-    - Maintain `pond` number of idle connections (default 3)
-    - When a connection is mated (proxying traffic), create new idle connections to maintain the pool
-    - When no connections are mated for a while, reduce idle connections to 1 to save resources
-    - Periodically check connection health with keepalive packets
++ `setup[]` / `shut[]` — **when implemented** for **`agent@portc`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-    **Protocol format:**
-    - Registration: `<macid>;<user>;<vcode>;<uptime>;\n` (encrypted with simple_encode)
-    - Keepalive request: `k\n`
-    - Keepalive response: `k\n`
-    - Mate command from server: `<type>;<port>;<hand_ip>;<hand_port>;<proto>;<uptime>;\n` (encrypted with simple_encode)
-    - Mate acknowledgment: `m\n`
+### **C Code Example**
 
-    **Proxy types:**
-    - TCP proxy (proto='t'): forward TCP traffic between server and local TCP port
-    - UDP proxy (proto='u'): forward UDP traffic between server and local UDP port
-    - Serial proxy (proto='d'): forward traffic between server and local serial device (e.g., uart@serial)
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_agent_portc(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "agent@portc", "status") == NULL)
+        return -1;
+    return ssets_string("agent@portc", "enable", "status") ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("agent@portc", "list", NULL); talk_free if JSON */
+```
+
