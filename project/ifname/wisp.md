@@ -511,11 +511,30 @@ ttrue
 
 ### **Joint handlers**
 
-**None** by default for this component (no extra joint handlers in the reference package).
++ `keepon[]` **clear the connect failed counter**   
+    - success: return `ttrue`
+    - called when network connection is confirmed alive
+    - resets the internal `connect_failed` counter to prevent unnecessary device reset
 
-### **Published joint events**
+    Example, clear the connect failed counter for first WAN network
+    ```shell
+    ifname@wisp.keepon
+    ttrue
+    ```   
 
-**None** in stock **`project/ifname`** sources for this component.
++ `keepoff[]` **handle keeplive check failure**   
+    - success: return `ttrue`
+    - performs configured action when keeplive check fails
+    - action depends on `keeplive/action` configuration:
+      - `"reboot"`: reboot the system (if uptime > 180s)
+      - `"reset"`: reset the interface device
+      - others: reset the connection
+
+    Example, handle keeplive failure for first WAN network
+    ```shell
+    ifname@wisp.keepoff
+    ttrue
+    ```   
 
 ### **C Code Example**
 
