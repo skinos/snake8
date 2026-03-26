@@ -23,12 +23,13 @@
                     <span><img src="/assets/css/images/signal_0.png" id="lte_rssiimg5" class="line-signal"></img></span>
                     <span id="lte_nettype5"></span> <span id="lte_operator5"></span>
                 </div>
-                <span id="lte_tip"></span>
+                <span id="lte_tip" style="display: none;"></span>
               </td>
               
               <td class="center">
-                <span id="lte_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="lte_delay"></span>
+                <span id="lte_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="lte_delay"></span>
                 </span>
                 <span id="lte_tipp"></span>
               </td>
@@ -51,12 +52,13 @@
                     <span><img src="/assets/css/images/signal_0.png" id="lte2_rssiimg5" class="line-signal"></img></span>
                     <span id="lte2_nettype5"></span> <span id="lte2_operator5"></span>
                 </div>
-                <span id="lte2_tip"></span>
+                <span id="lte2_tip" style="display: none;"></span>
               </td>
               
               <td class="center">
-                <span id="lte2_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="lte2_delay"></span>
+                <span id="lte2_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="lte2_delay"></span>
                 </span>
                 <span id="lte2_tipp"></span>
               </td>
@@ -79,12 +81,13 @@
                     <span><img src="/assets/css/images/signal_0.png" id="lte3_rssiimg5" class="line-signal"></img></span>
                     <span id="lte3_nettype5"></span> <span id="lte3_operator5"></span>
                 </div>
-                <span id="lte3_tip"></span>
+                <span id="lte3_tip" style="display: none;"></span>
               </td>
               
               <td class="center">
-                <span id="lte3_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="lte3_delay"></span>
+                <span id="lte3_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="lte3_delay"></span>
                 </span>
                 <span id="lte3_tipp"></span>
               </td>
@@ -107,12 +110,13 @@
                     <span><img src="/assets/css/images/signal_0.png" id="lte4_rssiimg5" class="line-signal"></img></span>
                     <span id="lte4_nettype5"></span> <span id="lte4_operator5"></span>
                 </div>
-                <span id="lte4_tip"></span>
+                <span id="lte4_tip" style="display: none;"></span>
               </td>
               
               <td class="center">
-                <span id="lte4_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="lte4_delay"></span>
+                <span id="lte4_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="lte4_delay"></span>
                 </span>
                 <span id="lte4_tipp"></span>
               </td>
@@ -128,12 +132,13 @@
                 <span id="wisp_peer"></span>
                 <span><img src="/assets/css/images/signal_0.png" id="wisp_rssiimg" class="line-signal"></img></span>
                 <span id="wisp_rssi"></span>
-                <span id="wisp_tip"></span>
+                <span id="wisp_tip" style="display: none;"></span>
               </td>
 
               <td class="center">
-                <span id="wisp_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wisp_delay"></span>
+                <span id="wisp_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wisp_delay"></span>
                 </span>
                 <span id="wisp_tipp"></span>
               </td>
@@ -149,12 +154,13 @@
                 <span id="wisp2_peer"></span>
                 <span><img src="/assets/css/images/signal_0.png" id="wisp2_rssiimg" class="line-signal"></img></span>
                 <span id="wisp2_rssi"></span>
-                <span id="wisp2_tip"></span>
+                <span id="wisp2_tip" style="display: none;"></span>
               </td>
 
               <td class="center">
-                <span id="wisp2_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wisp2_delay"></span>
+                <span id="wisp2_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wisp2_delay"></span>
                 </span>
                 <span id="wisp2_tipp"></span>
               </td>
@@ -167,11 +173,13 @@
               <td id="wan_state" class="center"></td>
               
               <td class="center">
-                <i class="fa fa-plug"></i>
+                <i id="wan_plug" class="fa fa-plug" style="display: none;"></i>
+                <span id="wan_tip" style="display: none;"></span>
               </td>
               <td class="center">
-                <span id="wan_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wan_delay"></span>
+                <span id="wan_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wan_delay"></span>
                 </span>
                 <span id="wan_tipp"></span>
               </td>
@@ -184,11 +192,13 @@
               <td id="wan2_state" class="center"></td>
 
               <td class="center">
-                <i class="fa fa-plug"></i>
+               <i id="wan2_plug" class="fa fa-plug" style="display: none;"></i>
+                <span id="wan2_tip" style="display: none;"></span>
               </td>
               <td class="center">
-                <span id="wan2_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wan2_delay"></span>
+                <span id="wan2_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wan2_delay"></span>
                 </span>
                 <span id="wan2_tipp"></span>
               </td>
@@ -201,11 +211,13 @@
               <td id="wan3_state" class="center"></td>
 
               <td class="center">
-                <i class="fa fa-plug"></i>
+                <i id="wan3_plug" class="fa fa-plug" style="display: none;"></i>
+                <span id="wan3_tip" style="display: none;"></span>
               </td>
               <td class="center">
-                <span id="wan3_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wan3_delay"></span>
+                <span id="wan3_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wan3_delay"></span>
                 </span>
                 <span id="wan3_tipp"></span>
               </td>
@@ -218,11 +230,13 @@
               <td id="wan4_state" class="center"></td>
 
               <td class="center">
-                <i class="fa fa-plug"></i>
+                <i id="wan4_plug" class="fa fa-plug" style="display: none;"></i>
+                <span id="wan4_tip" style="display: none;"></span>
               </td>
               <td class="center">
-                <span id="wan4_delay_head" style="white-space: nowrap; display: none;">
-                    <span data-i18n="Delay"></span>:<span id="wan4_delay"></span>
+                <span id="wan4_delay_head" style="white-space: wrap; display: none;">
+                    <span data-i18n="Delay"></span>:
+                    <span id="wan4_delay"></span>
                 </span>
                 <span id="wan4_tipp"></span>
               </td>
@@ -586,20 +600,26 @@
         if (has5G) {
             // 只要有5G（无论有没有4G），只显示5G
             $(id + "_5g_head").show();
+            $(id + "_tip").hide();
             $(id + "_operator5").text(operatorText || "");
         } 
         else if (has4G) {
             // 没有5G，但有4G，显示4G
             $(id + "_4g_head").show();
+            $(id + "_tip").hide();
             $(id + "_operator").text(operatorText || "");
         } 
         else if (operatorText) {
             // 没信号但有运营商信息（兜底显示在4G位置）
             $(id + "_4g_head").show();
+            $(id + "_tip").hide();
             $(id + "_operator").text(operatorText);
             $(id + "_nettype, " + id + "_csq").text(""); 
         }
         else {
+            $(id + "_4g_head").hide();
+            $(id + "_5g_head").hide();
+            $(id + "_tip").show();
             $(id + "_tip").text($.i18n('No Signal'));
         }
 
@@ -629,9 +649,11 @@
         }
 
         if (info.signal) {
-        $(id + "_rssiimg").attr("src", "/assets/css/images/signal_" + info.signal + ".png");
+            $(id + "_tip").hide();
+            $(id + "_rssiimg").attr("src", "/assets/css/images/signal_" + info.signal + ".png");
         } else {
             $(id + "_rssiimg").hide();
+            $(id + "_tip").show();
             $(id + "_tip").text($.i18n('No Signal'));
         }
 
@@ -748,10 +770,13 @@
             if ( list["ifname@wan"].inuse == "enable" )
             {
                 $('#wan_state').html( $.i18n('In Use') );
+                $('#wan_plug').show();
             }
             else
             {
                 $('#wan_state').html( $.i18n('Unused') );
+                $('#wan_tip').show();
+                $('#wan_tip').text($.i18n('No Signal'));
             }
             $('#wan').show();
         }
@@ -768,10 +793,13 @@
             if ( list["ifname@wan2"].inuse == "enable" )
             {
                 $('#wan2_state').html( $.i18n('In Use') );
+                $('#wan2_plug').show();
             }
             else
             {
                 $('#wan2_state').html( $.i18n('Unused') );
+                $('#wan2_tip').show();
+                $('#wan2_tip').text($.i18n('No Signal'));
             }
             $('#wan2').show();
         }
@@ -788,10 +816,13 @@
             if ( list["ifname@wan3"].inuse == "enable" )
             {
                 $('#wan3_state').html( $.i18n('In Use') );
+                $('#wan3_plug').show();
             }
             else
             {
                 $('#wan3_state').html( $.i18n('Unused') );
+                $('#wan3_tip').show();
+                $('#wan3_tip').text($.i18n('No Signal'));
             }
             $('#wan3').show();
         }
@@ -808,10 +839,13 @@
             if ( list["ifname@wan4"].inuse == "enable" )
             {
                 $('#wan4_state').html( $.i18n('In Use') );
+                $('#wan4_plug').show();
             }
             else
             {
                 $('#wan4_state').html( $.i18n('Unused') );
+                $('#wan4_tip').show();
+                $('#wan4_tip').text($.i18n('No Signal'));
             }
             $('#wan4').show();
         }
@@ -900,6 +934,46 @@
         else
         {
             $('#lte2').hide();
+        }
+        if ( list["ifname@lte3"] )
+        {
+            if ( list["ifname@lte3"].status )
+            {
+                $('#lte3_status').html( $.i18n(list["ifname@lte3"].status) );
+            }
+            if ( list["ifname@lte3"].inuse == "enable" )
+            {
+                $('#lte3_state').html( $.i18n('In Use') );
+            }
+            else
+            {
+                $('#lte3_state').html( $.i18n('Unused') );
+            }
+            $('#lte3').show();
+        }
+        else
+        {
+            $('#lte3').hide();
+        }
+        if ( list["ifname@lte4"] )
+        {
+            if ( list["ifname@lte4"].status )
+            {
+                $('#lte2_status').html( $.i18n(list["ifname@lte4"].status) );
+            }
+            if ( list["ifname@lte4"].inuse == "enable" )
+            {
+                $('#lte4_state').html( $.i18n('In Use') );
+            }
+            else
+            {
+                $('#lte4_state').html( $.i18n('Unused') );
+            }
+            $('#lte4').show();
+        }
+        else
+        {
+            $('#lte4').hide();
         }
       });
     }
