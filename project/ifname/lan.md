@@ -1,20 +1,20 @@
-***
 ## Local/LAN Network Management
-Manage local network. This component must depend on local network interface or network switch(SOC) and network management framework project  
-Usually ifname@lan is the first local network. If there are multiple local network in the system, ifname@lan2 will be the second local network, and increase by degress
+Manage local (LAN) networks. This component depends on a local network interface or switch (SoC), typically via **`arch`** (`ethernet`, bridge/VLAN wiring), and the **network** project (`network@frame` registration — see [`../network/frame.md`](../network/frame.md)).  
+Usually `ifname@lan` is the first local network. If there are multiple local networks, `ifname@lan2` is the second local network, and numbering increases sequentially.
 
-#### **configuration( ifname@lan )**   
+### **Configuration( `ifname@lan` )**
+
 **ifname@lan** is first local network   
 **ifname@lan2** is second local network   
 
 ```json
 // Attribute introduction
 {
-    "status":"start at system startup",    // [ "enable", "disable" ]
+    "status":"start at system startup",    // [ "enable", "disable" ], enable means auto-setup after boot
 
     // IPv4
-    "mode":"IPV4 address mode",            // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
-    "static":                                 // detial configure for "mode" is "static"
+    "mode":"IPV4 address mode",            // [ "dhcpc" ] DHCP client mode, [ "static" ] manual IPv4 setting
+    "static":                                 // detail configuration for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
         "mask":"IPv4 netmask",                      // < ipv4 netmask >
@@ -26,21 +26,21 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
         "dns":"IPv4 DNS",                           // [ ipv4 address ]
         "dns2":"IPv4 DNS"                           // [ ipv4 address ]
     },
-    "dhcpc":                                  // detial configure for "mode" is "dhcpc"
+    "dhcpc":                                  // detail configuration for "mode" is "dhcpc"
     {
-        "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ]
-        "routeopt":"dhcp option static route",                     // [ "disable", "enable" ]
+        "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ], temporary fallback address
+        "routeopt":"dhcp option static route",                     // [ "disable", "enable" ], accept classless static routes
         "custom_dns":"Custom DNS",                                 // [ "disable", "enable" ]
         "dns":"Custom DNS1",                                       // [ ip address ], This is valid when "custom_dns" is "enable"
         "dns2":"Custom DNS2"                                       // [ ip address ], This is valid when "custom_dns" is "enable"
     },
-    "dhcps":                                               // detial configure for "mode" is "ppp"
+    "dhcps":                                               // detail configuration for DHCP server settings
     {
         "status":"Whether to start the DHCP service",                      // [ "disable", "enable" ]
         "startip":"The start address within the IPv4 allocation pool",     // [ ipv4 address ]
         "endip":"IPv4 assigns the end address within the pool",            // [ ipv4 address ]
         "mask":"IPv4 assigns a subnet mask within a pool",                 // [ ipv4 netmask ]
-        "lease":"lease time for assigns",                                  // [ number ], the unit is second
+        "lease":"lease time for assigned addresses",                       // [ number ], unit is seconds
         "gw":"Specifies the IPv4 gateway",                                 // [ ipv4 address ], default is local network IP address
         "dns":"Specifies the IPv4 DNS",                                    // [ ipv4 address ], default is local network IP address
         "dns2":"Specifies the IPv4 backup dns",                            // [ ipv4 address ]
@@ -48,12 +48,11 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
     },
 
     // IPv6
-    "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "relay" ]
-                                                    // "disable" is not use ipv6
-                                                    // "manual" for manual setting
-                                                    // "automatic" for DHCPv6
-                                                    // "relay" for relay the extern network ipv6 address
-    "manual":                                 // detial configure for "method" is "manual"
+    "method":"IPv6 address mode",             // [ "disable", "manual", "automatic" ]
+                                                    // "disable" means IPv6 is disabled
+                                                    // "manual" means static IPv6 settings
+                                                    // "automatic" means DHCPv6
+    "manual":                                 // detail configuration for "method" is "manual"
     {
         "addr":"IPv6 address",                      // < ipv6 address >
         "prefix":"IPv6 prefix",                     // < number >, 1-128
@@ -61,11 +60,11 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
         "resolve":"IPv6 DNS",                       // [ ipv6 address ]
         "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
     },
-    "automatic":                             // detial configure for "method" is "automatic"
+    "automatic":                             // detail configuration for "method" is "automatic"
     {
         "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
-        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
-        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_dns" is "enable"
+        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
+        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
     },
     "addrpool":
     {
@@ -82,7 +81,7 @@ Usually ifname@lan is the first local network. If there are multiple local netwo
 }
 ```   
 
-Example, show all first local network configure
+Example, show all configuration of the first local network
 ```shell
 ifname@lan
 {
@@ -92,7 +91,7 @@ ifname@lan
         "ip":"192.168.1.1",                          # IPv4 address is 192.168.1.1
         "mask":"255.255.255.0"                       # IPv4 netmask is 255.255.255.0
     },
-    "method":"relay",                                # IPv6 address mode is relay
+    "method":"automatic",                            # IPv6 address mode is automatic
 
     "dhcps":
     {
@@ -107,41 +106,49 @@ ifname@lan
 }
 ```   
 
-Example, modify the first local network ip address, Take effect after restart
+Example, modify the first local network IP address (takes effect after restart)
 ```shell
 ifname@lan:static/ip=192.168.2.1
 ttrue
 ```   
 
-Example, disable the first local network dhcp server, Take effect after restart
+Example, disable DHCP server on the first local network (takes effect after restart)
 ```shell
 ifname@lan:dhcps/status=disable
 ttrue
 ```     
 
-Example, modify the first local network dhcp pool, start ip 192.168.2.100, end ip 192.168.2.200
+Example, modify DHCP pool of the first local network: start IP `192.168.2.100`, end IP `192.168.2.200`
 ```shell
 ifname@lan:dhcps|{"startip":"192.168.2.100","endip":"192.168.2.200"}
 ttrue
 ```
 
+Examples, change several attributes at once (**merge**)
+```shell
+ifname@lan|{"status":"enable","mode":"static"}
+ttrue
+```
 
+### **Component API**
 
-#### **Methods**   
-**ifname@lan** is first local network   
-**ifname@lan2** is second local network   
+**Directly callable** APIs: `ifname@lan.method`, `ifname@lan2.method`, …
 
-+ `status[]` **get the local network infomation** 
-    - failed return NULL
-    - error return terror   
-    - return json to describes this infomation  
+**ifname@lan** is first local network  
+**ifname@lan2** is second local network
+
++ `status[]` **get local network information** 
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return JSON status information  
     ```json
     // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "down", "up" ]
-                                             // "uping" for connecting
-                                             // "down" for the ifname is down
-                                             // "up" for the network is connect succeed
+        "status":"Current state",        // [ "nodevice", "uping", "down", "up" ]
+                                             // "nodevice" means the underlying device is not present
+                                             // "uping" means connecting
+                                             // "down" means interface is down
+                                             // "up" means connection is established
 
         "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
         "netdev":"netdev name",         // [ string ]
@@ -159,7 +166,7 @@ ttrue
         "tx_packets":"receive packets", // [ number ]
         "mac":"MAC address",            // [ mac address ]
 
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, exist when IPV6 enable
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], optional, present when IPv6 is enabled
                                             // "manual" for manual setting
                                             // "automatic" for DHCPv6
                                             // "slaac" for Stateless address autoconfiguration
@@ -170,7 +177,7 @@ ttrue
     }
     ```   
 
-    Example, get the first local network infomation
+    Example, get the first local network information
     ```shell
     ifname@lan.status
     {
@@ -193,9 +200,9 @@ ttrue
     ```   
 
 + `netdev[]` **get the netdev**   
-    - failed return NULL
-    - error return terror   
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return netdev string  
 
     Example, get the first local network netdev
     ```shell
@@ -204,9 +211,9 @@ ttrue
     ```   
 
 + `ifdev[]` **get the ifdev**   
-    - failed return NULL
-    - error return terror   
-    - return string to describes this infomation  
+    - failed: return `NULL`
+    - error: return `terror`   
+    - success: return ifdev component name  
 
     Example, get the first local network ifdev
     ```shell
@@ -215,9 +222,9 @@ ttrue
     ```   
 
 + `shut[]` **shutdown the local network**  
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
     Example, shutdown the first local network
     ```shell
@@ -231,11 +238,11 @@ ttrue
     ```   
 
 + `setup[]` **setup the local network**   
-    - failed return tfalse
-    - error return terror   
-    - succeed return ttrue
+    - failed: return `tfalse`
+    - error: return `terror`   
+    - success: return `ttrue`
 
-    Example, setup the frist local network
+    Example, setup the first local network
     ```shell
     ifname@lan.setup
     ttrue
@@ -244,7 +251,41 @@ ttrue
     ```shell
     ifname@lan2.setup
     ttrue
-    ```   
+    ```
+
+### **Lifecycle API**
+
++ `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@lan`**; the **network** stack or product code calls **`setup[]` / `shut[]`**.
 
 
+### **C Code Example**
 
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_ifname_lan(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "ifname@lan", "status") == NULL)
+        return -1;
+    ok = ssets_string("ifname@lan", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("ifname@lan", "status", NULL); then talk_free if JSON */
+```
