@@ -7,7 +7,7 @@
     "com":
     {
         "telnet":"telnet server management",
-        "ssh":"ssl shell server management"
+        "ssh":"SSH (Dropbear) server management"
     },
     "obj":
     {
