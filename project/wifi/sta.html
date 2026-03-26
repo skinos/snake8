@@ -147,7 +147,7 @@
             <!-- Disable local SSID -->
             <div class="form-group">
                 <label class="col-sm-3 control-label no-padding-right" data-i18n="Disable Local SSID"></label>
-                <div class="col-sm-9"><label><input id="ssid_disable" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
+                <div class="col-sm-9"><label><input id="nossid" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
             </div>
 
       </div> <!-- sta_config -->
@@ -260,10 +260,10 @@
             $('#peer3').val( sta.peer3 || '' );
             $('#strong').prop( 'checked', able2boole(sta.strong) );
             $('#peermac').val( sta.peermac || '' );
+            $('#nossid').prop( 'checked', sta.nossid=="enable" );
             $('#secure').val( sta.secure || 'disable' );
             $('#wpa_encrypt').val( sta.wpa_encrypt || 'tkipaes' );
             $('#wpa_key').val( sta.wpa_key || '' );
-            $('#ssid_disable').prop( 'checked', sta.ssid_disable=="enable" );
             $('#lock').prop( 'checked', sta.peermac );
             $('#hidden').prop( 'checked', sta.peermode=="hidden" );
             $('#channel').val( sta.channel || '1' );
@@ -449,7 +449,7 @@
               return;
             }
         }
-        sta.ssid_disable = boole2able( $('#ssid_disable').prop('checked') );
+        sta.nossid = boole2able( $('#nossid').prop('checked') );
         delete sta.peermode;
         delete sta.channel;
         if ( $('#hidden').prop('checked') )

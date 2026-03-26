@@ -1,8 +1,7 @@
-***
 ## 5.8G Radio Management   
 Manage 5.8G Radio
 
-#### Configuration( wifi@a )   
+### **Configuration( `wifi@a` )**
 
 ```json
 // Attribute introduction
@@ -32,8 +31,8 @@ Example, show 5.8G Radio all configure
 ```shell
 wifi@a
 {
-    "mode":"n",                # 5.8G Radio is 11N
-    "bandwidth":"40",          # 5.8G bandwidth 40M
+    "mode":"ac",               # 5.8G Radio is 11AC
+    "bandwidth":"80",          # 5.8G bandwidth 80M
     "channel":"165",           # 5.8G channel is 165
 
     "beacon":"100",            # 5.8G beacon interval is 100ms
@@ -57,8 +56,15 @@ wifi@a:channel=36
 ttrue
 ```
 
+Examples, change several attributes at once (**merge**)
+```shell
+wifi@a|{"mode":"ac","bandwidth":"80","channel":"0"}
+ttrue
+```
 
-#### **API**   
+### **Component API**
+
+**Directly callable** APIs: `wifi@a.method`, `wifi@a2.method`, … (HE / eline / HTTP `/he`).
 
 + `chlist[]` **get the 5.8G radio channel list**   
     - failed return NULL
@@ -147,3 +153,43 @@ ttrue
     ttrue
     ```
 
+### **Lifecycle API**
+
++ `setup[]` **start component services**, *succeed return ttrue, failed return tfalse*
+    - Called from the platform **`init`** schedule when **`setup[]`** is wired for this component.
+
++ `shut[]` **stop component services**, *succeed return ttrue, failed return tfalse*
+    - Called from the platform **`uninit`** schedule when **`shut[]`** is wired.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_wifi_a(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "wifi@a", "status") == NULL)
+        return -1;
+    ok = ssets_string("wifi@a", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("wifi@a", "status", NULL); then talk_free if JSON */
+```

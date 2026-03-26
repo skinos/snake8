@@ -1,8 +1,8 @@
-***
 ## 2.4G Radio Management   
-Manage 2.4G Radio
+Manage 2.4G Radio. Which driver and host stack apply is **product-specific**; the **`arch`** area supplies board integration, while configuration flows through the same **`land`** / `he` model as other components.
 
-#### Configuration( wifi@n )   
+### **Configuration( `wifi@n` )**
+
 
 ```json
 // Attribute introduction
@@ -58,8 +58,15 @@ wifi@n:channel=11
 ttrue
 ```
 
+Examples, change several attributes at once (**merge**)
+```shell
+wifi@n|{"mode":"an","bandwidth":"40","channel":"0"}
+ttrue
+```
 
-#### **API**   
+### **Component API**
+
+**Directly callable** APIs: `wifi@n.method`, `wifi@n2.method`, … (HE / eline / HTTP `/he`).
 
 + `chlist[]` **get the 2.4G radio channel list**   
     - failed return NULL
@@ -148,3 +155,43 @@ ttrue
     ttrue
     ```
 
+### **Lifecycle API**
+
++ `setup[]` **start component services**, *succeed return ttrue, failed return tfalse*
+    - Called from the platform **`init`** schedule when **`setup[]`** is wired for this component.
+
++ `shut[]` **stop component services**, *succeed return ttrue, failed return tfalse*
+    - Called from the platform **`uninit`** schedule when **`shut[]`** is wired.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_wifi_n(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "wifi@n", "status") == NULL)
+        return -1;
+    ok = ssets_string("wifi@n", "value", "status");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("wifi@n", "status", NULL); then talk_free if JSON */
+```
