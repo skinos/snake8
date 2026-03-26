@@ -1,8 +1,9 @@
-***
-## Manage System Date   
-Manage system date and time, including timezone setting and NTP synchronization
+## System date and time
 
-### Configuration( clock@date )   
+Manage system date and time, including timezone, manual set, NTP client sync, and status reporting (`clock@date`).
+
+### **Configuration( `clock@date` )**
+
 ```json
 // Attributes introduction
 {
@@ -37,10 +38,14 @@ Example, disable the NTP client time synchronization
 clock@date:ntpclient=disable
 ttrue
 ```  
+Examples, change several attributes at once (**merge** — only listed fields are updated; **`|`** plus JSON object)
+```shell
+clock@date|{"timezone":"8","ntpclient":"enable","ntpserver":"pool.ntp.org"}
+ttrue
+```
 
 
-
-### **API**   
+### **Component API**
 + `status[]` **get the date information**
     - return NULL when failed
     - return terror when error
@@ -60,7 +65,6 @@ ttrue
         "uptime":"system uptime in second"                // [ number ]
     }    
     ```   
-
     Example, get the current date   
     ```shell
     clock@date.status
@@ -70,7 +74,6 @@ ttrue
         "uptime":"118"                           # system run 118 second
     }
     ```   
-
 
 + `current[ [current date], [time zone] ]` **set current date or get current time**
     - [current date] ------ [ string ], format is hour:minute:second:month:day:year
@@ -125,6 +128,58 @@ ttrue
     ```shell
     clock@date.ntpsync
     ttrue
-    ```   
+    ```
 
 
+### **Lifecycle API**
+
++ `setup[]` **apply saved timezone and related boot-time state**, *succeed return ttrue*
+    - **Not** run automatically during **`init`** in the default clock package; call **`setup[]`** from your integration if the timezone must be applied before other services.
+
++ `shut[]` **stop this component’s supervised child (NTP client service)**, *succeed return ttrue*
+    - **Not** run automatically on **`uninit`** in the default integration; call explicitly if you need it on shutdown.
+
+### **Joint handlers**
+
+| Joint key | Invokes |
+|-----------|---------|
+| `network/online` | `clock@date.online` |
+
+Registered as a **joint** handler in the default clock package. When the stack marks the WAN path **online**, **`online[]`** starts the embedded NTP client **`service`** if configuration has **`ntpclient`** = **`enable`**.
+
+
+### **Published joint events**
+
++ **`date/modify`** — emitted when the wall clock is changed. Second argument is a short source tag, e.g. **`set`** (manual `current[…]`) or **`ntp`** (successful NTP sync).
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_clock_date(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "clock@date", "timezone") == NULL)
+        return -1;
+    ok = ssets_string("clock@date", "8", "timezone");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("clock@date", "status", NULL); then talk_free if JSON */
+```

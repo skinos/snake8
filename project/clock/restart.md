@@ -1,9 +1,9 @@
+## Scheduled system restart
 
-***
-## System restart Plan Management   
-Manages system restarts automatically, and restarts the system at a specified time
+Manages automatic system restarts by uptime, clock time, or idle/client conditions (`clock@restart`).
 
-#### Configuration( clock@restart )   
+### **Configuration( `clock@restart` )**
+
 ```json
 // attribute introduction
 {
@@ -64,5 +64,46 @@ Example: set to automatically restart at 03:30
 ```shell
 clock@restart|{"mode":"point","point_hour":"03","point_minute":"30"}
 ttrue
-```   
+```
 
+
+### **Lifecycle API**
+
++ `setup[]` **start the restart planner service when mode is active**, *succeed return ttrue*
+    - After install, **`init`** usually runs **`clock@restart.setup`** at the **`app`** stage. For **`mode`** in **`age`**, **`point`**, or **`idle`**, starts the **`service`** child; **`disable`** skips the service.
+
++ `shut[]` **stop restart supervision**, *succeed return ttrue*
+    - **`sdelete( COM_IDPATH )`**. **Not** run automatically on **`uninit`** in the default integration.
+
+
+### **C Code Example**
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int example_config_clock_restart(void)
+{
+    char buf[128];
+    boole ok;
+    if (sgets_string(buf, sizeof(buf), "clock@restart", "mode") == NULL)
+        return -1;
+    ok = ssets_string("clock@restart", "disable", "mode");
+    return ok ? 0 : -1;
+}
+```
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* Example: scall("clock@restart", "setup", NULL); — usually only from init */
+```
