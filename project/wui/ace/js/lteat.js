@@ -10,7 +10,7 @@ var watch_pager = '#watch-grid-pager';
 // 加载数据
 function lte_at() {
     window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
-        iconfig = v[1];
+        iconfig = v[0];
         if ( !iconfig )
         {
             iconfig = {};
@@ -128,7 +128,7 @@ function at_save() {
 	// compare
 	if ( !ocompare( iconfig, icopy ) )
 	{
-		cmds.push( ifname+"="+JSON.stringify(iconfig) );
+		cmds.push( modem+"="+JSON.stringify(iconfig) );
 		needsave = true;
 	}
 	if ( needsave == false )
@@ -150,6 +150,27 @@ function at_save() {
 	});
 }
 
+// 表单自定义逻辑
+var customForm = {
+    afterShowForm: function(form) {
+        $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+        $("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+        var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+            '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+            '</div>';
+        $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+        $("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
+        $("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
+    }
+};
+
+var customInline = $.extend(true, {}, jqtable.actionOptions, {  
+    formatoptions: {  
+        editformbutton: true,  
+        editOptions: customForm  
+    }  
+});
+
 function init_at() {
     var $setTable = $(set_table);
     var $watchTable = $(watch_table);
@@ -168,11 +189,12 @@ function init_at() {
     jqtable.create(set_table, set_pager, {
         caption: $.i18n("Custom setting AT"),
         toolbar: [true, "top"],
-        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return')],
+        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Operation')],
         colModel: [
             { name: 'name', width: 100, editable: true, editrules: { required: true } },
             { name: 'at', width: 250, editable: true, editrules: { required: true } },
-            { name: 'result', width: 400, editable: false }
+            { name: 'result', width: 400, editable: false },
+            customInline
         ],
         pager: set_pager,
         rowNum: 10,
@@ -191,19 +213,8 @@ function init_at() {
             edit: true, editicon: 'ace-icon fa fa-pencil blue',
             search: false, refresh: false, view: false
         }),
-        jqtable.editOptions,
-        $.extend(true, {}, jqtable.addOptions, {
-            afterShowForm: function(form) {
-                $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                $("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
-                    '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
-                    '</div>';
-                $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-                $("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
-                $("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
-            }
-        }),
+        $.extend(true,{},jqtable.editOptions,customForm),
+        $.extend(true,{},jqtable.addOptions,customForm),
         jqtable.deleteOptions
     );
     
@@ -211,11 +222,12 @@ function init_at() {
     jqtable.create(watch_table, watch_pager, {
         caption: $.i18n("Custom watching AT"),
         toolbar: [true, "top"],
-        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return')],
+        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Operation')],
         colModel: [
             { name: 'name', width: 200, editable: true, editrules: { required: true } },
             { name: 'at', width: 300, editable: true, editrules: { required: true } },
-            { name: 'result', width: 300, editable: false }
+            { name: 'result', width: 300, editable: false },
+            customInline
         ],
         pager: watch_pager,
         rowNum: 10,
@@ -234,19 +246,8 @@ function init_at() {
             edit: true, editicon: 'ace-icon fa fa-pencil blue',
             search: false, refresh: false, view: false
         }),
-        jqtable.editOptions,
-        $.extend(true, {}, jqtable.addOptions, {
-            afterShowForm: function(form) {
-                $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                $("label[for='at']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
-                    '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
-                    '</div>';
-                $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-                $("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
-                $("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
-            }
-        }),
+        $.extend(true,{},jqtable.editOptions,customForm),
+        $.extend(true,{},jqtable.addOptions,customForm),
         jqtable.deleteOptions
     );
     
@@ -283,7 +284,7 @@ function init_at() {
     return true;
 }
 
-$.i18n().load( page.lang('lteat') ).then( function () {
+$.i18n().load( page.lang('lte') ).then( function () {
 	/* init the langauage */
 	$.i18n().locale = lang; $('body').i18n();
 

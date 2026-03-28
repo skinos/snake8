@@ -1,11 +1,13 @@
 var lte;
+var modem = page.param('modem', location.hash);   
+var ifname = page.param('object', location.hash);
 
 var smslist_table = '#smslist-grid-table';  
 var smslist_pager = '#smslist-grid-pager';  
-var obj = window.object || page.param('object', location.hash);
+//var obj = window.object || page.param('object', location.hash);
 
 function lte_sms() {
-    window.LteConfigManager.loadStatus(obj, true).then(function(v) {
+    window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
     lte = v[0];
 
     $('#sms').prop('checked', lte.sms === "enable");  
@@ -44,8 +46,8 @@ function lte_sms() {
 
 function smslist_load()
 {
-  window.LteConfigManager.loadStatus(obj, true).then(function(v) {
-    var list = v[4];
+    window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
+    var list = v[7];
     if (!list) {
         list = {};
     }
@@ -82,7 +84,7 @@ function delete_smss( indexStr )
         var row = $(smslist_table).jqGrid('getRowData', indexs[index]);
         key = row.sid;
         // 通过sid删除
-        cmds.push( object+'.smsdel[' + row.sid + ']' );
+        cmds.push( modem+'.smsdel[' + row.sid + ']' );
     }
     // 执行删除
     he.exec( cmds ).then(function (){
@@ -107,6 +109,7 @@ function sms_save()
   lte.sms = boole2able( $('#sms').prop('checked') );
   if ( lte.sms == "enable" )
   {
+    console.log(lte.sms_cfg)
       if ( !lte.sms_cfg )
       {
         lte.sms_cfg = {};
@@ -116,6 +119,12 @@ function sms_save()
       {
         lte.sms_cfg.he_contact = $('#he_contact').val();
         lte.sms_cfg.he_prefix = $('#he_prefix').val();
+        if ( lte.sms_cfg.he_contact == "" )
+        {
+            page.alert( { message: $.i18n("Command Contact")+" "+$.i18n('Can not be empty') } );
+            return;
+        }
+
         if ( lte.sms_cfg.he_prefix == "" )
         {
             page.alert( { message: $.i18n("Command Prefix")+" "+$.i18n('Can not be empty') } );
@@ -133,7 +142,7 @@ function sms_save()
   page.confirm( { message: msg } ).then( function(result){
     if (!result) return location.reload();
     
-    var cmds = [ object+"="+JSON.stringify(lte) ];
+    var cmds = [ modem+"="+JSON.stringify(lte) ];
     he.exec(cmds).then( function(){
       page.hint2succeed( $.i18n('Modify successfully') );
       lte_sms();
@@ -227,7 +236,7 @@ function init_sms(){
 
 /* init */
 page.password('passwd', 'password-icon' );
-$.i18n().load( page.lang('ltesms') ).then( function () {
+$.i18n().load( page.lang('lte') ).then( function () {
   /* init the langauage */
   $.i18n().locale = lang; $('body').i18n();
   /* init the table */
