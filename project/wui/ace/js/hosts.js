@@ -54,6 +54,30 @@ function hosts_save()
     });
 }
 
+// 表单自定义逻辑
+var customForm = {
+    afterShowForm: function(form) {
+        // 添加自定义样式和提示
+        $("label[for='hostname']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+        $("label[for='ip']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+
+        var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+            '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+            '</div>';
+        
+        $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+        // 设置 placeholder
+        $("#hostname", form).attr("placeholder", $.i18n('Enter Hostname'));
+        $("#ip", form).attr("placeholder", $.i18n('Enter IP'));
+}
+};
+
+var customInline = $.extend(true, {}, jqtable.actionOptions, {  
+    formatoptions: {  
+        editformbutton: true,  
+        editOptions: customForm  
+    }  
+});
 
 /* init */
 $.i18n().load( page.lang('hosts') ).then( function () {
@@ -78,7 +102,8 @@ $.i18n().load( page.lang('hosts') ).then( function () {
                     editoptions: { maxlength:'15' },
                     editrules: { required: true }
                 },
-                jqtable.actionOptions,
+                //jqtable.actionOptions,
+                customInline
             ],
             rowNum: 10,
             viewrecords: true,
@@ -102,24 +127,8 @@ $.i18n().load( page.lang('hosts') ).then( function () {
                 search: false, refresh: false, view: false
             }
         ),
-        jqtable.editOptions,
-        //jqtable.addOptions,
-        $.extend(true,{},jqtable.addOptions,{
-            afterShowForm:function(form){
-                // 添加自定义样式和提示
-                    $("label[for='hostname']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                    $("label[for='ip']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-
-                    var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
-                        '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
-                        '</div>';
-                    
-                    $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-                    // 设置 placeholder
-                    $("#hostname", form).attr("placeholder", $.i18n('Enter Hostname'));
-                    $("#ip", form).attr("placeholder", $.i18n('Enter IP'));
-            }
-        }),
+        $.extend(true,{},jqtable.editOptions,customForm),
+        $.extend(true,{},jqtable.addOptions,customForm),
         jqtable.deleteOptions
     );
 
