@@ -34,10 +34,11 @@ window.LteConfigManager = {
             modem,
             ifname,           
             ifname + ".status",
-            ifname + ".custom_set",
-            ifname + ".custom_watch",
+            modem + ".custom_set",
+            modem + ".custom_watch",
             ifname + ".lock_imei",
-            ifname + ".lock_imsi"
+            ifname + ".lock_imsi",
+            modem + ".sms_list"
         ]).then(function(v) {
             v = v || [];
             for (var i = 0; i <= 6; i++) {
@@ -63,13 +64,17 @@ function config_load() {
             return; 
         }  
         lte_basic(v);  
-        status_load(v[3] || {}); 
+        //status_load(v[3] || {}); 
     });  
 };
 
 /* load the status */
-function status_load(info)
+function status_load()
 {
+  he.bkload( [ object+".status" ] ).then( function(v){
+    state = v[0]
+    var info = state;
+
       if(!info){
         info = {};
       }
@@ -180,7 +185,8 @@ function status_load(info)
 	  $(id+"_ip").text( info.ip||' ' );
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
-}
+    })
+  }
 
 /* load the configure on the input */
 function lte_basic(v)
@@ -395,6 +401,8 @@ function lte_basic(v)
       {
         case 'disable':
         case 'slaac':
+            $('#manual_cfg').hide();
+            break;
         case 'automatic':
             $('#manual_cfg').hide();
             break;
