@@ -256,12 +256,19 @@
             <option value="default" data-i18n="Use First Online"></option>
             <option value="cold" data-i18n="Backup(Cold)"></option>
             <option value="hot" data-i18n="Backup(Hot)"></option>
+            <option value="hot2" data-i18n="Backup(Hot) on First/Second"></option>
             <option value="hot3" data-i18n="Backup(Hot) on First/Second/Third"></option>
             <option value="hot4" data-i18n="Backup(Hot) on First/Second/Third/Fourth"></option>
+            <option value="hot5" data-i18n="Backup(Hot) on First/Second/Third/Fourth/Fifth"></option>
+
             <option value="lazy" data-i18n="Backup(Lazy)"></option>
+            <option value="lazy2" data-i18n="Backup(Lazy) on First/Second"></option>
             <option value="lazy3" data-i18n="Backup(Lazy) on First/Second/Third"></option>
             <option value="lazy4" data-i18n="Backup(Lazy) on First/Second/Third/Fourth"></option>
+            <option value="lazy5" data-i18n="Backup(Lazy) on First/Second/Third/Fourth/Fifth"></option>
+
             <option value="dbdc" data-i18n="Balancing"></option>
+            <option value="dbdc2" data-i18n="Balancing on First/Second"></option>
             <option value="dbdc3" data-i18n="Balancing on First/Second/Third"></option>
             <option value="dbdc4" data-i18n="Balancing on First/Second/Third/Fourth"></option>
           </select>
@@ -317,6 +324,33 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" id="sixth" data-i18n="Seventh Connection"></label>
+        <div class="col-sm-9">
+          <select class="col-xs-10 col-sm-5" id="reserve4"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" id="sixth" data-i18n="Eighth Connection"></label>
+        <div class="col-sm-9">
+          <select class="col-xs-10 col-sm-5" id="reserve5"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" id="sixth" data-i18n="Ninth Connection"></label>
+        <div class="col-sm-9">
+          <select class="col-xs-10 col-sm-5" id="reserve6"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" id="sixth" data-i18n="Tenth Connection"></label>
+        <div class="col-sm-9">
+          <select class="col-xs-10 col-sm-5" id="reserve7"></select>
+        </div>
+      </div>
 
     <div id="dns-sets" style="display:none;">
         <!-- DNS -->
@@ -527,6 +561,192 @@
             options += '<option value="' + i + '">' + $.i18n( i ) + '</option>'
         }
         $("#reserve3").html( options );
+    }
+    function reserve4_html()
+    {
+        var options = '<option value="">' + $.i18n( "NONE" ) + '</option>';
+        var skip = $('#main').val();
+        var skip2 = $('#back').val();
+        var skip3 = $('#king').val();
+        var skip4 = $('#reserve').val();
+        var skip5 = $('#reserve2').val();
+        var skip6 = $('#reserve3').val();
+        for ( var i in interfaces )
+        {
+            if ( skip && i == skip )
+            {
+                continue;
+            }
+            if ( skip2 && i == skip2 )
+            {
+                continue;
+            }
+            if ( skip3 && i == skip3 )
+            {
+                continue;
+            }
+            if ( skip4 && i == skip4 )
+            {
+                continue;
+            }
+            if ( skip5 && i == skip5 )
+            {
+                continue;
+            }
+            if ( skip6 && i == skip6 )
+            {
+                continue;
+            }
+            options += '<option value="' + i + '">' + $.i18n( i ) + '</option>'
+        }
+        $("#reserve4").html( options );
+    }
+    function reserve5_html()
+    {
+        var options = '<option value="">' + $.i18n( "NONE" ) + '</option>';
+        var skip = $('#main').val();
+        var skip2 = $('#back').val();
+        var skip3 = $('#king').val();
+        var skip4 = $('#reserve').val();
+        var skip5 = $('#reserve2').val();
+        var skip6 = $('#reserve3').val();
+        var skip7 = $('#reserve4').val();
+        for ( var i in interfaces )
+        {
+            if ( skip && i == skip )
+            {
+                continue;
+            }
+            if ( skip2 && i == skip2 )
+            {
+                continue;
+            }
+            if ( skip3 && i == skip3 )
+            {
+                continue;
+            }
+            if ( skip4 && i == skip4 )
+            {
+                continue;
+            }
+            if ( skip5 && i == skip5 )
+            {
+                continue;
+            }
+            if ( skip6 && i == skip6 )
+            {
+                continue;
+            }
+            if ( skip7 && i == skip7 )
+            {
+                continue;
+            }
+            options += '<option value="' + i + '">' + $.i18n( i ) + '</option>'
+        }
+        $("#reserve5").html( options );
+    }
+    function reserve6_html()
+    {
+        var options = '<option value="">' + $.i18n( "NONE" ) + '</option>';
+        var skip = $('#main').val();
+        var skip2 = $('#back').val();
+        var skip3 = $('#king').val();
+        var skip4 = $('#reserve').val();
+        var skip5 = $('#reserve2').val();
+        var skip6 = $('#reserve3').val();
+        var skip7 = $('#reserve4').val();
+        var skip8 = $('#reserve5').val();
+        for ( var i in interfaces )
+        {
+            if ( skip && i == skip )
+            {
+                continue;
+            }
+            if ( skip2 && i == skip2 )
+            {
+                continue;
+            }
+            if ( skip3 && i == skip3 )
+            {
+                continue;
+            }
+            if ( skip4 && i == skip4 )
+            {
+                continue;
+            }
+            if ( skip5 && i == skip5 )
+            {
+                continue;
+            }
+            if ( skip6 && i == skip6 )
+            {
+                continue;
+            }
+            if ( skip7 && i == skip7 )
+            {
+                continue;
+            }
+            if ( skip8 && i == skip8 )
+            {
+                continue;
+            }
+            options += '<option value="' + i + '">' + $.i18n( i ) + '</option>'
+        }
+        $("#reserve6").html( options );
+    }
+    function reserve7_html()
+    {
+        var options = '<option value="">' + $.i18n( "NONE" ) + '</option>';
+        var skip = $('#main').val();
+        var skip2 = $('#back').val();
+        var skip3 = $('#king').val();
+        var skip4 = $('#reserve').val();
+        var skip5 = $('#reserve2').val();
+        var skip6 = $('#reserve3').val();
+        var skip7 = $('#reserve4').val();
+        var skip8 = $('#reserve5').val();
+        var skip9 = $('#reserve6').val();
+        for ( var i in interfaces )
+        {
+            if ( skip && i == skip )
+            {
+                continue;
+            }
+            if ( skip2 && i == skip2 )
+            {
+                continue;
+            }
+            if ( skip3 && i == skip3 )
+            {
+                continue;
+            }
+            if ( skip4 && i == skip4 )
+            {
+                continue;
+            }
+            if ( skip5 && i == skip5 )
+            {
+                continue;
+            }
+            if ( skip6 && i == skip6 )
+            {
+                continue;
+            }
+            if ( skip7 && i == skip7 )
+            {
+                continue;
+            }
+            if ( skip8 && i == skip8 )
+            {
+                continue;
+            }
+            if ( skip9 && i == skip9 )
+            {
+                continue;
+            }
+            options += '<option value="' + i + '">' + $.i18n( i ) + '</option>'
+        }
+        $("#reserve7").html( options );
     }
     function dns_html()
     {
@@ -1007,6 +1227,18 @@
             reserve3_html();
             $('#reserve3').val( frame['6'] );
 
+            reserve4_html();
+            $('#reserve4').val( frame['7'] );
+
+            reserve5_html();
+            $('#reserve5').val( frame['8'] );
+
+            reserve6_html();
+            $('#reserve6').val( frame['9'] );
+
+            reserve7_html();
+            $('#reserve7').val( frame['10'] );
+
             dns_html();
             $('#custom_dns').val( frame.custom_dns||"disable" );
             $('#cdns').val( frame.dns );
@@ -1022,7 +1254,7 @@
                   $('#dns-sets').hide();
                   $('#delay-sets').hide();
               }
-              else if ( type == "dbdc" || type == "dbdc3" || type == "dbdc4" )
+              else if ( type == "dbdc" || type == "dbdc2" || type == "dbdc3" || type == "dbdc4" )
               {
                 $('#dns-sets').show();
                 $('#delay-sets').show();
@@ -1060,6 +1292,12 @@
         frame.reserve = $('#reserve').val();
         frame.reserve2 = $('#reserve2').val();
         frame.reserve3 = $('#reserve3').val();
+
+        frame.reserve4 = $('#reserve4').val();
+        frame.reserve5 = $('#reserve5').val();
+        frame.reserve6 = $('#reserve6').val();
+        frame.reserve7 = $('#reserve7').val();
+
         frame.custom_dns = $('#custom_dns').val();
         if ( frame.custom_dns == "enable" )
         {
@@ -1107,6 +1345,12 @@
         reserve_html();
         reserve2_html();
         reserve3_html();
+
+        reserve4_html();
+        reserve5_html();
+        reserve6_html();
+        reserve7_html();
+
         dns_html();
       });
       $('#back').unbind('change').change(function (e) {
@@ -1114,12 +1358,23 @@
         reserve_html();
         reserve2_html();
         reserve3_html();
+
+        reserve4_html();
+        reserve5_html();
+        reserve6_html();
+        reserve7_html();
+
         dns_html();
       });
       $('#king').unbind('change').change(function (e) {
         reserve_html();
         reserve2_html();
         reserve3_html();
+
+        reserve4_html();
+        reserve5_html();
+        reserve6_html();
+        reserve7_html();
       });
       // 设置定时器
       page.timing({
