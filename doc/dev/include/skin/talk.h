@@ -73,7 +73,7 @@ typedef talk_t   boole_t;
         "level":"low"
 
     } // ending of json
-	// ending of axp its idenfity is "info"
+	// ending of axp its identifier is "info"
 
 } // ending of json object
 

@@ -1,4 +1,4 @@
-## Telnet Server Management
+## tui@telnet — Telnet Server Management
 Manage the gateway **telnetd** service (BusyBox or system `telnetd` in `PATH`).
 
 #### Platform notes
@@ -6,8 +6,7 @@ Manage the gateway **telnetd** service (BusyBox or system `telnetd` in `PATH`).
 - `_setup` fails (`tfalse`) if `which telnetd` does not find an executable (path length check in code).
 - If there is **no stored configuration** for this component (`config_get` returns empty), `_setup` returns success and does not apply settings from a config object.
 
-### **Configuration( `tui@telnet` )**
-
+### Configuration ( `tui@telnet` )
 ```json
 // Attributes introduction 
 {
@@ -80,8 +79,7 @@ tui@telnet|{"status":"enable","port":"2323"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 + `setup[]` **apply saved telnet configuration and start or skip the service**, *succeed return ttrue*
     - Normally called during boot as **`tui@telnet.setup`** (via the installed package **init** schedule). Verifies **`telnetd`** exists; on **`scope=wrt`** or **`platform=slave`** returns success without starting. If configuration is missing, returns success without applying stored settings. If **`status`** is not **`enable`**, returns success without starting **`telnetd`**. Otherwise applies optional **`manager`** iptables rules (chain **`tui_telnet`**) and starts the **`service`** child (**`telnetd -F -p <port>`**).
     - *failed return tfalse* if **`telnetd`** is not found in **`PATH`**.
@@ -101,15 +99,13 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` — runs during **`init` → `app`** as **`tui@telnet.setup`**. **No** default **`uninit`**; use **`shut[]`** or extend the package manifest if needed.
 
 + `shut[]` — **not** wired on **`uninit`** in the default package; see **Component API**.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

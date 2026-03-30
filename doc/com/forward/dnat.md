@@ -1,8 +1,7 @@
-## Management of destination NAT
+## forward@dnat — Management of destination NAT
 Management of destination NAT to proxy internet port on gateway for local client access
 
-### **Configuration( `forward@dnat` )**
-
+### Configuration ( `forward@dnat` )
 ```json
 // Attributes introduction 
 {
@@ -76,8 +75,7 @@ forward@dnat|{"ifname@lan":{"proxy1":{"destip":"1.2.3.4","destport":"80","protoc
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 Use standard **`forward@dnat`** get/set/merge for configuration (see above).
 
 + `on[]` **refresh destination-NAT proxy rules for a LAN ifname**, *succeed return ttrue*
@@ -85,19 +83,16 @@ Use standard **`forward@dnat`** get/set/merge for configuration (see above).
 
 + `off[]` **tear down DNAT rules for an ifname**
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **not** wired in the default **init** / **uninit** schedule for this component; refresh via **`on[]`** / **`off[]`**.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/on` | `forward@dnat.on` |
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -125,4 +120,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@dnat", "list", NULL); talk_free if JSON */
 ```
-

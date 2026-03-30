@@ -1,4 +1,4 @@
-## SSH Server Management
+## tui@ssh — SSH Server Management
 Manage the gateway **SSH** service using **Dropbear** (`dropbear` in `PATH`), not OpenSSH `sshd`.
 
 #### Platform notes
@@ -11,8 +11,7 @@ Manage the gateway **SSH** service using **Dropbear** (`dropbear` in `PATH`), no
 - If project config provides **`dsskey`** / **`rsakey`** files, they are copied to `dropbear_dss_host_key` / `dropbear_rsa_host_key` under `/etc/dropbear/`.
 - If **`dropbearkey.sh`** is installed for this package, it is executed to generate missing key types (e.g. ed25519, ecdsa, rsa) as supported by the image.
 
-### **Configuration( `tui@ssh` )**
-
+### Configuration ( `tui@ssh` )
 ```json
 // Attributes introduction 
 {
@@ -77,8 +76,7 @@ tui@ssh|{"status":"enable","port":"2222"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 + `setup[]` **apply saved SSH (Dropbear) configuration and start or skip the service**, *succeed return ttrue*
     - Normally called during boot as **`tui@ssh.setup`** (via the installed package **init** schedule). Verifies **`dropbear`** exists; on **`scope=wrt`** or **`platform=slave`** returns success without starting. If configuration is missing, returns success without applying stored settings. If **`status`** is not **`enable`**, returns success without starting **Dropbear**. Otherwise prepares **`/etc/dropbear`** host keys (from project **`dsskey`** / **`rsakey`** if present, then **`dropbearkey.sh`** when installed), applies optional **`manager`** iptables rules (chain **`tui_ssh`**), and starts the **`service`** child (**`dropbear -F -p <port> -K 300`**).
     - *failed return tfalse* if **`dropbear`** is not found in **`PATH`**.
@@ -98,15 +96,13 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` — runs during **`init` → `app`** as **`tui@ssh.setup`** (often together with **`tui@telnet.setup`**). There is **no** default **`uninit`** hook; call **`shut[]`** explicitly if you need ordered shutdown.
 
 + `shut[]` — **not** invoked automatically on **`uninit`** in the default package; see **Component API**.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

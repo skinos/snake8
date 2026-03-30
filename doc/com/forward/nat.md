@@ -1,9 +1,7 @@
-## Management of System NAT/DMZ
+## forward@nat — Management of System NAT/DMZ
 Management of NAT to PORT map from external **ifname** to local network client
 
-### **Configuration( `forward@nat` )**
-
-
+### Configuration ( `forward@nat` )
 ```json
 // Attributes introduction 
 {
@@ -133,8 +131,7 @@ forward@nat|{"ifname@wan":{"mode":"dnat","rule":{"web":{"targetport":"80","proto
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 Configuration is also read/written via standard **`forward@nat`** get/set/merge (see **Configuration** above).
 
 + `on[]` **refresh NAT/port mapping for an external ifname**, *succeed return ttrue*
@@ -142,20 +139,17 @@ Configuration is also read/written via standard **`forward@nat`** get/set/merge 
 
 + `off[]` **tear down NAT for an external ifname**
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **not** listed in the default **init** / **uninit** schedule for **`forward@nat`**; rules are applied from **`on[]`** / **`off[]`** and configuration changes.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/onextern` | `forward@nat.on` |
 | `network/onvpn` | `forward@nat.on` |
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -183,4 +177,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@nat", "list", NULL); talk_free if JSON */
 ```
-

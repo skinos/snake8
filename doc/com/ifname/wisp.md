@@ -1,9 +1,8 @@
-## WISP Network Management
+## ifname@wisp — WISP Network Management
 Manage WISP networks. This component depends on a wireless station interface (**`wifi`** `sta` / **`arch`** radio BSP) and the **network** project ([`../network/frame.md`](../network/frame.md)).  
 Usually ifname@wisp is the first WISP (2.4G) network. If there are multiple WISP networks in the system, ifname@wisp2 is the second WISP (5.8G) network, and numbering increases sequentially.
 
-### **Configuration( `ifname@wisp` )**
-
+### Configuration ( `ifname@wisp` )
 **ifname@wisp** is first WISP(2.4G) network   
 **ifname@wisp2** is second WISP(5.8G) network   
 
@@ -236,9 +235,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `ifname@wisp.method`, `ifname@wisp2.method`, …
 
 **ifname@wisp** is first WISP network  
@@ -505,12 +502,10 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@wisp`**.
 
-### **Joint handlers**
-
+### Joint Handlers
 + `keepon[]` **clear the connect failed counter**   
     - success: return `ttrue`
     - called when network connection is confirmed alive
@@ -536,8 +531,7 @@ ttrue
     ttrue
     ```   
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

@@ -1,9 +1,7 @@
-## TTL settings
+## forward@ttl — TTL settings
 Management of outgoing IP packet TTL per LAN **ifname**
 
-### **Configuration( `forward@ttl` )**
-
-
+### Configuration ( `forward@ttl` )
 ```json
 // Attributes introduction 
 {
@@ -43,8 +41,7 @@ forward@ttl:ifname@lan|{"mode":"fix","fix":"64"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 Use standard **`forward@ttl`** get/set/merge for configuration.
 
 + `on[]` **re-apply TTL policy after a LAN ifname comes up**, *succeed return ttrue*
@@ -52,18 +49,15 @@ Use standard **`forward@ttl`** get/set/merge for configuration.
 
 + `off[]` **remove TTL mangling for an ifname**
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **not** wired in the default **init** / **uninit** schedule for this component; use **`on[]`** / **`off[]`**.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/on` | `forward@ttl.on` |
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -91,4 +85,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@ttl", "list", NULL); talk_free if JSON */
 ```
-

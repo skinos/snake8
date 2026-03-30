@@ -1,4 +1,4 @@
-## Management of joint event component
+## land@joint — Joint Event Management
 Administration of equipment joint event task
 Each FPK can register **joint** handlers through its shipped manifest; the system dispatches them when matching events occur
 
@@ -6,7 +6,7 @@ Joint events are string names. **Emitters** publish a short string or a JSON pay
 
 JSON payloads (for example from **`network@frame`**) typically carry interface context such as **`ifname`**, **`netdev`**, **`ifnametype`**, **`ontime`**, … String payloads are used for simpler signals (e.g. **`date/modify`** with `"set"` / `"ntp"`).
 
-### Joint event catalog (reference names)
+### Concepts
 
 The table summarizes **common event names**, what they mean, who usually **publishes** them, and **example consumers** in a typical reference image. Product FPKs almost always add or remap rows; check **`land@joint.list`** on a running device for the live map.
 
@@ -41,7 +41,7 @@ The table summarizes **common event names**, what they mean, who usually **publi
 **Larger products** typically map `network/onextern`, `network/on`, `network/online`, `machine/status`, … to `forward@nat.on`, `forward@firewall.on`, `agent@heclient.*`, `client@dhcps.reset`, and similar. See **`doc/com/land/joint.md`** for a narrative list, and **`land@joint.list`** on device for the effective map.
 
 
-### **Configuration( `land@joint` )**
+### Configuration ( `land@joint` )
 
 The **saved configuration object** for `land@joint` (**list** of joint tasks and optional **remote** UDP notify settings).
 
@@ -92,7 +92,7 @@ land@joint|{"remote":{"ip":"192.168.8.1","port":"2230"}}
 ttrue
 ```
 
-### **Component API**
+### Component API
 
 + `register[ joint event name, call ]` **register a joint event task, lost when reboot**  
     - joint event name ----------- [ string ] 
@@ -187,7 +187,6 @@ ttrue
     ```
 
 
-
 + `add[ task name, call, joint event name ]` **add a joint event task**
     - task name ------------- [ string ], task name, you can custom the name
     - call ------------------ [ string ], component API or program
@@ -226,8 +225,7 @@ ttrue
     - Not intended for manual invocation
 
 
-
-### **Lifecycle API**
+### Lifecycle API
 
 
 + `setup[]` **initialize the joint component**, *succeed return ttrue, failed return tfalse, error return terror*
@@ -240,10 +238,12 @@ ttrue
     - Not intended for manual invocation
 
 
+### Joint Handlers
+
+This object **defines** which `component.method` runs for each **joint key** (see the **Joint event catalog** section earlier in this file). It is not a subscriber itself; other components **publish** events listed in the catalog.
 
 
-
-### **C Code Example**
+### C Code Example
 
 **Read and update configuration**
 
@@ -356,13 +356,4 @@ if (ret != ttrue) print_joint_call_error("add", ret);
 talk_t ret = scalls("land@joint", "delete", "webreset");
 if (ret != ttrue) print_joint_call_error("delete", ret);
 ```
-
-### **Joint handlers**
-
-This object **defines** which `component.method` runs for each **joint key** (see the **Joint event catalog** section earlier in this file). It is not a subscriber itself; other components **publish** events listed in the catalog.
-
-
-### **Published joint events**
-
-**None** as a publisher — **`land@joint`** maps inbound joint events to target methods (see catalog in this document).
 

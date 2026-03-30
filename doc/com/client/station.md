@@ -1,9 +1,8 @@
-## Management of all local client   
+## client@station — Management of all local client
 Management of all local client  
 Shows **who is on the LAN**: which devices are online, names from DHCP where available, and your saved per-MAC settings (nickname, fixed IP, etc.). **`list`** returns this combined view. Notifications when a client appears or leaves are under **Joint Events** below.
 
-### **Configuration( `client@station` )**
-
+### Configuration ( `client@station` )
 ```json
 // Attributes introduction 
 {
@@ -18,6 +17,28 @@ Shows **who is on the LAN**: which devices are online, names from DHCP where ava
     // more client MAC address rule
 }
 ```   
+
+Examples, show all the station configure
+```shell
+client@station
+{
+    "00:03:7F:22:43:2B":                       # first client MAC address
+    {
+        "ifname":"ifname@lan",                     # belongs to ifname@lan network
+        "name":"Office-Printer",                   # custom hostname: Office-Printer
+        "bindip":"192.168.31.100",                 # fixed IP 192.168.31.100 for DHCP assignment
+        "arpbind":"enable",                        # keep a fixed IP-MAC binding on the LAN
+        "lease":"0"                                # use the default lease time
+    },
+    "F6:F7:73:82:0A:FC":                       # second client MAC address
+    {
+        "ifname":"ifname@lan",                     # belongs to ifname@lan network
+        "name":"Xiaomi-Phone",                     # custom hostname: Xiaomi-Phone
+        "bindip":"192.168.31.222",                 # fixed IP 192.168.31.222 for DHCP assignment
+        "arpbind":"disable"                        # no IP-MAC binding
+    }
+}
+```
 
 Examples, bind ip 192.168.31.222 for 00:51:45:CB:78:80
 ```shell
@@ -37,8 +58,7 @@ client@station|{"00:51:45:CB:78:80":{"bindip":"192.168.31.222","name":"Phone1"}}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `add[ mac, name, ]` **add a client with name**
     - mac -------------- [ mac address ], the format can be AA:BB:CC:DD:EE:FF or AABBCCDDEEFF (invalid format returns **tfalse**)
@@ -141,15 +161,13 @@ ttrue
     - **ip** — IPv4 address. Returns the **MAC** currently associated on the LAN, or **NULL** if unknown or not found.
     - Read-only. For a full client list, use **`list`**.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **start LAN client monitoring**, *succeed return ttrue* — **`init` → `general` → `client@station.setup`** in the default package. On **slave** builds, monitoring is not started; otherwise applies **`bindip`** / **`arpbind`** bindings and starts background monitoring.
 
 + `shut[]` **stop LAN client monitoring**, *succeed return ttrue* — clears fixed bindings and stops monitoring (**not** listed in stock **`uninit`**; add per product).
 
 
-### **Published joint events**
-
+### Published Joint Events
 Other components can **subscribe** (see **`joint_register`**). Raised when a LAN client **appears**, **disappears**, or **changes IP**.
 
 | Event | Description |
@@ -157,8 +175,7 @@ Other components can **subscribe** (see **`joint_register`**). Raised when a LAN
 | `station/appear` | New client or **new IP** after the old address was reported gone. Payload: **`ip`**, **`mac`**, **`ifname`**, **`netdev`**. |
 | `station/disappear` | Client offline or **IP** about to change. Payload: **`ip`**, **`mac`**, **`ifname`**, **`netdev`**. |
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -186,4 +203,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("client@station", "list", NULL); talk_free if JSON */
 ```
-

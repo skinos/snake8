@@ -1,9 +1,7 @@
-## LTE/NR SMS Management
+## modem@sms — LTE/NR SMS Management
 Manage LTE/NR modem SMS service.
 
-### **Configuration( `modem@sms` )**
-
-
+### Configuration ( `modem@sms` )
 **modem@sms** is the SMS service bound to the first LTE modem.
 **modem@sms2** is the SMS service bound to the second LTE modem.
 
@@ -24,10 +22,19 @@ Manage LTE/NR modem SMS service.
 }
 ```
 
+Example, show all the configure
+```shell
+modem@sms
+{
+    "he":"enable",                                         # enable SMS-to-command feature
+    "he_contact":"17688704240;10000;+8617688704240",       # only accept commands from these phone numbers (substring match)
+    "he_prefix":"CMD:"                                     # SMS content must start with "CMD:" to be processed as a command
+}
+```
+
 > **Security Warning**: When enabling the `he` feature, it is strongly recommended to configure `he_contact` to restrict which phone numbers can execute commands. Without this restriction, any incoming SMS could potentially execute system commands.
 
-#### **SMS-to-Command (HE) Feature**
-
+#### SMS-to-Command (HE) Feature
 When `he` is set to `enable`, incoming SMS messages can be interpreted as system commands and executed. The execution results are automatically replied to the sender via SMS.
 
 **Character Conversion Rules**:
@@ -63,8 +70,7 @@ Since some special characters may be difficult to input or transmit via SMS, the
 
 **Note**: UCS-2 encoded SMS messages are not processed as HE commands.
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 **modem@sms** is the first LTE modem SMS service.   
 **modem@sms2** is the second LTE modem SMS service.
@@ -230,8 +236,7 @@ Since some special characters may be difficult to input or transmit via SMS, the
     - The execution result is automatically sent back to the sender via SMS
     - **Note**: This API is not intended for manual invocation
 
-#### **SMS Storage**
-
+#### SMS Storage
 SMS messages are stored in the following directories:
 
 | Directory | Purpose |
@@ -242,22 +247,19 @@ SMS messages are stored in the following directories:
 | `{var}/modem@sms.outgoing/` | Outgoing SMS queue |
 | `{internal}/modem@sms.incoming/` | Received SMS (queried by `list[]`) |
 
-#### **Encoding Support**
-
+#### Encoding Support
 - **GSM 7-bit**: Standard SMS encoding
 - **UCS-2**: Unicode encoding for non-ASCII characters (e.g., Chinese). Automatically converted to UTF-8 when listing
 - **Binary**: Binary SMS content is not processed as HE commands
 
-#### **Dependencies**
-
+#### Dependencies
 The SMS service relies on the following external components:
 
 - `smsd` - SMS daemon process for low-level SMS handling
 - `sendsms.sh` - Script for sending SMS
 - `iconv` - Character encoding conversion utility
 
-#### **Complete Configuration Example**
-
+#### Complete Configuration Example
 ```json
 {
     "he": "enable",
@@ -277,14 +279,12 @@ CMD:landOmachineFstatus
 ```
 This will execute `land@machine.status` and reply with the result.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — driven by **`usbdrv@…`** / modem driver registration; **not** listed in the default modem package **`init`** table.
 + Consult modem driver component docs (**`modem@ec2x`**, **`modem@rm500u`**, …) for bring-up.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -312,4 +312,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("modem@sms", "list", NULL); talk_free if JSON */
 ```
-

@@ -12,7 +12,7 @@
 
 
 /// Maximum object level in one object structure
-#define OBJ_MAX_LEVEL 3
+#define OBJ_MAX_LEVEL 2
 
 /// object structure: this structure can locate the components
 /// example: "myproject@component" of component path description for object
@@ -22,19 +22,17 @@ struct com_st;
 typedef struct obj_st
 {
     // how many layer
-    // example: level is 3
+    // example: level is 2
     int level;
     // all layer pointer
-    // example: layer[0] point to "top_object"       obj_layer( obj, 1 );
-    // 			layer[1] point to "second_object"    obj_layer( obj, 2 );
+    // example: layer[0] point to "top_object"       obj_layer( object, 1 );
+    // 			layer[1] point to "second_object"    obj_layer( object, 2 );
     char *layer[OBJ_MAX_LEVEL];
 
 	// project name
     char *prj;
 	// component name
     char *obj;
-    // actual pathname buffer
-    char *pathbuf;
     // corresponding pointer of component structure
     struct com_st *com;                                                // need free
 
@@ -52,12 +50,12 @@ typedef obj_struct* obj_t;
 
 /**
  * @brief create a structure of object from string description of component(dynamic allocation)
- * @param[in] string component path in format "project@component" or "project@component/layer1/layer2"
+ * @param[in] path component path, typically "project@component"
  * @return object
  * 	@retval obj for succeed
  *  	@retval NULL for error, errno will be set
- * @note The string format is "project@component" or "project@component@layer1"
- * @note Maximum OBJ_MAX_LEVEL (3) layers supported
+ * @note One-segment input (e.g. registered alias "machine") is resolved with com_path(); on success level becomes 2 with both prj and obj set from the filesystem path
+ * @note Two-part form "project@component" sets prj and component directly (OBJ_MAX_LEVEL is 2)
  * @note Example:
  * @code
  * obj_t obj1 = obj_create("land@machine");           // Basic component path
@@ -68,7 +66,7 @@ typedef obj_struct* obj_t;
  * @see obj_free to release the object
  * @see obj_prj, obj_com to extract components
  */
-obj_t       obj_create( const char *string );
+obj_t       obj_create( const char *path );
 
 /**
  * @brief free an object and all its associated resources
@@ -87,6 +85,7 @@ void        obj_free( obj_t object );
  *	@retval string for succeed, valid only until obj_free() is called
  *  	@retval NULL for error, errno will be set
  * @note The returned pointer points to internal memory, do NOT free it
+ * @note After successful obj_create(), obj_level() is 2 and both prj and obj are usually non-NULL; NULL prj is only for degenerate/manual structures (see obj_name())
  * @warning The pointer becomes invalid after obj_free() is called
  * @see obj_com for getting component name
  * @see obj_name for getting full path string
@@ -110,10 +109,9 @@ const char *obj_com( obj_t object );
  * @brief get number of layers in object path
  * @param[in] object the object structure
  * @return number of layers
- *	@retval positive for succeed (1-3 layers)
+ *	@retval positive for succeed (1 or 2 with OBJ_MAX_LEVEL)
  *	@retval 0 for error, errno will be set
- * @note Returns the number of path components after @
- * @note Example: "land@machine" has 2 layer, "system@storage@disk" has 3 layers
+ * @note After successful obj_create(), this is 2 (either from project@component or resolved single-component path)
  * @see obj_layer to get specific layer name
  */
 int         obj_level( obj_t object );
@@ -125,8 +123,9 @@ int         obj_level( obj_t object );
  * @return property name
  * 	@retval string for succeed, valid only until obj_free() is called
  *  	@retval NULL for error, errno will be set
- * @note Layer numbers start from 1
- * @note Example: for "system@storage", layer 1 is "system", layer 2 is "storage"
+ * @note Layer numbers start from 1; use -1 for the last segment
+ * @note Example: for "land@machine", layer 1 is "land", layer 2 is "machine"
+ * @warning level must be in range 1..obj_level(object), or -1; otherwise behavior is undefined
  * @warning The pointer becomes invalid after obj_free() is called
  * @see obj_level to get total layer count
  */
@@ -161,9 +160,9 @@ typedef struct attr_st
     int level;
 
     // all layer pointer
-    // example: layer[0] point to "top_attr"        attr_layer( obj, 1 );
-    // 			layer[1] point to "second_attr"     attr_layer( obj, 2 );
-    // 			layer[2] point to "third_attr"      attr_layer( obj, 3 ); 
+    // example: layer[0] point to "top_attr"        attr_layer( attribute, 1 );
+    // 			layer[1] point to "second_attr"     attr_layer( attribute, 2 );
+    // 			layer[2] point to "third_attr"      attr_layer( attribute, 3 ); 
     char *layer[ATTR_MAX_LEVEL];
 
     // buffer where the string actual store

@@ -1,4 +1,4 @@
-## Username/Password and Permission Management
+## land@auth — User & Permission Management
 
 Manage usernames and permissions. Prefer the **Component API** below instead of editing raw configuration when possible.
 The configuration structure is divided into three layers
@@ -10,7 +10,7 @@ The configuration structure is divided into three layers
     > Examples storage functions are added, "nas" group are built in the storage. you can add or delete username belonging to "nas" group
 
 
-### **Configuration( `land@auth` )**
+### Configuration ( `land@auth` )
 
 The **saved configuration object** for `land@auth` (query/set via `land@auth`, paths under `user/` and `group/`, merge `|{json}`, etc.). Direct edits are easy to get wrong; use APIs for routine account work.
 
@@ -133,7 +133,7 @@ land@auth|{"user":{"admin":{"key_check":"enable"}}}
 ttrue
 ```
 
-### **Component API**
+### Component API
 
 + `domain[ username ]` **list domain belongs of username**   
     - username ----------- [ string ]
@@ -237,7 +237,6 @@ ttrue
     ```
 
 
-
 + `add[ [domain], username, password ]` **add a new username**   
     - domain ----------- [ string ],  specify a specific domain, default is common
     - username ----------- [ string ] 
@@ -333,7 +332,6 @@ ttrue
     ```
 
 
-
 + `md5[ string ]` **calculate MD5 hash of string**
     - string ----------- [ string ], the string to hash
     - failed return NULL
@@ -391,7 +389,7 @@ ttrue
     admin
     ```
 
-### **Lifecycle API**
+### Lifecycle API
 
 
 + `setup[]` **initialize the auth component**, *succeed return ttrue, failed return tfalse, error return terror*
@@ -400,8 +398,7 @@ ttrue
     - Not intended for manual invocation
 
 
-
-### **Published joint events**
+### Published Joint Events
 
 The following joint events are published when authentication data changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
 
@@ -410,8 +407,7 @@ The following joint events are published when authentication data changes. Other
 | `auth/modify` | Sent when authentication configuration or user accounts are modified. Triggered after `set` (config change), `add` (new account), `delete` (account removal), `modify` (password/username change), or `change` (password change via ciphertext). The event parameter is the affected account name, or `NULL` when the entire config was changed. |
 
 
-
-### **C Code Example**
+### C Code Example
 
 **Read and update configuration**
 
@@ -552,8 +548,4 @@ if (ret > tpanic)
 }
 else print_auth_call_error("list", ret);
 ```
-
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
 

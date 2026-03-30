@@ -1,7 +1,8 @@
-## Syslog Management   
-Manage system syslog, object name is land@syslog
+## land@syslog — System Logging
 
-### **Configuration( `land@syslog` )**
+Manages the system log service. Object name: `land@syslog`.
+
+### Configuration ( `land@syslog` )
 
 The **saved configuration object** for `land@syslog` (query/set via `land@syslog`, `land@syslog:path`, merge `|{json}`, etc.).
 
@@ -76,7 +77,7 @@ land@syslog|{"level":"info","remote":"192.168.8.1","port":"514"}
 ttrue
 ```
 
-### **Component API**
+### Component API
 
 + `path[]` **show log location and max size**, *succeed return talk, failed return NULL, error return terror*   
     ```json
@@ -259,8 +260,7 @@ ttrue
     ```
 
 
-
-### **Lifecycle API**
+### Lifecycle API
 
 
 + `setup[]` **initialize the syslog component**, *succeed return ttrue, failed return tfalse, error return terror*
@@ -274,7 +274,7 @@ ttrue
     - Not intended for manual invocation
 
 
-### **Joint handlers**
+### Joint Handlers
 
 **Joint** handlers may invoke **`land@syslog.setup`** when storage changes so log location logic can run again.
 
@@ -284,7 +284,7 @@ ttrue
 | `storage/remove` | `land@syslog.setup` |
 
 
-### **C Code Example**
+### C Code Example
 
 **Read and update configuration**
 
@@ -413,8 +413,3 @@ if (ret != ttrue) print_syslog_call_error("warn", ret);
 talk_t ret = scalls("land@syslog", "fault", "this is fault log from C");
 if (ret != ttrue) print_syslog_call_error("fault", ret);
 ```
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
-

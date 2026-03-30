@@ -1,4 +1,4 @@
-# Network Frame Management
+## network@frame — Network Frame Management
 
 ## Overview
 
@@ -20,8 +20,7 @@ Multi-uplink scheduling operates on **logical interfaces** (`ifname@wan`, `ifnam
 
 ---
 
-### **Configuration( `network@frame` )**
-
+### Configuration ( `network@frame` )
 #### Configuration attributes
 
 ```json
@@ -52,6 +51,19 @@ Multi-uplink scheduling operates on **logical interfaces** (`ifname@wan`, `ifnam
     "custom_dns": "Custom DNS",                       // [ "disable", "enable", "ifname@lte", "ifname@lte2", ... ]
     "dns": "Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
     "dns2": "Custom DNS2"                             // [ ip address ], This is valid when "custom_dns" is "enable"
+}
+```
+
+Example, show all the configure
+```shell
+network@frame
+{
+    "type":"hot",                              # multi-link scheduling mode: hot backup
+    "1":"ifname@wan",                          # priority slot 1: WAN (Ethernet)
+    "2":"ifname@lte",                          # priority slot 2: LTE modem
+    "3":"ifname@lte2",                         # priority slot 3: second LTE modem
+    "4":"ifname@wisp",                         # priority slot 4: WISP (wireless relay)
+    "custom_dns":"disable"                     # use DNS from the active uplink (not custom)
 }
 ```
 
@@ -418,8 +430,7 @@ The framework creates the **iptables/nftables structures** needed for outbound N
 
 ---
 
-#### **Joint Events**
-
+#### Joint Events
 The following joint events are published (JSON on the joint bus) when network interface state changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
 
 | Event | Description |
@@ -505,13 +516,11 @@ connect exit
 
 ---
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — bring up or tear down the frame service and multi-link **`connect`** integration. **`network@hosts.setup`** is scheduled under **`init` → `land`**; **`network@frame`** itself is usually started from the **`connect`** executable / platform sequence when a profile contains a **`connect`** section.
 
 
-### **Published joint events**
-
+### Published Joint Events
 **IPv4 / IPv6 uplink and scheduling notifications** emitted as JSON on the joint bus, including (non-exhaustive):
 
 | Event (examples) | When |
@@ -524,8 +533,7 @@ connect exit
 
 Payload structure follows the `talk_t` JSON built in **`_online` / `_offline` / `_upline` / `_downline`** (typically includes **`ifname`** and status fields).
 
-### **C Code Example**
-
+### C Code Example
 ```c
 #include "skin/skin.h"
 

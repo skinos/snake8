@@ -1,6 +1,6 @@
 # HTTP HE bridge (WUI / `webs`)
 
-The device exposes a small JSON-over-HTTP API that runs the same **HE** command lines as the CLI (see [`doc/com/land/eline.md`](../doc/com/land/eline.md)). The Ace WUI talks to **`POST /he`** after login and uses **`POST /auth`** for the session key. Unauthenticated **`POST /public`** is allowed only for commands that match **`wui@admin.publist`** on the device.
+The device exposes a small JSON-over-HTTP API that runs the same **HE** command lines as the CLI (see [`doc/com/land/eline.md`](../../doc/com/land/eline.md)). The Ace WUI talks to **`POST /he`** after login and uses **`POST /auth`** for the session key. Unauthenticated **`POST /public`** is allowed only for commands that match **`wui@admin.publist`** on the device.
 
 **Test base URL used in examples:** `http://192.168.8.1`  
 **Test credentials:** username `admin`, password `admin` (only for that demo host; production devices may differ).
@@ -337,7 +337,7 @@ Content-Type: text/plain; charset=UTF-8
 
 ## HE grammar (quick reference)
 
-Full syntax: **[`doc/com/land/eline.md`](../doc/com/land/eline.md)**.
+Full syntax: **[`doc/com/land/eline.md`](../../doc/com/land/eline.md)**.
 
 | Goal | HE line |
 |------|---------|

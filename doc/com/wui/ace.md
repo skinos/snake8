@@ -8,12 +8,12 @@
 
 **Where the Ace-based UI code lives:** all **web pages and assets that follow this Ace Admin–style framework** are under **`project/wui/ace/`**—for example **`content/`** (HTML fragments/pages), **`js/`** (page logic), **`api/`** (e.g. **`he.js`**), **`lang/`** (strings), and **`assets/`** (CSS, images, and related static files used by those pages).
 
-#### **Clone upstream (reference only)**
+#### Clone upstream (reference only)
 
 ```
 git clone https://github.com/bopoda/ace.git
 ```
 
-### **Note**
+### Note
 
 This file is a **framework / layout** guide for HTML, JS, and assets under `project/wui/ace/`. It is **not** a single HE configuration object (`project@component`). For the administration HTTP server object and its **`setup[]` / `shut[]`** lifecycle, see [`admin.md`](admin.md) (**`wui@admin`**).

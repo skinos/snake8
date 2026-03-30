@@ -7,6 +7,7 @@
  * @version 7.5
  * @date 20240903
  * @brief skinos system commom api base the ccall
+ * @note machine_restart/reboot/default pass "" when key is NULL (standard C, safe for scalls format)
  */
 
 
@@ -75,13 +76,13 @@
 
 /**
  * @brief list all registered uninitialization handlers
- * @param[in] ... printf-style parameter format string and arguments passed to INIT_COM "list" API
+ * @param[in] ... printf-style parameter format string and arguments passed to UNINIT_COM "list" API
  * @return talk_t result from uninit list API
  * 	@retval talk_t json list for succeed - caller must free with talk_free()
  * 	@retval tpanic for calling error
  * @see uninit_register
  */
-#define uninit_list( ... )              scalls( INIT_COM, "list", __VA_ARGS__ )
+#define uninit_list( ... )              scalls( UNINIT_COM, "list", __VA_ARGS__ )
 /**
  * @brief register an uninitialization handler to be called during system shutdown
  * @param[in] item uninitialization level/priority string (e.g., "10", "20"), lower values run first
@@ -92,6 +93,16 @@
  * @see uninit_list
  */
 #define uninit_register( item, call )   scall2s( UNINIT_COM, "register", item, call )
+/**
+ * @brief unregister a uninitialization handler
+ * @param[in] item uninitialization level/priority string (e.g., "10", "20"), lower values run first
+ * @param[in] call component API to unregister (e.g., "firewall@rule.apply")
+ * @return talk_t result from uninitialization unregister API
+ * 	@retval ttrue for succeed
+ * 	@retval tfalse/terror for failed
+ * @see uninit_register
+ */
+#define uninit_unregister( item, call )  scall2s( UNINIT_COM, "unregister", item, call )
 
 /**
  * @brief list all registered joint (event) handlers
@@ -177,7 +188,7 @@
  * @see machine_reboot for hardware reboot
  * @see machine_default for factory reset
  */
-#define machine_restart( delay, key )   scalls( MACHINE_COM, "restart", "%d,%s", delay, key?:"" )
+#define machine_restart( delay, key )   scalls( MACHINE_COM, "restart", "%d,%s", delay, (key)?(key):"" )
 /**
  * @brief reboot the hardware device
  * @param[in] delay delay in seconds before reboot (0 for immediate)
@@ -189,7 +200,7 @@
  * @see machine_restart for soft restart
  * @see machine_default for factory reset
  */
-#define machine_reboot( delay, key )    scalls( MACHINE_COM, "reboot", "%d,%s", delay, key?:"" )
+#define machine_reboot( delay, key )    scalls( MACHINE_COM, "reboot", "%d,%s", delay, (key)?(key):"" )
 /**
  * @brief reset the device to factory default settings and reboot
  * @param[in] delay delay in seconds before reset (0 for immediate)
@@ -201,7 +212,7 @@
  * @see machine_restart for soft restart
  * @see machine_reboot for hardware reboot
  */
-#define machine_default( delay, key )   scalls( MACHINE_COM, "default", "%d,%s", delay, key?:"" )
+#define machine_default( delay, key )   scalls( MACHINE_COM, "default", "%d,%s", delay, (key)?(key):"" )
 
 
 

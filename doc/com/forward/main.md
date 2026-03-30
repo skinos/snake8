@@ -1,9 +1,7 @@
-## Default Route Table Management
+## forward@main — Default Route Table Management
 Management of system route table, modifying this configuration directly is not recommended, It is recommended to manage through the method
 
-### **Configuration( `forward@main` )**
-
-
+### Configuration ( `forward@main` )
 ```json
 // Attributes introduction 
 {
@@ -40,9 +38,7 @@ forward@main
 ```  
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `status[]` **get the current default route table**
     - failed return NULL, error return terror
@@ -138,13 +134,11 @@ forward@main
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **apply saved static routes**, *succeed return ttrue* — normally scheduled as **`init` → `app` → `forward@main.setup`** in the default forward package. May also be called manually.
 + `shut[]` — not listed in stock **`uninit`**; add per product.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/on` | `forward@main.on` |
@@ -155,9 +149,7 @@ forward@main
     - Parameter **2** is a JSON object; when **`ifname`** is present, only rules tied to that logical **ifname** are reconsidered and re-added if needed.
 
 
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -185,4 +177,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@main", "list", NULL); talk_free if JSON */
 ```
-

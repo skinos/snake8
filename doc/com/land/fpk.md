@@ -1,5 +1,8 @@
-## FPK Management
+## land@fpk — FPK Package Management
+
 Manage system FPK projects.
+
+### Concepts
 
 #### Project concept
 * A project is a collection of programs developed to meet specific requirements, similar to an application on Windows or Android.
@@ -181,18 +184,16 @@ This file is generated automatically when the project is created. Understanding 
         "nssid/down":"arch@gpio.event"
     }    
 }
-```  
+```
 
-
-### **Configuration( `land@fpk` )**
+### Configuration ( `land@fpk` )
 
 The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `land@fpk:path`, merge `|{json}`, etc.).
 
 
-
 `land@fpk` does **not** use a standalone JSON configuration document like feature components. Each installed project carries its own **`prj.json`** under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**. The methods below register, unregister, or inspect those projects at runtime.
 
-### **Component API**
+### Component API
 
 + `register[ project directory [, ...] ]` **register project(s) to the system**. This API is called at startup to register all projects.
     - project directory ----------- [ string ], project directory
@@ -432,23 +433,13 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
     }
     ```
 
-### **Lifecycle API**
+### Lifecycle API
 
 + **No** `setup[]` in the usual sense — **`land@fpk`** exposes **register/install** APIs used during boot.
 + See **Component API** for **`register[]`**, **`install[]`**, etc.
 
 
-### **Joint handlers**
-
-**None** in **`joint`** for **`land@fpk`**.
-
-
-### **Published joint events**
-
-**None**.
-
-
-### **C Code Example**
+### C Code Example
 
 ```c
 #include "skin/skin.h"

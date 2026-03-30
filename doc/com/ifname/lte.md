@@ -1,10 +1,9 @@
-## LTE/NR Network Management
+## ifname@lte — LTE/NR Network Management
 Manage LTE/NR networks and 4G/NR baseband links. It pairs a **logical LTE interface** here with **modem management** (`modem@lte`, … — see [`../modem/lte.md`](../modem/lte.md)) and the **network framework** for uplink scheduling ([`../network/frame.md`](../network/frame.md)).  
 Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple LTE/NR modems, `ifname@lte2` is the second instance, and numbering increases sequentially.
 
 
-### **Configuration( `ifname@lte` )**
-
+### Configuration ( `ifname@lte` )
 **ifname@lte** is first LTE network   
 **ifname@lte2** is second LTE network   
 
@@ -319,9 +318,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `ifname@lte.method`, `ifname@lte2.method`, …
 
 **ifname@lte** is first LTE network  
@@ -602,12 +599,10 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@lte`**; modem bring-up is driven by the **network** stack or product integration.
 
-### **Joint handlers**
-
+### Joint Handlers
 + `keepon[]` **clear the connect failed counter**   
     - success: return `ttrue`
     - called when network connection is confirmed alive
@@ -634,8 +629,7 @@ ttrue
     ```   
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

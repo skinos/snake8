@@ -1,9 +1,8 @@
-## Management of the DHCP server  
+## client@dhcps — Management of the DHCP server
 Management of DHCP server  
 DHCP server settings are configured per logical **ifname**. **`client@dhcps.list`** returns clients currently known from the DHCP lease list (what the server has assigned), not a live probe of each device.
 
-### **Configuration( `client@dhcps` )**
-
+### Configuration ( `client@dhcps` )
 ```json
 // Attributes introduction 
 {
@@ -28,9 +27,25 @@ DHCP server settings are configured per logical **ifname**. **`client@dhcps.list
 }
 ```   
 
+Examples, show all the DHCP server configure
+```shell
+client@dhcps
+{
+    "ifname@lan":                              # DHCP settings for ifname@lan
+    {
+        "status":"enable",                         # DHCP server is enabled
+        "startip":"192.168.31.100",                # DHCP pool starts at 192.168.31.100
+        "endip":"192.168.31.254",                  # DHCP pool ends at 192.168.31.254
+        "mask":"255.255.255.0",                    # subnet mask 255.255.255.0
+        "lease":"86400",                           # lease time is 86400 seconds (24 hours)
+        "gw":"192.168.31.1",                       # gateway address sent to clients
+        "dns":"8.8.8.8",                           # primary DNS server for clients
+        "dns2":"114.114.114.114"                   # secondary DNS server for clients
+    }
+}
+```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `list[]` **list current dhcp client infomation**   
     - Returns a **JSON object** (empty **`{}`** if there is no lease information yet). Each key is a client **MAC**; each value has **`ip`** and **`name`** (hostname from DHCP).
@@ -79,8 +94,7 @@ DHCP server settings are configured per logical **ifname**. **`client@dhcps.list
     }
     ```   
 
-### **Lifecycle hooks (also callable)**
-
+### Lifecycle API
 The following are normally invoked during platform **`init`** / **`uninit`** (after the FPK is loaded) but may be called manually:
 
 
@@ -91,7 +105,7 @@ The following are normally invoked during platform **`init`** / **`uninit`** (af
 + `shut[]` **stop the DHCP server side**, *succeed return ttrue*
     - Called at shutdown. Stops the same DHCP-related services that were started.
 
-### **Joint handlers**
+### Joint Handlers
 Typical **joint** wiring (event → handler) on a device with this package:
 
 + `reset[]` **restart DHCP services after WAN/LAN ifname changes**, *succeed return ttrue*
@@ -102,14 +116,7 @@ Typical **joint** wiring (event → handler) on a device with this package:
     - **`network/online`** and **`network/offline`** → **`client@dhcps.on`**.
     - On **slave** builds, does nothing. Otherwise tells the DHCP services to reload their configuration.
 
-### **Lifecycle API**
-
-+ `setup[]` / `shut[]` — **when implemented** for **`client@dhcps`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-+
-
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -137,4 +144,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("client@dhcps", "list", NULL); talk_free if JSON */
 ```
-

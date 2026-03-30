@@ -1,16 +1,19 @@
-## Management of register
+## land@register — Register Variables
 
-Each object can have registers used to hold component data or communicate with other components. Values are **volatile** across reboot unless your product persists them elsewhere.
+Register variables are lightweight, **volatile** key-value slots attached to
+any object.  They are commonly used to hold runtime state (interface device
+names, connection flags, metric counters, etc.) that other components can
+read or write without persisting to flash.  Values are lost on reboot unless
+your product explicitly saves them elsewhere.
 
-### **Configuration( `land@register` )**
+### Configuration ( `land@register` )
 
 The **saved configuration object** for `land@register` (query/set via `land@register`, `land@register:path`, merge `|{json}`, etc.).
 
 
-
 `land@register` has **no** persisted JSON configuration; use the **Component API** to read and write register slots per object.
 
-### **Component API**
+### Component API
 
 + `list[ [object] ]` **list all register**, show specified object register list
     - object ----------- [ string ], when omitted, list registers for the default object
@@ -130,7 +133,10 @@ The **saved configuration object** for `land@register` (query/set via `land@regi
     ttrue
     ```
 
-### **C Code Example**
+### Lifecycle API
+
++ `setup[]` / `shut[]` — **when implemented** for **`land@register`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
+### C Code Example
 
 **Call component methods**
 
@@ -228,19 +234,4 @@ if (ret != ttrue) print_register_call_error("set_boole", ret);
 talk_t ret = scalls("land@register", "set_string", "ifname@wan,myreg3,myvalue");
 if (ret != ttrue) print_register_call_error("set_string", ret);
 ```
-
-### **Lifecycle API**
-
-+ `setup[]` / `shut[]` — **when implemented** for **`land@register`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-+
-
-
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
-
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
 

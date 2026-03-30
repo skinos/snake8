@@ -13,8 +13,8 @@
 
 /**
  * @brief get the configure of the object
- * @param[in] com a object pointer (e.g., obj_create("land@machine")) or string description (e.g., "land@machine")
- * @param[in] attr a attribute pointer or string description for attribute path (e.g., "wan/ip")
+ * @param[in] objp object pointer (e.g., obj_create("land@machine"))
+ * @param[in] attr attribute path (e.g., attr_create("wan/ip"))
  * @return talk for value or NULL
  * @retval talk for value, must be freed with talk_free() after use
  * @retval NULL for none value, errno may be set when error
@@ -22,31 +22,32 @@
  * @note The returned talk_t is dynamically allocated and must be freed
  * @note Use config_gets/config_sgets for printf-style attribute paths
  * @see config_gets, config_sgets, config_get_string for string return
- * @note Difference from dbs_fetch: config_get reads config, dbs_fetch reads from persistent database
+ * @note Difference from dbs_fetch: config_get reads config files, dbs_fetch reads the database layer
+ * @note objp must represent project@component (obj_prj and obj_com both non-empty); otherwise EINVAL
  */
-talk_t		config_get( obj_t com, attr_t attr );
-talk_t		config_gets( obj_t com, const char *attr, ... );
-talk_t		config_sget( const char *com, attr_t attr );
-talk_t		config_sgets( const char *com, const char *attr, ... );
+talk_t		config_get( obj_t objp, attr_t attr );
+talk_t		config_gets( obj_t objp, const char *attr, ... );
+talk_t		config_sget( const char *object, attr_t attr );
+talk_t		config_sgets( const char *object, const char *attr, ... );
 /**
  * @brief get the configure value of the object
  * @param[out] buffer buffer to store value
  * @param[in] buflen buffer size
- * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] objp object pointer or string (e.g., "land@machine")
  * @param[in] attr attribute path (e.g., "wan/ip")
  * @return string for value or NULL
  *		@retval string for succeed
  *		@retval NULL for none value, the errno code maybe sets when error
  */
-const char *config_get_string( char *buffer, int buflen,	obj_t com, attr_t attr );
-const char *config_gets_string( char *buffer, int buflen,  obj_t com, const char *attr, ... );
-const char *config_sgets_string( char *buffer, int buflen, const char *com, const char *attr, ... );
+const char *config_get_string( char *buffer, int buflen,	obj_t objp, attr_t attr );
+const char *config_gets_string( char *buffer, int buflen,  obj_t objp, const char *attr, ... );
+const char *config_sgets_string( char *buffer, int buflen, const char *object, const char *attr, ... );
 
 
 
 /**
  * @brief set the configuration value of the object
- * @param[in] com object pointer or string (e.g., "land@machine")
+ * @param[in] objp object pointer (e.g., obj_create("land@machine"))
  * @param[in] v the value to set (talk_t/json type), will be copied internally
  * @param[in] attr attribute path (e.g., attr_create("wan/ip") or "network/config")
  * @return operation result
@@ -54,7 +55,8 @@ const char *config_sgets_string( char *buffer, int buflen, const char *com, cons
  *  	@retval false for failed, errno will be set
  * @note This sets configuration
  * @note The value v is copied internally, caller retains ownership
- * @note Difference from dbs_save: config_set save to configuration, dbs_save persists to database
+ * @note objp must represent project@component (obj_prj and obj_com both non-empty); otherwise EINVAL
+ * @note Difference from dbs_save: config_set writes config files, dbs_save writes the database layer
  * @note Example:
  * @code
  * // Set configure IP address
@@ -69,13 +71,13 @@ const char *config_sgets_string( char *buffer, int buflen, const char *com, cons
  * @see config_get for reading configuration
  * @see dbs_save for persistent storage
  */
-boole config_set( obj_t com,                     talk_t v, attr_t attr );
-boole config_sets( obj_t com,                    talk_t v, const char *attr, ... );
-boole config_sset( const char *com,              talk_t v, attr_t attr );
-boole config_ssets( const char *com,             talk_t v, const char *attr, ... );
-boole config_set_string( obj_t com,              const char *string, attr_t attr );
-boole config_sset_string( const char *com,  const char *string, attr_t attr );
-boole config_ssets_string( const char *com, const char *string, const char *attr, ... );
+boole config_set( obj_t objp,                     talk_t v, attr_t attr );
+boole config_sets( obj_t objp,                    talk_t v, const char *attr, ... );
+boole config_sset( const char *object,              talk_t v, attr_t attr );
+boole config_ssets( const char *object,             talk_t v, const char *attr, ... );
+boole config_set_string( obj_t objp,              const char *string, attr_t attr );
+boole config_sset_string( const char *object,  const char *string, attr_t attr );
+boole config_ssets_string( const char *object, const char *string, const char *attr, ... );
 
 
 

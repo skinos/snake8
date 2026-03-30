@@ -1,7 +1,6 @@
-## Management of Application Layer Gateway  
+## forward@alg — Management of Application Layer Gateway
 
-### **Configuration( `forward@alg` )**
-
+### Configuration ( `forward@alg` )
 ```json
 // Attributes introduction 
 {
@@ -66,19 +65,16 @@ forward@alg|{"ftp":"enable","sip":"disable"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: standard configuration get/set/merge on **`forward@alg`** (see **Configuration**). No separate operator methods beyond **`setup[]` / `shut[]`** below.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **load ALG kernel helpers from configuration**, *succeed return ttrue* — **`init` → `app` → `forward@alg.setup`** in the default package. In **default** / **parasite** network modes, ALG is skipped; otherwise enables/disables helpers (FTP, SIP, …) per saved flags.
 
 + `shut[]` **unload ALG helpers**, *succeed return ttrue* — called from platform shutdown.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -106,4 +102,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@alg", "list", NULL); talk_free if JSON */
 ```
-

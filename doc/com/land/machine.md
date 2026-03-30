@@ -1,4 +1,6 @@
-## Management of Machine Basic Information
+## land@machine — System Information & Control
+
+Provides basic gateway/device information, restart/reset control, and system resource queries. Object name: `land@machine`.
 Manage gateway basic information
 
 **Who should read what:** JSON and `he` / shell examples are for operators and integrators using the command line. Optional **C-language** fragments at the end match the real headers (`#include "skin/skin.h"`, `talk_free`, `scall`, `json_*`, …); skip them if you do not embed the platform SDK.
@@ -7,7 +9,7 @@ Manage gateway basic information
 
 **Policy locks:** In **`lock`** configuration, **`default=enable`** disallows **`restart`** and **`default`** (restore defaults). **`factory=enable`** disallows **`release`** and **`factory`**. Separately, **`restart_block`** / **`restart_unblock`** toggles whether **`restart`** is allowed; **`default_block`** / **`default_unblock`** toggles whether **`default`**, **`release`**, and **`factory`** are allowed.
 
-### **Configuration( `land@machine` )**
+### Configuration ( `land@machine` )
 
 The **saved configuration object** for `land@machine` (query/set via `land@machine`, `land@machine:path`, merge `|{json}`, etc.).
 
@@ -82,7 +84,7 @@ land@machine|{"name":"DemoGW","language":"en"}
 ttrue
 ```
 
-### **Component API**
+### Component API
 
 + `status[]` **get the gateway basic information**   
     - returns JSON that describes the gateway basic information   
@@ -265,7 +267,6 @@ ttrue
     ```
 
 
-
 + `cpuinfo[]` **get the gateway CPU information**   
     - returns JSON that describes CPU statistics  
 
@@ -406,7 +407,6 @@ ttrue
     ```
 
 
-
 + `meminfo[]` **get the gateway memory information**   
     - returns JSON that describes system memory use  
 
@@ -430,7 +430,6 @@ ttrue
         "cached":"22024"
     }
     ```
-
 
 
 + `fsinfo[]` **get the gateway filesystem information**   
@@ -556,7 +555,7 @@ ttrue
     ```
 
 
-### **Lifecycle API**
+### Lifecycle API
 
 + `setup[]` **initialize the machine component**, *succeed return ttrue, failed return tfalse, error return terror*
     - This is a lifecycle method called automatically by the system during startup
@@ -564,9 +563,7 @@ ttrue
     - Not intended for manual invocation
 
 
-
-
-### **Published joint events**
+### Published Joint Events
 
 The following joint events are published when the machine state changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
 
@@ -575,9 +572,7 @@ The following joint events are published when the machine state changes. Other c
 | `machine/status` | Sent when the machine state is updated. Triggered in the following scenarios: 1) At the beginning of `restart`/`reboot`, after the state is marked as `restarting` in the register; 2) During firmware upgrade process when the state changes to `downloading`, `upgrading`, `failed`, or `succeed`; 3) During firmware recovery operations. This event notifies other components about system state transitions so they can prepare accordingly (e.g., save data, close connections, or update LED indicators). |
 
 
-
-
-### **C Code Example**
+### C Code Example
 
 **Read and update configuration** — `sgets` / `sgets_string`, `ssets_string` / `ssets` (same paths as HE).
 
@@ -830,8 +825,4 @@ if (ret > tpanic)
 }
 else print_call_error("esinfo", ret);
 ```
-
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
 

@@ -1,9 +1,8 @@
-## 5.8G SSID Management
+## wifi@assid — 5.8G SSID Management
 Manage 5.8G SSID
 Usually wifi@assid is the first 5.8G SSID. If there are multiple 5.8G SSID in the system, wifi@assid2 will be the second 5.8G SSID, and increase by degress
 
-### **Configuration( `wifi@assid` )**
-
+### Configuration ( `wifi@assid` )
 **wifi@assid** is first 5.8G SSID   
 **wifi@assid2** is second 5.8G SSID   
 
@@ -108,8 +107,7 @@ wifi@assid2:status=disable
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `wifi@assid.method`, `wifi@assid2.method`, … (HE / eline / HTTP `/he`).
 
 **wifi@assid** is first 5.8G SSID  
@@ -223,13 +221,11 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

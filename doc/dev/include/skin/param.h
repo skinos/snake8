@@ -35,15 +35,15 @@ typedef struct param_st
 	boole type[PARAM_OPTIONS_MAX];
 
     // string options pointer
-    // example: id[0] point to "myname"                      param_string( obj, 1 );
-    // 			id[1] point to '{"test":"testvalue"}'        param_string( obj, 2 );
-    // 			id[2] point to "test3"                       param_string( obj, 3 );
+    // example: option[0] point to "myname"                      param_string( param, 1 );
+    // 			option[1] point to '{"test":"testvalue"}'        param_string( param, 2 );
+    // 			option[2] point to "test3"                       param_string( param, 3 );
     void *option[PARAM_OPTIONS_MAX];
 
     // talk options pointer
-    // example: id[0] point to NULL
-    // 			id[1] point to a talk of {"test":"testvalue"}
-    // 			id[2] point to NULL
+    // example: talk[0] point to NULL
+    // 			talk[1] point to a talk of {"test":"testvalue"}
+    // 			talk[2] point to NULL
     talk_t talk[PARAM_OPTIONS_MAX];                                 // need free at param_free()
 
     // readable compiled string for this parameter
@@ -60,29 +60,32 @@ typedef param_struct* param_t;
 
 /**
  * @brief create a structure of parameter from string of options description(dynamic allocation)
- * @param[in] string description for options in format "opt1,opt2,opt3", can include JSON objects like '{"key":"value"}'
+ * @param[in] options description for options in format "opt1,opt2,opt3", can include JSON objects like '{"key":"value"}'
  * @return parameter
  * 	@retval parameter for succeed
  *  	@retval NULL for error, errno will be set
- * @note The string is copied internally, caller can free the input string after call
+ * @note The options string is copied internally (strdup); caller may free the input after return
+ * @note Commas split options only when not inside balanced {} / [] and outside unquoted "..." (quote toggles per ")
+ * @note Returns NULL (EINVAL) if braces/brackets/quotes are unbalanced after scan
+ * @note At most PARAM_OPTIONS_MAX comma-separated options; extra tail is silently ignored
  * @note Example formats:
  * @code
  * param_t p1 = param_create("eth0,192.168.1.1,24");           // Simple comma-separated values
- * param_t p2 = param_create('iface,{"ip":"1.1.1.1"},active'); // Mixed string and JSON
- * param_t p3 = param_create(NULL);                            // Empty parameter
+ * param_t p2 = param_create("iface,{\"ip\":\"1.1.1.1\"},active"); // Mixed string and JSON
+ * param_t p3 = param_create(NULL);                            // Empty parameter (not NULL)
  * @endcode
  * @see param_free to release the parameter structure
  */
-param_t     param_create( const char *string );
+param_t     param_create( const char *options );
 
 /**
  * @brief create a structure of parameter from json description(dynamic allocation)
- * @param[in] json a JSON object whose attributes will be converted to parameters (1st-4th attrs used)
+ * @param[in] json a JSON object whose string attributes "1".."PARAM_OPTIONS_MAX" become options (in order)
  * @return parameter
  * 	@retval parameter for succeed
  *  	@retval NULL for error, errno will be set
- * @note The json is duplicated internally, caller retains ownership of input json
- * @note Looks for attributes named "1" through "10" (up to PARAM_OPTIONS_MAX) in the JSON
+ * @note Caller retains ownership of input json; values are duplicated via talk_dup into the param
+ * @note Looks for attributes named "1" through "10" (PARAM_OPTIONS_MAX); skips missing keys; fails if none found
  * @see param_create for string-based parameter creation
  */
 param_t     param_build( talk_t json );

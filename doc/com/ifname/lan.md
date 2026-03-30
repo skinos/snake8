@@ -1,9 +1,8 @@
-## Local/LAN Network Management
+## ifname@lan — Local/LAN Network Management
 Manage local (LAN) networks. This component depends on a local network interface or switch (SoC), typically via **`arch`** (`ethernet`, bridge/VLAN wiring), and the **network** project (`network@frame` registration — see [`../network/frame.md`](../network/frame.md)).  
 Usually `ifname@lan` is the first local network. If there are multiple local networks, `ifname@lan2` is the second local network, and numbering increases sequentially.
 
-### **Configuration( `ifname@lan` )**
-
+### Configuration ( `ifname@lan` )
 **ifname@lan** is first local network   
 **ifname@lan2** is second local network   
 
@@ -130,8 +129,7 @@ ifname@lan|{"status":"enable","mode":"static"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `ifname@lan.method`, `ifname@lan2.method`, …
 
 **ifname@lan** is first local network  
@@ -253,13 +251,11 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@lan`**; the **network** stack or product code calls **`setup[]` / `shut[]`**.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

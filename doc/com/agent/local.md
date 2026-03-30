@@ -1,8 +1,7 @@
-## Local Agent -- LAN Management Service
+## agent@local — Local Agent -- LAN Management Service
 Provide local area network management services including JSON TCP command interface and UDP broadcast discovery/command interface for device discovery, querying and configuration on the LAN
 
-### **Configuration( `agent@local` )**
-
+### Configuration ( `agent@local` )
 ```json
 {
     // JSON TCP service
@@ -70,9 +69,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the local agent services**
     setup will read the configuration and start the enabled services:
@@ -199,13 +196,11 @@ ttrue
     - "all" mode (mode=2): allow all operations
     - other value (mode=0): disable all command execution, only basic discovery
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@local`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 +
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -233,4 +228,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@local", "list", NULL); talk_free if JSON */
 ```
-

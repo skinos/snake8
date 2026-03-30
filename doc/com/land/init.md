@@ -1,4 +1,4 @@
-## Management of Boot startup component
+## land@init — Boot Startup Tasks
 Administration of equipment initialize task
 Each FPK can register startup tasks through its shipped manifest; the system runs them at the configured **init** level 
 
@@ -23,7 +23,7 @@ There are multiple boot levels at system startup:
 *It is not recommended for common application developers to register extern and earlier boot levels*
 
 
-### **Configuration( `land@init` )**
+### Configuration ( `land@init` )
 
 The **saved configuration object** for `land@init` (boot task **list** and optional **remote** notify target). `register` / `unregister` / `list` also use a per-object **cache file**; see the note below.
 
@@ -93,7 +93,7 @@ ttrue
 `register` / `unregister` / `list` use the per-object **cache file** (same layout as the level map above). `add` / `delete` change the persisted **`list`** in configuration; those entries are applied into the cache when **setup** runs (normally at boot). Until then, `list` still reflects only what is already in the cache.
 
 
-### **Component API**
+### Component API
 
 + `register[ [boot level], call ]` **register a startup task, lost when reboot**  
     - boot level ----------- [ string ], default be "general" 
@@ -213,8 +213,7 @@ ttrue
     - Not intended for manual invocation
 
 
-
-### **Lifecycle API**
+### Lifecycle API
 
 
 + `setup[]` **initialize the init component**, *succeed return ttrue, failed return tfalse, error return terror*
@@ -226,17 +225,7 @@ ttrue
     - This is a lifecycle method called automatically by the system during shutdown
     - Not intended for manual invocation
 
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
-
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
-
-
-### **C Code Example**
+### C Code Example
 
 ```c
 #include "skin/skin.h"

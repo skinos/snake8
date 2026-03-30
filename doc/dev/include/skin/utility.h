@@ -21,14 +21,16 @@
 void char2char( char *src, char a, char b );
 /**
  * @brief convert string to uppercase (in-place)
- * @param[in] str string to be modified
+ * @param[in] str string to be modified (entire C string until '\\0', using toupper per byte)
  * @return none
+ * @note Sets errno to EINVAL if str is NULL
  */
 void low2upp( char *str );
 /**
  * @brief convert string to lowercase (in-place)
- * @param[in] str string to be modified
+ * @param[in] str string to be modified (entire C string until '\\0', using tolower per byte)
  * @return none
+ * @note Sets errno to EINVAL if str is NULL
  */
 void upp2low( char *str );
 
@@ -36,9 +38,9 @@ void upp2low( char *str );
  * @brief MD5 hash encoding
  * @param[in] s input string
  * @param[in] len input length (use strlen(s) if len <= 0)
- * @return MD5 hash string (32 characters), need to free after use
+ * @return MD5 hash string (32 hex characters + internal '\\0'), caller must free
  *   @retval string for succeed
- *   @retval NULL for failed
+ *   @retval NULL for failed (EINVAL if s is NULL; ENOMEM if OpenSSL MD context allocation fails)
  */
 char *md5_encode( const char *s, int len );
 /**
@@ -81,23 +83,24 @@ char *url_encode( char const *s, int len, int *new_length );
 int   url_decode( char *str, int len );
 
 /**
- * @brief Simple XOR encryption (not for security-critical use)
- * @param[in] message plaintext message
- * @param[in] key encryption key
- * @return encrypted string, need to free after use
+ * @brief Lightweight AES-128-CBC encrypt + Base64 (default key snake8@SkinOS if tok NULL)
+ * @param[in] message plaintext (non-empty)
+ * @param[in] tok passphrase (at most 16 bytes used for key material; padded key buffer internally)
+ * @return Base64 ciphertext, caller must free
  *   @retval string for succeed
- *   @retval NULL for failed
+ *   @retval NULL for failed (EINVAL empty message, or crypto/OOM)
+ * @note Not a substitute for authenticated encryption; IV is zero-filled in implementation
  */
-char *simple_encode( const char *message, const char *key );
+char *simple_encode( const char *message, const char *tok );
 /**
- * @brief Simple XOR decryption (not for security-critical use)
- * @param[in] message encrypted message
- * @param[in] key decryption key
- * @return decrypted string, need to free after use
+ * @brief Inverse of simple_encode: Base64 decode + AES-128-CBC decrypt
+ * @param[in] message Base64 blob, or plaintext if it starts with '*' (returns strdup of rest), or legacy "|*|V2" hex form
+ * @param[in] tok same rules as simple_encode (NULL uses default)
+ * @return plaintext, caller must free
  *   @retval string for succeed
  *   @retval NULL for failed
  */
-char *simple_decode( const char *message, const char *key );
+char *simple_decode( const char *message, const char *tok );
 
 /**
  * @brief Convert string to hexadecimal representation
@@ -258,7 +261,6 @@ boole       fd_lock( int fd, boole ex, int start, int whence, int len, int wait 
 /**
  * @brief unlock the corresponding area of the file
  * @param[in] fd file descriptor
- * @param[in] ex exclusive lock if true
  * @param[in] start starting offset for lock
  * @param[in] whence seek reference (SEEK_SET, SEEK_CUR, SEEK_END)
  * @param[in] len number of bytes to lock
@@ -266,7 +268,7 @@ boole       fd_lock( int fd, boole ex, int start, int whence, int len, int wait 
  *		@retval true for succeed
  *		@retval false for failed, the errno code will be sets
  */
-boole       fd_unlock( int fd, boole ex, int start, int whence, int len );
+boole       fd_unlock( int fd, int start, int whence, int len );
 /**
  * @brief get the region locking pid of process corresponding to the file
  * @param[in] fd file descriptor
@@ -430,21 +432,22 @@ time_t        date_adjust( time_t seconds, const char* zone );
 
 
 /**
- * @brief same the system() function and more safe
- * @param[in] format shell command
- * @return value of command return
- * 		@retval 0 for succeed
- *  	@retval negative for failed, the errno code will be sets
+ * @brief Run a command via system(3) with extra validation (not a full shell sandbox)
+ * @param[in] format printf-style format; result must fit in LINE_MAX-1
+ * @return Same convention as system(3): -1 on fork/wait/signal error; otherwise wait status (use WIFEXITED/WEXITSTATUS)
+ *		@retval -1 command rejected (EINVAL metacharacters/controls, ENOSPC overflow) or system() failure
+ * @note Rejects common sh metacharacters (e.g. ; | < ` $() ${} and stray &) so behavior differs from raw system()
+ * @note Allows typical redirects such as >/dev/null and 2>&1 (ampersand only immediately after '>')
  */
 int   shell( const char *format, ... );
 /**
- * @brief same the system() function and more safe, also have timeout control
- * @param[in] timeout timeout in seconds
- * @param[in] silent silent mode (no output if true)
- * @param[in] format shell command format string
- * @return return of command
- *		@retval 0 for succeed
- *		@retval negative for failed, the errno code will be sets
+ * @brief Run a program without shell: fork + execvp on whitespace-split argv
+ * @param[in] timeout timeout in seconds (>0 enables SIGALRM and SIGKILL on expiry)
+ * @param[in] silent if true, redirect stdin/stdout/stderr to /dev/null in child
+ * @param[in] format printf-style single command line; split on ASCII space only (no quotes)
+ * @return Child exit status (WEXITSTATUS) when wait succeeds and no library error; -1 on failure
+ *		@retval -1 format error, fork/exec error, wait error, child stopped, or ETIMEDOUT/ECHILD/EINVAL as errno
+ * @note At most 19 arguments after argv[0]; embedded spaces in arguments are not supported
  */
 int   execute( int timeout, boole silent, const char *format, ... );
 #define silent_execute( ... )   execute( 0, 1, __VA_ARGS__ )
@@ -490,15 +493,15 @@ int   ip6tables( const char *format, ... );
  */
 int   ebtables( const char *format, ... );
 /**
- * @brief insmod the module
- * @param[in] module module pathname
- * @return none 
+ * @brief Load kernel module via modprobe if not already in /proc/modules
+ * @param[in] module module name passed to modprobe
+ * @return 0 on success, -1 on error (errno set; EEXIST if already loaded)
  */
 int   insmod( const char *module );
 /**
- * @brief rmmod the module
+ * @brief Unload kernel module via rmmod if listed in /proc/modules
  * @param[in] module module name
- * @return none 
+ * @return 0 on success, -1 on error (errno set; EINVAL if module not loaded)
  */
 int   rmmod( const char *module );
 /**
@@ -907,6 +910,14 @@ boole         partlabel_dev( const char *name, char *mmc );
 #define       MERGE_LINE_LEN 512
 #define       MERGE_LINE_MAX 1024
 boole         fileline_merge( const char *gap, const char *src, const char *adjust, const char *merge );
+/**
+ * @brief check shell command string for injection characters
+ * @param[in] cmd command string to check
+ * @return whether injection characters were found
+ * 		@retval true for injection detected
+ *  	@retval false for safe command
+ */
+boole         shell_injection_check( const char *cmd );
 
 
 

@@ -1,16 +1,19 @@
-## Management of component
+## land@component — Component Registration
 
-A component can register an object name so that HE traffic for that object is handled by the chosen component implementation.
+Every object name in the system must be backed by a component implementation.
+`land@component` provides the API to bind an object name to a component at
+runtime — useful when the mapping is not already established by an installed
+FPK package.  It carries no JSON configuration of its own; all work is done
+through the `register` / `unregister` calls below.
 
-### **Configuration( `land@component` )**
+### Configuration ( `land@component` )
 
 The **saved configuration object** for `land@component` (query/set via `land@component`, `land@component:path`, merge `|{json}`, etc.).
 
 
-
 `land@component` has **no** JSON configuration object. Mapping is done only through **`register`** / **`unregister`** in the **Component API**.
 
-### **Component API**
+### Component API
 
 
 + `register[ object, component name ]` **register a object**
@@ -36,7 +39,12 @@ The **saved configuration object** for `land@component` (query/set via `land@com
     ttrue
     ```
 
-### **C Code Example**
+### Lifecycle API
+
++ `setup[]` — invoked from platform init to register built-in components.
+
+
+### C Code Example
 
 **Call component methods**
 
@@ -65,18 +73,4 @@ if (ret != ttrue) print_component_call_error("register", ret);
 talk_t ret = scalls("land@component", "unregister", "ifname@wan3");
 if (ret != ttrue) print_component_call_error("unregister", ret);
 ```
-
-### **Lifecycle API**
-
-+ `setup[]` — invoked from platform init to register built-in components.
-
-
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
-
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
 

@@ -12,9 +12,9 @@
  * @note define boole data type, redefine the false and true value
  */
 
+ 
 
-
-/// Maximum identifier name length (256 characters)
+ /// Maximum identifier name length (256 characters)
 #ifndef NAME_MAX
 #define NAME_MAX          (256)
 #endif
@@ -26,8 +26,8 @@
 #ifndef LINE_MAX
 #define LINE_MAX          (1024)
 #endif
-/// he Maximum command line length (1024 characters) for
-#define JSON_LINE_MAX   (63335)
+/// Soft cap (bytes) for single-line JSON / read growth in socket helpers (e.g. util_socket.c)
+#define JSON_LINE_MAX   (65535)
 
 /// default file mode
 #define REGULAR_FILE_MODE (0660)
@@ -134,8 +134,10 @@ typedef int boole;
 
 /// core project
 #define LAND_PROJECT    "land"
-#define DAEMON_EXE      LAND_PROJECT""PROJECT_OBJECT_GAPS"deamon"
+#define DAEMON_EXE      LAND_PROJECT""PROJECT_OBJECT_GAPS"daemon"
 #define HEART_COM       LAND_PROJECT""PROJECT_OBJECT_GAPS"heart"
+/** component management component */
+#define COM_COM         LAND_PROJECT""PROJECT_OBJECT_GAPS"com"
 /** machine basic property management component */
 #define MACHINE_COM     LAND_PROJECT""PROJECT_OBJECT_GAPS"machine"
 /** service management component */
@@ -285,8 +287,8 @@ typedef int boole;
 /** modem sms object component */
 #define SMS_COM          MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms"
 #define SMS2_COM         MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms2"
-#define SMS3_COM         MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms2"
-#define SMS4_COM         MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms2"
+#define SMS3_COM         MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms3"
+#define SMS4_COM         MODEM_PROJECT""PROJECT_OBJECT_GAPS"sms4"
 /** modem atport service component */
 #define ATPROXY_COM      MODEM_PROJECT""PROJECT_OBJECT_GAPS"atproxy"
 /** modem atport object component */

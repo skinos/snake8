@@ -1,9 +1,7 @@
-## Administrator WEB Server Management
+## wui@admin — Administrator WEB Server Management
 Administration of equipment Management web page. The admin web stack is configured as **`wui@admin`**; the attributes below apply to that object after the service is bound to it.
 
-### **Configuration( `wui@admin` )**
-
-
+### Configuration ( `wui@admin` )
 ```json
 // Attributes introduction 
 {
@@ -115,8 +113,7 @@ wui@admin|{"status":"enable","port":"80","sslport":"443"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 + `setup[]` **apply saved `wui@admin` configuration and start or skip the admin web service**, *succeed return ttrue*
     - If **`status`** is **`disable`**, the HTTP/HTTPS service is not started.
     - Otherwise starts the long-running **`service`** (static pages and `/auth`, `/he`, `/public`, `/upload`, `/download`, etc.).
@@ -136,15 +133,13 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` — runs during **`init` → `app`** as **`wui@admin.setup`** in the default package.
 
 + `shut[]` — runs during **`uninit` → `app`** as **`wui@admin.shut`** in the default package.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

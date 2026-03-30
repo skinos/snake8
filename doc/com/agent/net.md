@@ -1,8 +1,7 @@
-## Network client — one GTOG VPN instance
+## agent@net — Network client — one GTOG VPN instance
 Each **`agent@net`**, **`agent@net2`**, … is one mesh VPN membership, usually managed by **`agent@gtog`**. Configuration covers server reachability, VPN addressing, keepalives, optional DNS/routing, and peer updates via **`endpoint` / `branch` / `leaf`**.
 
-### **Configuration( `agent@net` )**
-
+### Configuration ( `agent@net` )
 **agent@net** is first gtog network
 **agent@net2** is second gtog network
 
@@ -83,9 +82,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 **agent@net** is first gtog network
 **agent@net2** is second gtog network
@@ -347,12 +344,10 @@ ttrue
 + `service[]` **internal (not called via HE)**
     Background worker for this **`agent@net*`** object: brings up WireGuard, registers with the mesh coordinator, syncs tunables (**`network`**, keepalive fields, …), maintains reachability for the current role (**master / branch / leaf**), and drives **`online[]` / `offline[]`** when the tunnel state changes. **Hard config / disable** errors stop without auto-restart; **link / socket** issues and **extern not ready** are retried.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@net`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -380,4 +375,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@net", "list", NULL); talk_free if JSON */
 ```
-

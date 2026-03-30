@@ -1,8 +1,7 @@
-## HE Client — Heport remote management client
+## agent@heclient — HE Client — Heport remote management client
 Connects to the remote Heport service for administration: remote commands, status reporting, and coordinated control of related agent components (**`agent@portc`**, **`agent@gtog`**, etc.).
 
-### **Configuration( `agent@heclient` )**
-
+### Configuration ( `agent@heclient` )
 ```json
 {
     // basic
@@ -71,9 +70,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the he client, start the connection service**
     setup will read the configuration, if status is "enable", start the background service process to connect to the heport server
@@ -199,21 +196,17 @@ ttrue
 + `service[]` **internal (not called via HE)**
     Background worker started by **`setup[]`**: maintains the session to the Heport service, registers the device, keeps the link alive, executes remote **`object.method`** requests, and returns results. On **account / verification** errors the client stops without auto-restart; on **connect / timeout / extern not ready** it retries according to platform policy.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@heclient`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/online` | `agent@heclient.setup` |
 | `machine/status` | `agent@heclient.update` |
 
 
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -241,4 +234,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@heclient", "list", NULL); talk_free if JSON */
 ```
-

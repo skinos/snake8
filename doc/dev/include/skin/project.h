@@ -82,25 +82,21 @@ const char *project_path( char *buffer, int buflen, const char *name );
 const char *project_storage( char *buffer, int buflen, const char *name, const char *type );
 #define project2storage( buffer, buflen, type ) project_storage( buffer, buflen, PROJECT_ID, type )
 /**
- * @brief get the execute pathname for project
- * @param[out] buffer buffer to store executable path
+ * @brief get the program pathname for project
+ * @param[out] buffer buffer to store program path
  * @param[in] buflen buffer size
  * @param[in] name project name
- * @param[in] execute executable filename
- * @return string of execute pathname
+ * @param[in] execute program filename
+ * @return string of program pathname
  * 		@retval string for succeed
  *  	@retval NULL for error, errno will be set
  */
-const char *project_exe_path( char *buffer, int buflen, const char *name, const char *execute, ... );
-#define exe2path( buffer, buflen, ... )  project_exe_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
-#define project_ko_path project_exe_path
-#define ko2path( buffer, buflen, ... )  project_exe_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
-#define project_shell_path project_exe_path
-#define shell2path( buffer, buflen, ... )  project_exe_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
-#define project_misc_path project_exe_path
-#define misc2path( buffer, buflen, ... )  project_exe_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
-#define project_cfg_path project_exe_path
-#define cfg2path( buffer, buflen, ... )  project_exe_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
+const char *project_osc_path( char *buffer, int buflen, const char *name, const char *variable, ... );
+#define osc2path( buffer, buflen, ... )  project_osc_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
+#define project_ko_path project_osc_path
+#define ko2path( buffer, buflen, ... )  project_osc_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
+#define project_misc_path project_osc_path
+#define misc2path( buffer, buflen, ... )  project_osc_path( buffer, buflen, PROJECT_ID, __VA_ARGS__ )
 /**
  * @brief get the variable pathname for project
  * @param[out] buffer buffer to store variable path

@@ -1,8 +1,7 @@
-## IO Agent -- GPIO and Network IO Management
+## agent@io — IO Agent -- GPIO and Network IO Management
 Manage device GPIO input/output, support IO state monitoring, trigger actions on state changes, and report IO state to remote servers via TCP/UDP/MQTT clients and servers
 
-### **Configuration( `agent@io` )**
-
+### Configuration ( `agent@io` )
 ```json
 {
     "status":"io agent service status",                    // [ "disable", "enable" ]
@@ -161,9 +160,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the io agent, start the service**
     setup will read the configuration, check if init map has any GPIO defined and status is not "disable", then start the background service process
@@ -352,15 +349,12 @@ ttrue
     - Subscribe to configured topics for remote control
     - Support TLS with CA/cert/key files at: `<config_path>/io-<name>.ca`, `io-<name>.crt`, `io-<name>.key`
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@io`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 +
 
 
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -388,4 +382,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@io", "list", NULL); talk_free if JSON */
 ```
-

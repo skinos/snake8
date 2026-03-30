@@ -1,7 +1,12 @@
-## Daemon Management
-Manage the `daemon` executable and its watchdog behavior.
+## land@daemon — Daemon & Watchdog
 
-### **Configuration( `land@daemon` )**
+The **daemon** executable is the main supervisor process of the gateway.
+It feeds the hardware watchdog, monitors memory usage, checks the local
+network interface, and periodically scans registered services — restarting
+any that have exited unexpectedly.  All behaviour is controlled through the
+`land@daemon` configuration object described below.
+
+### Configuration ( `land@daemon` )
 
 The **saved configuration object** for `land@daemon` (watchdog, memory, local link checks, service scan interval). Consumed by the **`daemon`** executable at runtime.
 
@@ -24,44 +29,36 @@ The **saved configuration object** for `land@daemon` (watchdog, memory, local li
 }
 ```
 
+Example, show all the configure
+```shell
+land@daemon
+{
+    "service_check":"5",                       # scan registered services every 5 seconds
+    "watchdog_file":"/dev/watchdog",           # hardware watchdog device path
+    "watchdog_interval":"1000000",             # feed watchdog every 1000000 microseconds (1 second)
+    "memory_check":"10",                       # check free memory every 10 seconds
+    "memory_warn":"3000",                      # warn when free memory below 3000 kB
+    "memory_reboot":"800",                     # reboot when free memory below 800 kB
+    "local_check":"30",                        # check local network interface every 30 seconds
+    "local_disbuild":"20",                     # reboot after 20 consecutive local-missing at setup
+    "local_disappear":"10",                    # reboot after 10 consecutive local-disappear checks
+    "local_ifname":"ifname@local"              # local network interface object name
+}
+```
+
 Examples, merge several tuning fields at once
 ```shell
 land@daemon|{"service_check":"5","watchdog_interval":"1000000"}
 ttrue
 ```
 
-#### **Notes**
+#### Notes
 - `watchdog_interval` is parsed as microseconds, then converted into `tv_sec/tv_usec`.
 - `memory_warn` and `memory_reboot` are compared with free memory in kB.
 - `local_disbuild` and `local_disappear` are retry counts, not time duration.
 - If `watchdog_file` is not set in config, daemon tries register variable `watchdog_file`.
 
-### **Executable commands**
-
-The **`daemon`** program (not HE methods on a long-running session) accepts these control lines:
-
-#### **Shell Command Examples**
-Stop daemon immediately:
-```shell
-daemon exit
-```
-
-Stop daemon after 15 seconds:
-```shell
-daemon stop15exit
-```
-
-Stop daemon after 600 seconds:
-```shell
-daemon delay600exit
-```
-
-Show flash id:
-```shell
-daemon flashid
-```
-
-#### **Configuration Examples**
+#### Configuration Examples
 Minimal service check only:
 ```json
 {
@@ -90,23 +87,31 @@ Enable memory and local watchdog policies:
 }
 ```
 
-### **Lifecycle API**
+### Executable Commands
 
-+ **No** HE `setup[]` on `land@daemon` — configuration is read by the standalone **`daemon`** executable.
-+ Treat **`land@daemon`** as persisted settings only.
+The **`daemon`** program (not HE methods on a long-running session) accepts these control lines:
 
+Stop daemon immediately:
+```shell
+daemon exit
+```
 
-### **Joint handlers**
+Stop daemon after 15 seconds:
+```shell
+daemon stop15exit
+```
 
-**None** (not a joint subscriber).
+Stop daemon after 600 seconds:
+```shell
+daemon delay600exit
+```
 
+Show flash id:
+```shell
+daemon flashid
+```
 
-### **Published joint events**
-
-**None**.
-
-
-### **C Code Example**
+### C Code Example
 
 **Read and update configuration**
 
@@ -135,4 +140,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("land@daemon", "list", NULL); talk_free if JSON */
 ```
-

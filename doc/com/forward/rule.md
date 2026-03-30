@@ -1,8 +1,7 @@
-***
-## Policy based routing
+## forward@rule — Policy Based Routing
 Management of policy based routing
 
-#### Configuration( forward@rule )
+### Configuration ( forward@rule )
 ```json
 // Attributes introduction 
 {
@@ -33,7 +32,7 @@ Management of policy based routing
 }
 
 ```   
-Example, show current all of policy rule
+Examples, show all the policy rule configure
 ```shell
 forward@rule
 {
@@ -54,7 +53,7 @@ forward@rule
 }
 ```  
 
-#### **Methods**
+### Component API
 
 + `status[]` **get the current policy rule**
     - failed reeturn NULL, error return terror  

@@ -1,9 +1,8 @@
-## Management of Access control access
+## client@acl — Management of Access control access
 Management ACL of client from local ifname   
 Per logical **`ifname`** (e.g. `ifname@lan`), ACL controls whether matching traffic is **dropped**, **accepted**, or **left to later rules**, using **source (`src`)**, **destination**, **ports**, optional **time windows**, and so on. Configure under **`client@acl`**; when **`status`** is **enable**, the rules you define are enforced for that **ifname**.
 
-### **Configuration( `client@acl` )**
-
+### Configuration ( `client@acl` )
 ```json
 // Attributes introduction 
 {
@@ -113,7 +112,12 @@ client@acl:ifname@lan/rule/disqq=
 ttrue
 ```
 
-### **Joint handlers**
+### Lifecycle API
++ `setup[]` / `shut[]` — **when implemented** for **`client@acl`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
++
+
+
+### Joint Handlers
 **Joint** wiring maps events to the handlers below (separate from everyday **Component API** methods):
 
 + `on[]` **refresh ACL when a LAN ifname is brought up**, *succeed return ttrue, failed return tfalse*
@@ -126,14 +130,7 @@ ttrue
     - **`network/off`** → **`client@acl.off`**.
     - Parameter **2** is a JSON object with **`ifname`**. Removes ACL rules for that **ifname**; if **`ifname`** is missing, nothing is done and the call still succeeds.
 
-### **Lifecycle API**
-
-+ `setup[]` / `shut[]` — **when implemented** for **`client@acl`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-+
-
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -161,4 +158,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("client@acl", "list", NULL); talk_free if JSON */
 ```
-

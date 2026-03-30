@@ -1,9 +1,8 @@
-## System date and time
+## clock@date — System date and time
 
 Manage system date and time, including timezone, manual set, NTP client sync, and status reporting (`clock@date`).
 
-### **Configuration( `clock@date` )**
-
+### Configuration ( `clock@date` )
 ```json
 // Attributes introduction
 {
@@ -45,7 +44,7 @@ ttrue
 ```
 
 
-### **Component API**
+### Component API
 + `status[]` **get the date information**
     - return NULL when failed
     - return terror when error
@@ -131,16 +130,14 @@ ttrue
     ```
 
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **apply saved timezone and related boot-time state**, *succeed return ttrue*
     - **Not** run automatically during **`init`** in the default clock package; call **`setup[]`** from your integration if the timezone must be applied before other services.
 
 + `shut[]` **stop this component’s supervised child (NTP client service)**, *succeed return ttrue*
     - **Not** run automatically on **`uninit`** in the default integration; call explicitly if you need it on shutdown.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Invokes |
 |-----------|---------|
 | `network/online` | `clock@date.online` |
@@ -148,12 +145,10 @@ ttrue
 Registered as a **joint** handler in the default clock package. When the stack marks the WAN path **online**, **`online[]`** starts the embedded NTP client **`service`** if configuration has **`ntpclient`** = **`enable`**.
 
 
-### **Published joint events**
-
+### Published Joint Events
 + **`date/modify`** — emitted when the wall clock is changed. Second argument is a short source tag, e.g. **`set`** (manual `current[…]`) or **`ntp`** (successful NTP sync).
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

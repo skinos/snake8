@@ -1,9 +1,7 @@
-## Management of System Firewall
+## forward@firewall — Management of System Firewall
 Management of firewall for limit access from external **ifname** (internet)
 
-### **Configuration( `forward@firewall` )**
-
-
+### Configuration ( `forward@firewall` )
 ```json
 // Attributes introduction 
 {
@@ -131,8 +129,7 @@ forward@firewall|{"ifname@lte":{"status":"enable","default":"drop"}}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 Use standard **`forward@firewall`** get/set/merge for configuration.
 
 + `on[]` **refresh inbound firewall rules for an external ifname**, *succeed return ttrue*
@@ -140,20 +137,17 @@ Use standard **`forward@firewall`** get/set/merge for configuration.
 
 + `off[]` **tear down firewall for an ifname**
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **not** wired in the default **init** / **uninit** schedule for this component; use **`on[]`** / **`off[]`**.
 
-### **Joint handlers**
-
+### Joint Handlers
 | Joint key | Method |
 |-----------|--------|
 | `network/onextern` | `forward@firewall.on` |
 | `network/onvpn` | `forward@firewall.on` |
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -181,4 +175,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("forward@firewall", "list", NULL); talk_free if JSON */
 ```
-

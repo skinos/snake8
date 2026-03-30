@@ -1,9 +1,7 @@
-## Port client — remote port proxy
+## agent@portc — Port client — remote port proxy
 Connects to the port-proxy service so remote sessions can reach local **TCP**, **UDP**, or **serial** targets. Keeps standby links to the server so new proxy requests can be served quickly.
 
-### **Configuration( `agent@portc` )**
-
-
+### Configuration ( `agent@portc` )
 ```json
 {
     // server connection
@@ -62,9 +60,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 + `setup[]` **setup the port client, start the connection service**
     start the background service process to connect to the port proxy server
@@ -194,12 +190,10 @@ ttrue
 + `service[]` **internal (not called via HE)**
     Background worker started by **`setup[]`**: uses **`agent@heclient`** (or local fields) for server identity when unset, keeps a pool of **`pond`** idle server links, renews them as proxies attach/detach, and applies the timeout fields from configuration. **Auth errors** stop without auto-restart; **network / socket** issues and **extern not ready** are retried.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@portc`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -227,4 +221,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@portc", "list", NULL); talk_free if JSON */
 ```
-

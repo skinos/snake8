@@ -1,9 +1,8 @@
-## Scheduled system restart
+## clock@restart — Scheduled system restart
 
 Manages automatic system restarts by uptime, clock time, or idle/client conditions (`clock@restart`).
 
-### **Configuration( `clock@restart` )**
-
+### Configuration ( `clock@restart` )
 ```json
 // attribute introduction
 {
@@ -67,8 +66,7 @@ ttrue
 ```
 
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **start the restart planner service when mode is active**, *succeed return ttrue*
     - After install, **`init`** usually runs **`clock@restart.setup`** at the **`app`** stage. For **`mode`** in **`age`**, **`point`**, or **`idle`**, starts the **`service`** child; **`disable`** skips the service.
 
@@ -76,8 +74,7 @@ ttrue
     - **`sdelete( COM_IDPATH )`**. **Not** run automatically on **`uninit`** in the default integration.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

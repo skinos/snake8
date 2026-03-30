@@ -1,8 +1,7 @@
-***
-## Mark the packet（forward@mark） 
-mark the packet with a mark id
+## forward@mark — Mark the Packet
+Mark the packet with a mark id
 
-#### Configuration( forward@mark )
+### Configuration ( forward@mark )
 
 ```json
 // Attributes introduction
@@ -22,8 +21,9 @@ mark the packet with a mark id
 }
 ```
 
-Example, show current all of mark rule
+Examples, show all the mark rule configure
 ```shell
+forward@mark
 {
     
     "myCustom1":                       # rule name is myCustom1

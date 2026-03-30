@@ -1,4 +1,4 @@
-## Management of shutdown component
+## land@uninit — Shutdown Tasks
 Administration of equipment shutdown task
 Each FPK can register shutdown tasks through its shipped manifest; the system runs them at the configured **uninit** level 
 
@@ -20,7 +20,7 @@ There are multiple shutdown levels at system shutdown process:
     - `land`       skinos land shutdown
     - `arch`       skinos arch shutdown
 
-### **Configuration( `land@uninit` )**
+### Configuration ( `land@uninit` )
 
 The **saved configuration object** for `land@uninit` (shutdown task **list** and optional **remote**). Same cache-file behaviour as `land@init`.
 
@@ -81,7 +81,7 @@ land@uninit|{"remote":{"ip":"","port":"515"}}
 ttrue
 ```
 
-### **Component API**
+### Component API
 
 + `register[ [shutdown level], call ]` **register a shutdown task, lost when reboot**  
     - shutdown level ------- [ string ], default be "general" 
@@ -161,7 +161,6 @@ ttrue
     ```
 
 
-
 + `add[ task name, call, [shutdown level] ]` **add a shutdown task**
     - task name ------------ [ string ], task name, you can custom the name
     - call ------------------ [ string ], component API or program 
@@ -200,9 +199,7 @@ ttrue
     - Not intended for manual invocation
 
 
-
-
-### **Lifecycle API**
+### Lifecycle API
 
 
 + `setup[]` **initialize the uninit component**, *succeed return ttrue, failed return tfalse, error return terror*
@@ -214,17 +211,7 @@ ttrue
     - This is a lifecycle method called automatically by the system during shutdown
     - Not intended for manual invocation
 
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
-
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
-
-
-### **C Code Example**
+### C Code Example
 
 ```c
 #include "skin/skin.h"

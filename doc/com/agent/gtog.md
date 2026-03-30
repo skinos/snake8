@@ -1,8 +1,7 @@
-## Gateway to gateway (GTOG) — mesh VPN
+## agent@gtog — Gateway to gateway (GTOG) — mesh VPN
 Manages multiple **WireGuard**-based mesh VPNs (**`agent@net`**, **`agent@net2`**, …): register networks, push endpoint lists, and add **branch** (relay-capable) or **leaf** peers. Topology and reachability follow each device’s NAT characteristics and configured preference.
 
-### **Configuration( `agent@gtog` )**
-
+### Configuration ( `agent@gtog` )
 ```json
 {
     "net_max":"maximum number of gtog networks",           // [ number ], product default
@@ -26,8 +25,7 @@ ttrue
 ```
 
 
-
-#### **Network Configuration( agent@net )**
+#### Network Configuration( agent@net )
 Each registered network has its own configuration object (agent@net for the first, agent@net2 for the second, etc.)
 
 > **Full field list:** `server`, `extern`, `key`, `lport`, DNS, routing, `mtu`, etc. are documented in **`net.md`** (Network Client). The table below is a minimal summary; use **`net.md`** as the authoritative reference for per-network options.
@@ -57,9 +55,7 @@ agent@net
 ```
 
 
-
-#### **API( agent@gtog )**
-
+### Component API
 + `setup[]` **setup all gtog network infrastructure**
     Reads **`agent@gtog`** limits, wires each registered **`agent@net*`** into **`network@frame`**, and hooks **init** / **`network/online`** so instances can start in order.
     - succeed return ttrue
@@ -233,18 +229,45 @@ agent@net
     ttrue
     ```
 
++ `state[]` **get the VPN instance runtime state** (alias: `status[]`)
+    Only meaningful on per-network objects (`agent@net`, `agent@net2`, …).
+    When called on the main **`agent@gtog`** object, returns NULL.
+    - failed return NULL
+    - succeed return JSON describing the instance state:
+    ```json
+    {
+        "status":"current status",      // "up", "down", "uping", "failed", "block"
+        "ip":"tunnel local IP",
+        "mask":"tunnel mask",
+        "dstip":"tunnel peer IP",
+        "netdev":"WireGuard interface name",
+        "delay":"master keepalive delay (ms)",
+        "livetime":"human-readable uptime",
+        "rx_bytes":"...", "rx_packets":"...",
+        "tx_bytes":"...", "tx_packets":"...",
+        "server":"master server address",
+        "pref":"preference value",
+        "mode":"current mode",
+        "mip":"master IP",
+        "mmacid":"master MAC ID",
+        "mpref":"master preference",
+        "tid":"configuration transaction ID"
+    }
+    ```
+
 + `online[]` **internal**
     Invoked when **`network/online`** fires so the instance can refresh reachability context (e.g. gateway) before continuing bring-up.
+
++ `offline[]` **internal**
+    Invoked when the VPN link goes down. Cleans up DNS resolver entries, removes iptables MASQUERADE rules, and clears TCP MSS clamping for the interface.
 
 + `service[]` **internal (not called via HE)**
     Per-**`agent@net*`** worker: applies saved VPN settings, owns the WireGuard interface and peer set, exchanges keepalives with the mesh coordinator according to the current role (**master / branch / leaf**), and adjusts peers when **`endpoint` / `branch` / `leaf`** APIs update the topology. **Config errors** typically stop without auto-restart; **transient link loss** is retried.
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@gtog`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -272,4 +295,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("agent@gtog", "list", NULL); talk_free if JSON */
 ```
-

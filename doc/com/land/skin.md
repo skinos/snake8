@@ -547,6 +547,8 @@ int main(void)
 
 **Indexing:** `param_string` / `param_talk` / `param_pointer` use **1-based** serial numbers; **`-1`** selects the **last** option. **`param_insert*`** prepends; **`param_add*`** appends. **`param_shift` / `param_unshift`** move the visible window (`start` / `end`). **`param_import` / `param_import2`** merge one or two JSON objects into an existing `param_t`. **`param_combine`** returns a single readable string form (internal buffer; valid until `param_free()`). **`param_free()`** releases the structure and any owned `talk_t` / internal strings; do not use the `param_t` after that.
 
+**Parsing rules (`param_create`):** commas split options only when **not** inside balanced `{` `}` / `[` `]` and when outside unquoted `"` segments (quote parity). Unbalanced braces/brackets/quotes → **`NULL`** with **`EINVAL`**. At most **`PARAM_OPTIONS_MAX`** comma-separated fields; if the input continues past that, the **tail is ignored** without error.
+
 ---
 
 ### 3.1 Creation and Release
@@ -556,8 +558,8 @@ int main(void)
 param_t param_create(const char *a);
 ```
 **Description:** Create parameter structure from string
-**Parameters:** a - Option description string, e.g., "opt1,opt2,opt3"
-**Returns:** Parameter structure pointer
+**Parameters:** a - Option description string, e.g. `"opt1,opt2,opt3"`, or **`NULL`** for an **empty** list (no options).
+**Returns:** Non-NULL **`param_t`** on success; **`NULL`** with **`EINVAL`** if **`a`** is only whitespace after trim. Parse failures (**unbalanced** `{}` / `[]` / quotes) → **`NULL`**, **`EINVAL`**. Allocation failures call **`memory_exit`**.
 
 #### param_build
 ```c
@@ -703,7 +705,7 @@ static void demo_param_all(void)
 
 | Type | Role |
 |------|------|
-| **`obj_t`** | Parsed **component path** (`project@component`, optional extra layers up to **`OBJ_MAX_LEVEL`** = 3). Holds project/component strings, optional `com` / register handles, and buffers; **`obj_create` / `obj_free`**. |
+| **`obj_t`** | Parsed **component path**. Parser stores up to **`OBJ_MAX_LEVEL`** = **2** segments (`project@component`). A **single** registered alias is resolved via **`com_path()`** and normalized to two layers. Holds project/component strings, optional `com` / register handles, and buffers; **`obj_create` / `obj_free`**. |
 | **`attr_t`** | Parsed **attribute path** inside config or JSON (e.g. `wan/ip`, multi-level with `OBJECT_CONFIG_GAPS` / `/`). **`attr_create` / `attr_free`**, `attr_layer`, `attr_combine`. |
 | **JSON helpers** | **`attr_get` / `attr_set` / `attr_cut`** (and `*s` / `*_string` variants) walk a **`talk_t` JSON tree** by attribute path — same logical layout as `config_get` paths. |
 
@@ -718,8 +720,9 @@ Returned `const char *` views from `obj_*` / `attr_*` point into internal buffer
 obj_t obj_create(const char *string);
 ```
 **Description:** Create object from string
-**Parameters:** string - Component path in format "project@component"
-**Returns:** Object pointer
+**Parameters:** string - Usually `project@component`, or a **single** component alias that **`com_register`** maps to a real path (resolved to project + component).
+**Returns:** Object pointer, or **NULL** on invalid input / resolution failure (`errno` set).
+**Note:** After successful **`obj_create`**, **`obj_level()`** is **2** and **`obj_prj()`** / **`obj_com()`** are typically both non-NULL.
 
 #### obj_free
 ```c
@@ -877,17 +880,17 @@ static void demo_path_all(void)
 | **Discovery** | `com_list`, `com_project_list`, `com_register` aliases, **`com_path`** → buffer + returns **`char`** component type code. |
 | **Open / symbol** | `com_open` / `com_sopen`, **`com_symbol`** (names use **`COM_API_PREFIX`**, e.g. `_status`). |
 | **Calls** | **`ccall` / `scall`** + variants: `*t` (JSON), `*s` (format string), `*st`, `*4p`, `*_string` (result into user buffer). Results are **`void *`**: often **`talk_t` JSON** (caller **`talk_free`**) or sentinels **`ttrue` / `tfalse` / `terror` / `tpanic` / `tnull`** — see §1.1. |
-| **Shell** | **`shell_object`**, **`shell_param`**, **`shell_api`**, **`shell_pipe`** when running inside an HE-driven API (§5.6). |
+| **Shell child** | **`execute_object`**, **`execute_param`**, **`execute_api`**, **`execute_pipe`** when running inside a **shell-spawned** `COM_FILE_EXECUTE` component (§5.6). Environment variables **`OBJECT`**, **`PARAM_SIZE`**, **`PARAM1..N`**, **`API`**, **`cpipe`** are set by the parent. |
 
 ---
 
-### 5.1 Component Type Definitions
+### 5.1 Component file kinds (`com_t`)
+
+As in `com.h` today (only these two are defined on the `com_t.type` field):
 
 ```c
-#define COM_FILE_KO      1    // Kernel module
-#define COM_FILE_LIB     2    // Dynamic library (.com)
-#define COM_FILE_SHELL   3    // Shell script (.ash)
-#define COM_FILE_EXECUTE 4    // Executable file
+#define COM_FILE_LIB      1    /* shared object (.com, etc.) */
+#define COM_FILE_EXECUTE  2    /* executable helper; reply pipe uses fixed fd SHELL_COM_PIPE (7) */
 ```
 
 ### 5.2 Component Discovery and Registration
@@ -1079,16 +1082,18 @@ param_free(p);
 
 ### 5.6 Shell invocation context (`com.h`)
 
-When a component API is entered through the HE/shell command path, the runtime can query the current call:
+When a **`COM_FILE_EXECUTE`** component runs as a **child of the shell RPC path**, it reads context from the environment (set by **`execute_ccall`** in `com.c`):
 
-#### shell_object / shell_param / shell_api / shell_pipe
+#### execute_object / execute_param / execute_api / execute_pipe
 ```c
-obj_t shell_object(void);
-param_t shell_param(void);
-const char *shell_api(void);
-int shell_pipe(void);
+obj_t       execute_object(void);
+param_t     execute_param(void);
+const char *execute_api(void);
+int         execute_pipe(void);
 ```
-**Description:** Current component object, `param_t`, method name, and optional reply pipe descriptor. **Outside a shell-driven API call**, `shell_object` / `shell_param` / `shell_api` return **NULL**, and `shell_pipe` returns a negative value (see `com.h`).
+**Description:** **`execute_object`** builds **`obj_t`** from **`OBJECT`**. **`execute_param`** builds **`param_t`** from **`PARAM_SIZE`** and **`PARAM1`…`PARAMn`** (via **`param_adds`**; missing env vars become NULL string slots). It returns **NULL** only on allocation failure — an empty call still yields a non-NULL **`param_t`** with zero options when **`PARAM_SIZE`** is absent or zero. **`execute_api`** returns **`getenv("API")`**. **`execute_pipe`** returns **`atoi(cpipe)`** or **`-1`** if unset — this is the fd where **`talk2fd`** should write the JSON reply (**`SHELL_COM_PIPE`** = 7 after **`dup2`** in the child).
+
+**Outside** that child context, **`execute_object`** / **`execute_api`** typically see **NULL** env vars and return **NULL**; **`execute_pipe`** is **`-1`**.
 
 ### 5.7 Sample program (every `com.h` function)
 
@@ -1114,10 +1119,10 @@ static void demo_com_all(void)
     com_t ch;
     talk_t tl;
 
-    (void)shell_object();
-    (void)shell_param();
-    (void)shell_api();
-    (void)shell_pipe();
+    (void)execute_object();
+    (void)execute_param();
+    (void)execute_api();
+    (void)execute_pipe();
 
     tl = com_project_list();
     if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
@@ -1374,6 +1379,8 @@ static void demo_config_all(void)
 
 Naming mirrors **`config_*`**: **`dbs_fetch` + obj** vs **`dbs_sfetch` + string com**, `*s` for varargs path segments. This is **durable storage**; **`config_*`** is oriented toward **current configuration** semantics.
 
+**Whole-file vs key path:** In **`dbs_fetch`** (and the same pattern in save paths), if **`attr` is `NULL`** or **`attr_level(attr) <= 0`**, the implementation loads/saves the **entire** JSON file as one value (via **`file2json`** / full-document write). Otherwise it walks **`attr`** layers inside the parsed file JSON.
+
 ---
 
 ### 7.1 Data Fetch
@@ -1387,8 +1394,8 @@ talk_t dbs_sfetchs(const char *com, const char *fa, const char *attr, ...);
 ```
 **Description:** Fetch data from database
 **Parameters:**
-- fa - File path attribute
-- attr - Data key
+- fa - Logical DB file / namespace (combined with component to form the on-disk path under **`PROJECT_DBS_DIR`**).
+- attr - Key path inside the file, or **`NULL`** / empty-level **`attr_t`** for **whole-file** JSON (see §7.0).
 
 #### dbs_fetch_string / dbs_fetchs_string / dbs_sfetchs_string
 ```c
@@ -2039,7 +2046,7 @@ static void demo_serv_all(void)
 | Area | APIs |
 |------|------|
 | **Discovery** | **`project_scan`** (refresh), **`project_list`** (cache), **`project_dirty`**, **`project_check`**. |
-| **Paths** | **`project_path`**, **`project_storage`**, **`project_exe_path`**, **`project_var_path`**, **`project_internal_path`** — plus **`project2path`**, **`exe2path`**, … macros using **`PROJECT_ID`**. |
+| **Paths** | **`project_path`**, **`project_storage`**, **`project_osc_path`**, **`project_var_path`**, **`project_internal_path`** — plus **`project2path`**, **`exe2path`**, … macros using **`PROJECT_ID`**. |
 | **Bootstrapping** | **`project_add_init` / `project_add_uninit` / `project_add_joint` / `project_add_object`** register entries in project metadata. |
 | **i18n** | **`project_i18n`**, **`project_i18n_get`**. |
 
@@ -2079,10 +2086,10 @@ const char *project_storage(char *buffer, int buflen, const char *name, const ch
 ```
 **Description:** Get project storage directory
 
-#### project_exe_path / exe2path / project_var_path / var2path / project_internal_path / internal2path
+#### project_osc_path / osc2path / project_var_path / var2path / project_internal_path / internal2path
 ```c
-const char *project_exe_path(char *buffer, int buflen, const char *name, const char *execute, ...);
-#define exe2path(buffer, buflen, ...) project_exe_path(buffer, buflen, PROJECT_ID, __VA_ARGS__)
+const char *project_osc_path(char *buffer, int buflen, const char *name, const char *execute, ...);
+#define exe2path(buffer, buflen, ...) project_osc_path(buffer, buflen, PROJECT_ID, __VA_ARGS__)
 const char *project_var_path(char *buffer, int buflen, const char *name, const char *variable, ...);
 #define var2path(buffer, buflen, ...) project_var_path(buffer, buflen, PROJECT_ID, __VA_ARGS__)
 const char *project_internal_path(char *buffer, int buflen, const char *name, const char *variable, ...);
@@ -2151,12 +2158,10 @@ static void demo_project_all(void)
     (void)project2path(buf, sizeof buf);
     (void)project_storage(buf, sizeof buf, "land", "config");
     (void)project2storage(buf, sizeof buf, "config");
-    (void)project_exe_path(buf, sizeof buf, "land", "app");
-    (void)exe2path(buf, sizeof buf, "app");
+    (void)project_osc_path(buf, sizeof buf, "land", "openvpn");
+    (void)osc2path(buf, sizeof buf, "openvpn");
     (void)ko2path(buf, sizeof buf, "drv.ko");
-    (void)shell2path(buf, sizeof buf, "s.ash");
     (void)misc2path(buf, sizeof buf, "m.bin");
-    (void)cfg2path(buf, sizeof buf, "c.json");
     (void)project_var_path(buf, sizeof buf, "land", "x");
     (void)var2path(buf, sizeof buf, "x");
     (void)project_internal_path(buf, sizeof buf, "land", "i");
@@ -2414,7 +2419,7 @@ void char2char(char *src, char a, char b);
 void low2upp(char *str);
 void upp2low(char *str);
 ```
-**Description:** Character replacement/To uppercase/To lowercase
+**Description:** **`char2char`** replaces every **`a`** with **`b`** in-place in **`src`** (NUL-terminated). **`low2upp`** / **`upp2low`** convert the **entire** string in place using **`toupper` / `tolower`** on **`(unsigned char)`** bytes. **`NULL` `src` / `str`** → **`EINVAL`** and no-op (see `util_encode.c`).
 
 ### 14.2 Encoding/Decoding
 
@@ -2424,7 +2429,7 @@ char *md5_encode(const char *s, int len);
 char *b64_encode(const char *s, int len);
 char *b64_decode(const char *s, int *len);
 ```
-**Description:** MD5/Base64 encode/decode
+**Description:** MD5 digest as **hex string**; Base64 encode/decode. **`md5_encode`**: **`NULL`** / invalid length → **`NULL`** with **`EINVAL`**; allocation failure → **`NULL`** with **`ENOMEM`**. Caller frees returned strings.
 
 #### url_encode / url_decode
 ```c
@@ -2435,10 +2440,10 @@ int url_decode(char *str, int len);
 
 #### simple_encode / simple_decode
 ```c
-char *simple_encode(const char *message, const char *key);
-char *simple_decode(const char *message, const char *key);
+char *simple_encode(const char *message, const char *tok);
+char *simple_decode(const char *message, const char *tok);
 ```
-**Description:** Simple encryption/decryption
+**Description:** **AES-128-CBC** (key/IV derived from **`tok`** and fixed salt in the implementation), then **Base64** for the wire form — not XOR. On failure returns **`NULL`** with **`errno`** set (**`EINVAL`**, **`ENOMEM`**, etc. per `util_encode.c`).
 
 #### string2hex / hex2string / hex2printf
 ```c
@@ -2545,7 +2550,7 @@ int shell(const char *format, ...);
 int execute(int timeout, boole silent, const char *format, ...);
 #define silent_execute(...) execute(0, 1, __VA_ARGS__)
 ```
-**Description:** Execute shell commands (with timeout control)
+**Description:** **`shell`** formats the command into a **`LINE_MAX`** buffer, rejects **empty** / **oversized** commands and patterns unsafe for **`/bin/sh -c`** (e.g. `` ` ``, `|`, `;`, `<`, `$(` / `${`, stray `&` except `>&`), then calls **`system(3)`** — returns its status, **`errno`** preserved from the last relevant failure. **`execute`** **`fork`**s and runs **`execvp`** on the **first whitespace-separated token** as argv\[0\] (up to **19** more tokens); optional **`timeout`** seconds and **`SIGALRM`**; on timeout sends **`SIGKILL`**. Return value is the child’s **`WEXITSTATUS`** when exited cleanly, or **`-1`** with **`errno`** on fork/exec/wait/signal errors or non-normal exit. **`silent_execute`** is **`execute(0, 1, …)`** (stdio to **`/dev/null`** in the child when supported).
 
 #### killpid
 ```c
@@ -2568,7 +2573,7 @@ int insmod(const char *module);
 int rmmod(const char *module);
 boole lsmod(const char *module);
 ```
-**Description:** Load/Unload/Check kernel modules
+**Description:** **`insmod`** uses **`modprobe`** via **`shell`** when the module name is **not** already listed in **`/proc/modules`**; if already loaded returns **`-1`** with **`EEXIST`**. **`rmmod`** runs **`rmmod`** only when the module **appears** in **`/proc/modules`**; if not loaded returns **`-1`** with **`EINVAL`**. Return values otherwise follow **`shell`**. **`lsmod`** checks presence in **`/proc/modules`**.
 
 ### 14.10 Network Tools
 
@@ -2729,11 +2734,11 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 ### 15.4 Uninit API
 
 ```c
-#define uninit_list(...) scalls(INIT_COM, "list", __VA_ARGS__)
+#define uninit_list(...) scalls(UNINIT_COM, "list", __VA_ARGS__)
 #define uninit_register(item, call) scall2s(UNINIT_COM, "register", item, call)
 ```
 
-**Note:** `uninit_list` is expanded exactly as in `skinapi.h` (it uses `INIT_COM` for `"list"`, same token sequence as `init_list`). If you intended a separate uninit-only listing API, confirm the daemon’s routing; the macro matches the header as shipped.
+**Note:** Matches `skinapi.h`: **`uninit_list`** routes **`"list"`** to **`UNINIT_COM`** (not **`INIT_COM`**).
 
 ### 15.5 Joint API
 
@@ -2750,16 +2755,25 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 ```c
 #define machine_config(...) sgets(MACHINE_COM, __VA_ARGS__)
 #define machine_status(...) scalls(MACHINE_COM, "status", __VA_ARGS__)
-#define machine_restart(delay, key) scalls(MACHINE_COM, "restart", "%d,%s", delay, key?:"")
-#define machine_reboot(delay, key) scalls(MACHINE_COM, "reboot", "%d,%s", delay, key?:"")
-#define machine_default(delay, key) scalls(MACHINE_COM, "default", "%d,%s", delay, key?:"")
+#define machine_restart(delay, key) scalls(MACHINE_COM, "restart", "%d,%s", delay, (key)?(key):"")
+#define machine_reboot(delay, key) scalls(MACHINE_COM, "reboot", "%d,%s", delay, (key)?(key):"")
+#define machine_default(delay, key) scalls(MACHINE_COM, "default", "%d,%s", delay, (key)?(key):"")
 ```
 
-**Note:** `key?:""` is a **GNU C extension** (empty string if `key` is null). It requires a compiler that supports this extension (e.g. GCC/Clang with GNU extensions). For strict ISO C, pass `key ? key : ""` instead.
+**Note:** **`NULL` `key`** is passed to **`scalls`** as **`""`** (ISO C). See the file-level comment in **`skinapi.h`**.
 
 ---
 
 ## 16. Predefined Component Constants (skinhead.h)
+
+### 16.0 Limits and platform caps (`skinhead.h`)
+
+| Macro | Typical role |
+|-------|----------------|
+| **`NAME_MAX`** | **256** if not defined by the system — max sensible length for single path component names in Skin helpers. |
+| **`PATH_MAX`** | **512** if not defined — buffers for filesystem paths built by Skin. |
+| **`LINE_MAX`** | **1024** if not defined — e.g. **`shell`** / **`execute`** command buffers. |
+| **`JSON_LINE_MAX`** | **65535** — upper bound for a single JSON line / string chunk in parsers that enforce it. |
 
 ### 16.1 Hardware Project Components
 

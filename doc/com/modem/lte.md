@@ -1,13 +1,11 @@
-## LTE/NR Modem Management
+## modem@lte — LTE/NR Modem Management
 Manage LTE/NR modem baseband services.
 
 This document describes the modem-side component (`modem@lte`, `modem@lte2`) only.
 It focuses on baseband control, SIM/AT operations, and modem runtime status.
 For end-to-end dialing, routing, and `network@frame` integration, use the logical LTE interface document [`../ifname/lte.md`](../ifname/lte.md) (`ifname@lte`, …).
 
-### **Configuration( `modem@lte` )**
-
-
+### Configuration ( `modem@lte` )
 **modem@lte** is first LTE modem  
 **modem@lte2** is second LTE modem
 
@@ -104,8 +102,7 @@ modem@lte:sms=enable
 ttrue
 ```  
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 **modem@lte** is first LTE modem
 **modem@lte2** is second LTE modem
@@ -336,7 +333,6 @@ ttrue
     ```
 
 
-
 + `at[ at command ]` **execute a raw AT command**
     - at command ----------- [ string ]
     - failed: return NULL
@@ -498,8 +494,7 @@ ttrue
     - the request is forwarded to the SMS service object
 
 
-#### **API availability by modem state**
-
+#### API availability by modem state
 Not all APIs are available in every modem state. The following table shows when each API returns an error/NULL due to state restrictions:
 
 | API | unavailable states (returns NULL or terror) |
@@ -518,15 +513,12 @@ Not all APIs are available in every modem state. The following table shows when 
 | `netdev` | always available (reads from registry directly) |
 | `sms_send`, `sms_list`, `sms_delete` | requires `sms` to be "enable" and sms_object to be present |
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — driven by **`usbdrv@…`** / modem driver registration; **not** listed in the default modem package **`init`** table.
 + Consult modem driver component docs (**`modem@ec2x`**, **`modem@rm500u`**, …) for bring-up.
 
 
-
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
@@ -554,4 +546,3 @@ static void print_call_error(const char *api, talk_t ret)
 
 /* e.g. scall("modem@lte", "list", NULL); talk_free if JSON */
 ```
-

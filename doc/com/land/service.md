@@ -1,23 +1,26 @@
-## Management of System Service   
-Manage gateway system service task
+## land@service — Service Management
 
-### **Configuration( `land@service` )**
+`land@service` manages long-running background tasks (services) on the
+gateway.  A service wraps any component API call as a supervised process:
+if the process exits unexpectedly the system will automatically restart it.
+Use the Component API below to register, start, stop, reset, and query
+services.
 
-The **saved configuration object** for `land@service` (query/set via `land@service`, `land@service:path`, merge `|{json}`, etc.).
-
-
-
-`land@service` has **no** separate JSON configuration tree. All behaviour is driven by the **Component API** below (`run`, `delete`, `list`, etc.).
-
-#### The following describes service concepts   
+### Concepts
 * A service is a Linux background process
 * The service is usually an endless loop that runs and never exits
 * If the service exits unexpectedly, the system will restart the service
 * All APIs in the object can run in service mode. However, the API should not exit; otherwise, the system will rerun it frequently.  
 
 
+### Configuration ( `land@service` )
 
-### **Component API**
+The **saved configuration object** for `land@service` (query/set via `land@service`, `land@service:path`, merge `|{json}`, etc.).
+
+
+`land@service` has **no** separate JSON configuration tree. All behaviour is driven by the **Component API** below (`run`, `delete`, `list`, etc.).
+
+### Component API
 
 + `run[ [delay], service name, object, API, [parameter list,,,] ]` **add service**, register and start a service, update and reset it when already exists
     - delay ------------------ [ number ], delay before start (microseconds; e.g. 5000000 for 5 seconds)
@@ -245,7 +248,10 @@ The **saved configuration object** for `land@service` (query/set via `land@servi
     }
     ```
 
-### **C Code Example**
+### Lifecycle API
+
++ `setup[]` / `shut[]` — **when implemented** for **`land@service`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
+### C Code Example
 
 **Call component methods**
 
@@ -360,19 +366,4 @@ if (ret > tpanic)
 }
 else print_service_call_error("list", ret);
 ```
-
-### **Lifecycle API**
-
-+ `setup[]` / `shut[]` — **when implemented** for **`land@service`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-+
-
-
-### **Joint handlers**
-
-**None** by default for this object (product builds may add more).
-
-
-### **Published joint events**
-
-**None** beyond what is documented above in the reference package.
 

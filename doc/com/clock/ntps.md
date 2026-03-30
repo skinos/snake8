@@ -1,8 +1,7 @@
-## NTP Server management
+## clock@ntps — NTP Server management
 Manage the NTP Server
 
-### **Configuration( `clock@ntps` )**
-
+### Configuration ( `clock@ntps` )
 ```json
 // attribute introduction
 {
@@ -30,8 +29,7 @@ clock@ntps|{"status":"enable","local":"ifname@lan"}
 ttrue
 ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **start or skip the NTP server from saved configuration**, *succeed return ttrue*
     - After install, **`init`** usually runs **`clock@ntps.setup`** at the **`general`** stage. If **`status`** is **`enable`**, starts the **`service`** child that runs **`ntpd`** bound to **`local`** (or auto-detected **`local_netdev`**).
 
@@ -39,8 +37,7 @@ ttrue
     - **`sdelete( COM_IDPATH )`**. **Not** run automatically on **`uninit`** in the default integration; call explicitly if you need it on shutdown.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
