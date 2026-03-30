@@ -8,15 +8,11 @@
 
     "cmd":
     {
-        "prj":"online programming tool"
+        "testexe":"example for the executable program programming"
     },
     "com":
     {
         "testcom":"example for the components programming"
-    },
-    "exe":
-    {
-        "testexe":"example for the executable program programming"
     },
 
     "init":

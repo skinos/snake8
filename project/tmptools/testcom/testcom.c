@@ -47,7 +47,7 @@ skinapi.h			define all the general component api
 /* Register example name */
 #define REG_KEY_NAME      "loop"
 /* Test program name */
-#define TESTEXE_NAME      "testexe"
+#define TESTEXE_NAME      "testcmd"
 /* Component version - update this to verify deployment */
 #define COMPONENT_VERSION "v1.0.4 - 2025-01-07"
 
@@ -134,8 +134,8 @@ boole_t _service( obj_t this, param_t param )
         sleep( 1 );
     }
 
-	/* Get the testexe program pathname */
-	ptr = exe2path( path, sizeof(path), TESTEXE_NAME );
+	/* Get the testcmd program pathname */
+	ptr = osc2path( path, sizeof(path), TESTEXE_NAME );
 	if ( ptr == NULL )
 	{
 		app_fault( "%s: cannot find the program %s", object, TESTEXE_NAME );
@@ -144,7 +144,7 @@ boole_t _service( obj_t this, param_t param )
 	}
 
     /*********************************************/
-    /* then execl the testexe that loop and log  */
+    /* then execl the testcmd that loop and log  */
     /*********************************************/
 	execl( path, TESTEXE_NAME, NULL );
 
@@ -178,7 +178,7 @@ talk_t _status( obj_t this, param_t param )
         json_set_string( ret, "status", "running" );
 		// set the service process pid
         json_set_number( ret, "pid", pid );
-		// get the register named "loop" that increase in testexe
+		// get the register named "loop" that increase in testcmd
 		i = reg_int( this, REG_KEY_NAME );
 		if ( i > 0 )
 		{
