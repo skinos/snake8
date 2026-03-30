@@ -59,7 +59,7 @@ boole_t _setup( obj_t this, param_t param )
         return tfalse;
     }
 	/* need the ifdev exist */
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
         talk_free( cfg );
         return tfalse;
@@ -206,7 +206,7 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 5 );
         return tfalse;
     }
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
 		ifname_fault( obj, "%s ifdev %s does not exist", object, ifdev );
 		sleep( 5 );
@@ -398,7 +398,7 @@ boole_t _service( obj_t this, param_t param )
 		}
 		if ( check >= failed_timeout )
 		{
-			if ( com_sexist( ifdev, "reset" ) == true )
+			if ( com_have( ifdev, "reset" ) == true )
 			{
 				ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, failed_timeout );
 				scall( ifdev, "reset", NULL );
@@ -449,7 +449,7 @@ boole_t _service( obj_t this, param_t param )
 	{
 		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (connect_failed%failed_everytime) == 0 )
 		{
-			if ( com_sexist( ifdev, "reset" ) == true )
+			if ( com_have( ifdev, "reset" ) == true )
 			{
 				ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, connect_failed );
 				connect_failed++;
@@ -615,7 +615,7 @@ boole_t _automatic( obj_t this, param_t param )
         return tfalse;
     }
 	/* need the ifdev exist */
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
         talk_free( cfg );
         return tfalse;
@@ -919,7 +919,7 @@ talk_t _status( obj_t this, param_t param )
 	}
 	object = obj_name( this );
     /* get the ifdev or main ifdev info */
-	if ( com_sexist( ifdev, "status" ) == true )
+	if ( com_have( ifdev, "status" ) == true )
 	{
 		v = scalls( ifdev, "status", object );
         if ( v > tpanic )

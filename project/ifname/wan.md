@@ -1,9 +1,8 @@
-## WAN Network Management
+## ifname@wan — WAN Network Management
 Manage WAN networks. This component depends on WAN-facing interfaces (often **`arch`** `ethernet`) and the **network** project (`network@frame`, `skinnet`, multi-link **`connect`** — see [`../network/frame.md`](../network/frame.md)).  
 Usually `ifname@wan` is the first WAN network. If there are multiple WANs, `ifname@wan2` is the second WAN network, and numbering increases sequentially.
 
-### **Configuration( `ifname@wan` )**
-
+### Configuration ( `ifname@wan` )
 **ifname@wan** is first WAN network   
 **ifname@wan2** is second WAN network   
 
@@ -221,8 +220,7 @@ ifname@wan:pppoec|{"username":"user@isp","password":"secret"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `ifname@wan.method`, `ifname@wan2.method`, …
 
 **ifname@wan** is first WAN network  
@@ -350,12 +348,10 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@wan`**; the **network** stack, product integration, or operators call **`setup[]` / `shut[]`** when links go up or down.
 
-### **Joint handlers**
-
+### Joint Handlers
 + `keepon[]` **clear the connect failed counter**   
     - success: return `ttrue`
     - called when network connection is confirmed alive
@@ -382,8 +378,7 @@ ttrue
     ```   
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

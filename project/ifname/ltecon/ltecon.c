@@ -59,7 +59,7 @@ boole_t _setup( obj_t this, param_t param )
         return tfalse;
     }
 	/* need the ifdev exist */
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
         talk_free( cfg );
         return tfalse;
@@ -342,7 +342,7 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 5 );
         return tfalse;
     }
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
 		ifname_fault( obj, "%s ifdev %s does not exist", object, ifdev );
 		sleep( 5 );
@@ -1116,7 +1116,7 @@ boole_t _automatic( obj_t this, param_t param )
         return tfalse;
     }
 	/* need the ifdev exist */
-	if ( com_sexist( ifdev, NULL ) == false )
+	if ( com_have( ifdev, NULL ) == false )
 	{
         talk_free( cfg );
         return tfalse;
@@ -1420,7 +1420,7 @@ talk_t _status( obj_t this, param_t param )
 	}
 	object = obj_name( this );
     /* get the ifdev or main ifdev info */
-	if ( com_sexist( ifdev, "status" ) == true )
+	if ( com_have( ifdev, "status" ) == true )
 	{
 		v = scalls( ifdev, "status", object );
         if ( v > tpanic )
