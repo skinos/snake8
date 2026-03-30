@@ -1,8 +1,8 @@
-## clock@restart — Scheduled system restart
+## clock@restart — 计划系统重启
 
-Manages automatic system restarts by uptime, clock time, or idle/client conditions (`clock@restart`).
+管理基于运行时长、时钟时间或空闲/客户端条件的自动系统重启（`clock@restart`）。
 
-### Configuration ( `clock@restart` )
+### 配置 ( `clock@restart` )
 ```json
 // attribute introduction
 {
@@ -27,7 +27,7 @@ Manages automatic system restarts by uptime, clock time, or idle/client conditio
 }
 ```   
 
-Example showing the configuration for age mode, it will automatically restart when system runs for 2880 seconds
+示例，显示 age 模式的配置，系统运行 2880 秒后将自动重启
 ```shell
 clock@restart
 {
@@ -36,7 +36,7 @@ clock@restart
 }
 ```   
 
-Example showing the configuration for point mode, it will restart at 23:45
+示例，显示 point 模式的配置，系统将在 23:45 重启
 ```shell
 clock@restart
 {
@@ -47,35 +47,35 @@ clock@restart
 }
 ```
 
-Example disable the restart function
+示例，禁用重启功能
 ```shell
 clock@restart:mode=disable
 ttrue
 ```   
 
-Example: set to automatically restart when system runs for 3600 seconds
+示例：设置系统运行 3600 秒后自动重启
 ```shell
 clock@restart|{"mode":"age","age":"3600"}
 ttrue
 ```   
 
-Example: set to automatically restart at 03:30
+示例：设置在 03:30 自动重启
 ```shell
 clock@restart|{"mode":"point","point_hour":"03","point_minute":"30"}
 ttrue
 ```
 
 
-### Lifecycle API
-+ `setup[]` **start the restart planner service when mode is active**, *succeed return ttrue*
-    - After install, **`init`** usually runs **`clock@restart.setup`** at the **`app`** stage. For **`mode`** in **`age`**, **`point`**, or **`idle`**, starts the **`service`** child; **`disable`** skips the service.
+### 生命周期 API
++ `setup[]` **当模式处于活动状态时启动重启计划服务**，*成功返回 ttrue*
+    - 安装后，**`init`** 通常在 **`app`** 阶段运行 **`clock@restart.setup`**。对于 **`mode`** 为 **`age`**、**`point`** 或 **`idle`** 时，启动 **`service`** 子进程；**`disable`** 则跳过服务。
 
-+ `shut[]` **stop restart supervision**, *succeed return ttrue*
-    - **`sdelete( COM_IDPATH )`**. **Not** run automatically on **`uninit`** in the default integration.
++ `shut[]` **停止重启监控**，*成功返回 ttrue*
+    - **`sdelete( COM_IDPATH )`**。在默认集成的 **`uninit`** 中 **不会** 自动运行。
 
 
-### C Code Example
-**Read and update configuration**
+### C 代码示例
+**读取和更新配置**
 
 ```c
 #include "skin/skin.h"
@@ -91,7 +91,7 @@ static int example_config_clock_restart(void)
 }
 ```
 
-**Call component methods**
+**调用组件方法**
 
 ```c
 #include "skin/skin.h"

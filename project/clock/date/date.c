@@ -116,7 +116,7 @@ static boole ntpclient_sync( const char* server, const char* zone )
         return false;
     }
     ret = false;
-    project_exe_path( path, sizeof(path), PROJECT_ID, "ntpclient" );
+    project_osc_path( path, sizeof(path), PROJECT_ID, "ntpclient" );
     /* sync the time */
     if ( 0 == execute( 60, true, "%s -h %s -s" , path, server ) )
     {
