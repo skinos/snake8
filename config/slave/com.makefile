@@ -1,7 +1,6 @@
 ### Auto name
 PWD_DIR := $(shell pwd)
 BINS := $(shell basename ${PWD_DIR})
-DYNAMIC_LIB := ${BINS}.com
 
 ### Add the xflags define and library include
 CFLAGS += -s -O2 -Wall -Werror
@@ -27,11 +26,11 @@ OBJS := $(subst .c,.o,$(SRCS))
 sinclude mconfig
 
 ### Common Actions
-all: ${DYNAMIC_LIB}
+all: ${BINS}
 install:
 clean distclean:
-	@rm -f *.[oa] *.com *.elf *.so *~ *.gdb ${DYNAMIC_LIB} ${OBJS}
-${DYNAMIC_LIB}: ${OBJS}
+	@rm -f *.[oa] *.elf *.so *~ *.gdb ${BINS} ${OBJS}
+${BINS}: ${OBJS}
 	$(CC) -shared -o $@ $^ ${LIBSO_ADDIN} $(CFLAGS) $(LDFLAGS)
 ${OBJS}:%.o:%.c
 	${CC} -c ${CFLAGS} -fPIC $< -o $@

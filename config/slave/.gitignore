@@ -1,0 +1,14 @@
+
+/dl/
+/center/
+
+/repo.config
+
+**/*.fpk
+**/*.store
+
+**/DS_Store
+**/*.DS_Store
+**/.vscode/
+
+

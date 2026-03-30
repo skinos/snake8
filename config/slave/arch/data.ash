@@ -36,8 +36,8 @@ setup()
 
     sudo mkdir -p $MROOT
     sudo chmod a+rwx $MROOT
-    mkdir -p $PROJECT_CFG_DIR
     mkdir -p $PROJECT_DBS_DIR
+    mkdir -p $PROJECT_CFG_DIR
     mkdir -p $PROJECT_OEM_DIR
     mkdir -p $PROJECT_INT_DIR
 

@@ -4,9 +4,9 @@
 define Package/Define
   LIB_LIST:=$(shell prj-read lib)
   COM_LIST:=$(shell prj-read com)
-  CMD_LIST:=$(shell prj-read cmd)
   EXE_LIST:=$(shell prj-read exe)
   OSC_LIST:=$(shell prj-read osc)
+  CMD_LIST:=$(shell prj-read cmd)
   KO_LIST:=$(shell prj-read ko)
   RES_LIST:=$(shell prj-read res)
   SH_LIST:=$(wildcard *.sh *.ash *.lua)
@@ -28,7 +28,7 @@ endef
 # 定义项目预处理函数, 将源代码拷贝到PKG_BUILD_DIR
 # $(call Build/Prepare/Default, NeedBeCopySubdirList);
 #     确认有项目目录下prj.json文件, prj.json中要有VERSION_ID
-#     拷贝NeedBeCopySubdirList指定的子目录列表, 如未给出默认拷贝${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST}
+#     拷贝NeedBeCopySubdirList指定的子目录列表, 如未给出默认拷贝${LIB_LIST} ${COM_LIST} ${EXE_LIST} ${OSC_LIST} ${CMD_LIST} ${KO_LIST}
 define Build/Prepare/Default
 	@if [ "X" = "X$(VERSION_ID)" ]; then \
 		echo "project ${PROJECT_ID} version cannot find, maybe ${gPROJECT_INF} broken"; \
@@ -39,7 +39,7 @@ define Build/Prepare/Default
 		$(CP) ./lib $(PKG_BUILD_DIR); \
 	fi
 	@if [ "X" = "X$(1)" ]; then \
-		for i in ${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${OSC_LIST} ${KO_LIST} ;do \
+		for i in ${LIB_LIST} ${COM_LIST} ${EXE_LIST} ${OSC_LIST} ${CMD_LIST} ${KO_LIST} ;do \
 			if [ -e $$i ]; then \
 				$(CP) $$i $(PKG_BUILD_DIR); \
 			fi; \
@@ -68,10 +68,15 @@ endef
 #     Subdir可指定配置的子目录
 # $(call Build/Prepare/dep, NeedBeConfigureSubdirList);
 #     确认要配置的目录中有configure文件
-#     NeedBeConfigureSubdirList指定要配置的子目录列表, 如未给出默认只配置${OSC_LIST}
+#     NeedBeConfigureSubdirList指定要配置的子目录列表, 如未给出默认只配置${OSC_LIST} ${CMD_LIST}
 define Build/Configure/dep
 	@if [ "X" == "X$(1)" ];then \
 		for i in ${OSC_LIST} ;do \
+			if [ -e $$i ];then \
+				$(call Build/Configure/Default,,,$$i); \
+			fi; \
+		done; \
+		for i in ${CMD_LIST} ;do \
 			if [ -e $$i ];then \
 				$(call Build/Configure/Default,,,$$i); \
 			fi; \
@@ -112,19 +117,19 @@ define Build/Compile/ko
 endef
 # 定义项目编译函数
 # $(call Build/Compile/Default, NeedBeCompileOSCList, OSCMakefilePath); 
-#     编译${LIB_LIST} ${COM_LIST} ${CMD_LIST} ${EXE_LIST} ${KO_LIST}, 并安装${LIB_LIST}
-#     NeedBeCompileOSCList给出测编译此子目录列表, 如未给出测编译${OSC_LIST}
-#     编译$(OSC_LIST)时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
+#     编译${LIB_LIST} ${COM_LIST} $${EXE_LIST} ${KO_LIST}, 并安装${LIB_LIST}
+#     NeedBeCompileOSCList给出测编译此子目录列表, 如未给出测编译${OSC_LIST} ${CMD_LIST}
+#     编译$(OSC_LIST) ${CMD_LIST}时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Compile/Default
 	$(FIND) $(PKG_BUILD_DIR) -name \*.o -or -name \*.a | $(XARGS) rm -f
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE})
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE},install)
 	$(call Build/Compile/bin,${COM_LIST},${gCOM_MAKEFILE})
-	$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/bin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/ko,${KO_LIST})
 	if [ "X" == "X$(1)" ]; then \
-		$(call Build/Compile/bin,${OSC_LIST},$(2)); \
+		$(call Build/Compile/bin,${OSC_LIST},${gEXE_MAKEFILE}); \
+		$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE}); \
 	fi
 	if [ "X" != "X$(1)" ]; then \
 		$(call Build/Compile/bin,$(1),$(2)); \
@@ -134,11 +139,12 @@ endef
 
 # 定义项目安装函数
 # $(call Build/Install/Default, NeedBeInstallSubdirList, MakefilePath);
-#     NeedBeCompileOSCList给出测安装此子目录列表, 如未给出测编译${OSC_LIST}
+#     NeedBeCompileOSCList给出测安装此子目录列表, 如未给出测编译${OSC_LIST} ${CMD_LIST}
 #     安装$(OSC_LIST)时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Install/Default
 	@if [ "X" == "X$(1)" ]; then \
-		$(call Build/Compile/bin,${OSC_LIST},$(2),install); \
+		$(call Build/Compile/bin,${OSC_LIST},${gEXE_MAKEFILE},install); \
+		$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE},install); \
 	fi
 	@if [ "X" != "X$(1)" ]; then \
 		$(call Build/Compile/bin,$(1),$(2),install); \
@@ -217,7 +223,20 @@ define Build/Install/fpk
 	fi
 	for i in ${COM_LIST};do \
 		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
-			$(CP) $(PKG_BUILD_DIR)/$$i/$$i.com $(FPK_BUILD_DIR); \
+			$(CP) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
+		fi; \
+	done
+	for i in ${LIB_LIST};do \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
+			$(CP) $(PKG_BUILD_DIR)/$$i/lib$$i.so $(FPK_LIB_DIR); \
+			$(LN) lib$$i.so $(FPK_LIB_DIR)/lib$$i.so.0; \
+		fi; \
+	done
+	for i in ${EXE_LIST};do \
+		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
+			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
+				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
+			fi; \
 		fi; \
 	done
 	for i in ${OSC_LIST};do \
@@ -227,23 +246,10 @@ define Build/Install/fpk
 			fi; \
 		fi; \
 	done
-	for i in ${LIB_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
-			$(CP) $(PKG_BUILD_DIR)/$$i/lib$$i.so $(FPK_LIB_DIR); \
-			$(LN) lib$$i.so $(FPK_LIB_DIR)/lib$$i.so.0; \
-		fi; \
-	done
 	for i in ${CMD_LIST};do \
 		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
 			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BIN_DIR); \
-			fi; \
-		fi; \
-	done
-	for i in ${EXE_LIST};do \
-		if [ -d $(PKG_BUILD_DIR)/$$i ]; then \
-			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
-				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
 			fi; \
 		fi; \
 	done

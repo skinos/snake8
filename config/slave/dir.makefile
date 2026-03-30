@@ -10,7 +10,17 @@ subdirs := ${OBJ}
 endif
 all dep install:
 	for i in ${PROJECTS} ;do \
-		if [ -d ${gPROJECT_DIR}/$$i ]; then \
+		if [ -d ${gPLATFORM_DIR}/$$i ]; then \
+			if [ -f ${gPLATFORM_DIR}/$$i/${gPROJECT_INF} ]; then \
+				if [ -f ${gPLATFORM_DIR}/$$i/fpk.makefile ]; then \
+					echo "[`pwd`] make -f ${gPLATFORM_DIR}/$$i/fpk.makefile -C $$i $@"; \
+					make -f ${gPLATFORM_DIR}/$$i/fpk.makefile -C ${gPLATFORM_DIR}/$$i $@ || exit $?; \
+				else \
+					echo "[`pwd`] make -f ${gFPK_MAKEFILE} -C $$i $@"; \
+					make -f ${gFPK_MAKEFILE} -C ${gPLATFORM_DIR}/$$i $@ || exit $?; \
+				fi; \
+			fi; \
+		elif [ -d ${gPROJECT_DIR}/$$i ]; then \
 			if [ -f ${gPROJECT_DIR}/$$i/${gPROJECT_INF} ]; then \
 				if [ -f ${gPROJECT_DIR}/$$i/fpk.makefile ]; then \
 					echo "[`pwd`] make -f ${gPROJECT_DIR}/$$i/fpk.makefile -C $$i $@"; \
