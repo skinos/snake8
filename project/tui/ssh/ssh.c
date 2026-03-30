@@ -87,7 +87,7 @@ boole_t _setup( obj_t this, param_t param )
 	{
 		shell( "cp %s /etc/dropbear/dropbear_rsa_host_key", path );
 	}
-	ptr = exe2path( NULL, 0, "dropbearkey.sh" );
+	ptr = misc2path( NULL, 0, "dropbearkey.sh" );
 	if ( ptr != NULL && stat( ptr, &st ) == 0 )
 	{
 		shell( ptr );
