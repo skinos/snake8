@@ -1,9 +1,7 @@
-## 2.4G Radio Management   
+## wifi@n — 2.4G Radio Management
 Manage 2.4G Radio. Which driver and host stack apply is **product-specific**; the **`arch`** area supplies board integration, while configuration flows through the same **`land`** / `he` model as other components.
 
-### **Configuration( `wifi@n` )**
-
-
+### Configuration ( `wifi@n` )
 ```json
 // Attribute introduction
 {
@@ -64,8 +62,7 @@ wifi@n|{"mode":"an","bandwidth":"40","channel":"0"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `wifi@n.method`, `wifi@n2.method`, … (HE / eline / HTTP `/he`).
 
 + `chlist[]` **get the 2.4G radio channel list**   
@@ -155,8 +152,7 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **start component services**, *succeed return ttrue, failed return tfalse*
     - Called from the platform **`init`** schedule when **`setup[]`** is wired for this component.
 
@@ -164,8 +160,7 @@ ttrue
     - Called from the platform **`uninit`** schedule when **`shut[]`** is wired.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

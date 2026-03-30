@@ -1,9 +1,8 @@
-## 2.4G SSID Management   
+## wifi@nssid — 2.4G SSID Management
 Manage 2.4G SSID
 Usually wifi@nssid is the first 2.4G SSID. If there are multiple 2.4G SSID in the system, wifi@nssid2 will be the second 2.4G SSID, and increase by degress
 
-### **Configuration( `wifi@nssid` )**
-
+### Configuration ( `wifi@nssid` )
 **wifi@nssid** is first 2.4G SSID   
 **wifi@nssid2** is second 2.4G SSID   
 
@@ -105,8 +104,7 @@ wifi@nssid2:status=disable
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `wifi@nssid.method`, `wifi@nssid2.method`, … (HE / eline / HTTP `/he`).
 
 **wifi@nssid** is first 2.4G SSID  
@@ -119,7 +117,7 @@ ttrue
     ```json
     // Attributes introduction of talk by the method return
     {
-        "state":"current state",                // [ "up", "down" ], "up" for enable, "down" for disable
+        "status":"current status",              // [ "up", "down" ], "up" for enable, "down" for disable
         "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
                                                         // disable for disable the secure
                                                         // wpapsk for WPAPSK
@@ -146,7 +144,7 @@ ttrue
     ```shell
     wifi@nssid.status
     {
-        "state":"up",
+        "status":"up",
         "secure":"wpapskwpa2psk",
         "rx_bytes":"767164641",
         "rx_packets":"22258095",
@@ -221,13 +219,11 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

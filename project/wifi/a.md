@@ -1,8 +1,7 @@
-## 5.8G Radio Management   
+## wifi@a — 5.8G Radio Management
 Manage 5.8G Radio
 
-### **Configuration( `wifi@a` )**
-
+### Configuration ( `wifi@a` )
 ```json
 // Attribute introduction
 {
@@ -62,8 +61,7 @@ wifi@a|{"mode":"ac","bandwidth":"80","channel":"0"}
 ttrue
 ```
 
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `wifi@a.method`, `wifi@a2.method`, … (HE / eline / HTTP `/he`).
 
 + `chlist[]` **get the 5.8G radio channel list**   
@@ -153,8 +151,7 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` **start component services**, *succeed return ttrue, failed return tfalse*
     - Called from the platform **`init`** schedule when **`setup[]`** is wired for this component.
 
@@ -162,8 +159,7 @@ ttrue
     - Called from the platform **`uninit`** schedule when **`shut[]`** is wired.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c

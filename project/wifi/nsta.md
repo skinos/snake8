@@ -1,9 +1,8 @@
-## 2.4G Station Management   
+## wifi@nsta — 2.4G Station Management
 Manage 2.4G Station
 
 
-### **Configuration( `wifi@nsta` )**
-
+### Configuration ( `wifi@nsta` )
 ```json
 // Attribute introduction
 {
@@ -68,9 +67,7 @@ ttrue
 ```
 
 
-
-### **Component API**
-
+### Component API
 **Directly callable** APIs: `wifi@nsta.method`, `wifi@nsta2.method`, … (HE / eline / HTTP `/he`).
 
 + `status[]` **get the 2.4G Station infomation**   
@@ -211,13 +208,11 @@ ttrue
     ttrue
     ```
 
-### **Lifecycle API**
-
+### Lifecycle API
 + `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
 
 
-### **C Code Example**
-
+### C Code Example
 **Read and update configuration**
 
 ```c
