@@ -14,19 +14,19 @@
 |--------|------|
 | **Linux** | 内核、驱动及用户态守护进程，与标准嵌入式 Linux 一致 |
 | **组件** | 以 `land@machine`、`forward@nat`、`client@dhcps` 等形式寻址；各组件包含 JSON 配置及可调用的 API |
-| **`eline`** | 设备侧**默认交互环境**（提示符通常为 **`$ `**）：基于 readline，支持行编辑与历史；在此环境下应**直接输入 HE 命令**，**不得**再加 `he` 前缀。说明见 [`doc/com/land/eline.md`](doc/com/land/eline.md) |
-| **`he`** | 在 **`ash` 或常规 shell** 中执行**单行 HE** 的程序；应使用 **`he '完整命令'`**（单引号包裹），以免 shell 误解析 `=`、管道符 `|`、JSON 等字符。语法规范见 [`doc/com/land/he.md`](doc/com/land/he.md) |
+| **`eline`** | 设备侧**默认交互环境**（提示符通常为 **`$ `**）：基于 readline，支持行编辑与历史；在此环境下应**直接输入 HE 命令**，**不得**再加 `he` 前缀。说明见 [`doc/com/land/eline.cn.md`](doc/com/land/eline.cn.md) |
+| **`he`** | 在 **`ash` 或常规 shell** 中执行**单行 HE** 的程序；应使用 **`he '完整命令'`**（单引号包裹），以免 shell 误解析 `=`、管道符 `|`、JSON 等字符。语法规范见 [`doc/com/land/he.cn.md`](doc/com/land/he.cn.md) |
 | **工程与 FPK** | `project/` 下含 `prj.json` 的目录可构建为 **FPK** 安装包，部署至设备后扩展系统能力 |
 | **生命周期** | 系统按启动阶段执行 `init` 中登记的组件 API；网络链路变化等事件触发 **joint**（联动）任务；关机或退出阶段执行 `uninit`。具体映射关系由各工程 `prj.json` 定义 |
 
 ### 核心文档入口（[`doc/com/land/`](doc/com/land/)）
 
-- [`README.md`](doc/com/land/README.md) — 总体说明与索引  
-- [`eline.md`](doc/com/land/eline.md) — 基于串口 / Telnet / SSH 的**常规运维与会话约定**  
-- [`he.md`](doc/com/land/he.md) — **Shell 环境及脚本**中使用 `he` 的语法与注意事项  
-- [`fpk.md`](doc/com/land/fpk.md) — FPK 安装布局及 `prj.json` 字段说明  
-- [`init.md`](doc/com/land/init.md)、[`joint.md`](doc/com/land/joint.md)、[`uninit.md`](doc/com/land/uninit.md) — 启动阶段、联动事件与收尾阶段的任务注册  
-- [`component.md`](doc/com/land/component.md)、[`machine.md`](doc/com/land/machine.md)、[`auth.md`](doc/com/land/auth.md)、[`syslog.md`](doc/com/land/syslog.md)、[`service.md`](doc/com/land/service.md)、[`register.md`](doc/com/land/register.md)、[`daemon.md`](doc/com/land/daemon.md)、[`skin.md`](doc/com/land/skin.md)、[`prj.json.md`](doc/com/land/prj.json.md) — 核心 `land@*` 组件及相关工具  
+- [`README.cn.md`](doc/com/land/README.cn.md) — 总体说明与索引  
+- [`eline.cn.md`](doc/com/land/eline.cn.md) — 基于串口 / Telnet / SSH 的**常规运维与会话约定**  
+- [`he.cn.md`](doc/com/land/he.cn.md) — **Shell 环境及脚本**中使用 `he` 的语法与注意事项  
+- [`fpk.cn.md`](doc/com/land/fpk.cn.md) — FPK 安装布局及 `prj.json` 字段说明  
+- [`init.cn.md`](doc/com/land/init.cn.md)、[`joint.cn.md`](doc/com/land/joint.cn.md)、[`uninit.cn.md`](doc/com/land/uninit.cn.md) — 启动阶段、联动事件与收尾阶段的任务注册  
+- [`component.cn.md`](doc/com/land/component.cn.md)、[`machine.cn.md`](doc/com/land/machine.cn.md)、[`auth.cn.md`](doc/com/land/auth.cn.md)、[`syslog.cn.md`](doc/com/land/syslog.cn.md)、[`service.cn.md`](doc/com/land/service.cn.md)、[`register.cn.md`](doc/com/land/register.cn.md)、[`daemon.cn.md`](doc/com/land/daemon.cn.md)、[`skin.cn.md`](doc/com/land/skin.cn.md)、[`prj.json.cn.md`](doc/com/land/prj.json.cn.md) — 核心 `land@*` 组件及相关工具  
 
 路由、二层/三层、无线等主题的说明位于 [`doc/com/`](doc/com/) 下对应子目录。
 
@@ -37,12 +37,11 @@
 | 路径 | 用途 |
 |------|------|
 | **`Makefile`** | 顶层构建入口：`dep`、`kernel` / `app`，输出至 `build/`；头文件同步至 `doc/dev/include` |
-| **`gBOARDID`** | 指定**平台、SoC、板型、scope、OEM**（书写规则见文件内注释），并驱动 `config/<platform>/…` 的解析 |
+| **`gBOARDID`** | 指定**平台、SoC、板型、scope、OEM**（书写规则见文件内注释），并驱动 `config/<platform>/…` 的解析。该文件被 `.gitignore` 排除；**`gBOARDID.txt`** 为纳入版本管理的参考模板 |
 | **`config/`** | 按平台/方案划分的配置树（如 **`smtk2`**、**`smtk3`**、**`srock`**、**`sopen`**、**`slave`** 等），包含工具链、内核、rootfs 叠加、`sdk.makefile`、`fpk.makefile` 等 |
-| **`core/`** | **实现代码**：C 语言组件、库、守护进程、HTTP、VPN、modem、**land** 基础设施（`core/land`）等；目录命名通常与 `doc/com` 及工程划分一致 |
-| **`project/`** | **可交付工程**：业务源码、Web 资源、**`prj.json`**（声明组件集合、`init` / `joint` / `uninit` 挂钩及 Web 菜单元数据） |
+| **`project/`** | **实现代码与可交付工程**：C 语言组件、库、守护进程、Web 资源及 **`prj.json`**（声明组件集合、`init` / `joint` / `uninit` 挂钩及 Web 菜单元数据）；目录命名通常与 `doc/com` 划分一致 |
 | **`doc/`** | 用户文档及构建生成的头文件说明 |
-| **`tools/`** | 宿主机侧构建辅助工具 |
+| **`tools/`** | 宿主机侧构建辅助工具（含指向 **`project/fpktools`** 的符号链接：`firmware-encode`、`fpk-install`、`prj` 等 FPK 打包工具） |
 | **`var/`** | 本地 IDE（如 Si4）工程文件，与固件产物无直接关系 |
 | **`rice/`** | 可选的客户定制叠加目录（对应 `Makefile` 中 `gRICE_DIR`） |
 
@@ -51,21 +50,22 @@
 - **`build/install/`** — 编译过程中的头文件、库等中间产物  
 - **`build/rootfs/`** — 组装的 rootfs；已安装工程通常位于 **`usr/share/skinos/`** 等路径（参见 `Makefile` 中 `gosPRJ_DIR`）  
 
-符号化安装路径（如 **`⟨PRJ_ROOT⟩`**）的定义见 [`doc/com/land/fpk.md`](doc/com/land/fpk.md)，并与 `PROJECT_DIR` 等 C 语言宏对应。
+符号化安装路径（如 **`⟨PRJ_ROOT⟩`**）的定义见 [`doc/com/land/fpk.cn.md`](doc/com/land/fpk.cn.md)，并与 `PROJECT_DIR` 等 C 语言宏对应。
 
 ---
 
-## `core/` 与 `project/` 的关系
+## `project/` 目录组织
 
-- **`core/<领域>/`** 存放**功能实现**（例如 `core/forward/nat/nat.c`、`core/land/machine/`、`core/webs/httpd/`）。  
-- **`project/<名称>/`** 描述**可打包工程**：说明如何与 `core`（及本目录资源）组合构建、在何种时机执行 `init` / `joint` / `uninit`，以及 **Web 管理界面**如何挂载。
+**`project/`** 下每个子目录代表一个**功能域**，同时包含**实现源码**（C 组件、库、守护进程）和**打包清单**（`prj.json`）。
+
+示例：`project/land`、`project/forward`、`project/network`、`project/webs`、`project/wifi`、`project/modem` 等。
 
 每个工程须至少包含：
 
 1. **`prj.json`** — 工程清单（字段说明见下文）  
 2. **Makefile** — 与目标平台构建体系一致（本 SDK 中常见形态接近 OpenWrt）
 
-FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fpk.md)。
+FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.cn.md`](doc/com/land/fpk.cn.md)。
 
 ---
 
@@ -82,12 +82,12 @@ FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fp
 | **`osc`** | 随工程打包的第三方或开源源码树 |
 | **`cmd`** | 随工程安装至系统的命令（例如 **land** 工程中的 `he`、`eline`、`daemon`） |
 | **`obj`** | **别名映射**：对外组件名可指向另一实际实现 |
-| **`init`** | **启动阶段**（如 `app`、`land`、`general`）与待调用 **`工程@组件.接口`** 的对应关系（例如 `land@auth.setup`） |
+| **`init`** | **启动阶段**与待调用 **`工程@组件.接口`** 的对应关系。已知阶段包括 **`arch`**、**`land`**、**`app`**、**`general`**、**`manage`**、**`delay`**（详见 [`init.cn.md`](doc/com/land/init.cn.md)）。每个阶段的值可为**字符串**（单个 API，如 `"wui@admin.setup"`）或**对象**（多个 API，如 `{"land@auth.setup":"", "land@init.setup":""}`) |
 | **`joint`** | **事件**（如 `network/on`、`network/online`）与待调用接口的对应关系 |
 | **`uninit`** | 关机或退出阶段待执行的接口 |
 | **`wui`** | Web 管理端注册信息：菜单分组、多语言标题、HTML 页面，以及可选的 `config` / `object` 绑定 |
 
-启动阶段与联动事件的命名及语义以 [`init.md`](doc/com/land/init.md)、[`joint.md`](doc/com/land/joint.md)、[`uninit.md`](doc/com/land/uninit.md) 为准。
+启动阶段与联动事件的命名及语义以 [`init.cn.md`](doc/com/land/init.cn.md)、[`joint.cn.md`](doc/com/land/joint.cn.md)、[`uninit.cn.md`](doc/com/land/uninit.cn.md) 为准。
 
 ---
 
@@ -112,7 +112,7 @@ FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fp
                                       |
                                       v
   +---------------------------------------------------------------------+
-  | land core: skin, machine, auth, syslog, service, register, fpk,    |
+  | land:      skin, machine, auth, syslog, service, register, fpk,    |
   |            init / joint / uninit, component registry               |
   +---------------------------------------------------------------------+
                                       |
@@ -167,8 +167,9 @@ FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fp
 - **`clock`** — 时间、NTP、定时重启（`clock@ntps`、`date`、`restart`）；常结合 **`network/online`** 等事件在广域网可用后校时。  
 - **`storage`** — 如 **`storage@ftp`**；由 `init` 拉起服务；存储插拔时 **land** 的 **joint** 可调整 syslog 等路径（参见 **land** 工程 `prj.json`）。  
 - **`tui`** — Telnet、SSH（`tui@telnet`、`tui@ssh`，Dropbear），用于远程接入 **`eline`** 或 **`he`**。  
-- **`wui`** — Web 管理端：**`wui@admin`** 通过 **`obj`** 绑定至 **`webs@httpd`**（实现位于 **`core/webs`**）。**`app`** 阶段 **`init` / `uninit`** 负责管理站点的启停。  
+- **`wui`** — Web 管理端：**`wui@admin`** 通过 **`obj`** 绑定至 **`webs@httpd`**（实现位于 **`project/webs`**）。**`app`** 阶段 **`init` / `uninit`** 负责管理站点的启停。  
 - **`agent`** — **远程与云端管控**：`agent@io`、`local`、`heclient`、`portc` 及可执行文件 **`gtog`**。**`init` / `joint`** 将 **`heclient`** 与 **`network/online`**、`machine/status` 等状态关联。  
+- **`webs`** — **HTTP 服务**：`webs@httpd`（Web 管理端的后端引擎）。`wui@admin` 通过 **`obj`** 绑定至此组件。  
 - **`uart`** — 串口相关应用：`uart@frame`、`dtu`、`hetui`，库 **`skinuart`**；Web 配置页常对应 **`uart@tty`**、`tty2`、`tty3`。  
 - **`tmptools`** — **示例与模板工程**：`tmptools@testcom`、`testexe`、**`prj`** 命令，用于学习组件与工程组织方式。
 
@@ -176,24 +177,25 @@ FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fp
 
 ## 工程与组件文档索引
 
-下表将 **`prj.json` 中的组件名** 映射至**文档路径**（相对于仓库根目录）。若无独立 Markdown，则指向最接近的说明或 **`core/<领域>/`** 源码。
+下表将 **`prj.json` 中的组件名** 映射至**文档路径**（相对于仓库根目录）。若无独立 Markdown，则指向最接近的说明或 **`project/<领域>/`** 源码。
 
 | 工程 | 组件文档 | 备注 |
 |---------|-----------------------------------|----------------|
-| **land** | [`land@fpk`](doc/com/land/fpk.md) · [`land@init`](doc/com/land/init.md) · [`land@joint`](doc/com/land/joint.md) · [`land@uninit`](doc/com/land/uninit.md) · [`land@component`](doc/com/land/component.md) · [`land@register`](doc/com/land/register.md) · [`land@syslog`](doc/com/land/syslog.md) · [`land@service`](doc/com/land/service.md) · [`land@machine`](doc/com/land/machine.md) · [`land@auth`](doc/com/land/auth.md) | **`cmd`**: [`he`](doc/com/land/he.md)、[`eline`](doc/com/land/eline.md)、[`daemon`](doc/com/land/daemon.md) · **`lib`**: [`skin`](doc/com/land/skin.md) |
-| **forward** | [`forward@alg`](doc/com/forward/alg.md) · [`forward@ttl`](doc/com/forward/ttl.md) · [`forward@firewall`](doc/com/forward/firewall.md) · [`forward@nat`](doc/com/forward/nat.md) · [`forward@dnat`](doc/com/forward/dnat.md) · [`forward@main`](doc/com/forward/main.md) · 另见 [`rule.md`](doc/com/forward/rule.md)、[`mark.md`](doc/com/forward/mark.md) | **`obj`** 示例：`forward@254` → `main` |
-| **network** | [`network@frame`](doc/com/network/frame.md)；`hosts` / `vlan` / `bridge` / `keeplive` *暂无独立文档，参见 [`frame.md`](doc/com/network/frame.md) 及 `core/network/`* | **`lib`**: `skinnet`；**`exe`**: `connect`；**`osc`**: `ppp-2.4.5` |
-| **client** | [`client@acl`](doc/com/client/acl.md) · [`client@dhcps`](doc/com/client/dhcps.md) · [`client@station`](doc/com/client/station.md) | 大量 **joint** 与 LAN/WAN 事件绑定 |
-| **modem** | [`modem@atd`](doc/com/modem/lte.md)（蜂窝 / AT，与 **`atd`** 同属一类能力）· [`modem@smsd`](doc/com/modem/sms.md)；**`ec2x` / `rm500u`** *参见 [`lte.md`](doc/com/modem/lte.md) 与 `core/modem/`* | **`lib`**: `skinmodem`；**`cmd`**: `tip`；**`obj`**: `usbdrv@ec2x` / `rm500u` |
-| **wifi** | AP：[`wifi@n`（2.4G）](doc/com/wifi/n.md)、[`wifi@a`（5.8G）](doc/com/wifi/a.md)；STA：[`wifi@nsta`](doc/com/wifi/nsta.md)、[`wifi@asta`](doc/com/wifi/asta.md)；多 SSID：[`assid`](doc/com/wifi/assid.md)、[`nssid`](doc/com/wifi/nssid.md) — *与 `prj.json` 中 **`ap` / `sta`** 目录对应* | **`lib`**: `skinwifi` |
-| **ifname** | [`ifname@lan`](doc/com/ifname/lan.md) · [`wan`](doc/com/ifname/wan.md) · [`lte`](doc/com/ifname/lte.md) · [`wisp`](doc/com/ifname/wisp.md) — *与 **`ethcon` / `ltecon`** 等用法对应* | 有线 / 蜂窝 / WISP 上行相关能力 |
-| **clock** | [`clock@ntps`](doc/com/clock/ntps.md) · [`clock@date`](doc/com/clock/date.md) · [`clock@restart`](doc/com/clock/restart.md) | **`osc`**: `ntpclient` |
-| **storage** | [`storage@ftp`](project/storage/ftp.md) | 文件服务类；总览见 [`project/storage/README.md`](project/storage/README.md) |
-| **tui** | [`tui@telnet`](doc/com/tui/telnet.md) · [`tui@ssh`](doc/com/tui/ssh.md) | **`obj`**: `telnetd`→`telnet`，`sshd`→`ssh` |
-| **wui** | [`wui@admin`](doc/com/wui/admin.md) · [ACE 皮肤](doc/com/wui/ace.md)；**`webs@httpd`** *实现位于 `core/webs/`* | Web 管理框架 |
-| **agent** | [`agent@io`](doc/com/agent/io.md) · [`local`](doc/com/agent/local.md) · [`heclient`](doc/com/agent/heclient.md) · [`portc`](doc/com/agent/portc.md) · [`gtog`](doc/com/agent/gtog.md) · [`net`](doc/com/agent/net.md) | **`exe`**: `gtog` |
-| **uart** | *当前无 `doc/com/uart/`* — 参见 `project/uart/`、`core/uart/` | **`lib`**: `skinuart` |
-| **tmptools** | [`prj` 工具说明](project/tmptools/prj.md) · [`prj.json` 规范](doc/com/land/prj.json.md)；**`testcom`** *示例见 [`prj.json.md`](doc/com/land/prj.json.md) 第 15 节及 `project/tmptools/`* | **`cmd`**: `prj`；**`exe`**: `testexe` |
+| **land** | [`land@fpk`](doc/com/land/fpk.cn.md) · [`land@init`](doc/com/land/init.cn.md) · [`land@joint`](doc/com/land/joint.cn.md) · [`land@uninit`](doc/com/land/uninit.cn.md) · [`land@component`](doc/com/land/component.cn.md) · [`land@register`](doc/com/land/register.cn.md) · [`land@syslog`](doc/com/land/syslog.cn.md) · [`land@service`](doc/com/land/service.cn.md) · [`land@machine`](doc/com/land/machine.cn.md) · [`land@auth`](doc/com/land/auth.cn.md) | **`cmd`**: [`he`](doc/com/land/he.cn.md)、[`eline`](doc/com/land/eline.cn.md)、[`daemon`](doc/com/land/daemon.cn.md) · **`lib`**: [`skin`](doc/com/land/skin.cn.md) |
+| **forward** | [`forward@alg`](doc/com/forward/alg.cn.md) · [`forward@ttl`](doc/com/forward/ttl.cn.md) · [`forward@firewall`](doc/com/forward/firewall.cn.md) · [`forward@nat`](doc/com/forward/nat.cn.md) · [`forward@dnat`](doc/com/forward/dnat.cn.md) · [`forward@main`](doc/com/forward/main.cn.md) · 另见 [`rule.cn.md`](doc/com/forward/rule.cn.md)、[`mark.cn.md`](doc/com/forward/mark.cn.md) | **`obj`** 示例：`forward@254` → `main` |
+| **network** | [`network@frame`](doc/com/network/frame.cn.md)；`hosts` / `vlan` / `bridge` / `keeplive` *暂无独立文档，参见 [`frame.cn.md`](doc/com/network/frame.cn.md) 及 `project/network/`* | **`lib`**: `skinnet`；**`exe`**: `connect`；**`osc`**: `ppp-2.4.5` |
+| **client** | [`client@acl`](doc/com/client/acl.cn.md) · [`client@dhcps`](doc/com/client/dhcps.cn.md) · [`client@station`](doc/com/client/station.cn.md) | 大量 **joint** 与 LAN/WAN 事件绑定 |
+| **modem** | [`modem@atd`](doc/com/modem/lte.cn.md)（蜂窝 / AT，与 **`atd`** 同属一类能力）· [`modem@smsd`](doc/com/modem/sms.cn.md)；**`ec2x` / `rm500u`** *参见 [`lte.cn.md`](doc/com/modem/lte.cn.md) 与 `project/modem/`* | **`lib`**: `skinmodem`；**`cmd`**: `tip`；**`obj`**: `usbdrv@ec2x` / `rm500u` |
+| **wifi** | AP：[`wifi@n`（2.4G）](doc/com/wifi/n.cn.md)、[`wifi@a`（5.8G）](doc/com/wifi/a.cn.md)；STA：[`wifi@nsta`](doc/com/wifi/nsta.cn.md)、[`wifi@asta`](doc/com/wifi/asta.cn.md)；多 SSID：[`assid`](doc/com/wifi/assid.cn.md)、[`nssid`](doc/com/wifi/nssid.cn.md) — *与 `prj.json` 中 **`ap` / `sta`** 目录对应* | **`lib`**: `skinwifi` |
+| **ifname** | [`ifname@lan`](doc/com/ifname/lan.cn.md) · [`wan`](doc/com/ifname/wan.cn.md) · [`lte`](doc/com/ifname/lte.cn.md) · [`wisp`](doc/com/ifname/wisp.cn.md) — *与 **`ethcon` / `ltecon`** 等用法对应* | 有线 / 蜂窝 / WISP 上行相关能力 |
+| **clock** | [`clock@ntps`](doc/com/clock/ntps.cn.md) · [`clock@date`](doc/com/clock/date.cn.md) · [`clock@restart`](doc/com/clock/restart.cn.md) | **`osc`**: `ntpclient` |
+| **storage** | [`storage@ftp`](doc/com/storage/ftp.cn.md) | 文件服务类 |
+| **tui** | [`tui@telnet`](doc/com/tui/telnet.cn.md) · [`tui@ssh`](doc/com/tui/ssh.cn.md) | **`obj`**: `telnetd`→`telnet`，`sshd`→`ssh` |
+| **wui** | [`wui@admin`](doc/com/wui/admin.cn.md) · [ACE 皮肤](doc/com/wui/ace.cn.md) · [网页编写指南](doc/com/wui/webpage.cn.md)；**`webs@httpd`** *实现位于 `project/webs/`* | Web 管理框架 |
+| **agent** | [`agent@io`](doc/com/agent/io.cn.md) · [`local`](doc/com/agent/local.cn.md) · [`heclient`](doc/com/agent/heclient.cn.md) · [`portc`](doc/com/agent/portc.cn.md) · [`gtog`](doc/com/agent/gtog.cn.md) · [`net`](doc/com/agent/net.cn.md) | **`exe`**: `gtog` |
+| **webs** | *参见 `project/webs/` 源码* — `webs@httpd` | HTTP 后端引擎 |
+| **uart** | *当前无 `doc/com/uart/`* — 参见 `project/uart/` | **`lib`**: `skinuart` |
+| **tmptools** | [`prj` 工具说明](project/tmptools/prj.cn.md) · [`prj.json` 规范](doc/com/land/prj.json.cn.md)；**`testcom`** *示例见 [`prj.json.cn.md`](doc/com/land/prj.json.cn.md) 第 15 节及 `project/tmptools/`* | **`cmd`**: `prj`；**`exe`**: `testexe` |
 
 部分目录可能**未**包含独立 `prj.json`，仍可由平台 Makefile 或其他工程作为依赖引入。
 
@@ -204,22 +206,22 @@ FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.md`](doc/com/land/fp
 | 路径 | 内容 |
 |------|-----------|
 | **`doc/com/<领域>/`** | 按功能划分的**组件说明**：一般包含 JSON 配置项与 API 描述，命名与 `工程@组件` 一致 |
-| **`doc/com/land/`** | **命令行与会话**：[`eline.md`](doc/com/land/eline.md)、[`he.md`](doc/com/land/he.md)、[`fpk.md`](doc/com/land/fpk.md)，以及 [`init`](doc/com/land/init.md) / [`joint`](doc/com/land/joint.md) / [`uninit`](doc/com/land/uninit.md)；核心 `land@*` 说明亦集中于此 |
+| **`doc/com/land/`** | **命令行与会话**：[`eline.cn.md`](doc/com/land/eline.cn.md)、[`he.cn.md`](doc/com/land/he.cn.md)、[`fpk.cn.md`](doc/com/land/fpk.cn.md)，以及 [`init`](doc/com/land/init.cn.md) / [`joint`](doc/com/land/joint.cn.md) / [`uninit`](doc/com/land/uninit.cn.md)；核心 `land@*` 说明亦集中于此 |
 | **`doc/dev/include/`** | 构建完成后由 `build/install/include` 同步的 **C 头文件**，供二次开发参考 |
 | **`doc/product/`**、**`doc/use/`** | 产品或场景相关补充材料（可选） |
 
-**对应关系归纳：** 实现位于 **`core/`**，接口与配置约定见 **`doc/com/<主题>/`**，打包与生命周期挂钩见 **`project/<名称>/prj.json`**。
+**对应关系归纳：** 实现位于 **`project/`**，接口与配置约定见 **`doc/com/<主题>/`**，打包与生命周期挂钩见 **`project/<名称>/prj.json`**。
 
 ---
 
 ## 运行时管理
 
-系统管理统一基于 **HE 语法**（[`eline.md`](doc/com/land/eline.md)、[`he.md`](doc/com/land/he.md)）。操作可分为三类：
+系统管理统一基于 **HE 语法**（[`eline.cn.md`](doc/com/land/eline.cn.md)、[`he.cn.md`](doc/com/land/he.cn.md)）。操作可分为三类：
 
 | 操作类型 | 说明 |
 |-----------|------|
 | **查询配置** | 读取组件持久化 JSON：完整对象为 `组件名`，子路径为 `组件名:属性/路径`（层级以 `/` 分隔） |
-| **修改配置** | 单字段赋值、整体替换 `组件={...}`、或采用管道形式合并局部字段（详见 [`he.md`](doc/com/land/he.md)） |
+| **修改配置** | 单字段赋值、整体替换 `组件={...}`、或采用管道形式合并局部字段（详见 [`he.cn.md`](doc/com/land/he.cn.md)） |
 | **调用 API** | 形式为 `组件.接口` 或 `组件.接口[参数]`；返回值多为 JSON 或 **`ttrue` / `tfalse`** 等哨兵。若仅需 JSON 子字段，可在末尾追加 **`:属性路径`** |
 
 **会话约定：** 提示符 **`$ `** 表示 **eline** 环境，应**原样输入** HE 行；提示符 **`~ #`** 表示已通过 **`ashy` 进入 shell**，须将同一 HE 行写作 **`he '…'`**。
@@ -245,11 +247,11 @@ $ ifname@lan:static
 | **`land@machine:name`** | 读取 **`name` 字段** | **纯文本行**；未配置时可能为空；通常不含 JSON 引号 |
 | **`ifname@lan:static`** | 读取 LAN 静态地址相关配置（视固件是否提供该模型） | **JSON 片段**（常见字段如 `ip`、`mask`）；未配置时输出极少 |
 
-在 **`$ `** 下输入 **`@`** 可列出当前固件中的组件；非 eline 环境的等价操作见 [`he.md`](doc/com/land/he.md)。JSON 字段语义以 **`doc/com/`** 各组件文档为准，不同产品可能存在差异。
+在 **`$ `** 下输入 **`@`** 可列出当前固件中的组件；非 eline 环境的等价操作见 [`he.cn.md`](doc/com/land/he.cn.md)。JSON 字段语义以 **`doc/com/`** 各组件文档为准，不同产品可能存在差异。
 
 ### 2. 修改配置
 
-写入前经组件校验。常见形式包括：单字段赋值、**`路径=`** 清空、**`组件={...}`** 整体替换、**`组件|{...}`** 等合并语法（完整规则见 [`he.md`](doc/com/land/he.md)）。
+写入前经组件校验。常见形式包括：单字段赋值、**`路径=`** 清空、**`组件={...}`** 整体替换、**`组件|{...}`** 等合并语法（完整规则见 [`he.cn.md`](doc/com/land/he.cn.md)）。
 
 **eline（`$ `）示例：**
 
@@ -271,8 +273,8 @@ he 'gnss@nmea:client='
 
 | 命令 | 说明 | 典型输出 |
 |---------|----------------|----------------|
-| **`land@machine:name=MyGateway`** | 将 **`name`** 设为 **`MyGateway`**（由 **`land@machine`** 校验） | 常见 **`ttrue` / `tfalse`** 或简短状态信息；失败时返回错误提示。脚本中 **`he`** 的退出码与结果相关（见 [`he.md`](doc/com/land/he.md)） |
-| **`land@machine` + 管道合并**（示例 `{"language":"en"}`，语法见 [`he.md`](doc/com/land/he.md)） | 仅更新所列键，其余保持不变 | 与单字段写入类似；非法 JSON 或禁止的键将导致失败 |
+| **`land@machine:name=MyGateway`** | 将 **`name`** 设为 **`MyGateway`**（由 **`land@machine`** 校验） | 常见 **`ttrue` / `tfalse`** 或简短状态信息；失败时返回错误提示。脚本中 **`he`** 的退出码与结果相关（见 [`he.cn.md`](doc/com/land/he.cn.md)） |
+| **`land@machine` + 管道合并**（示例 `{"language":"en"}`，语法见 [`he.cn.md`](doc/com/land/he.cn.md)） | 仅更新所列键，其余保持不变 | 与单字段写入类似；非法 JSON 或禁止的键将导致失败 |
 | **`gnss@nmea:client=`** | 清除 **`client`** 子配置（示例：删除客户端配置块） | 成功/失败类提示；成功时通常无大段 JSON |
 
 *注：**`gnss@nmea`** 仅当目标固件包含该组件时适用。*
@@ -301,12 +303,12 @@ he 'client@station.list'
 
 | 命令 | 说明 | 典型输出 |
 |---------|----------------|----------------|
-| **`land@machine.status`** | 调用 **`land@machine`** 的 **`status`**（运行状态、版本、能力等，字段由实现定义） | **JSON**；或无 JSON 体时的 **`ttrue`/`tfalse`/`terror`/`tpanic`** 等（见 [`he.md`](doc/com/land/he.md)） |
+| **`land@machine.status`** | 调用 **`land@machine`** 的 **`status`**（运行状态、版本、能力等，字段由实现定义） | **JSON**；或无 JSON 体时的 **`ttrue`/`tfalse`/`terror`/`tpanic`** 等（见 [`he.cn.md`](doc/com/land/he.cn.md)） |
 | **`land@machine.status:version`** | 同上，但仅输出 **`version` 字段** | 短字符串；字段不存在时为空或报错 |
-| **`clock@date.ntpsync[ntp1.aliyun.com]`** | 向指定 NTP 服务器发起同步 | 接受请求时常为 **`ttrue`**，失败为 **`tfalse`** 或错误文本；部分版本可能返回额外 JSON — 详见 **`doc/com/clock/date.md`** |
+| **`clock@date.ntpsync[ntp1.aliyun.com]`** | 向指定 NTP 服务器发起同步 | 接受请求时常为 **`ttrue`**，失败为 **`tfalse`** 或错误文本；部分版本可能返回额外 JSON — 详见 **`doc/com/clock/date.cn.md`** |
 | **`client@station.list`** | 列出已学习的 LAN 终端（语义因产品而异，类似 ARP 表） | **JSON** 数组或对象；服务未就绪时可能无输出或报错 |
 
-列举某组件可用 API 可使用 **`<组件名>.`**（参见 [`eline.md`](doc/com/land/eline.md)、[`he.md`](doc/com/land/he.md)）。
+列举某组件可用 API 可使用 **`<组件名>.`**（参见 [`eline.cn.md`](doc/com/land/eline.cn.md)、[`he.cn.md`](doc/com/land/he.cn.md)）。
 
 ---
 
@@ -315,24 +317,24 @@ he 'client@station.list'
 多数固件将 **`eline`** 设为登录 shell。通过串口、Telnet 或 SSH 登录后，提示符为 **`$ `**，具备命令历史与行编辑能力。此时应：
 
 - **直接输入 HE 命令**，**不得**添加 **`he`** 前缀。  
-- 语法与 [`he.md`](doc/com/land/he.md) 一致；[`eline.md`](doc/com/land/eline.md) 另说明 **eline 扩展功能**：  
+- 语法与 [`he.cn.md`](doc/com/land/he.cn.md) 一致；[`eline.cn.md`](doc/com/land/eline.cn.md) 另说明 **eline 扩展功能**：  
   - **`set <组件>`** — 单组件多字段交互式编辑  
   - **`ashy`** — 进入 BusyBox **`ash`**，此后须按前三节使用 **`he '…'`**  
   - **`exit`** 或 Ctrl+D — 在不进入 shell 的情况下退出 eline  
   - 少量经 **eline** 转发的系统命令（实现见 `eline` 源码）
 
-### 5. Shell 环境：`he '…'`**
+### 5. Shell 环境：`he '…'`
 
 在 **`ashy`** 之后，或由脚本、cron、独立 **`/bin/ash`** 会话中，前台不再为 HE 解释循环，**每条** HE 命令须通过 **`he '…'`** 调用，格式同前三节。
 
-[`he.md`](doc/com/land/he.md) 说明了 **`he` 的参数拼接规则**及在含空格或 shell 元字符时**必须使用单引号**的原因。
+[`he.cn.md`](doc/com/land/he.cn.md) 说明了 **`he` 的参数拼接规则**及在含空格或 shell 元字符时**必须使用单引号**的原因。
 
 部分旧版固件仍采用经典 **HE 循环**（提示符 **`# `**），此时同样**不得**使用 `he` 前缀；请以实际提示符为准。
 
 ### 6. 组件与 API 发现
 
-- 在 **`$ `** 下：**`@`** 列出组件；**`<组件名>.`** 列出 API — 详见 [`eline.md`](doc/com/land/eline.md)、[`he.md`](doc/com/land/he.md)。  
-- 返回值可能为 **JSON**、纯文本、空，或 **`ttrue` / `tfalse` / `terror` / `tpanic`** 等（参见 [`he.md`](doc/com/land/he.md)、[`eline.md`](doc/com/land/eline.md)）。
+- 在 **`$ `** 下：**`@`** 列出组件；**`<组件名>.`** 列出 API — 详见 [`eline.cn.md`](doc/com/land/eline.cn.md)、[`he.cn.md`](doc/com/land/he.cn.md)。  
+- 返回值可能为 **JSON**、纯文本、空，或 **`ttrue` / `tfalse` / `terror` / `tpanic`** 等（参见 [`he.cn.md`](doc/com/land/he.cn.md)、[`eline.cn.md`](doc/com/land/eline.cn.md)）。
 
 ### 7. Web 管理界面
 
@@ -347,11 +349,44 @@ he 'client@station.list'
 ## 构建流程（概要）
 
 1. 在根目录 **`gBOARDID`** 中配置与目标硬件一致的标识（平台 + SoC + 板型 + 可选 scope/OEM）。  
-2. 执行 **`make dep`**，初始化 `build/` 及 rootfs 暂存目录。  
-3. 执行 **`make`**（或按需要分别执行 **`make kernel`** / **`make app`**，参见 **`target.makefile`** 及对应平台 **`sdk.makefile`**）。  
-4. 构建完成后，公共头文件更新至 **`doc/dev/include/`**。  
+2. 执行 **`make preset`**（首次构建时），安装 Ubuntu 宿主机侧编译依赖。  
+3. 执行 **`make update`**，拉取最新的 SDK 及平台仓库代码。  
+4. 执行 **`make dep`**，初始化 `build/` 及 rootfs 暂存目录。  
+5. 执行 **`make`**（或按需要分别执行 **`make kernel`** / **`make app`**，参见 **`target.makefile`** 及对应平台 **`sdk.makefile`**）。  
+6. 构建完成后，公共头文件更新至 **`doc/dev/include/`**。  
 
-具体工具链与镜像生成步骤取决于所选 **`config/<平台>`** 目录中的说明与 Makefile。
+其他常用目标（定义于 **`misc.makefile`**）：
+
+| 目标 | 用途 |
+|------|------|
+| `make preset` | 安装 Ubuntu 构建依赖 |
+| `make update` | 拉取最新 SDK + 平台仓库 |
+| `make rebuild` | 重新编译、安装并启动（宿主机 / slave 模式） |
+| `make menu` / `make menuconfig` | 进入 SDK 菜单配置（smtk2/smtk3 等） |
+| `make install` / `make start` / `make stop` | 安装 / 启动 / 停止系统（slave / 宿主模式） |
+| `make tftp` / `make ftp` / `make sz` | 通过不同传输方式部署固件至设备 |
+
+具体工具链与镜像生成步骤取决于所选 **`config/<平台>`** 目录中的说明与 Makefile。在 **slave**（Ubuntu 宿主机）平台上的完整快速上手流程，请参阅 [`config/slave/readme.md`](config/slave/readme.md)。
+
+---
+
+## 仓库结构 — 多仓库布局
+
+主仓库（`snake8`）本身**不直接包含**平台配置树的内容，而是：
+
+- **`project/`** 下每个子目录（如 `project/land`、`project/forward`、`project/agent` 等）为**独立的 Git 仓库**，需单独克隆或拉取。
+- 每个 **`config/<平台>`** 目录（如 `config/smtk2`、`config/srock`）同样是独立 Git 仓库。
+- 可选的 **`rice/`** 目录（客户定制叠加）也可能是独立仓库。
+
+顶层 **`.gitignore`** 已排除上述路径，不被主仓库跟踪。
+
+多仓库操作辅助脚本：
+
+| 脚本 | 用途 |
+|------|------|
+| **`gitst`** | 在主仓库、所有 `project/` 子仓库、`rice/` 及各 `config/<平台>` 中执行 `git status` |
+| **`gitup`** | 在上述同一组仓库中执行 `git pull` |
+| **`mkdel`** | 清理所有平台 SDK 构建树中的构建产物（`skinos_*` 临时目录） |
 
 ---
 
@@ -364,6 +399,6 @@ he 'client@station.list'
 
 ## 总结
 
-**Snake8** 将能力划分为 `project/` 下多个**协同工程**，于运行时注册至**统一组件体系**。**`land`** 提供 **`he`**、**`eline`**、**`daemon`** 及 **`land@*`** 基础服务；**`network`**、**`ifname`**、**`wifi`**、**`modem`** 负责网络连通性；**`forward`**、**`client`** 实现路由与局域网策略；**`wui`**、**`tui`**、**`agent`**、**`uart`**、**`clock`**、**`storage`**、**`tmptools`** 等工程在此基础上扩展管理与业务功能。
+**Snake8** 将能力划分为 `project/` 下多个**协同工程**，于运行时注册至**统一组件体系**。**`land`** 提供 **`he`**、**`eline`**、**`daemon`** 及 **`land@*`** 基础服务；**`network`**、**`ifname`**、**`wifi`**、**`modem`** 负责网络连通性；**`forward`**、**`client`** 实现路由与局域网策略；**`webs`** 提供 HTTP 服务能力；**`wui`**、**`tui`**、**`agent`**、**`uart`**、**`clock`**、**`storage`**、**`tmptools`** 等工程在此基础上扩展管理与业务功能。
 
-**运维建议：** 在设备上优先采用 [`eline.md`](doc/com/land/eline.md) 所述 **`$ `** 环境直接输入 HE；仅在常规 shell 或自动化脚本中使用 [`he.md`](doc/com/land/he.md) 规定的 **`he '…'`** 形式。
+**运维建议：** 在设备上优先采用 [`eline.cn.md`](doc/com/land/eline.cn.md) 所述 **`$ `** 环境直接输入 HE；仅在常规 shell 或自动化脚本中使用 [`he.cn.md`](doc/com/land/he.cn.md) 规定的 **`he '…'`** 形式。

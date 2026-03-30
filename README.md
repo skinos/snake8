@@ -35,12 +35,11 @@ Other domains (`forward`, `network`, `wifi`, …) have matching folders under [`
 | Path | Purpose |
 |------|---------|
 | **`Makefile`** | Top build orchestration: `dep`, `kernel` / `app`, install into `build/`, refresh `doc/dev/include` from staged headers |
-| **`gBOARDID`** | Selects **platform / SoC / board / scope / OEM** (see file comments). Drives `config/<platform>/…` resolution |
+| **`gBOARDID`** | Selects **platform / SoC / board / scope / OEM** (see file comments). Drives `config/<platform>/…` resolution. Excluded from version control; see **`gBOARDID.txt`** for a checked-in reference template |
 | **`config/`** | Per-platform trees (**`smtk2`**, **`smtk3`**, **`srock`**, **`sopen`**, **`slave`**, …): toolchains, kernel, rootfs overlays, `makefile.config`, `sdk.makefile`, `fpk.makefile`, etc. |
-| **`core/`** | **Implementations**: C components, libraries, daemons, HTTP server, VPN, modem stack, **land** infrastructure (`core/land`), etc. Each area usually mirrors a **domain** name used in docs and projects |
-| **`project/`** | **Product-facing packages**: sources, Web UI pages, and **`prj.json`** that declare which components belong to the package, init/joint/uninit wiring, and menu metadata for the Web UI |
+| **`project/`** | **All implementations and packages**: C components, libraries, daemons, Web UI pages, and **`prj.json`** manifests. Each subdirectory corresponds to a domain (e.g. `project/land`, `project/forward`, `project/network`, `project/webs`) |
 | **`doc/`** | Human-facing documentation and generated API headers |
-| **`tools/`** | Host-side build helpers |
+| **`tools/`** | Host-side build helpers (`firmware-encode`, `fpk-install`, `prj` and other FPK packaging utilities) |
 | **`var/`** | Local IDE / Si4 project files (not part of the firmware story) |
 | **`rice/`** | Optional path for customer-specific overlays (referenced by `Makefile` as `gRICE_DIR`) |
 
@@ -53,10 +52,11 @@ Symbolic install paths such as **`⟨PRJ_ROOT⟩`** are documented in [`doc/com/
 
 ---
 
-## How `core/` and `project/` relate
+## Project layout
 
-- **`core/<domain>/`** holds the **actual code** (e.g. `core/forward/nat/nat.c`, `core/land/machine/`, `core/webs/httpd/`).
-- **`project/<name>/`** is a **shippable project**: it lists which pieces from `core` (and its own files) belong together, **when** they run (`init` / `joint` / `uninit`), and how the **Web UI** should expose them.
+Each subdirectory under **`project/`** represents a **domain** — it contains both the **implementation source code** (C components, libraries, daemons) and the **packaging manifest** (`prj.json`).
+
+Examples: `project/land`, `project/forward`, `project/network`, `project/webs`, `project/wifi`, `project/modem`, etc.
 
 Every project **must** include:
 
@@ -80,7 +80,7 @@ Packaging and install semantics are described in [`doc/com/land/fpk.md`](doc/com
 | **`osc`** | Bundled third-party / open-source trees |
 | **`cmd`** | Commands shipped with the project (e.g. `he`, `eline`, `daemon` under **land**) |
 | **`obj`** | **Aliases**: maps a public component name to another implementation (e.g. dynamic or shared object) |
-| **`init`** | Map **boot level** (e.g. `app`, `land`, `general`) → **`project@component.api`** to run at startup (e.g. `land@auth.setup`) |
+| **`init`** | Map **boot level** → **`project@component.api`** to run at startup. Known levels include **`arch`**, **`land`**, **`app`**, **`general`**, **`manage`**, **`delay`** (see [`init.md`](doc/com/land/init.md)). Value per level can be a **string** (single API, e.g. `"wui@admin.setup"`) or an **object** (multiple APIs, e.g. `{"land@auth.setup":"", "land@init.setup":""}`) |
 | **`joint`** | Map **event** (e.g. `network/on`, `network/online`) → APIs to run when that event fires |
 | **`uninit`** | Shutdown-stage APIs |
 | **`wui`** | Web UI registration: menu group, localized titles, HTML page, optional `config` / `object` binding |
@@ -110,7 +110,7 @@ Plain **monospace text** diagram (no Mermaid). Read top → bottom as “depends
                                       |
                                       v
   +---------------------------------------------------------------------+
-  | land core: skin, machine, auth, syslog, service, register, fpk,    |
+  | land:      skin, machine, auth, syslog, service, register, fpk,    |
   |            init / joint / uninit, component registry               |
   +---------------------------------------------------------------------+
                                       |
@@ -162,28 +162,30 @@ Plain **monospace text** diagram (no Mermaid). Read top → bottom as “depends
 - **`clock`** — **`clock@ntps`**, **`clock@date`**, **`clock@restart`**; uses **`joint`** on **`network/online`** to sync time when WAN appears.  
 - **`storage`** — **`storage@ftp`** (and related file-server bits); **`init`** runs setup tasks; **`land`** may react to **`storage/insert|remove`** for syslog paths (see **`land`** `joint` in `prj.json`).  
 - **`tui`** — **`tui@telnet`**, **`tui@ssh`** (Dropbear) so operators reach **`eline`** / **`he`** remotely.  
-- **`wui`** — Does not reimplement HTTP in this tree: **`wui@admin`** is an **`obj`** alias to **`webs@httpd`** (implemented under **`core/webs`**). **`init` / `uninit`** at **`app`** stage start/stop the admin site.  
+- **`wui`** — Does not reimplement HTTP in this tree: **`wui@admin`** is an **`obj`** alias to **`webs@httpd`** (implemented under **`project/webs`**). **`init` / `uninit`** at **`app`** stage start/stop the admin site.  
 - **`agent`** — **Off-box control**: **`agent@io`**, **`agent@local`**, **`agent@heclient`**, **`agent@portc`**, executable **`gtog`**. **`init` / `joint`** tie **`heclient`** to **`network/online`** and **`machine/status`** so cloud tunnels track reality.  
+- **`webs`** — **HTTP server**: **`webs@httpd`** — the actual HTTP daemon used by **`wui@admin`** via **`obj`** alias. Implementation in **`project/webs/httpd/`**.  
 - **`uart`** — **Serial applications**: **`uart@frame`**, **`uart@dtu`**, **`uart@hetui`**, **`skinuart`**; WUI maps pages to **`uart@tty`** / **`tty2`** / **`tty3`**.  
 - **`tmptools`** — **Teaching / templates**: **`tmptools@testcom`**, **`testexe`**, **`prj`** command; safe sandbox to copy patterns from.  
 
-The table maps **`prj.json` → component names** to **clickable docs** (relative to the repo root). If no split Markdown exists yet, we point to the closest doc or to **`core/<domain>/`** source.
+The table maps **`prj.json` → component names** to **clickable docs** (relative to the repo root). If no split Markdown exists yet, we point to the closest doc or to **`project/<domain>/`** source.
 
 | Project | Components — documentation links | Notable extras |
 |---------|-----------------------------------|----------------|
 | **land** | [`land@fpk`](doc/com/land/fpk.md) · [`land@init`](doc/com/land/init.md) · [`land@joint`](doc/com/land/joint.md) · [`land@uninit`](doc/com/land/uninit.md) · [`land@component`](doc/com/land/component.md) · [`land@register`](doc/com/land/register.md) · [`land@syslog`](doc/com/land/syslog.md) · [`land@service`](doc/com/land/service.md) · [`land@machine`](doc/com/land/machine.md) · [`land@auth`](doc/com/land/auth.md) | **`cmd`**: [`he`](doc/com/land/he.md), [`eline`](doc/com/land/eline.md), [`daemon`](doc/com/land/daemon.md) · **`lib`**: [`skin`](doc/com/land/skin.md) |
 | **forward** | [`forward@alg`](doc/com/forward/alg.md) · [`forward@ttl`](doc/com/forward/ttl.md) · [`forward@firewall`](doc/com/forward/firewall.md) · [`forward@nat`](doc/com/forward/nat.md) · [`forward@dnat`](doc/com/forward/dnat.md) · [`forward@main`](doc/com/forward/main.md) · also [`rule`](doc/com/forward/rule.md), [`mark`](doc/com/forward/mark.md) | **`obj`** aliases e.g. `forward@254` → `main` |
-| **network** | [`network@frame`](doc/com/network/frame.md) · `network@hosts` / `vlan` / `bridge` / `keeplive` — *no separate `doc/com` pages; see [`frame.md`](doc/com/network/frame.md) and `core/network/`* | **`lib`**: `skinnet`; **`exe`**: `connect`; **`osc`**: `ppp-2.4.5` |
+| **network** | [`network@frame`](doc/com/network/frame.md) · `network@hosts` / `vlan` / `bridge` / `keeplive` — *no separate `doc/com` pages; see [`frame.md`](doc/com/network/frame.md) and `project/network/`* | **`lib`**: `skinnet`; **`exe`**: `connect`; **`osc`**: `ppp-2.4.5` |
 | **client** | [`client@acl`](doc/com/client/acl.md) · [`client@dhcps`](doc/com/client/dhcps.md) · [`client@station`](doc/com/client/station.md) | Heavy **`joint`** on LAN/WAN events |
-| **modem** | [`modem@atd`](doc/com/modem/lte.md) (LTE / AT — same feature area as **`atd`**) · [`modem@smsd`](doc/com/modem/sms.md) · **`modem@ec2x` / `modem@rm500u`** — *drivers; see [`lte.md`](doc/com/modem/lte.md) + `core/modem/`* | **`lib`**: `skinmodem`; **`cmd`**: `tip`; **`obj`**: `usbdrv@ec2x` / `rm500u` |
-| **wifi** | AP radios: [`wifi@n` (2.4G)](doc/com/wifi/n.md), [`wifi@a` (5.8G)](doc/com/wifi/a.md); STA: [`wifi@nsta`](doc/com/wifi/nsta.md), [`wifi@asta`](doc/com/wifi/asta.md); multi-SSID: [`assid`](doc/com/wifi/assid.md), [`nssid`](doc/com/wifi/nssid.md) — *maps to `prj.json` **`ap` / `sta`** trees* | **`lib`**: `skinwifi` |
+| **modem** | [`modem@atd`](doc/com/modem/lte.md) (LTE / AT — same feature area as **`atd`**) · [`modem@smsd`](doc/com/modem/sms.md) · **`modem@ec2x` / `modem@rm500u`** — *drivers; see [`lte.md`](doc/com/modem/lte.md) + `project/modem/`* | **`lib`**: `skinmodem`; **`cmd`**: `tip`; **`obj`**: `usbdrv@ec2x` / `rm500u` |
+| **wifi** | AP radios: [`wifi@n` \(2.4G\)](doc/com/wifi/n.md), [`wifi@a` \(5.8G\)](doc/com/wifi/a.md); STA: [`wifi@nsta`](doc/com/wifi/nsta.md), [`wifi@asta`](doc/com/wifi/asta.md); multi-SSID: [`assid`](doc/com/wifi/assid.md), [`nssid`](doc/com/wifi/nssid.md) — *maps to `prj.json` **`ap` / `sta`** trees* | **`lib`**: `skinwifi` |
 | **ifname** | [`ifname@lan`](doc/com/ifname/lan.md) · [`ifname@wan`](doc/com/ifname/wan.md) · [`ifname@lte`](doc/com/ifname/lte.md) · [`ifname@wisp`](doc/com/ifname/wisp.md) — *wired / uplink docs; aligns with **`ethcon` / `ltecon`** usage* | Building blocks for wired/LTE/WISP uplinks |
 | **clock** | [`clock@ntps`](doc/com/clock/ntps.md) · [`clock@date`](doc/com/clock/date.md) · [`clock@restart`](doc/com/clock/restart.md) | **`osc`**: `ntpclient` |
-| **storage** | [`storage@ftp`](project/storage/ftp.md) | File / NAS style services; see also [`project/storage/README.md`](project/storage/README.md) |
+| **storage** | [`storage@ftp`](doc/com/storage/ftp.md) | File / NAS style services |
 | **tui** | [`tui@telnet`](doc/com/tui/telnet.md) · [`tui@ssh`](doc/com/tui/ssh.md) | **`obj`**: `telnetd`→`telnet`, `sshd`→`ssh` |
-| **wui** | [`wui@admin`](doc/com/wui/admin.md) · [`wui` ACE skin](doc/com/wui/ace.md) · **`webs@httpd`** — *HTTP server code: `core/webs/`* | Web admin shell |
+| **wui** | [`wui@admin`](doc/com/wui/admin.md) · [`wui` ACE skin](doc/com/wui/ace.md) · [`webpage guide`](doc/com/wui/webpage.md) · **`webs@httpd`** — *HTTP server code: `project/webs/`* | Web admin shell |
 | **agent** | [`agent@io`](doc/com/agent/io.md) · [`agent@local`](doc/com/agent/local.md) · [`agent@heclient`](doc/com/agent/heclient.md) · [`agent@portc`](doc/com/agent/portc.md) · [`gtog`](doc/com/agent/gtog.md) · [`net`](doc/com/agent/net.md) | **`exe`**: `gtog` |
-| **uart** | *No `doc/com/uart/` yet* — see `project/uart/`, `core/uart/` | **`lib`**: `skinuart` |
+| **webs** | `webs@httpd` — *HTTP daemon implementation in `project/webs/httpd/`* | Used by **wui** via `obj` alias |
+| **uart** | *No `doc/com/uart/` yet* — see `project/uart/` | **`lib`**: `skinuart` |
 | **tmptools** | [`prj` online tool](project/tmptools/prj.md) · [`prj.json` format](doc/com/land/prj.json.md) · **`testcom`** — *examples in [`prj.json.md`](doc/com/land/prj.json.md) §15 + `project/tmptools/`* | **`cmd`**: `prj`; **`exe`**: `testexe` |
 
 Other directories may exist without a `prj.json`; they may still be pulled in by platform makefiles or as dependencies of another project.
@@ -199,7 +201,7 @@ Other directories may exist without a `prj.json`; they may still be pulled in by
 | **`doc/dev/include/`** | **C headers** staged from `build/install/include` after a successful build. |
 | **`doc/product/`**, **`doc/use/`** | Product-specific notes (optional). |
 
-**Rule of thumb:** implementation in **`core/`** + contract in **`doc/com/<same topic>/`** + shipping rules in **`project/<name>/prj.json`**.
+**Rule of thumb:** implementation in **`project/<name>/`** + contract in **`doc/com/<same topic>/`** + shipping rules in **`project/<name>/prj.json`**.
 
 ---
 
@@ -336,12 +338,45 @@ The **`agent`** project wires **`agent@heclient`** and related pieces to **netwo
 
 ## Building (overview)
 
-1. Set **`gBOARDID`** in **`gBOARDID`** to match your hardware profile (platform + SoC + board + optional scope/OEM).  
-2. Run **`make dep`** to prepare `build/` trees and rootfs staging.  
-3. Run **`make`** (or split **`make kernel`** / **`make app`** as your workflow requires — see **`target.makefile`** and platform **`sdk.makefile`**).  
-4. After a successful build, public headers are refreshed under **`doc/dev/include/`**.
+1. **Install host dependencies** (Ubuntu): **`make preset`** installs compilers, libraries, and tools needed by the build.  
+2. Set **`gBOARDID`** to match your hardware profile: either edit `gBOARDID` directly, or run **`make pid gBOARDID=<platform-soc-board>`** (e.g. `slave-x86-ubuntu2004`). See **`gBOARDID.txt`** for known identifiers.  
+3. **`make update`** — pull the latest SDK, platform config repos, and apply SDK adjustments.  
+4. **`make dep`** — prepare `build/` trees and rootfs staging.  
+5. **`make`** (or split **`make kernel`** / **`make app`** as your workflow requires — see **`target.makefile`** and platform **`sdk.makefile`**).  
+6. After a successful build, public headers are refreshed under **`doc/dev/include/`**.
 
-Exact toolchain and image packaging steps depend on the selected **`config/<platform>`** tree; consult that platform’s docs and makefiles under `config/`.
+Additional useful targets (defined in **`misc.makefile`**):
+
+| Target | Purpose |
+|--------|---------|
+| `make preset` | Install Ubuntu build dependencies |
+| `make update` | Pull latest SDK + platform repos |
+| `make rebuild` | Recompile, install, and start (host / slave mode) |
+| `make menu` / `make menuconfig` | Enter SDK menu configuration (smtk2/smtk3 etc.) |
+| `make install` / `make start` / `make stop` | Install / start / stop the system (slave / host mode) |
+| `make tftp` / `make ftp` / `make sz` | Deploy firmware to device via different transports |
+
+Exact toolchain and image packaging steps depend on the selected **`config/<platform>`** tree; consult that platform's docs and makefiles under `config/`. For a complete quick-start walkthrough on the **slave** (Ubuntu host) platform, see [`config/slave/readme.md`](config/slave/readme.md).
+
+---
+
+## Repository structure — multi-repo layout
+
+The main repository (`snake8`) does **not** contain platform trees directly. Instead:
+
+- Each subdirectory under **`project/`** (e.g. `project/land`, `project/forward`, `project/agent`, …) is an **independent Git repository**, cloned or pulled separately.
+- Each **`config/<platform>`** directory (e.g. `config/smtk2`, `config/srock`) is also a separate Git repository.
+- The optional **`rice/`** directory (customer overlays) may be yet another repo.
+
+The top-level **`.gitignore`** excludes these paths so they are not tracked by the main repo.
+
+Helper scripts for working with this multi-repo layout:
+
+| Script | Purpose |
+|--------|---------|
+| **`gitst`** | Run `git status` across the main repo, all `project/` sub-repos, `rice/`, and each `config/<platform>` |
+| **`gitup`** | Run `git pull` across the same set of repositories |
+| **`mkdel`** | Clean build artifacts (`skinos_*` temp directories) from all platform SDK build trees |
 
 ---
 
@@ -354,6 +389,6 @@ Exact toolchain and image packaging steps depend on the selected **`config/<plat
 
 ## Summary
 
-**Snake8** ships **many coordinated projects** under `project/`, each registering **named components** and **lifecycle hooks** into a single runtime. **`land`** supplies the **`he` / `eline` / `daemon`** tooling and core **`land@*`** services; **`network`**, **`ifname`**, **`wifi`**, and **`modem`** implement connectivity; **`forward`** and **`client`** implement routing and LAN policy; optional **`wui`**, **`tui`**, **`agent`**, **`uart`**, **`clock`**, **`storage`**, and **`tmptools`** layer management and applications on top.
+**Snake8** ships **many coordinated projects** under `project/`, each registering **named components** and **lifecycle hooks** into a single runtime. **`land`** supplies the **`he` / `eline` / `daemon`** tooling and core **`land@*`** services; **`network`**, **`ifname`**, **`wifi`**, and **`modem`** implement connectivity; **`forward`** and **`client`** implement routing and LAN policy; **`webs`** provides the HTTP server; **`wui`**, **`tui`**, **`agent`**, **`uart`**, **`clock`**, **`storage`**, and **`tmptools`** layer management and applications on top.
 
 **Operate the device through [`eline.md`](doc/com/land/eline.md) by default**; use [`he.md`](doc/com/land/he.md) **only when you are in a normal shell** or automating with **`he '…'`**.
