@@ -414,7 +414,7 @@ boole_t _up( obj_t this, param_t param )
 	cfg = config_get( this, NULL );
 	if ( cfg == NULL )
 	{
-		return tfalse;
+		return terror;
 	}
 
     /* ignore it if up already */
@@ -470,7 +470,7 @@ boole_t _up( obj_t this, param_t param )
 		talk_free( cfg );
 		lock_close( fd );
 		unlink( path );
-		return ttrue;
+		return terror;
 	}
 	/* peer */
 	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer3 == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
@@ -478,7 +478,7 @@ boole_t _up( obj_t this, param_t param )
 		talk_free( cfg );
 		lock_close( fd );
 		unlink( path );
-		return ttrue;
+		return terror;
 	}
 
 	/* get all configure */
@@ -580,7 +580,7 @@ boole_t _down( obj_t this, param_t param )
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
 		wifi_debug( "%s(%s) down", object, netdev );
-		//ifconfig( "%s down", netdev );
+		ifconfig( "%s down", netdev );
 	}
 	/* delete the mark file */
 	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
