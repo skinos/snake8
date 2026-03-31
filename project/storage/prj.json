@@ -5,6 +5,7 @@
     "type":"root",
     "version":"8.0.0",
     "author":"dimmalex@gmail.com",
+
     "com":
     {
         "ftp":"FTP server (ProFTPD)"

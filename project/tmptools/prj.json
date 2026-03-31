@@ -10,11 +10,11 @@
     {
         "testexe":"example for the executable program programming"
     },
+
     "com":
     {
         "testcom":"example for the components programming"
     },
-
     "init":
     {
         "app":
@@ -22,7 +22,6 @@
             "tmptools@testcom.setup":""
         }
     },
-
     "joint":
     {
         "network/on":
