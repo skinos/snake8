@@ -40,7 +40,13 @@
             "cn":"2.4G网卡",
             "en":"2.4G ApClient",
             "page":"sta.html",
-            "object":"wifi@nsta"
+            "object":"wifi@nsta",
+            "mode":
+            {
+                "wisp":"disable",
+                "dwisp":"disable",
+                "mwm":"disable"
+            }
         },
         "nclient":
         {
@@ -73,7 +79,13 @@
             "cn":"5.8G网卡",
             "en":"5.8G ApClient",
             "page":"sta.html",
-            "object":"wifi@asta"
+            "object":"wifi@asta",
+            "mode":
+            {
+                "nwisp":"disable",
+                "dwisp":"disable",
+                "mwm":"disable"
+            }
         },
         "aclient":
         {
