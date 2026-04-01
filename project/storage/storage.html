@@ -170,6 +170,10 @@
             if ( $(this).prop('checked') )
             {
                 $('#ftp-sets').show();
+                var containerWidth = $('#ftp-mode').outerWidth();  
+                if ($("#auth-grid-table")[0] && $("#auth-grid-table")[0].grid) { 
+                    $("#auth-grid-table").jqGrid('setGridWidth', containerWidth, true);
+                }  
             }
             else
             {
@@ -438,7 +442,7 @@
             autowidth:true,
             loadonce:true,
             shrinkToFit:true,
-            responsive:true,
+            //responsive:true,
             
         }
       ).jqGrid( 
@@ -489,6 +493,11 @@
         $('#rowNums').on('change',function(){
                   var newRowNum = parseInt($(this).val(),10);
                   $(auth_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+
+        $(window).unbind('resize.myGrid').on('resize.myGrid', function () {
+            var inputWidth = $('#ftp-mode').outerWidth();
+            $("#auth-grid-table").jqGrid('setGridWidth', inputWidth);
         });
 
         auth_load();

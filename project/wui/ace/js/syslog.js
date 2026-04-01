@@ -33,7 +33,11 @@ function load_syslog()
         $('#status').unbind('change').change(function () {
             if ($(this).prop('checked'))
             {
-                $('#statusSets').show()
+                $('#statusSets').show();
+                var containerWidth = $('#size').outerWidth();  
+                if ($("#syslogs-grid-table")[0] && $("#syslogs-grid-table")[0].grid) { 
+                    $("#syslogs-grid-table").jqGrid('setGridWidth', containerWidth, true);
+                }  
             }
             else
             {
@@ -205,7 +209,7 @@ $.i18n().load( page.lang('syslog') ).then( function () {
         autowidth:true,
         loadonce:true,
         shrinkToFit:true,
-        responsive:true,
+        //responsive:true,
        
     }
   ).jqGrid( 
@@ -232,6 +236,11 @@ $.i18n().load( page.lang('syslog') ).then( function () {
     $('#rowNums').on('change',function(){
         var newRowNum = parseInt($(this).val(),10);
         $(syslogs_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
+
+    $(window).unbind('resize.myGrid').on('resize.myGrid', function () {
+        var inputWidth = $('#size').outerWidth();
+        $("#syslogs-grid-table").jqGrid('setGridWidth', inputWidth);
     });
 
   /* load the configure */
