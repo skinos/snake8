@@ -66,7 +66,7 @@ function load_syslog()
             count++;
         }
         // 表头设置为在线客户端的数量
-        $(syslogs_table).jqGrid( "setCaption", $.i18n('Log List') + '(' + count + ')' );
+        $(syslogs_table).jqGrid( "setCaption", $.i18n('Log List') + ' (' + count + ')' );
         // 记住滚动条的位置
         var scrollPos = jqtable.getScrollPos();
         // 给proejcts表格设置数据
@@ -186,9 +186,9 @@ $.i18n().load( page.lang('syslog') ).then( function () {
         toolbar: [true, "top"],
         colNames: [ $.i18n('Log File'), $.i18n('Download'), $.i18n('Operation') ],
         colModel: [
-            { name:'name', width:180 },
+            { name:'name'},
             {
-                name: 'download', width: 160,
+                name: 'download', width: 85,
                 fixed: true, sortable: false,
                 formatter: function ( cellvalue, options, rowObject )
                 {
