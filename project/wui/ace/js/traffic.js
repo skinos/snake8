@@ -1,5 +1,4 @@
 const FLUSH_INTERVAL = 1; // 刷新间隔
-const CLIENT_REFRESH_INTERVAL = 3000; // 客户端刷新间隔
 
 // 全局缓冲区
 const buff = {};
@@ -125,7 +124,6 @@ const chartManager = {
             // 显示图表
             this.showChart(ifname);
         }
-
         // 如果图表之前已经可见，直接绘制
         if (wasVisible) {
             this.drawChart(ifname);
@@ -183,7 +181,7 @@ const chartManager = {
         }
     },
     
-    // 更新布局（extern和local同时处理）
+    // 更新布局
     updateLayouts: function() {
        
         // 处理extern布局
@@ -447,383 +445,341 @@ const chartManager = {
     }
 };
 
-
-// 工具函数 字节转换为可读格式
-function byte2readable(bytes) {
-    bytes = parseInt(bytes);
-    if (bytes === 0) return "0B";
-    
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    let i = 0;
-    
-    while (bytes >= 1024 && i < units.length - 1) {
-        bytes /= 1024;
-        i++;
-    }
-    
-    return bytes.toFixed(2) + units[i];
-}
-
-// 工具函数 秒数转换为时间字符串
-function time2string(seconds) {
-    seconds = parseInt(seconds);
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (days > 0) {
-        return days + "d " + hours + "h";
-    } else if (hours > 0) {
-        return hours + "h " + minutes + "m";
-    } else if (minutes > 0) {
-        return minutes + "m " + secs + "s";
-    } else {
-        return secs + "s";
-    }
-}
-
 // 终端列表管理器
-const clientManager = {
-    // 客户端表格相关变量
-    clients_table: '#dashboard-clients-grid-table',
-    clients_pager: '#dashboard-clients-grid-pager',
-    timer: null,
-    nstalist: null,
-    astalist: null,
-    clientlist: null,
-    object: 'center@heport',
-    inputFocused:false,
+var timer;
+var nstalist;
+var astalist;
+var clientlist;
+var isDataLoading = false; 
 
-    // 定时器控制相关变量
-    refresh_interval: CLIENT_REFRESH_INTERVAL,
-    
-    // 初始化客户端表格
-    init: function() {
-        const self = this;
-        
-        $.i18n().load(page.lang('dashboard')).then(function() {
-            // 获取翻译文本
-            var connectedClientsText = $.i18n('Connected Clients');
-            
-            // 创建客户端表格
-            jqtable.create(self.clients_table, self.clients_pager, {
-                caption: '<i class="ace-icon fa fa-users"></i> ' + connectedClientsText + ' <span id="online-clients-count" style="font-size: 14px; margin-left: 5px;"></span>',
-                toolbar: [true, "top"], 
-                colNames: [
-                    $.i18n('Hostname'), 
-                    $.i18n('MAC Address'), 
-                    $.i18n('IP Address'), 
-                    $.i18n('Live Time'), 
-                    $.i18n('Rx/Tx'), 
-                    $.i18n('Interface'), 
-                    $.i18n('Interface Device')
-                ],
-                colModel: [
-                    { name: 'name', width: 200 },
-                    { name: 'mac', width: 150 },
-                    { name: 'ip', width: 130 },
-                    { name: 'livetime', width: 90 },
-                    { name: 'rxtx', width: 150 },
-                    { name: 'ifname', width: 100 },
-                    { name: 'ifdev', width: 100 }
-                ],
-                pager: '#dashboard-clients-grid-pager',
-                rowNum: 10,
-                viewrecords: true,
+var object = "client@station";
+var clients_table = '#clients-grid-table';
+var clients_pager = '#clients-grid-pager';
 
-                pgbuttons: true,
-                pagerpos:'center',
-                pginput:true,
-
-                autowidth: true,
-                loadonce: true,
-                shrinkToFit: true,
-                responsive: true,
-                
-                // 当用户进行分页操作时触发
-                onPaging: function(pgButton) {
-                    //console.log('用户操作分页，按钮:', pgButton);
-
-                    // 如果用户输入页码
-                    if (pgButton === 'user') {
-                        // 获取输入的页码
-                        var inputPage = null;
-                        var pagerInput = $(this).closest('.ui-jqgrid')
-                                   .find('.ui-pg-table .ui-pg-input');
-            
-                        if (pagerInput.length > 0) {
-                            inputPage = parseInt(pagerInput.val(), 10);
-                            //console.log('获取到输入页码:', inputPage);
-                        }
-                            // 如果输入的是第一页，设置标记
-                            if (inputPage === 1) {
-                                //console.log('用户输入页码1 重启定时器');
-                                self.startRefreshTimer();
-                            }
-                        }
-                        // 如果是点击第一页按钮
-                        else if (pgButton === 'first') {
-                            //console.log('点击第一页按钮 重启定时器');
-                            self.startRefreshTimer();
-                        }
-                        // 如果是点击上一页按钮且当前在第二页
-                        else if (pgButton === 'prev') {
-                            var currentPage = $(this).getGridParam('page');
-                            if (currentPage === 2) {
-                                //console.log('从第二页点击上一页 重启定时器');
-                                self.startRefreshTimer();
-                            }
-                        }
-                        
-                        return true;
-                    },
-                
-                gridComplete: function() {
-                    // 绑定分页行数选择器事件
-                    $('#rowNums').off('change.grid').on('change.grid', function() {
-                        //console.log('用户修改行数');
-
-                        var newRowNum = parseInt($(this).val(), 10);
-                        if (!isNaN(newRowNum)) {
-                            $(self.clients_table).jqGrid('setGridParam', {
-                                rowNum: newRowNum
-                            }).trigger('reloadGrid');
-                        }
-                    });
-
-                    // 绑定分页输入框事件
-                    var pagerInput = $(this).closest('.ui-jqgrid')
-                                           .find('.ui-pg-table .ui-pg-input');
-
-                    if (pagerInput.length > 0) {
-                        // 焦点获得时暂停定时器
-                        pagerInput.on('focus', function() {
-                            //console.log('分页输入框获得焦点，暂停定时器');
-                            self.stopRefreshTimer();
-                            self.inputFocused = true;
-                        });
-                        
-                        // 焦点失去时处理
-                        pagerInput.on('blur', function() {
-                            //console.log('分页输入框失去焦点');
-                            self.inputFocused = false;
-                            
-                            // 延迟处理 等待分页操作完成
-                            setTimeout(function() {
-                                var currentPage = $(self.clients_table).getGridParam('page');
-                                //console.log('失去焦点后检查，当前页:', currentPage, '输入框焦点:', self.inputFocused);
-                                
-                                if (currentPage === 1 && !self.inputFocused) {
-                                    //console.log('在第一页且输入框无焦点，重启定时器');
-                                    self.startRefreshTimer();
-                                }
-                            }, 100);
-                        });
-                        
-                        // 回车键处理
-                        pagerInput.on('keyup', function(e) {
-                            if (e.keyCode === 13) {
-                                // 回车后会自动触发onPaging事件 处理定时器
-                            }
-                        });
-                    }
-                    
-                    // 检查是否应该重启定时器
-                    var currentPage = $(this).getGridParam('page');
-                    if (currentPage === 1 && !self.inputFocused) {
-                        // 如果在第一页且输入框无焦点
-                        //console.log('需要重启定时器（由分页操作触发）');
-                        self.startRefreshTimer();
-                    }
-                },
-            });
-
-            var $toolbar = $("#t_" + self.clients_table.replace('#', ''));
-            $toolbar.append($('#grid-controls').children());
-            $toolbar.css({
-                'display': 'flex',
-                'justify-content': 'space-between', // 撑开两端
-                'align-items': 'center',            // 垂直居中
-                'background': '#f5f5f5',
-                'padding': '8px 10px',
-                'height': 'auto',                   // 覆盖默认高度
-                //'border-bottom': '1px solid #e1e1e1' // 加个分割线
-            });
-
-            // 初始加载客户端数据
-            self.load_clients_dashboard();
-            
-            // 启动定时刷新
-            self.startRefreshTimer();
-        });
-    },
-    
-    // 启动定时刷新器
-    startRefreshTimer: function() {
-        const self = this;
-        
-        // 如果定时器已经在运行，先停止
-        if (self.timer) {
-            clearInterval(self.timer);
-        }
-        self.timer = setInterval(function() {
-        
-            var currentPage = $(self.clients_table).getGridParam('page');
-            //console.log('定时器触发，当前页:', currentPage);
-            if (currentPage === 1) {
-                // 只有在第一页时才刷新数据
-                //console.log('在第一页，执行刷新');
-                self.load_clients_dashboard();
+/* load the table infomation */
+    function load_clients()
+    {
+        he.bkload( [ object+'.list', "wifi@n.stalist", "wifi@a.stalist" ] ).then( function(v){
+            clientlist = v[0];
+            if ( !clientlist )
+            {
+                clientlist = {};
             }
-            // 不在第一页时什么也不做，定时器继续运行
-        }, self.refresh_interval);
-        
-        //console.log('定时器已启动，间隔:', self.refresh_interval, 'ms');
-    },
-    
-    // 停止定时刷新器
-    stopRefreshTimer: function() {
-        const self = this;
-        
-        if (self.timer) {
-            clearInterval(self.timer);
-            self.timer = null;
-            //console.log('定时器已暂停');
-        }
-    },
+            nstalist = v[1];
+            if ( !nstalist )
+            {
+                nstalist = {};
+            }
+            astalist = v[2];
+            if ( !astalist )
+            {
+                astalist = {};
+            }
+            // 保存所有的客户端行
+            var count = 0;
+            var rows = [];
+            for ( var index in clientlist )
+            {
+                var client = clientlist[index];
+                if ( !client )
+                {
+                    continue;
+                }
+                if ( nstalist[index] )
+                {
+                    var x = nstalist[index];
+                    if ( x.ifdev )
+                    {
+                        client.ifdev = x.ifdev;
+                        client.rssi = x.rssi;
+                    }
+                    nstalist[index] = null;
+                }
+                else if ( astalist[index] )
+                {
+                    var x = astalist[index];
+                    if ( x.ifdev )
+                    {
+                        client.ifdev = x.ifdev;
+                        client.rssi = x.rssi;
+                    }
+                    astalist[index] = null;
+                }
+                var row = {};
+                row[ 'mac'] =  index;
+                row[ 'ip'] = client.ip || '';
+                row[ 'name'] = client.name || '';
+                if ( !client.rx_bytes && !client.tx_bytes )
+                {
+                    row[ 'rxtx' ] = '';
+                }
+                else
+                {
+                    if ( !client.rx_bytes )
+                    {
+                        client.rx_bytes = "0";
+                    }
+                    if ( !client.tx_bytes )
+                    {
+                        client.tx_bytes = "0";
+                    }
+                    row[ 'rxtx' ] = byte2readable( client.rx_bytes ) + " / " + byte2readable(client.tx_bytes);
+                }
 
-    // 加载客户端信息
-    load_clients_dashboard: function() {
-        const self = this;
-        
-        he.bkload([
-            self.object + '.list', 
-            "wifi@n.stalist", 
-            "wifi@a.stalist"
-        ]).then(function(v) {
-            self.clientlist = v[0];
-            self.nstalist = v[1] || {};
-            self.astalist = v[2] || {};
-            
-            // 处理客户端数据
-            const rows = self.processClientData();
-            
-            // 更新在线客户端数量
-            const onlineCount = rows.filter(row => row.livetime !== $.i18n('Leave')).length;
-            $('#online-clients-count').text('(' + onlineCount + ' ' + $.i18n('Online') + ')');
-            
+                if ( client.ifname )
+                {
+                    row[ 'ifname'] =  $.i18n(client.ifname);
+                }
+                if ( client.ifdev )
+                {
+                    row[ 'ifdev'] =  $.i18n(client.ifdev);
+                }
+                if ( client.livetime )
+                {
+                    row[ 'livetime'] = time2string(client.livetime);
+                    count++;
+                    rows.unshift( row );
+                }
+                else
+                {
+                    row[ 'livetime'] = $.i18n('Leave');
+                    rows.push( row );
+                }
+            }
+            for ( var index in nstalist )
+            {
+                var client = nstalist[index];
+                if ( client == null )
+                {
+                    continue;
+                }
+                var row = {};
+                row[ 'mac'] = index;
+                if ( client.ifdev )
+                {
+                    row[ 'ifdev'] =  $.i18n(client.ifdev);
+                }
+                if ( client.livetime )
+                {
+                    row[ 'livetime'] = time2string(client.livetime);
+                    count++;
+                    rows.unshift( row );
+                }
+                else
+                {
+                    row[ 'livetime'] = $.i18n('Leave');
+                    rows.push( row );
+                }
+            }
+            for ( var index in astalist )
+            {
+                var client = astalist[index];
+                if ( client == null )
+                {
+                    continue;
+                }
+                var row = {};
+                row[ 'mac'] =  index;
+                if ( client.ifdev )
+                {
+                    row[ 'ifdev'] =  $.i18n(client.ifdev);
+                }
+                if ( client.livetime )
+                {
+                    row[ 'livetime'] = time2string(client.livetime);
+                    count++;
+                    rows.unshift( row );
+                }
+                else
+                {
+                    row[ 'livetime'] = $.i18n('Leave');
+                    rows.push( row );
+                }
+            }
+            // 表头设置为在线客户端的数量
+            $(clients_table).jqGrid( "setCaption", '<i class="ace-icon fa fa-users"></i> ' + $.i18n('Connected Clients') + '(' + count + ')' );
+            // 记住滚动条的位置
+            var scrollPos = jqtable.getScrollPos();
             // 获取当前分页状态
-            const currentPage = $(self.clients_table).getGridParam('page');
-            const currentRowNum = $(self.clients_table).getGridParam('rowNum');
+            var currentPage = $(clients_table).jqGrid('getGridParam', 'page');
+            var currentRowNum = $(clients_table).jqGrid('getGridParam', 'rowNum');
             
-            //console.log('数据加载完成，当前页码:', currentPage);
-
-            // 更新表格数据，保持当前分页状态
-            $(self.clients_table).jqGrid('setGridParam', { 
+            // 给clients表格设置数据
+            $(clients_table).jqGrid('setGridParam', {
                 data: rows,
                 page: currentPage,
                 rowNum: currentRowNum
             }).trigger('reloadGrid');
-            
-
-            // 设置离线行的样式
-            $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({ color: '#888' });
-
-        })
-    },
-    
-    // 处理客户端数据
-    processClientData: function() {
-        const rows = [];
-        const self = this;
-        
-        // 处理有线和WiFi客户端
-        for (const index in self.clientlist) {
-            const client = self.clientlist[index];
-            const row = this.createClientRow(index, client);
-            
-            // 合并WiFi信息
-            if (self.nstalist[index]) {
-                this.mergeWifiInfo(row, self.nstalist[index]);
-                self.nstalist[index] = null;
-            } else if (self.astalist[index]) {
-                this.mergeWifiInfo(row, self.astalist[index]);
-                self.astalist[index] = null;
-            }
-            
-            // 根据在线状态排序
-            if (client.livetime) {
-                rows.unshift(row);
-            } else {
-                rows.push(row);
-            }
-        }
-        
-        // 处理剩余的WiFi客户端
-        this.processRemainingWifiClients(rows, self.nstalist);
-        this.processRemainingWifiClients(rows, self.astalist);
-        
-        return rows;
-    },
-    
-    // 创建客户端行
-    createClientRow: function(mac, client) {
-        const row = {
-            'mac': mac,
-            'ip': client.ip || '',
-            'name': client.name || '',
-            'rxtx': this.formatRxTx(client.rx_bytes, client.tx_bytes),
-            'ifname': client.ifname ? $.i18n(client.ifname) : '',
-            'ifdev': client.ifdev ? $.i18n(client.ifdev) : '',
-            'livetime': client.livetime ? time2string(client.livetime) : $.i18n('Leave')
-        };
-        
-        return row;
-    },
-    
-    // 合并WiFi信息
-    mergeWifiInfo: function(row, wifiInfo) {
-        if (wifiInfo.ifdev) {
-            row.ifdev = $.i18n(wifiInfo.ifdev);
-        }
-    },
-    
-    // 处理剩余的WiFi客户端
-    processRemainingWifiClients: function(rows, wifiList) {
-        for (const index in wifiList) {
-            const client = wifiList[index];
-            if (client == null) continue;
-            
-            const row = {
-                'mac': index,
-                'ip': '',
-                'name': '',
-                'rxtx': '',
-                'ifname': '',
-                'ifdev': client.ifdev ? $.i18n(client.ifdev) : '',
-                'livetime': client.livetime ? time2string(client.livetime) : $.i18n('Leave')
-            };
-            
-            if (client.livetime) {
-                rows.unshift(row);
-            } else {
-                rows.push(row);
-            }
-        }
-    },
-    
-    // 格式化Rx/Tx显示
-    formatRxTx: function(rx_bytes, tx_bytes) {
-        if (!rx_bytes && !tx_bytes) {
-            return '';
-        }
-        
-        const rx = rx_bytes || "0";
-        const tx = tx_bytes || "0";
-        return byte2readable(rx) + " / " + byte2readable(tx);
+            // 恢复滚动条的位置
+            jqtable.setScrollPos(scrollPos);
+            // 改变离线行的颜色
+            $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({color: '#888'});
+        });
     }
-};
+
+    function controlRefresh() {
+        var $grid = $(clients_table);
+        
+        var selectedIds = $grid.jqGrid('getGridParam', 'selarrrow');
+        if (selectedIds.length > 0) return true;
+        
+        var currentPage = $grid.getGridParam('page');
+        if (currentPage !== 1) return true;
+        
+        var activeEl = document.activeElement;
+        if (activeEl && $(activeEl).hasClass('ui-pg-input')) {
+            return true;
+        }
+        if (isDataLoading) return true;
+
+        return false; // 不忙，可以刷新
+    }
+
+    function startRefreshTimer() {
+        if (timer) clearInterval(timer);
+
+        timer = setInterval(function() {
+            var $grid = $(clients_table);
+
+            if ($grid.length === 0) {
+                //console.log("检测到表格已不在当前页面，正在自动销毁定时器...");
+                stopRefreshTimer();
+                return; 
+            }
+
+            if (!controlRefresh()) {
+                //console.log('条件满足，执行加载...');
+                // 执行加载前加锁
+                isDataLoading = true;
+                load_clients(); 
+            } else {
+                // console.log('跳过刷新，原因:', busyReason);
+            }
+        }, 3000);
+    }
+
+    function stopRefreshTimer() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    }
+
+     // 表单自定义逻辑
+    var customForm = {
+        afterShowForm: function(form) {
+            // 添加自定义样式和提示
+            $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+            $("label[for='mac']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+
+            var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+                '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+                '</div>';
+            
+            $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+            
+            // 设置 placeholder
+            $("#name", form).attr("placeholder", $.i18n('Enter Hostname'));
+            $("#mac", form).attr("placeholder", $.i18n('Enter MAC Address'));
+        }
+    };
+
+    function init_table(){
+        jqtable.create(  clients_table, clients_pager,
+        {
+            caption: ' ', // 必需设置值, 防止表格不能折叠
+            toolbar: [true, "top"], 
+            colNames: [ $.i18n('Hostname'), $.i18n('MAC Address'), $.i18n('IP Address'), $.i18n('Live Time'), $.i18n('Rx/Tx'), $.i18n('Interface'), $.i18n('Interface Device')],
+            colModel: [
+                { name:'name', width:200, editable:true, editrules:{ required:true } },
+                { name:'mac', width:150, editable:true, editrules:{ required:true } },
+                { name:'ip', width:130 },
+                { name:'livetime', width:90 },
+                { name:'rxtx', width:150 },
+                { name:'ifname', width:100 },
+                { name:'ifdev', width:100 },
+               
+            ],
+            pager: '#clients-grid-pager',
+            rowNum: 10,
+            viewrecords: true,
+            multiselect:false,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
+            autowidth:true,
+            loadonce:true,
+            shrinkToFit:true,
+            responsive:true,
+            forceFit: true,
+            
+            // 当用户进行分页操作时触发
+            onPaging: function(pgButton) {
+                //console.log('用户操作分页，按钮:', pgButton);
+
+                // 如果用户输入页码
+                if (pgButton === 'user') {
+                    // 获取输入的页码
+                    var inputPage = null;
+                    var pagerInput = $(this).closest('.ui-jqgrid')
+                                .find('.ui-pg-table .ui-pg-input');
+        
+                    if (pagerInput.length > 0) {
+                        inputPage = parseInt(pagerInput.val(), 10);
+                        //console.log('获取到输入页码:', inputPage);
+                    }
+                        // 如果输入的是第一页，设置标记
+                        if (inputPage === 1) {
+                            //console.log('用户输入页码1 重启定时器');
+                            startRefreshTimer();
+                        }
+                    }
+                    // 如果是点击第一页按钮
+                    else if (pgButton === 'first') {
+                        //console.log('点击第一页按钮 重启定时器');
+                        startRefreshTimer();
+                    }
+                    // 如果是点击上一页按钮且当前在第二页
+                    else if (pgButton === 'prev') {
+                        var currentPage = $(this).getGridParam('page');
+                        if (currentPage === 2) {
+                            //console.log('从第二页点击上一页 重启定时器');
+                            startRefreshTimer();
+                        }
+                    }
+                    return true;
+                },
+
+            gridComplete: function() {
+                isDataLoading = false; 
+                startRefreshTimer();
+            
+                var $pagerInput = $(this).closest('.ui-jqgrid').find('.ui-pg-table .ui-pg-input');
+                $pagerInput.off('blur').on('blur', function() {
+                    // 失去焦点时不立即刷新，而是等下一秒的定时器自己去判定
+                });
+            },
+        }
+      )
+        var $toolbar = $("#t_" + clients_table.replace('#', ''));
+        $toolbar.append($('#grid-controls').children());
+        $toolbar.css({
+            'display': 'flex',
+            'justify-content': 'space-between', // 撑开两端
+            'align-items': 'center',            // 垂直居中
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto',                   // 覆盖默认高度
+            //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+        });
+
+        $('#rowNums').on('change',function(){
+                var newRowNum = parseInt($(this).val(),10);
+                $(clients_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+    }
 
 // 主数据加载函数
 function dashboard_reload() {
@@ -867,13 +823,18 @@ function dashboard_reload() {
 
 // 初始化函数
 function initDashboard() {
-    $.i18n().load(page.lang('dashboard')).then(function() {
+    $.i18n().load(page.lang('traffic')).then(function() {
         // 设置语言
         $.i18n().locale = lang;
         $('body').i18n();
         
         // 初始化客户端管理器
-        clientManager.init();
+        init_table();
+
+        load_clients();
+
+        // 初始启动客户端定时器
+        startRefreshTimer();
         
         // 加载初始数据 折线图
         dashboard_reload();

@@ -481,7 +481,7 @@ function utilization_reload() {
 }
 
 /* init */
-$.i18n().load(page.lang('dashboard')).then(function() {
+$.i18n().load(page.lang('utilization')).then(function() {
     /* init the language */
     $.i18n().locale = lang;
     $('body').i18n();
