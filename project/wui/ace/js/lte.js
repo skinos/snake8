@@ -642,6 +642,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
     /* init the langauage */
     $.i18n().locale = lang; $('body').i18n();
 
+    status_load();
     /* load the configure */
     config_load();
 
