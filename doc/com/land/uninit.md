@@ -207,9 +207,7 @@ ttrue
     - It registers all shutdown tasks from configuration and sets up remote logging if configured
     - Not intended for manual invocation
 
-+ `shut[]` **shutdown the uninit component**, *succeed return ttrue, failed return tfalse, error return terror*
-    - This is a lifecycle method called automatically by the system during shutdown
-    - Not intended for manual invocation
+**Note:** The shared **`land@init`** implementation used by **`land@uninit`** does not export **`shut[]`**.
 
 ### C Code Example
 

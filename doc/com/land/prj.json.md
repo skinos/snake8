@@ -1,14 +1,12 @@
 # `prj.json` — Skinos project manifest
 
-Chinese version: [`prj.json.cn.md`](./prj.json.cn.md).
-
 This document describes the **project information file `prj.json`**: fields, semantics, packaging layout, and runtime behavior. For the **FPK product model** and **`land@fpk` APIs**, see [`fpk.md`](./fpk.md).
 
 ---
 
 ## 1. Role in the system
 
-- Every **Skinos project directory** (often `project/<name>/` in the SDK) must contain a **`prj.json`** (`PROJECT_INFOFILE` in `skin/project.h`).
+- Every **Skinos project directory** (often `project/<name>/` in the SDK) must contain a **`prj.json`** (the standard manifest filename, exposed to C code as **`PROJECT_INFOFILE`**).
 - When the project is built into an **`.fpk`**, `prj.json` is shipped in the package. After installation, the system uses it to know the **project name, version, libraries, executables, components, resources**, and which **component APIs** to run for **boot, shutdown, and joint events**.
 - Treat `prj.json` as a **machine-readable manifest**: human-facing metadata plus data for **build / pack / register / schedule**.
 
@@ -17,8 +15,8 @@ This document describes the **project information file `prj.json`**: fields, sem
 ## 2. How to read this file quickly
 
 1. **Top-level strings** (`name`, `intro`, `desc`, `type`, `version`, `author`) identify the project and permission class.
-2. **`lib` / `exe` / `cmd` / `com` / `osc` / `ko` / `res`**: keys are usually **source subdirectories** under the project; values are **short descriptions**. Each key **declares** that artifact class exists.
-3. **`obj`**: maps **public object names** to **`com` directory names** (aliases, multi-instance).
+2. **`lib` / `exe` / `cmd` / `com` / `osc` / `ko` / `res`**: keys are usually **source subdirectories** under the project; values are **short descriptions**. Each key **declares** that artifact class exists. At runtime, **`land@fpk.register`** only **reads** the **`com`**, **`exe`**, **`obj`**, **`init`**, **`uninit`**, and **`joint`** objects from `prj.json` (plus required **`name`**). **`lib` / `cmd` / `osc` / `ko` / `res`** drive **build / pack / on-disk layout** (e.g. **`lib/`** and **`bin/`** trees); the register pass does **not** walk those sections as JSON keys.
+3. **`obj`**: maps **public object names** to a **component key**. If the value contains **`@`**, it is passed straight to **`com_register(object, value, 0)`**; otherwise it is expanded to **`⟨prj.name⟩@⟨value⟩`** using the same **`@`** separator as HE object names.
 4. **`init` / `uninit` / `joint`**: **nested** maps — boot level / shutdown level / event name → inner keys are **`project@component.method`** (HE-style), values are descriptions (often `""`).
 5. **`wui`**: optional Web UI menu + page + language registration.
 
@@ -59,12 +57,10 @@ Each of these is an object: `"name": "brief description"`. The **key** is the **
 
 ## 5. `obj`: component instances and aliases
 
-Shape: `"object-name": "component-directory-name"`.
+Shape: `"public-object-id": "component-subdir-or-origin-key"`.
 
-- **Value** always refers to a **`com`** key (which directory implements the logic).
-- **Key** can be:
-  - A **short service name** (classic `tui`-style example): e.g. `"telnetd": "telnet"` means invoking **`tui@telnet`** via that alias, or
-  - A **full object id** like `land@joint` mapping to component dir `init`.
+- **Value** is either a **`com`** subdirectory name (expanded to **`project@subdir`** for **`com_register`**) or an **already-qualified** object path containing **`@`** (used as-is as the register **origin** key for **`type` 0**).
+- **Key** is the **public object id** (e.g. **`tui@telnet`**, **`land@joint`**, or a short alias depending on product conventions).
 
 Use this for **several logical objects sharing one component** (e.g. `ifname@lan` / `ifname@lan2`) or **stable public names** that differ from the directory name.
 
@@ -101,10 +97,12 @@ Each top-level key under `wui` is a **page id**. Per page, common fields:
 | `page` | HTML filename (under the project, as packaged). |
 | `lang` | Object mapping locale keys (`cn`, `en`, …) to **JSON language file** paths for that page. |
 | `config` | If set, the menu entry is shown when this **component config object** exists (e.g. `tui@telnet`). |
-| `object` | When `config` is null, visibility can be tied to **component existence** via this object string. |
+| `object` | With `config` unset, **`land@fpk.wui_menu`** may require this object (and optional **`api`**) to exist via **`com_have`** before the entry is listed. |
+| `api` | Optional; paired with **`object`** for the **`com_have(object, api)`** check before **`land@fpk.wui_menu`** lists an entry. |
+| `mode` | Optional object: **keys** are **work-mode** identifiers; they must match the runtime string in the default-object register **`network_mode`** (product code usually keeps this aligned with **`land@machine` → `mode`**, e.g. `ap`, `gateway`, `mix`). **Values** are strings; when the entry for the **current** mode is exactly **`"disable"`**, this **`wui`** page is **omitted** from **`land@fpk.wui_menu`**. Omit **`mode`**, omit the key for the current mode, or use any value other than **`"disable"`** to leave the page visible (still subject to **`config` / `object` / `attr`**). **Global prerequisite:** if register **`network_mode`** is missing or empty, **`wui_menu`** returns **NULL** for the whole menu. |
 | `attr` | When `config` is non-null, optional **attribute path** for finer visibility rules. |
 
-Examples: `tmptools/prj.json` (`testcom`) and **§15** (`tui` excerpt).
+See **§15** for a composite example; match keys to real directories in your SDK tree.
 
 ---
 
@@ -116,8 +114,8 @@ Examples: `tmptools/prj.json` (`testcom`) and **§15** (`tui` excerpt).
 
 ## 11. Validation and tooling
 
-- **`project_check`** (`skin/project.h`) can validate project JSON.
-- Helper binaries may live under **`cmd`** (e.g. `tmptools` → `prj`).
+- **`project_check`**: verifies the project directory exists, **`prj.json`** parses as JSON, and **every** file in that directory whose name contains **`.json`** or **`.cfg`** also parses as JSON (invalid companion files fail the check).
+- Helper binaries may live under **`cmd`** (named by each `cmd` key in `prj.json`); exact tools depend on your SDK.
 
 ---
 
@@ -125,7 +123,7 @@ Examples: `tmptools/prj.json` (`testcom`) and **§15** (`tui` excerpt).
 
 **Notation:** **`prj.json:section`** means “every **key** under that JSON object”: e.g. `prj.json:cmd` builds one command per key (`he`, `daemon`, …). **`FPK:/`** is the **root of the `.fpk` archive**.
 
-**On-device paths** use the same **symbols** as **[`fpk.md`](./fpk.md)** (*Runtime install paths*): **`⟨PRJ_ROOT⟩`** (C macro **`PROJECT_DIR`** in [`skin/skinhead.h`](./skin/skinhead.h)), **`⟨PRJ_NAME⟩`** (installed project = `prj.json` → `name`), **`⟨LIB_DIR⟩`** / **`⟨BIN_DIR⟩`** (**`PROJECT_LIB_DIR`** / **`PROJECT_BIN_DIR`**), **`⟨SYS_ROOT⟩`** (running system root for merged trees). Per-project install prefix: **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**.
+**On-device paths** use the same **symbols** as **[`fpk.md`](./fpk.md)** (*Runtime install paths*): **`⟨PRJ_ROOT⟩`** (typically the installed-project root macro **`PROJECT_DIR`**), **`⟨PRJ_NAME⟩`** (installed project = `prj.json` → `name`), **`⟨LIB_DIR⟩`** / **`⟨BIN_DIR⟩`** (**`PROJECT_LIB_DIR`** / **`PROJECT_BIN_DIR`**), **`⟨SYS_ROOT⟩`** (running system root for merged trees). Per-project install prefix: **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**.
 
 **Pipeline:** (1) **Compile** sources in subdirectories named by `prj.json` keys → (2) **Pack** outputs and loose files into an **FPK** → (3) **Install** under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**, and copy `install/*` into the **SDK `INSTALL/`** tree.
 
@@ -205,13 +203,15 @@ After **`land@fpk.install`** (or equivalent), FPK contents are expanded under **
 | `*.ko` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
 | **`res`** content as packed | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
 
-### 13.3 Optional trees inside the FPK → system root
+### 13.3 Optional trees inside the FPK → system paths (`land@fpk.register`)
 
-| In FPK | On device | Status |
-|--------|-----------|--------|
-| `etc/*` | `⟨SYS_ROOT⟩/etc/` | **[Not implemented]** in typical installers |
-| `internal/*` | `⟨SYS_ROOT⟩/mnt/internal/` | **[Not implemented]** in typical installers (path may differ by product) |
-| `rootfs/*` | `⟨SYS_ROOT⟩/` | Merged into **system root** |
+When **`land@fpk.register`** runs against a project directory, it may **copy** payloads (only if the destination file does not already exist):
+
+| In project / FPK tree | Typical destination (platform macros) | Notes |
+|------------------------|-----------------------------------------------|--------|
+| `etc/*` (under **`FPK_ETC_DIR`**, i.e. `etc/`) | **`PROJECT_ETC_DIR`** (often `/etc`) | Copy when the target path is not already present |
+| `internal/*` (under **`FPK_INT_DIR`**, i.e. `internal/`) | **`PROJECT_INT_DIR`** (under **`PROJECT_MNT_DIR`**, product-defined) | Same rule |
+| `rootfs/*` | **`⟨SYS_ROOT⟩/`** | **Not** applied by the **`land`** FPK register path; treat as **packaging / product installer** convention if your SDK emits this tree (see §12.3) |
 
 ### 13.4 Loose files at FPK root → per-project prefix
 
@@ -230,9 +230,9 @@ These paths are usually **consumed at install time** and **not** left as a runti
 
 ---
 
-## 14. Example excerpt — `land` project
+## 14. Example — `land` project (this repository)
 
-From this repository’s `land/prj.json`:
+Current `land/prj.json` (verbatim; formatting normalized):
 
 ```json
 {
@@ -245,18 +245,36 @@ From this repository’s `land/prj.json`:
     "lib": {
         "skin": "skinos core library"
     },
+    "cmd": {
+        "he": "tools for call all component",
+        "daemon": "service daemon management",
+        "eline": "tools for terminal line to execute the he command"
+    },
     "com": {
         "fpk": "fpk management",
-        "init": "init/uninit/joint management"
-    },
-    "cmd": {
-        "he": "tools for call all component"
+        "init": "init/uninit/joint management",
+        "component": "component management",
+        "register": "register variables",
+        "syslog": "system log management",
+        "service": "service management",
+        "machine": "system basic information management",
+        "auth": "authentication management"
     },
     "obj": {
         "land@uninit": "init",
-        "land@joint": "init"
+        "land@joint": "init",
+        "com": "component",
+        "reg": "register",
+        "log": "syslog",
+        "serv": "service",
+        "fpk": "fpk",
+        "machine": "machine",
+        "auth": "auth"
     },
     "init": {
+        "arch": {
+            "land@syslog.setup": ""
+        },
         "land": {
             "land@auth.setup": "",
             "land@joint.setup": "",
@@ -266,6 +284,9 @@ From this repository’s `land/prj.json`:
     },
     "joint": {
         "storage/insert": {
+            "land@syslog.setup": ""
+        },
+        "storage/remove": {
             "land@syslog.setup": ""
         }
     }
@@ -324,12 +345,11 @@ Illustrates **`com` + `cmd` + short `obj` aliases + `init` + `wui`** (trimmed to
 
 | Document | Content |
 |----------|---------|
-| [`fpk.md`](./fpk.md) / [`fpk.cn.md`](./fpk.cn.md) | FPK lifecycle, `land@fpk` |
+| [`fpk.md`](./fpk.md) | FPK lifecycle, `land@fpk` |
 | [`init.md`](./init.md), [`uninit.md`](./uninit.md), [`joint.md`](./joint.md) | Lifecycle registration |
 | [`component.md`](./component.md) | Components |
 | [`he.md`](./he.md) | HE grammar |
-| [`README.md`](./README.md) | land doc index |
 
 ---
 
-**TL;DR:** **`prj.json`** = project identity + **which directories become lib/com/cmd/exe/…** + **`obj` aliases** + **when to call `project@component.method`** + optional **`wui`**. **§12–§13** connect the JSON to **FPK** layout and **on-device paths** **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** (macros in `skinhead.h`; see **`fpk.md`**).
+**TL;DR:** **`prj.json`** = project identity + **which directories become lib/com/cmd/exe/…** + **`obj` aliases** + **when to call `project@component.method`** + optional **`wui`**. **§12–§13** connect the JSON to **FPK** layout and **on-device paths** **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** (see **Runtime install paths** in **`fpk.md`**).

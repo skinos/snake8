@@ -235,7 +235,7 @@ ttrue
     - component ----------- [ string ]，要从 verbose 日志掩码中移除的组件名称
 
 + `list[]` **列出所有日志文件**，*成功返回 talk，失败返回 NULL*
-    - 返回将日志文件名映射到完整路径的 JSON
+    - 返回 JSON：**文件名 → 完整路径**，仅包含与当前活动日志同目录下、文件名含 **`landlog.txt`** 子串的项（与 **`LANDLOG_FILENAME`** 约定一致）
     ```json
     // 方法返回的 JSON 属性介绍
     {

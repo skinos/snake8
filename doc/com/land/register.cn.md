@@ -50,7 +50,7 @@
     - object ----------- [ string ]，省略则使用默认对象（与单参数形式相同）
     - register name ----------- [ string ]
     - 无数据或失败返回 NULL     
-    - 返回描述的字符串  
+    - 返回由 **`number2x`** 编码的 talk 整型值（命令行上通常显示为十进制数字）
 
     示例，显示 ifname@wan 对象的 tid
     ```shell
@@ -62,7 +62,7 @@
     - object ----------- [ string ]，省略则使用默认对象
     - register name ----------- [ string ]
     - 无数据或失败返回 NULL     
-    - 返回描述的字符串  
+    - 返回 **`string2x`** 包装的 **`true`** / **`false`** 字符串
 
     示例，显示 ifname@wan 对象的 keeplive
     ```shell
@@ -74,7 +74,7 @@
     - object ----------- [ string ]，省略则使用默认对象
     - register name ----------- [ string ]
     - 无数据或失败返回 NULL     
-    - 返回描述的字符串  
+    - 返回 **`string2x`** 的 talk 字符串；槽位未设置或出错时为 **NULL**
 
     示例，显示 ifname@wan 对象的 mode 寄存器
     ```shell

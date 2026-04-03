@@ -13,6 +13,8 @@
 
 `land@machine` 的**保存配置对象**（通过 `land@machine`、`land@machine:path`、合并 `|{json}` 等查询/设置）。
 
+**合并与外部字段：** **`get`** 时会从 **`arch@data`** 合并 **`sn`**、**`mac`**、**`macid`**、**`language`**、**`cfgversion`**、**`gpversion`**。**`set`** 不允许直接改 **`sn`** / **`mac`** / **`macid`**，其余合并字段写回 **`arch@data`**。**`default`** / **`release`** / **`factory`** 除 **`default_block`**、**`restart_block`** 等 API 外，还会读取 **`arch@lock`**（平台 **lock** 组件，**`LOCK_COM`**）。
+
 ```json
 // 属性介绍 
 {
@@ -634,7 +636,7 @@ static int machine_config_get_and_set(void)
 - 使用 `ssets_string()` / `ssets()` 更新配置值。
 - 作为 `talk_t` 返回的引用已分配 JSON 的值必须在下面的 C 示例中使用 `talk_free()` 释放（仅使用 `he` 的用户可以忽略这一点）。
 
-**调用组件方法** — `scall` / `scalls`（`com.h`）。
+**调用组件方法** — `scall` / `scalls`（Skin SDK 中的组件 RPC 辅助宏/函数）。
 
 ```c
 #include "skin/skin.h"

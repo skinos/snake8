@@ -235,7 +235,7 @@ ttrue
     - component ----------- [ string ], component name(s) to remove from verbose log mask
 
 + `list[]` **list all log files**, *succeed return talk, failed return NULL*
-    - returns JSON mapping log file names to their full paths
+    - returns JSON mapping **basename → full path** for files in the same directory as the active log path whose names contain the platform log basename pattern (**`landlog.txt`** substring, per **`LANDLOG_FILENAME`**)
     ```json
     // Attributes introduction of json by the method return
     {

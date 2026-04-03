@@ -135,26 +135,15 @@ ttrue
 
 ### 组件 API
 
-+ `domain[ username ]` **列出用户名所属的域**   
++ `domain[ username ]` **按用户已启用的组合并域相关 JSON**   
     - username ----------- [ string ]
-    - 失败返回 NULL
-    - 返回 JSON 列出域信息   
-    ```json
-    // 方法返回的 JSON 属性介绍
-    {
-        "domain name":"domain state"   // [ string ]:[ "disable", "enable" ]
-        // "...":"..."                 // 有多少个域就显示多少条属性
-    }    
-    ```
+    - 失败返回 NULL（例如缺少用户名）
+    - 成功返回一个 JSON 对象（可能为空 `{}`）。实现会遍历 **`user/<用户名>/group`**：对每个值为 **`enable`** 的组，从已保存配置读取 **`group/<组名>/domain`**，并用 **`json_patch`** 依次合并。返回值**不是**简单的 `"域名":"enable"` 平面映射，其结构取决于各组下 **`domain`** 对象里实际存的内容。
 
-    示例，列出用户名 admin 的所有域
+    示例（具体形状取决于你的 `group/*/domain` 配置）
     ```shell
     land@auth.domain[ admin ]
-    {
-        "admin":"enable",
-        "tui":"enable",
-        "nas":"enable"
-    }
+    { }
     ```
 
 + `check[ [domain], username, password ]` **检查用户名和密码是否正确**   
@@ -237,10 +226,11 @@ ttrue
     ```
 
 
-+ `add[ [domain], username, password ]` **添加新用户名**   
-    - domain ----------- [ string ]，指定特定域，默认为 common
-    - username ----------- [ string ] 
-    - password ----------- [ string ] 
++ `add[ [domain], username, password [, group, ... ] ]` **添加新用户名**   
+    - domain ----------- [ string ]，可选；用于在 **`user/<名>/domain/<域>/key`** 下保存域专属密钥
+    - username ----------- [ string ]（必填）
+    - password ----------- [ string ]（解析上可选；若提供则经 **`simple_encode`** 后写入）
+    - group ... -------- 从第 4 个参数起的可选组名：每个非 NULL 名称会在新用户的 **`group`** 映射中置为 **`"enable"`**
     - 失败返回 tfalse
     - 成功返回 ttrue
 
@@ -268,19 +258,19 @@ ttrue
     ttrue
     ```
 
-+ `list[ [group] ]` **列出系统用户名**   
-    - group ----------- [ string ]
++ `list[ [group] ]` **列出用户（可选按组成员过滤）**   
+    - group ----------- [ string ]，可选；若指定，仅返回 **`group/<组名> == "enable"`** 的用户
     - 失败返回 NULL
-    - 返回 JSON 描述信息   
+    - 返回 JSON：每个用户包含 **`key`**（默认密码字段）及从该用户 **`domain`** 节点经 **`json_cut_value`** 得到的 **`domain`** 子树，风格与配置中一致（常为 **`simple_encode`** 后的串）。   
     ```json
-    // 方法返回的 JSON 属性介绍
+    // 实现返回形状（示意）
     {
-        "user name":                 // [ string ]
+        "user name":
         {
-            "key":"username password"         // [ string ]
+            "key":"编码后或明文密码串",
+            "domain": { "...": { "key":"..." } }
         }
-        // "...":{...}                  // 有多少个用户名就显示多少条属性
-    }    
+    }
     ```
 
     示例，列出所有 admin 组的用户名
@@ -367,7 +357,7 @@ ttrue
 
 + `encode[ string, [key] ]` **简单加密字符串**
     - string ----------- [ string ]，要加密的字符串
-    - key -------------- [ string ]，可选的加密密钥；如果省略，使用系统默认密钥
+    - key -------------- [ string ]，可选，作为令牌；省略或 NULL 使用实现内默认
     - 失败返回 NULL
     - 返回加密后的字符串
 
@@ -379,7 +369,7 @@ ttrue
 
 + `decode[ string, [key] ]` **简单解密字符串**
     - string ----------- [ string ]，要解密的加密字符串
-    - key -------------- [ string ]，可选的解密密钥；如果省略，使用系统默认密钥
+    - key -------------- [ string ]，可选，作为令牌（须与 **`encode`** 一致）
     - 失败返回 NULL
     - 返回解密后的字符串
 
@@ -394,7 +384,8 @@ ttrue
 
 + `setup[]` **初始化认证组件**，*成功返回 ttrue，失败返回 tfalse，错误返回 terror*
     - 这是系统启动期间自动调用的生命周期方法
-    - 它刷新认证配置并初始化用户/组设置
+    - 当寄存器 **`scope`** 为 **`wrt`** 或 **`platform`** 为 **`slave`** 时，**`setup`** 直接返回 **`ttrue`**，不合并 passwd/shadow（**`set`** 同样受此保护：写入返回 **false** 且不执行 **`_refresh`**）。
+    - 否则执行 **`_refresh`**，将配置中的用户/组合并到系统账户文件（如 **`/var/passwd`** 及相关文件，具体因镜像而异）。
     - 不建议手动调用
 
 
@@ -523,7 +514,7 @@ talk_t ret = scalls("land@auth", "change", "wui,admin,%s,newpass,admin2", cipher
 if (ret != ttrue) print_auth_call_error("change", ret);
 ```
 
-##### `add[ [domain], username, password ]`
+##### `add[ [domain], username, password [, group, ... ] ]`
 
 ```c
 talk_t ret = scalls("land@auth", "add", "wui,alice,alice_password");

@@ -43,7 +43,7 @@
 
 #### 运行时安装路径（符号）
 
-文档使用**尖括号占位符**代替固定路径。它们映射到 [`land/skin/skinhead.h`](./skin/skinhead.h) 中的 **C 宏**（值因平台/产品而异）：
+文档使用**尖括号占位符**代替固定路径。它们对应**平台构建宏**（值因平台/产品而异）；下表列出常用宏名：
 
 | 符号 | 典型含义 | C 宏（参考） |
 |------|---------|-------------|
@@ -362,11 +362,11 @@
     ```
 
 
-+ `install[ FPK file [,...] ]` **安装 FPK 包到系统**
-    - FPK file ----------- [ string ]，FPK 文件
-    - ... ---------------- [ string ]，安装多个 FPK 文件
++ `install[ path [,...] ]` **安装 FPK 或项目目录到系统**
+    - 每个参数 ----------- [ string ]，可为 **`.fpk` / `.tar.gz` 包**（先解压到临时目录再安装），或**已是展开的项目目录**（内含 **`prj.json`**）
+    - ... ---------------- [ string ]，可一次安装多个路径
     - 失败返回 tfalse
-    - 成功返回 ttrue
+    - 成功返回 ttrue（行为见上文：目录或压缩包）
 
     示例，安装 `wui` 项目 FPK 到系统
     ```shell
@@ -396,9 +396,67 @@
     15
     ```
 
-+ `wui_menu` **获取 Web UI 菜单结构**
++ `project_add[ name, [intro] ]` **创建最小可写项目**（位于 **`PROJECT_APP_DIR`**，与 **`install`** 使用的可写项目区一致）
+    - **name** ----------- [ string ]，目录名 / `prj.json` 的 **`name`**（必填）
+    - **intro** ---------- [ string ]，可选，写入 **`prj.json`**
+    - 失败返回 **NULL**（缺 **`name`** 时为 **EINVAL**）
+    - 成功返回 JSON（含 **`path`**、默认 **`version`**、**`author`** 为 **`land@fpk`**）
+
++ `project_delete[ name ]` **删除整个项目目录**
+    - **name** ----------- [ string ]，由 **`project_path`** 解析
+    - 失败返回 **tfalse**
+    - 成功返回 **ttrue**（对目录执行 **`rm -fr`**）
+
++ `project_check[ name ]` **检查项目存在并通过内部校验**
+    - **name** ----------- [ string ]
+    - 失败返回 **tfalse**
+    - 成功返回 **ttrue**（项目通过 **`project_check`** 时）
+
++ `project_pack[ name ]` **将可写项目打成 `.fpk` 包**
+    - **name** ----------- [ string ]，须解析到 **`PROJECT_APP_DIR`** 下（若在固件 **`PROJECT_DIR`** 下则为 **EPERM** / **NULL**）
+    - 失败返回 **NULL**
+    - 成功返回 talk 字符串路径：**`⟨TMP⟩/name-⟨version⟩-⟨hardware⟩.fpk`**（**`PROJECT_TMP_DIR`**、**`PROJECT_DEFAULT_VERSION`**、寄存器 **`hardware`**；内容为 **`tar zcf`**）
+
++ `com_add[ prj, name, [intro] ]` **向项目添加 shell 组件脚手架并登记**
+    - **prj** ------------ [ string ]，项目名称（**`project_path`**）
+    - **name** ----------- [ string ]，组件短名；运行对象名为 **`prj`⟨@⟩`name`**（**`PROJECT_OBJECT_GAPC`**）
+    - **intro** ---------- [ string ]，可选，写入 **`prj.json` → `com`**
+    - 复制模板 **`comshell`**，更新 **`prj.json`**，再调用 **`com_register( prj@name, comshell路径, 0 )`** —— 第二参数语义同 **`land@component.register`** / **`com_register(..., 0)`**（**`type` 0** 时走 **`COM_COM`** 映射查找）
+    - 失败返回 **NULL**
+    - 成功返回 talk 字符串：项目目录路径
+
++ `wui_add[ prj, name, menu ]` **添加 Web UI 菜单项并生成页面/语言文件骨架**
+    - **prj** ------------ [ string ]，项目名称
+    - **name** ----------- [ string ]，**`prj.json` → `wui`** 下的键
+    - **menu** ----------- [ string ]，英文菜单文案（写入 **`en`**）
+    - 生成 **`name.html`**、**`name-cn.json`** / **`name-en.json`**，更新 **`prj.json`**
+    - 失败返回 **NULL**
+    - 成功返回 JSON（新 **`wui`** 项，路径为绝对路径）
+
++ `obj_add[ prj, object, origin ]` **添加动态对象映射并注册**
+    - **prj** ------------ [ string ]，项目名称
+    - **object** --------- [ string ]，**`prj.json` → `obj`** 的键
+    - **origin** --------- [ string ]， backing 组件目录名（**`obj`** 的值），**`land@component.register`** 第二参数为 **`prj`⟨@⟩`origin`**
+    - 更新 **`prj.json`** 后执行 **`land@component.register[ object, prj@origin ]`**
+    - 失败 **tfalse**，成功 **ttrue**
+
++ `init_add[ prj, level, call ]` **追加 init 项并运行时注册**
+    - **prj** / **level** / **call** --- [ string ]；**`level`** 为 **`prj.json` → `init`** 的键，**`call`** 为方法串（如 **`arch@ethernet.setup`**）
+    - 更新 **`prj.json`** 后 **`land@init.register[ level, call ]`**
+    - 失败 **tfalse**，成功 **ttrue**
+
++ `uninit_add[ prj, level, call ]` **追加 uninit 项并注册**
+    - 形式同 **`init_add`**，对应 **`prj.json` → `uninit`** 与 **`land@uninit.register`**
+
++ `joint_add[ prj, level, call ]` **追加 joint 项并注册**
+    - 形式同 **`init_add`**，对应 **`prj.json` → `joint`** 与 **`land@joint.register`**（**`level`** 为事件名）
+
++ `wui_menu[ [type] ]` **获取 Web UI 菜单结构**
+    - **type** ----------- [ string ]，可选；指定扫描 **`prj.json`** 顶层的哪个对象（默认 **`wui`**）
+    - 若平台 **custom** 组件下 **`project`** 映射将某项目标为 **`disable`**，则跳过该项目（对象名因产品而异，常见为 **`arch@custom`**）
+    - 各菜单项可能要求已有配置（**`config`** / **`attr`**）或 **`object`**/**`api`** 可用（**`com_have`**）；不满足的项会被过滤
     - 失败返回 NULL
-    - 返回描述 Web UI 菜单结构的 JSON
+    - 返回 JSON（**`page`**、**`lang`** 等路径改写为绝对路径）
 
     示例，获取 Web UI 菜单
     ```shell

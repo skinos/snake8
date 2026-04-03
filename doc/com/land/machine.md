@@ -13,6 +13,8 @@ Manage gateway basic information
 
 The **saved configuration object** for `land@machine` (query/set via `land@machine`, `land@machine:path`, merge `|{json}`, etc.).
 
+**Merged and external fields:** **`get`** copies **`sn`**, **`mac`**, **`macid`**, **`language`**, **`cfgversion`**, and **`gpversion`** from **`arch@data`** when present. **`set`** refuses direct writes to **`sn`** / **`mac`** / **`macid`** and routes the other merged fields back to **`arch@data`**. **`default`**, **`release`**, and **`factory`** also consult **`arch@lock`** (the platform **lock** component, **`LOCK_COM`**) in addition to **`default_block`** / **`restart_block`** style APIs.
+
 ```json
 // Attributes introduction 
 {
@@ -634,7 +636,7 @@ Notes:
 - Use `ssets_string()` / `ssets()` to update configuration values.
 - Values returned as `talk_t` that reference allocated JSON must be released with `talk_free()` in C examples below (`he`-only users can ignore this).
 
-**Call component methods** — `scall` / `scalls` (`com.h`).
+**Call component methods** — `scall` / `scalls` (component RPC helpers from the Skin SDK).
 
 ```c
 #include "skin/skin.h"

@@ -28,6 +28,8 @@ The **saved configuration object** for `land@component` (query/set via `land@com
     ttrue
     ```
 
+    **Implementation:** this API calls `com_register(object, origin, 0)`. With **`type == 0`**, **`origin`** is **not** treated as a raw filesystem path: it is a **key** resolved through the daemon **`COM_COM`** register map (`register_value_pointer`). The map must already contain a non-empty value (the real `.com` path). If the key is missing, registration fails with **`ENOENT`**. To register from an explicit on-disk file, **`land@fpk`** uses `com_register` with a non-zero **`type`**.
+
 + `unregister[ object ]` **delete a object**
     - object ------------------ [ string ]
     - failed return tfalse

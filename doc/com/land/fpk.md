@@ -43,7 +43,7 @@ Manage system FPK projects.
 
 #### Runtime install paths (symbols)
 
-Documentation uses **angle-bracket placeholders** instead of fixed paths. They map to **C macros** in [`land/skin/skinhead.h`](./skin/skinhead.h) (values vary by platform / product):
+Documentation uses **angle-bracket placeholders** instead of fixed paths. They correspond to **platform build macros** (values vary by platform / product); the table below lists the usual macro names:
 
 | Symbol | Typical meaning | C macro (reference) |
 |--------|-----------------|---------------------|
@@ -362,11 +362,11 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
     ```
 
 
-+ `install[ FPK file [,...] ]` **install FPK package(s) to the system**
-    - FPK file ----------- [ string ], FPK file
-    - ... ---------------- [ string ], install multiple FPK files
++ `install[ path [,...] ]` **install FPK archive(s) or expanded project directory(ies)**
+    - path --------------- [ string ], each argument may be a **`.fpk` / tarball** (extracted under `/tmp` first) or a **directory** that already contains **`prj.json`**
+    - ... ---------------- [ string ], install multiple paths in one call
     - failed return tfalse
-    - succeed return ttrue
+    - succeed return ttrue (behavior described above: directory or archive)
 
     Example, install the `wui` project FPK to the system
     ```shell
@@ -396,9 +396,68 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
     15
     ```
 
-+ `wui_menu` **get the Web UI menu structure**
++ `project_add[ name, [intro] ]` **create a minimal writable project** (under **`PROJECT_APP_DIR`**, same tree **`install`** uses)
+    - **name** ----------- [ string ], directory / `prj.json` → `name` (required)
+    - **intro** ---------- [ string ], optional; written into **`prj.json`**
+    - failed return **NULL** (**EINVAL** if name missing)
+    - succeed return JSON (includes **`path`** to the new project directory, default **`version`**, **`author`** set to **`land@fpk`**)
+
++ `project_delete[ name ]` **delete a project directory**
+    - **name** ----------- [ string ], project name whose path is resolved by **`project_path`**
+    - failed return **tfalse**
+    - succeed return **ttrue** (runs **`rm -fr`** on that directory)
+
++ `project_check[ name ]` **validate that a project exists and passes internal checks**
+    - **name** ----------- [ string ]
+    - failed return **tfalse**
+    - succeed return **ttrue** when the project passes **`project_check`**
+
++ `project_pack[ name ]` **pack a writable project into a `.fpk` tarball**
+    - **name** ----------- [ string ], must resolve under **`PROJECT_APP_DIR`** (not under firmware **`PROJECT_DIR`** — otherwise **EPERM** / **NULL**)
+    - failed return **NULL**
+    - succeed return talk string path to **`⟨TMP⟩/name-⟨version⟩-⟨hardware⟩.fpk`** ( **`PROJECT_TMP_DIR`**, **`PROJECT_DEFAULT_VERSION`**, register **`hardware`**; archive is **`tar zcf`** of project contents)
+
++ `com_add[ prj, name, [intro] ]` **add a shell-backed component stub to a project**
+    - **prj** ------------ [ string ], project name (path via **`project_path`**)
+    - **name** ----------- [ string ], component short name; runtime object is **`prj`⟨@⟩`name`** (see **`PROJECT_OBJECT_GAPC`**)
+    - **intro** ---------- [ string ], optional description stored under **`prj.json` → `com`**
+    - copies template **`comshell`** into the project, updates **`prj.json`**, then calls **`com_register( prj@name, path_to_comshell, 0 )`** — second-argument semantics match **`land@component.register`** / **`com_register(..., 0)`** (**`COM_COM`** map lookup for **`type` 0**)
+    - failed return **NULL**
+    - succeed return talk string: project directory path
+
++ `wui_add[ prj, name, menu ]` **add a Web UI menu entry and scaffold files**
+    - **prj** ------------ [ string ], project name
+    - **name** ----------- [ string ], key under **`prj.json` → `wui`**
+    - **menu** ----------- [ string ], English menu label (stored in **`en`**)
+    - creates **`name.html`** from template, **`name-cn.json`** / **`name-en.json`**, updates **`prj.json`**
+    - failed return **NULL**
+    - succeed return JSON for the new **`wui`** entry (paths filled to absolute files)
+
++ `obj_add[ prj, object, origin ]` **add a dynamic object mapping and register it**
+    - **prj** ------------ [ string ], project name
+    - **object** --------- [ string ], object name ( **`prj.json` → `obj`** key)
+    - **origin** --------- [ string ], backing component catalog name ( **`obj`** value), used to build **`land@component.register`** second argument as **`prj`⟨@⟩`origin`**
+    - updates **`prj.json`**, then **`land@component.register[ object, prj@origin ]`**
+    - failed return **tfalse**
+    - succeed return **ttrue**
+
++ `init_add[ prj, level, call ]` **append an init slot and register it at runtime**
+    - **prj** / **level** / **call** --- [ string ]; **`level`** is the key under **`prj.json` → `init`**, **`call`** is the method string (e.g. **`arch@ethernet.setup`**)
+    - updates **`prj.json`**, then **`land@init.register[ level, call ]`**
+    - failed return **tfalse**, succeed **ttrue**
+
++ `uninit_add[ prj, level, call ]` **append an uninit slot and register it**
+    - same shape as **`init_add`**, for **`prj.json` → `uninit`** and **`land@uninit.register`**
+
++ `joint_add[ prj, level, call ]` **append a joint slot and register it**
+    - same shape as **`init_add`**, for **`prj.json` → `joint`** and **`land@joint.register`** ( **`level`** is the event key)
+
++ `wui_menu[ [type] ]` **get the Web UI menu structure**
+    - **type** ----------- [ string ], optional; names the **`prj.json`** top-level object to scan (default **`wui`**). Use another key if your project stores pages there under a different section name.
+    - Skips projects whose name maps to **`disable`** in the **`project`** object under the platform **custom** component (object name varies by product; often **`arch@custom`**).
+    - For each menu item: may require existing config (**`config`** / **`attr`**) or a live **`object`**/**`api`** (**`com_have`**); entries that fail those checks are omitted.
     - failed return NULL
-    - return JSON describing the Web UI menu structure
+    - return JSON describing the Web UI menu structure (**`page`** / **`lang`** paths rewritten to absolute paths)
 
     Example, get the Web UI menu
     ```shell

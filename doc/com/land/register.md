@@ -52,7 +52,7 @@ The **saved configuration object** for `land@register` (query/set via `land@regi
     - object ----------- [ string ], omit to use default object (same as one-argument form)
     - register name ----------- [ string ]
     - none or failed return NULL     
-    - return string to describes  
+    - return talk value produced by **`number2x`** (integer channel; shell traces usually show a decimal number)
 
     Example, show the tid of ifname@wan object
     ```shell
@@ -64,7 +64,7 @@ The **saved configuration object** for `land@register` (query/set via `land@regi
     - object ----------- [ string ], omit to use default object
     - register name ----------- [ string ]
     - none or failed return NULL     
-    - return string to describes  
+    - return **`true`** / **`false`** talk strings via **`string2x`**
 
     Example, show the keeplive of ifname@wan object
     ```shell
@@ -76,7 +76,7 @@ The **saved configuration object** for `land@register` (query/set via `land@regi
     - object ----------- [ string ], omit to use default object
     - register name ----------- [ string ]
     - none or failed return NULL     
-    - return string to describes  
+    - return talk string via **`string2x`**, or **NULL** when the slot is unset / error
 
     Example, show the mode register of ifname@wan object 
     ```shell

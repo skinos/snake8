@@ -221,9 +221,7 @@ ttrue
     - It registers all startup tasks from configuration and sets up remote logging if configured
     - Not intended for manual invocation
 
-+ `shut[]` **shutdown the init component**, *succeed return ttrue, failed return tfalse, error return terror*
-    - This is a lifecycle method called automatically by the system during shutdown
-    - Not intended for manual invocation
+**Note:** The land **`init`** component shares the same **`land@init`** implementation as **`joint`** / **`uninit`** and does not export **`shut[]`**; only **`land@syslog`** provides **`_shut`** in this tree.
 
 ### C Code Example
 

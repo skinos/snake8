@@ -1,14 +1,12 @@
 # `prj.json` — Skinos 项目清单
 
-英文版本：[`prj.json.md`](./prj.json.md)。
-
 本文档描述了**项目信息文件 `prj.json`**：字段、语义、打包布局和运行时行为。有关 **FPK 产品模型**和 **`land@fpk` API**，请参阅 [`fpk.cn.md`](./fpk.cn.md)。
 
 ---
 
 ## 1. 在系统中的角色
 
-- 每个 **Skinos 项目目录**（通常是 SDK 中的 `project/<name>/`）必须包含一个 **`prj.json`**（`skin/project.h` 中的 `PROJECT_INFOFILE`）。
+- 每个 **Skinos 项目目录**（通常是 SDK 中的 `project/<name>/`）必须包含一个 **`prj.json`**（标准清单文件名，在 C 侧常量为 **`PROJECT_INFOFILE`**）。
 - 当项目构建为 **`.fpk`** 时，`prj.json` 会包含在包中。安装后，系统使用它来了解**项目名称、版本、库、可执行文件、组件、资源**，以及为**启动、关闭和 joint 事件**运行哪些**组件 API**。
 - 将 `prj.json` 视为**机器可读的清单**：面向人类的元数据加上用于**构建/打包/注册/调度**的数据。
 
@@ -17,8 +15,8 @@
 ## 2. 如何快速阅读此文件
 
 1. **顶级字符串**（`name`、`intro`、`desc`、`type`、`version`、`author`）标识项目和权限类别。
-2. **`lib` / `exe` / `cmd` / `com` / `osc` / `ko` / `res`**：键通常是项目下的**源代码子目录**；值是**简短描述**。每个键**声明**该工件类别存在。
-3. **`obj`**：将**公共对象名称**映射到 **`com` 目录名称**（别名、多实例）。
+2. **`lib` / `exe` / `cmd` / `com` / `osc` / `ko` / `res`**：键通常是项目下的**源代码子目录**；值是**简短描述**。每个键**声明**该工件类别存在。运行时，**`land@fpk.register`** 仅从 `prj.json` 读取 **`com`**、**`exe`**、**`obj`**、**`init`**、**`uninit`**、**`joint`** 以及必填的 **`name`**。**`lib` / `cmd` / `osc` / `ko` / `res`** 用于**构建/打包/磁盘布局**（例如 **`lib/`**、**`bin/`** 树）；注册流程**不会**把这些段当作 JSON 键去遍历。
+3. **`obj`**：将**公共对象名**映射到**组件键**。若值中含 **`@`**，则直接交给 **`com_register(object, value, 0)`**；否则展开为 **`⟨prj.name⟩@⟨值⟩`**，分隔符与 HE 对象名一致。
 4. **`init` / `uninit` / `joint`**：**嵌套**映射 — 启动级别/关闭级别/事件名称 → 内部键是 **`project@component.method`**（HE 风格），值是描述（通常是 `""`）。
 5. **`wui`**：可选的 Web UI 菜单 + 页面 + 语言注册。
 
@@ -59,12 +57,10 @@
 
 ## 5. `obj`：组件实例和别名
 
-形状：`"object-name": "component-directory-name"`。
+形状：`"公共对象 id": "组件子目录名或带 @ 的 origin 键"`。
 
-- **值**始终引用 **`com`** 键（哪个目录实现逻辑）。
-- **键**可以是：
-  - **短服务名称**（经典的 `tui` 风格示例）：例如 `"telnetd": "telnet"` 意味着通过该别名调用 **`tui@telnet`**，或
-  - **完整对象 id**，如 `land@joint` 映射到组件目录 `init`。
+- **值**要么是 **`com`** 下的子目录名（注册时展开为 **`project@子目录`** 再 **`com_register`**），要么是已带 **`@`** 的**完整路径**（作为 **`type` 0** 的 **`COM_COM`** 查找键原样使用）。
+- **键**为对外对象名（例如 **`tui@telnet`**、**`land@joint`**，或产品定义的短别名）。
 
 用于**多个逻辑对象共享一个组件**（例如 `ifname@lan` / `ifname@lan2`）或与目录名称不同的**稳定公共名称**。
 
@@ -101,10 +97,12 @@
 | `page` | HTML 文件名（在项目下，按打包）。 |
 | `lang` | 将语言环境键（`cn`、`en`、...）映射到该页面的 **JSON 语言文件**路径的对象。 |
 | `config` | 如果设置，当此**组件配置对象**存在时显示菜单条目（例如 `tui@telnet`）。 |
-| `object` | 当 `config` 为 null 时，可以通过此对象字符串将可见性绑定到**组件存在性**。 |
+| `object` | 未设置 `config` 时，**`land@fpk.wui_menu`** 可能要求该对象（及可选 **`api`**）通过 **`com_have`** 检测后才列出菜单项。 |
+| `api` | 可选；与 **`object`** 配对，供 **`com_have(object, api)`** 检测，通过后才由 **`land@fpk.wui_menu`** 列出。 |
+| `mode` | 可选对象：**键**为**工作模式**标识，须与运行时默认对象寄存器 **`network_mode`** 的字符串一致（产品侧通常与 **`land@machine` → `mode`** 同步，如 `ap`、`gateway`、`mix`）。**值**为字符串；当**当前模式**对应键的值为 **`"disable"`** 时，该 **`wui`** 页面不会出现在 **`land@fpk.wui_menu`** 结果中。不写 **`mode`**、不写当前模式对应的键、或值不是 **`"disable"`** 时，不因本字段隐藏（仍受 **`config` / `object` / `attr`** 约束）。**全局条件：** 若 **`network_mode`** 未设置或为空，**`wui_menu`** 对整个菜单返回 **NULL**。 |
 | `attr` | 当 `config` 非 null 时，用于更细粒度可见性规则的可选**属性路径**。 |
 
-示例：`tmptools/prj.json`（`testcom`）和 **§15**（`tui` 摘录）。
+见 **§15** 的组合示例；键名需与 SDK 中真实子目录一致。
 
 ---
 
@@ -116,8 +114,8 @@
 
 ## 11. 验证和工具
 
-- **`project_check`**（`skin/project.h`）可以验证项目 JSON。
-- 辅助二进制文件可能位于 **`cmd`** 下（例如 `tmptools` → `prj`）。
+- **`project_check`**：检查项目目录存在、**`prj.json`** 可解析为 JSON，且目录下**文件名**含 **`.json`** 或 **`.cfg`** 的每个文件也必须能解析为 JSON（同伴文件不合法则整体失败）。
+- 辅助工具可放在 **`cmd`** 各键对应的目录中；具体以 SDK 为准。
 
 ---
 
@@ -125,7 +123,7 @@
 
 **符号说明：** **`prj.json:section`** 表示"该 JSON 对象下的每个**键**"：例如 `prj.json:cmd` 为每个键构建一个命令（`he`、`daemon`、...）。**`FPK:/`** 是 **`.fpk` 归档的根目录**。
 
-**设备上的路径**使用与 **[`fpk.cn.md`](./fpk.cn.md)** 相同的**符号**（*运行时安装路径*）：**`⟨PRJ_ROOT⟩`**（[`skin/skinhead.h`](./skin/skinhead.h) 中的 C 宏 **`PROJECT_DIR`**）、**`⟨PRJ_NAME⟩`**（已安装项目 = `prj.json` → `name`）、**`⟨LIB_DIR⟩`** / **`⟨BIN_DIR⟩`**（**`PROJECT_LIB_DIR`** / **`PROJECT_BIN_DIR`**）、**`⟨SYS_ROOT⟩`**（合并树的运行系统根目录）。每个项目的安装前缀：**`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**。
+**设备上的路径**使用与 **[`fpk.cn.md`](./fpk.cn.md)** 相同的**符号**（*运行时安装路径*）：**`⟨PRJ_ROOT⟩`**（一般为已安装项目根宏 **`PROJECT_DIR`**）、**`⟨PRJ_NAME⟩`**（已安装项目 = `prj.json` → `name`）、**`⟨LIB_DIR⟩`** / **`⟨BIN_DIR⟩`**（**`PROJECT_LIB_DIR`** / **`PROJECT_BIN_DIR`**）、**`⟨SYS_ROOT⟩`**（合并树的运行系统根目录）。每个项目的安装前缀：**`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**。
 
 **流程：** (1) 在由 `prj.json` 键命名的子目录中**编译**源代码 → (2) 将输出和松散文件**打包**成 **FPK** → (3) **安装**到 **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** 下，并将 `install/*` 复制到 **SDK `INSTALL/`** 树中。
 
@@ -205,13 +203,15 @@
 | `*.ko` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
 | 打包的 **`res`** 内容 | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
 
-### 13.3 FPK 内的可选树 → 系统根目录
+### 13.3 FPK / 项目树中的可选目录 → 系统路径（**`land@fpk.register`**）
 
-| FPK 中 | 设备上 | 状态 |
-|--------|-----------|--------|
-| `etc/*` | `⟨SYS_ROOT⟩/etc/` | 典型安装程序中**[未实现]** |
-| `internal/*` | `⟨SYS_ROOT⟩/mnt/internal/` | 典型安装程序中**[未实现]**（路径可能因产品而异） |
-| `rootfs/*` | `⟨SYS_ROOT⟩/` | 合并到**系统根目录** |
+**`land@fpk.register`** 执行时，可在**目标文件尚不存在**时**复制**下列内容：
+
+| 项目 / FPK 中的树 | 典型目标（平台宏） | 说明 |
+|------------------------|-----------------------------------------------|--------|
+| `etc/*`（**`FPK_ETC_DIR`**，即 `etc/`） | **`PROJECT_ETC_DIR`**（常为 `/etc`） | 目标路径尚不存在时再复制 |
+| `internal/*`（**`FPK_INT_DIR`**，即 `internal/`） | **`PROJECT_INT_DIR`**（在 **`PROJECT_MNT_DIR`** 下，因产品而异） | 同上 |
+| `rootfs/*` | **`⟨SYS_ROOT⟩/`** | **`land`** 的 FPK 注册流程**不处理**；若 SDK 生成该树，一般由**产品安装/合并流程**消费（见 §12.3） |
 
 ### 13.4 FPK 根目录的松散文件 → 每个项目前缀
 
@@ -230,9 +230,9 @@
 
 ---
 
-## 14. 示例摘录 — `land` 项目
+## 14. 示例 — `land` 项目（本仓库）
 
-来自此仓库的 `land/prj.json`：
+当前 `land/prj.json`（内容与仓库一致，仅整理格式）：
 
 ```json
 {
@@ -245,18 +245,36 @@
     "lib": {
         "skin": "skinos core library"
     },
+    "cmd": {
+        "he": "tools for call all component",
+        "daemon": "service daemon management",
+        "eline": "tools for terminal line to execute the he command"
+    },
     "com": {
         "fpk": "fpk management",
-        "init": "init/uninit/joint management"
-    },
-    "cmd": {
-        "he": "tools for call all component"
+        "init": "init/uninit/joint management",
+        "component": "component management",
+        "register": "register variables",
+        "syslog": "system log management",
+        "service": "service management",
+        "machine": "system basic information management",
+        "auth": "authentication management"
     },
     "obj": {
         "land@uninit": "init",
-        "land@joint": "init"
+        "land@joint": "init",
+        "com": "component",
+        "reg": "register",
+        "log": "syslog",
+        "serv": "service",
+        "fpk": "fpk",
+        "machine": "machine",
+        "auth": "auth"
     },
     "init": {
+        "arch": {
+            "land@syslog.setup": ""
+        },
         "land": {
             "land@auth.setup": "",
             "land@joint.setup": "",
@@ -266,6 +284,9 @@
     },
     "joint": {
         "storage/insert": {
+            "land@syslog.setup": ""
+        },
+        "storage/remove": {
             "land@syslog.setup": ""
         }
     }
@@ -328,8 +349,7 @@
 | [`init.cn.md`](./init.cn.md)、[`uninit.cn.md`](./uninit.cn.md)、[`joint.cn.md`](./joint.cn.md) | 生命周期注册 |
 | [`component.cn.md`](./component.cn.md) | 组件 |
 | [`he.cn.md`](./he.cn.md) | HE 语法 |
-| [`README.cn.md`](./README.cn.md) | land 文档索引 |
 
 ---
 
-**总结：** **`prj.json`** = 项目标识 + **哪些目录变成 lib/com/cmd/exe/...** + **`obj` 别名** + **何时调用 `project@component.method`** + 可选的 **`wui`**。**§12–§13** 将 JSON 连接到 **FPK** 布局和**设备上路径** **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**（`skinhead.h` 中的宏；参见 **`fpk.cn.md`**）。
+**总结：** **`prj.json`** = 项目标识 + **哪些目录变成 lib/com/cmd/exe/...** + **`obj` 别名** + **何时调用 `project@component.method`** + 可选的 **`wui`**。**§12–§13** 将 JSON 连接到 **FPK** 布局和**设备上路径** **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**（符号与宏对照见 **`fpk.cn.md`** 中**运行时安装路径**）。

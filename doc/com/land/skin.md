@@ -6,7 +6,7 @@
 
 **libskin** is the platform library behind Skinos components: communication, configuration, logging, services, and related facilities.
 
-**Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to `skin/skin.h`. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
+**Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to the umbrella header. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
 
 ---
 
@@ -349,7 +349,7 @@ int talk_print(talk_t json);
 
 ### 2.6 Sample program (every `talk.h` function)
 
-The program below is **educational** (not minimal production code). It calls **every function** declared in `talk.h` at least once. **`talk.h` macros** (`JSON_PATCH_OP`, `JSON_STRING_PREFIX`, `ttrue`, …) are not functions; this sample uses **`JSON_PATCH_OP`** in a comment and builds patch mode via `json_set_string(..., ".", ...)` as in `talk.c`.
+The program below is **educational** (not minimal production code). It calls **every function** declared in `talk.h` at least once. **`talk.h` macros** (`JSON_PATCH_OP`, `JSON_STRING_PREFIX`, `ttrue`, …) are not functions; this sample uses **`JSON_PATCH_OP`** in a comment and builds patch mode via `json_set_string(..., ".", ...)` as in the library implementation.
 
 **Build:** compile and link against libskin (same as other examples), e.g. `#include "skin.h"` so `boole` and `memory_exit` paths resolve.
 
@@ -1082,7 +1082,7 @@ param_free(p);
 
 ### 5.6 Shell invocation context (`com.h`)
 
-When a **`COM_FILE_EXECUTE`** component runs as a **child of the shell RPC path**, it reads context from the environment (set by **`execute_ccall`** in `com.c`):
+When a **`COM_FILE_EXECUTE`** component runs as a **child of the shell RPC path**, it reads context from the environment (set by the loader’s **`execute_ccall`** when spawning the child):
 
 #### execute_object / execute_param / execute_api / execute_pipe
 ```c
@@ -1750,7 +1750,7 @@ static void demo_register_all(void)
 
 ### 9.0 Summary
 
-`log.h` defines **severity levels**, **output options**, and **subsystem type/subtype** constants that are packed into a single **`unsigned int flags`** passed to **`landlog()`**. The runtime (`log.c`) splits `flags` into level, options, type, and subtype, then filters against **`register`** keys such as **`log_mask`** / **`log_options`** before formatting and writing (TUI, syslog, file, etc.).
+`log.h` defines **severity levels**, **output options**, and **subsystem type/subtype** constants that are packed into a single **`unsigned int flags`** passed to **`landlog()`**. The runtime splits `flags` into level, options, type, and subtype, then filters against **`register`** keys such as **`log_mask`** / **`log_options`** before formatting and writing (TUI, syslog, file, etc.).
 
 | Entry point | Role |
 |-------------|------|
@@ -1802,7 +1802,7 @@ Names in this table are **type / subsystem identifiers** (`LANDLOG_LAND`, `LANDL
 
 ### 9.3.1 Composing `flags` for `landlog()`
 
-`landlog()` treats `flags` as a bit layout (`log.c`):
+`landlog()` treats `flags` as a bit layout in the implementation:
 
 | Field | Bits (conceptually) | Macros |
 |-------|---------------------|--------|
@@ -2263,7 +2263,7 @@ int rc = line_he_command("land@machine.version");
 
 ### 12.4 Sample program (every `he2com.h` function)
 
-The **`HE_*`** symbols are **integer constants** (see §12.1); the first line forces them to appear in the snippet. **`json2he()`** expects at least **`"obj"`**; for a call shape, add **`"op"`** with the method name (see `he2com.c`).
+The **`HE_*`** symbols are **integer constants** (see §12.1); the first line forces them to appear in the snippet. **`json2he()`** expects at least **`"obj"`**; for a call shape, add **`"op"`** with the method name (see **`he2com.h`** / HE JSON shape).
 
 ```c
 #include "skin.h"
@@ -2419,7 +2419,7 @@ void char2char(char *src, char a, char b);
 void low2upp(char *str);
 void upp2low(char *str);
 ```
-**Description:** **`char2char`** replaces every **`a`** with **`b`** in-place in **`src`** (NUL-terminated). **`low2upp`** / **`upp2low`** convert the **entire** string in place using **`toupper` / `tolower`** on **`(unsigned char)`** bytes. **`NULL` `src` / `str`** → **`EINVAL`** and no-op (see `util_encode.c`).
+**Description:** **`char2char`** replaces every **`a`** with **`b`** in-place in **`src`** (NUL-terminated). **`low2upp`** / **`upp2low`** convert the **entire** string in place using **`toupper` / `tolower`** on **`(unsigned char)`** bytes. **`NULL` `src` / `str`** → **`EINVAL`** and no-op (as documented for the encoding helpers).
 
 ### 14.2 Encoding/Decoding
 
@@ -2443,7 +2443,7 @@ int url_decode(char *str, int len);
 char *simple_encode(const char *message, const char *tok);
 char *simple_decode(const char *message, const char *tok);
 ```
-**Description:** **AES-128-CBC** (key/IV derived from **`tok`** and fixed salt in the implementation), then **Base64** for the wire form — not XOR. On failure returns **`NULL`** with **`errno`** set (**`EINVAL`**, **`ENOMEM`**, etc. per `util_encode.c`).
+**Description:** **AES-128-CBC** (key/IV derived from **`tok`** and fixed salt in the implementation), then **Base64** for the wire form — not XOR. On failure returns **`NULL`** with **`errno`** set (**`EINVAL`**, **`ENOMEM`**, etc., per the encoding helpers).
 
 #### string2hex / hex2string / hex2printf
 ```c
@@ -3309,7 +3309,7 @@ gcc -o myapp myapp.c \
 
 ## 20. Related Documents
 
-- `skin/com.h`, `skin/talk.h`, … — source of truth for prototypes and Doxygen-style comments
+- Public headers under the Skin library — source of truth for prototypes and Doxygen-style comments
 - `skin.h` — umbrella include
 - `skinhead.h` — constants and component name macros
 - `skinapi.h` — convenience macros (`scalls`, `machine_*`, …)

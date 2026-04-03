@@ -6,7 +6,7 @@
 
 **libskin** 是 Skinos 组件背后的平台库：通信、配置、日志记录、服务和相关设施。
 
-**主头文件：** `#include "skin.h"` 按依赖顺序引入 `stdhead.h`（标准 C/POSIX 包含）、`skinhead.h`（类型、限制、`*_COM` 常量）和 `skinapi.h`（如 `scalls`、`machine_config` 等快捷方式）。这与磁盘上 `skin/skin.h` 旁边的布局一致。如需更小的编译面，你可以只包含所需的头文件（例如 `talk.h` + `com.h`）；其他 Markdown 中的示例默认使用完整的 `skin.h` 入口点，除非另有说明。
+**主头文件：** `#include "skin.h"` 按依赖顺序引入 `stdhead.h`（标准 C/POSIX 包含）、`skinhead.h`（类型、限制、`*_COM` 常量）和 `skinapi.h`（如 `scalls`、`machine_config` 等快捷方式）。这与磁盘上伞形头文件旁边的布局一致。如需更小的编译面，你可以只包含所需的头文件（例如 `talk.h` + `com.h`）；其他 Markdown 中的示例默认使用完整的 `skin.h` 入口点，除非另有说明。
 
 ---
 
@@ -349,7 +349,7 @@ int talk_print(talk_t json);
 
 ### 2.6 示例程序（每个 `talk.h` 函数）
 
-以下程序是**教学性**的（不是最小生产代码）。它至少调用一次 `talk.h` 中声明的**每个函数**。**`talk.h` 宏**（`JSON_PATCH_OP`、`JSON_STRING_PREFIX`、`ttrue`、...）不是函数；此示例在注释中使用了 **`JSON_PATCH_OP`**，并通过 `json_set_string(..., ".", ...)` 构建补丁模式，如 `talk.c` 中所示。
+以下程序是**教学性**的（不是最小生产代码）。它至少调用一次 `talk.h` 中声明的**每个函数**。**`talk.h` 宏**（`JSON_PATCH_OP`、`JSON_STRING_PREFIX`、`ttrue`、...）不是函数；此示例在注释中使用了 **`JSON_PATCH_OP`**，并通过 `json_set_string(..., ".", ...)` 构建补丁模式，与库实现一致。
 
 **构建：** 编译并链接 libskin（与其他示例相同），例如 `#include "skin.h"` 以便解析 `boole` 和 `memory_exit` 路径。
 
@@ -1063,7 +1063,7 @@ param_free(p);
 
 ### 5.6 Shell 派生子进程上下文（`com.h`）
 
-当 **`COM_FILE_EXECUTE`** 组件作为 shell RPC 路径的**子进程**运行时，从环境变量读取上下文（由 `com.c` 中 **`execute_ccall`** 设置）：
+当 **`COM_FILE_EXECUTE`** 组件作为 shell RPC 路径的**子进程**运行时，从环境变量读取上下文（由加载器在派生子进程时通过 **`execute_ccall`** 设置）：
 
 #### execute_object / execute_param / execute_api / execute_pipe
 ```c
@@ -1731,7 +1731,7 @@ static void demo_register_all(void)
 
 ### 9.0 概要
 
-`log.h` 定义了**严重级别**、**输出选项**和**子系统类型/子类型**常量，它们被打包到单个 **`unsigned int flags`** 中传递给 **`landlog()`**。运行时（`log.c`）将 `flags` 拆分为级别、选项、类型和子类型，然后在格式化和写入（TUI、syslog、文件等）之前根据 **`register`** 键（如 **`log_mask`** / **`log_options`**）进行过滤。
+`log.h` 定义了**严重级别**、**输出选项**和**子系统类型/子类型**常量，它们被打包到单个 **`unsigned int flags`** 中传递给 **`landlog()`**。运行时将 `flags` 拆分为级别、选项、类型和子类型，然后在格式化和写入（TUI、syslog、文件等）之前根据 **`register`** 键（如 **`log_mask`** / **`log_options`**）进行过滤。
 
 | 入口点 | 作用 |
 |-------------|------|
@@ -1783,7 +1783,7 @@ static void demo_register_all(void)
 
 ### 9.3.1 为 `landlog()` 组合 `flags`
 
-`landlog()` 将 `flags` 视为位布局（`log.c`）：
+`landlog()` 将 `flags` 视为实现中的位布局：
 
 | 字段 | 位（概念上） | 宏 |
 |-------|---------------------|--------|
@@ -2244,7 +2244,7 @@ int rc = line_he_command("land@machine.version");
 
 ### 12.4 示例程序（每个 `he2com.h` 函数）
 
-**`HE_*`** 符号是**整数常量**（见 §12.1）；第一行强制它们出现在代码片段中。**`json2he()`** 至少需要 **`"obj"`**；对于调用形状，添加带有方法名的 **`"op"`**（见 `he2com.c`）。
+**`HE_*`** 符号是**整数常量**（见 §12.1）；第一行强制它们出现在代码片段中。**`json2he()`** 至少需要 **`"obj"`**；对于调用形状，添加带有方法名的 **`"op"`**（见 **`he2com.h`** / HE JSON 形态）。
 
 ```c
 #include "skin.h"
@@ -2400,7 +2400,7 @@ void char2char(char *src, char a, char b);
 void low2upp(char *str);
 void upp2low(char *str);
 ```
-**描述：** **`char2char`** 将 **`src`** 中所有 **`a`** 替换为 **`b`**（原地修改，NUL 结尾）。**`low2upp` / `upp2low`** 对整串逐字节使用 **`toupper` / `tolower`**，按 **`(unsigned char)`** 转换。**`NULL` 的 `src` / `str`** → **`EINVAL`** 且直接返回（见 **`util_encode.c`**）。
+**描述：** **`char2char`** 将 **`src`** 中所有 **`a`** 替换为 **`b`**（原地修改，NUL 结尾）。**`low2upp` / `upp2low`** 对整串逐字节使用 **`toupper` / `tolower`**，按 **`(unsigned char)`** 转换。**`NULL` 的 `src` / `str`** → **`EINVAL`** 且直接返回（与编码辅助函数文档一致）。
 
 ### 14.2 编码/解码
 
@@ -2424,7 +2424,7 @@ int url_decode(char *str, int len);
 char *simple_encode(const char *message, const char *tok);
 char *simple_decode(const char *message, const char *tok);
 ```
-**描述：** **AES-128-CBC**（密钥/IV 由 **`tok`** 与实现内固定盐派生），再经 **Base64** 封装 — **非** XOR。失败返回 **`NULL`**，**`errno`** 见 **`util_encode.c`**（**`EINVAL`**、**`ENOMEM`** 等）。
+**描述：** **AES-128-CBC**（密钥/IV 由 **`tok`** 与实现内固定盐派生），再经 **Base64** 封装 — **非** XOR。失败返回 **`NULL`**，**`errno`** 按编码辅助函数约定（**`EINVAL`**、**`ENOMEM`** 等）。
 
 #### string2hex / hex2string / hex2printf
 ```c
@@ -3281,7 +3281,7 @@ gcc -o myapp myapp.c \
 
 ## 20. 相关文档
 
-- `skin/com.h`、`skin/talk.h`、... — 原型和 Doxygen 风格注释的权威来源
+- Skin 库下的公共头文件 — 原型和 Doxygen 风格注释的权威来源
 - `skin.h` — 伞形包含
 - `skinhead.h` — 常量和组件名称宏
 - `skinapi.h` — 便捷宏（`scalls`、`machine_*`、...）

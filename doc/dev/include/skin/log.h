@@ -157,6 +157,15 @@
 /// UART
 #define LANDLOG_UART                (0x0a)
 #define LANDLOG_UART_DEFAULT        (0x00)
+#define LANDLOG_UART_TTY            (0x01)
+#define LANDLOG_UART_TTY2           (0x02)
+#define LANDLOG_UART_TTY3           (0x03)
+#define LANDLOG_UART_TTY4           (0x04)
+#define LANDLOG_UART_TTY5           (0x05)
+#define LANDLOG_UART_TTY6           (0x06)
+#define LANDLOG_UART_TTY7           (0x07)
+#define LANDLOG_UART_TTY8           (0x08)
+
 /// VPN
 #define LANDLOG_VPN                 (0x0b)
 #define LANDLOG_VPN_DEFAULT         (0x00)

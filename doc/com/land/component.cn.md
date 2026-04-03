@@ -26,6 +26,8 @@
     ttrue
     ```
 
+    **实现说明：** 该 API 调用 `com_register(object, origin, 0)`。当 **`type == 0`** 时，**`origin`** **不会**被当作裸文件路径，而是作为 **键** 在守护进程 **`COM_COM`** 寄存器映射中查找（`register_value_pointer`）。映射中须已有非空值（实际 `.com` 路径）；键不存在则注册失败并置 **`ENOENT`**。若要从磁盘上的具体文件注册，**`land@fpk`** 侧会以非零 **`type`** 调用 `com_register`。
+
 + `unregister[ object ]` **删除一个对象**
     - object ------------------ [ string ]
     - 失败返回 tfalse

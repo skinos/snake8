@@ -233,10 +233,7 @@ ttrue
     - It registers all joint event tasks from configuration and sets up remote logging if configured
     - Not intended for manual invocation
 
-+ `shut[]` **shutdown the joint component**, *succeed return ttrue, failed return tfalse, error return terror*
-    - This is a lifecycle method called automatically by the system during shutdown
-    - Not intended for manual invocation
-
+**Note:** The shared **`land@init`** implementation used by **`land@joint`** does not export **`shut[]`**.
 
 ### Joint Handlers
 

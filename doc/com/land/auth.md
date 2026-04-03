@@ -135,26 +135,15 @@ ttrue
 
 ### Component API
 
-+ `domain[ username ]` **list domain belongs of username**   
++ `domain[ username ]` **merge domain JSON from the user’s enabled groups**   
     - username ----------- [ string ]
-    - failed return NULL
-    - return json to list the daemon   
-    ```json
-    // Attributes introduction of json by the method return
-    {
-        "domain name":"domain state"   // [ string ]:[ "disable", "enable" ]
-        // "...":"..."                 // How many domain show how many properties
-    }    
-    ```
+    - failed return NULL (e.g. missing username)
+    - returns a JSON object (possibly empty `{}`). Implementation walks **`user/<username>/group`**: for each group whose value is **`enable`**, it loads **`group/<group>/domain`** from the saved config and **`json_patch`**es those objects together. The result is **not** a flat map of `"domain":"enable"` strings; its shape matches whatever you store under each group’s **`domain`** object.
 
-    Example, list all domain of username admin
+    Example (shape depends on your `group/*/domain` configuration)
     ```shell
     land@auth.domain[ admin ]
-    {
-        "admin":"enable",
-        "tui":"enable",
-        "nas":"enable"
-    }
+    { }
     ```
 
 + `check[ [domain], username, password ]` **check the username and password correct**   
@@ -237,10 +226,11 @@ ttrue
     ```
 
 
-+ `add[ [domain], username, password ]` **add a new username**   
-    - domain ----------- [ string ],  specify a specific domain, default is common
-    - username ----------- [ string ] 
-    - password ----------- [ string ] 
++ `add[ [domain], username, password [, group, ... ] ]` **add a new username**   
+    - domain ----------- [ string ], optional slot used when storing a domain-specific key (`user/<name>/domain/<domain>/key`)
+    - username ----------- [ string ] (required)
+    - password ----------- [ string ] (optional in the parser; if present it is stored via **`simple_encode`**)
+    - group ... -------- optional 4th, 5th, … parameters: each non-NULL name gets **`"enable"`** in the new user’s **`group`** map
     - failed return tfalse
     - succeed return ttrue
 
@@ -268,19 +258,19 @@ ttrue
     ttrue
     ```
 
-+ `list[ [group] ]` **list system username**   
-    - group ----------- [ string ]
++ `list[ [group] ]` **list users (optionally filter by group membership)**   
+    - group ----------- [ string ], optional; when set, only users with **`group/<group> == "enable"`** are included
     - failed return NULL
-    - return json to describes   
+    - returns JSON: per user, **`key`** (default password field) and a **`domain`** subtree (from **`json_cut_value`** on that user’s **`domain`** node), same style as stored in config (often **`simple_encode`**d strings).   
     ```json
-    // Attributes introduction of json by the method return
+    // Shape returned by implementation (illustrative)
     {
-        "user name":                 // [ string ]
+        "user name":
         {
-            "key":"username password"         // [ string ]
+            "key":"encoded-or-plain password string",
+            "domain": { "...": { "key":"..." } }
         }
-        // "...":{...}                  // How many username show how many properties
-    }    
+    }
     ```
 
     Example, list all admin group username
@@ -367,7 +357,7 @@ ttrue
 
 + `encode[ string, [key] ]` **simple encode a string**
     - string ----------- [ string ], the string to encode
-    - key -------------- [ string ], optional encryption key; if omitted, uses the system default key
+    - key -------------- [ string ], optional token passed; omitted / NULL uses the implementation default)
     - failed return NULL
     - return the encoded string
 
@@ -379,7 +369,7 @@ ttrue
 
 + `decode[ string, [key] ]` **simple decode a string**
     - string ----------- [ string ], the encoded string to decode
-    - key -------------- [ string ], optional decryption key; if omitted, uses the system default key
+    - key -------------- [ string ], optional token (must match **`encode`**)
     - failed return NULL
     - return the decoded string
 
@@ -394,7 +384,8 @@ ttrue
 
 + `setup[]` **initialize the auth component**, *succeed return ttrue, failed return tfalse, error return terror*
     - This is a lifecycle method called automatically by the system during startup
-    - It refreshes the authentication configuration and initializes user/group settings
+    - When register **`scope`** is **`wrt`** or **`platform`** is **`slave`**, **`setup`** returns **`ttrue`** without merging passwd/shadow (same guard applies to **`set`**: writes return **false** and do not run **`_refresh`**).
+    - Otherwise it runs **`_refresh`** to merge configured users/groups into system account files (e.g. **`/var/passwd`** and related files; exact set depends on the image).
     - Not intended for manual invocation
 
 
@@ -523,7 +514,7 @@ talk_t ret = scalls("land@auth", "change", "wui,admin,%s,newpass,admin2", cipher
 if (ret != ttrue) print_auth_call_error("change", ret);
 ```
 
-##### `add[ [domain], username, password ]`
+##### `add[ [domain], username, password [, group, ... ] ]`
 
 ```c
 talk_t ret = scalls("land@auth", "add", "wui,alice,alice_password");

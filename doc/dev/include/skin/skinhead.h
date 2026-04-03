@@ -319,15 +319,23 @@ typedef int boole;
 
 /// uart management project
 #define UART_PROJECT       "uart"
+/** uart frame component */
+#define UART_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"frame"
+#define TTY_COM         UART_PROJECT""PROJECT_OBJECT_GAPS"tty"
+#define TTY2_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty2"
+#define TTY3_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty3"
+#define TTY4_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty4"
+#define TTY5_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty5"
+#define TTY6_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty6"
+#define TTY7_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty7"
+#define TTY8_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"tty8"
+/// uart driver management component
+#define UARTDRV_PROJECT   "uartdrv"
+#define UARTDRV_ITEM      UARTDRV_PROJECT
+
 /// uart modbus driver management component
 #define MODBUSDRV_PROJECT  "modbusdrv"
 #define MODBUSDRV_ITEM     MODBUSDRV_PROJECT
-/** uart frame component */
-#define UART_COM           UART_PROJECT""PROJECT_OBJECT_GAPS"frame"
-#define SERIAL_COM         UART_PROJECT""PROJECT_OBJECT_GAPS"serial"
-#define SERIAL2_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"serial2"
-#define SERIAL3_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"serial3"
-#define SERIAL4_COM        UART_PROJECT""PROJECT_OBJECT_GAPS"serial4"
 
 /// i2c device management project
 #define I2CDRV_PROJECT     "i2cdrv"
