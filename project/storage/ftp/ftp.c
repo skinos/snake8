@@ -233,14 +233,14 @@ boole_t _service( obj_t this, param_t param )
 	            {
 	            	ptr = permission;
 	            }
-	            if ( 0 == strcmp( ptr, "all" ) )
+	            if ( ptr != NULL && 0 == strcmp( ptr, "all" ) )
 	            {
 	                strcat( writelist, user );
 	                strcat( writelist, " " );
 	                strcat( readlist, user );
 	                strcat( readlist, " " );
 	            }
-	            else if ( 0 == strcmp( ptr, "read" ) )
+	            else if ( ptr != NULL && 0 == strcmp( ptr, "read" ) )
 	            {
 	                strcat( readlist, user);
 	                strcat( readlist, " ");

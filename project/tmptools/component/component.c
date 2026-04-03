@@ -46,9 +46,11 @@
  */
 boole_t _setup( obj_t this, param_t param )
 {
-	(void)param;
-	app_info( "%s: _setup", COM_IDPATH );
-	printf( "%s: _setup\n", COM_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _setup", object );
+	printf( "%s: _setup\n", object );
 	return ttrue;
 }
 
@@ -58,9 +60,11 @@ boole_t _setup( obj_t this, param_t param )
  */
 boole_t _shut( obj_t this, param_t param )
 {
-	(void)param;
-	app_info( "%s: _shut", COM_IDPATH );
-	printf( "%s: _shut\n", COM_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _shut", object );
+	printf( "%s: _shut\n", object );
 	return ttrue;
 }
 
@@ -75,9 +79,11 @@ boole_t _shut( obj_t this, param_t param )
 talk_t _get( obj_t this, attr_t path )
 {
 	talk_t cfg;
+    const char *object;
 
+    object = obj_name( this );
 	cfg = config_get( this, path );
-	app_info( "%s: _get", COM_IDPATH );
+	app_info( "%s: _get", object );
 	return cfg;
 }
 
@@ -90,11 +96,13 @@ talk_t _get( obj_t this, attr_t path )
 boole _set( obj_t this, talk_t v, attr_t path )
 {
 	boole ret;
+    const char *object;
 
+    object = obj_name( this );
 	ret = config_set( this, v, path );
 	if ( ret == true )
 	{
-		app_info( "%s: _set saved, restarting (_shut → _setup)", COM_IDPATH );
+		app_info( "%s: _set saved, restarting (_shut → _setup)", object );
 		_shut( this, NULL );
 		_setup( this, NULL );
 	}
@@ -111,9 +119,10 @@ boole _set( obj_t this, talk_t v, attr_t path )
  */
 boole_t _service( obj_t this, param_t param )
 {
-	(void)this;
-	(void)param;
-	app_info( "%s: _service (blocked on pause() — replace with real work)", COM_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _service (blocked on pause() — replace with real work)", object );
 	pause();
 	return tfalse;
 }
@@ -131,13 +140,14 @@ boole_t _online( obj_t this, param_t param )
 	talk_t ms;
 	char *payload_txt;
 	const char *event;
+    const char *object;
 
-	(void)this;
+    object = obj_name( this );
 	event = param_string( param, 1 );
 	ms = param_talk( param, 2 );
 
 	payload_txt = json2string( ms );
-	app_info( "%s: joint event=%s payload=%s", COM_IDPATH,
+	app_info( "%s: joint event=%s payload=%s", object,
 			event != NULL ? event : "(null)",
 			payload_txt != NULL ? payload_txt : "(null)" );
 	if ( payload_txt != NULL )

@@ -2,4 +2,5 @@
 2. add the ipset manage
 3. add the iptables mark manage
 4. add the ip rule manage
+5. add the lock for all the component setup/shut
 

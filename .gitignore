@@ -5,6 +5,16 @@
 **/.vscode/
 
 /core/
+/project/agent/
+/project/client/
+/project/forward/
+/project/land/
+/project/modem/
+/project/network/
+/project/uart/
+/project/webs/
+/tools/fpktools/
+/project/wui/ace/arch
 /rice/
 /var/
 /shell/

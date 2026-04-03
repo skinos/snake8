@@ -5,7 +5,7 @@
  *
  * Difference from component/
  *   Built as a separate binary.  The framework starts it with execl and passes
- *   context through shell_object(), shell_api(), shell_param(), shell_pipe().
+ *   context through execute_object(), execute_api(), execute_param(), execute_pipe().
  *
  * Build provides
  *   PROJECT_ID, EXE_ID, EXE_IDPATH  (and often COM_ID / COM_IDPATH if shared)
@@ -40,9 +40,11 @@
  */
 boole_t _setup( obj_t this, param_t param )
 {
-	(void)param;
-	app_info( "%s: _setup", EXE_IDPATH );
-	printf( "%s: _setup\n", EXE_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _setup", object );
+	printf( "%s: _setup\n", object );
 	return ttrue;
 }
 
@@ -52,9 +54,11 @@ boole_t _setup( obj_t this, param_t param )
  */
 boole_t _shut( obj_t this, param_t param )
 {
-	(void)param;
-	app_info( "%s: _shut", EXE_IDPATH );
-	printf( "%s: _shut\n", EXE_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _shut", object );
+	printf( "%s: _shut\n", object );
 	return ttrue;
 }
 
@@ -64,9 +68,10 @@ boole_t _shut( obj_t this, param_t param )
  */
 boole_t _service( obj_t this, param_t param )
 {
-	(void)this;
-	(void)param;
-	app_info( "%s: _service (pause — replace with real daemon loop)", EXE_IDPATH );
+    const char *object;
+
+    object = obj_name( this );
+	app_info( "%s: _service (pause — replace with real daemon loop)", object );
 	pause();
 	return tfalse;
 }
@@ -81,12 +86,13 @@ boole_t _online( obj_t this, param_t param )
 	talk_t ms;
 	char *payload_txt;
 	const char *event;
+    const char *object;
 
-	(void)this;
+    object = obj_name( this );
 	event = param_string( param, 1 );
 	ms = param_talk( param, 2 );
 	payload_txt = json2string( ms );
-	app_info( "%s: _online event=%s payload=%s", EXE_IDPATH,
+	app_info( "%s: _online event=%s payload=%s", object,
 			event != NULL ? event : "(null)",
 			payload_txt != NULL ? payload_txt : "(null)" );
 	if ( payload_txt != NULL )

@@ -56,13 +56,13 @@
 
 ## `project/` 目录组织
 
-**`project/`** 下每个子目录代表一个**功能域**，同时包含**实现源码**（C 组件、库、守护进程）和**打包清单**（`prj.json`）。
+**`project/`** 下每个子目录代表一个**功能域**，同时包含**实现源码**（C 组件、库、守护进程）和**项目描述文件**（**`prj.json`**）。
 
 示例：`project/land`、`project/forward`、`project/network`、`project/webs`、`project/wifi`、`project/modem` 等。
 
 每个工程须至少包含：
 
-1. **`prj.json`** — 工程清单（字段说明见下文）  
+1. **`prj.json`** — **项目描述文件**（字段说明见下文）  
 2. **Makefile** — 与目标平台构建体系一致（本 SDK 中常见形态接近 OpenWrt）
 
 FPK 打包规则及安装路径约定见 [`doc/com/land/fpk.cn.md`](doc/com/land/fpk.cn.md)。

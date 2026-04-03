@@ -1363,11 +1363,12 @@ talk_t _state( obj_t this, param_t param )
 					{
 						if ( t <= 1 )
 						{
-							strcpy( path, "addr" );
+							strncpy( path, "addr", sizeof(path)-1 );
+							path[sizeof(path)-1] = '\0';
 						}
 						else
 						{
-							sprintf( path, "addr%d", t );
+							snprintf( path, sizeof(path), "addr%d", t );
 						}
 						end = strstr( host, "%" );
 						if ( end != NULL )

@@ -12,6 +12,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 # 包含Openwrt的一些有关包处理的函数
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/kernel.mk
 include $(gSKIN_MKFILE)
 # 生成项目通用定义
 $(eval $(call Package/Define))
