@@ -36,6 +36,12 @@
 /config/mtk3/dl/
 /config/mtk3/repo.config
 
+/swrt5/
+/config/swrt5/
+/wrt5/
+/config/wrt5/dl/
+/config/wrt5/repo.config
+
 /sopen/
 /config/sopen/
 /open/

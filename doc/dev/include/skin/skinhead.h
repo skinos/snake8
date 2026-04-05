@@ -332,6 +332,10 @@ typedef int boole;
 /// uart driver management component
 #define UARTDRV_PROJECT   "uartdrv"
 #define UARTDRV_ITEM      UARTDRV_PROJECT
+#define UARTDRV_DTU       UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"dtu"
+#define UARTDRV_TUI       UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"tui"
+#define UARTDRV_NMEA      UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"nmea"
+#define UARTDRV_MODBUS    UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"modbus"
 
 /// uart modbus driver management component
 #define MODBUSDRV_PROJECT  "modbusdrv"
