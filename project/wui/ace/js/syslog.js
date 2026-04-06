@@ -66,7 +66,7 @@ function load_syslog()
             count++;
         }
         // 表头设置为在线客户端的数量
-        $(syslogs_table).jqGrid( "setCaption", $.i18n('Log List') + ' (' + count + ')' );
+        $(syslogs_table).jqGrid( "setCaption", $.i18n('Log List') + '(' + count + ')' );
         // 记住滚动条的位置
         var scrollPos = jqtable.getScrollPos();
         // 给proejcts表格设置数据

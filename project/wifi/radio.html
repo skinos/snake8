@@ -292,6 +292,18 @@
           </div>
         </div>
       </div>
+
+      <!-- LDPC -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="LDPC"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="ldpc" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+
       <!-- STBC -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="STBC"></label>
@@ -364,12 +376,10 @@
     var sobj = object+"ssid";
     /* load the configure on the input */
 
-
-
-    
     function flash_channel( mode, country, channel, acs )
     {
         he.bkload( [ robj+".chlist["+mode+","+country+"]" ] ).then( function(v){
+
             if ( v[0] )
             {
                 $("#channel").empty();
@@ -464,6 +474,7 @@
         /* radio */
         $('#beacon').val( radio.beacon );
         $('#dtim').val( radio.dtim );
+        $('#ldpc').prop( 'checked', able2boole(radio.ldpc) );
         $('#stbc').prop( 'checked', able2boole(radio.stbc) );
         $('#shortgi').prop( 'checked', able2boole(radio.shortgi) );
         $('#country').val( radio.country||"db" );
@@ -576,6 +587,7 @@
       radio.channel = $('#channel').val();
       radio.beacon = $('#beacon').val();
       radio.dtim = $('#dtim').val();
+      radio.ldpc = boole2able( $('#ldpc').prop('checked') );
       radio.stbc = boole2able( $('#stbc').prop('checked') );
       radio.shortgi = boole2able( $('#shortgi').prop('checked') );
       if ( $('#txpower').val() )
@@ -601,6 +613,7 @@
           return;
       }
       page.confirm( { message: $.i18n('The wireless client will be disconneted because of the change of configuration') } ).then( function(result){
+        if (!result) return location.reload();
         if ( result )
         {
           he.exec( cmds ).then( function(){
@@ -610,7 +623,6 @@
         }
       });
     }
-
 
     /* init */
     page.password('wpa_key', 'wpa_key-icon' );

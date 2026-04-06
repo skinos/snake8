@@ -5,7 +5,7 @@
     <div class="form-horizontal" role="form">
 
 
-        <div class="form-group">
+        <div class="form-group" id="ap_client" style="display: none;">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="AP Client"></label>
           <div class="col-sm-9">
             <label>
@@ -15,7 +15,7 @@
           </div>
         </div>
 
-        <div id="sta_config">
+        <div id="sta_config" style="display: none;">
             <!-- 连接状态 -->
             <table class="table table-bordered table-striped">
             <tbody>
@@ -55,7 +55,8 @@
             <!-- 扫描 -->
             <div class="form-group">
                 <label class="col-sm-3 control-label no-padding-right" data-i18n="Scan"></label>
-                <div class="col-sm-9 form-right-text"><button class="btn btn-main btn-mini" id="apscan" data-i18n="Scan"></button></div>
+                <!-- <div class="col-sm-9 form-right-text"><button class="btn btn-main btn-mini" id="apscan" data-i18n="Scan"></button></div> -->
+                <div class="col-sm-9"><button class="btn btn-main" id="apscan" data-i18n="Scan" style="padding: 4px 12px; font-size: 12px;"></button></div>
             </div>
             <!-- 对端 -->
             <div class="form-group">
@@ -154,7 +155,7 @@
 
 
 
-      <div class="clearfix form-actions">
+      <div class="clearfix form-actions" id="button_ap" style="display: none;">
         <div class="col-md-offset-3 col-md-9">
           <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
           &nbsp; &nbsp; &nbsp;
@@ -231,6 +232,8 @@
         sta = v[0];
         chlist = v[1];
         securelist = v[2];
+        $("#button_ap").show();
+
         var selects = "";
         for ( var ch in chlist )
         {
@@ -249,6 +252,7 @@
         {
             if ( sta.status )
             {
+                $("#ap_client").show();
                 $('#status').prop( 'checked', able2boole(sta.status) );
             }
             else if ( sta.peer || sta.peermac )
@@ -472,10 +476,16 @@
           page.alert( { message: $.i18n('Settings unchanged') } );
           return;
       }
-      he.exec( cmds ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
-        cfg_load();
-      });
+      page.confirm( { message: $.i18n('The wireless client will be disconneted because of the change of configuration') } ).then( function(result){
+        if (!result) return location.reload();
+        if ( result )
+        {
+            he.exec( cmds ).then( function(){
+                page.hint2succeed( $.i18n('Modify successfully') );
+                cfg_load();
+            });
+        }
+     });
     }
     
 
@@ -503,9 +513,9 @@
                         }
                     },
                     { name: 'ssid', width: 180 },
-                    { name: 'channel', width: 50 },
+                    { name: 'channel', width: 70 },
                     {
-                        name: 'signal', width: 50,
+                        name: 'signal', width: 70,
                         formatter: function ( cellvalue, options, rowObject )
                         {
                             if ( cellvalue > 0 )
@@ -518,9 +528,9 @@
                             }
                         }
                     },
-                    { name: 'mac', width: 130 },
+                    { name: 'mac', width: 160 },
                     {
-                        name: 'secure', width: 130,
+                        name: 'secure', width: 190,
                         formatter: function ( cellvalue )
                         {
                             return '<span data-secure="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
@@ -531,7 +541,7 @@
                         }
                     },
                     {
-                        name: 'wpa_encrypt', width: 80,
+                        name: 'wpa_encrypt', width: 100,
                         formatter: function (cellvalue)
                         {
                             return '<span data-wpa_encrypt="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';

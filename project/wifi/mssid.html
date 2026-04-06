@@ -6,7 +6,7 @@
 
 
       <!-- 状态 -->
-      <div class="form-group">
+      <div class="form-group" id="second_ssid" style="display: none;">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Second SSID"></label>
         <div class="col-sm-9">
           <label>
@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <div id="ssid_cfg">
+      <div id="ssid_cfg" style="display: none;">
         <!-- 名称 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="SSID"></label>
@@ -104,7 +104,7 @@
 
 
       <!-- 状态 -->
-      <div class="form-group">
+      <div class="form-group" id="third_ssid" style="display: none;">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Third SSID"></label>
         <div class="col-sm-9">
           <label>
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <div id="ssid_cfg2">
+      <div id="ssid_cfg2" style="display: none;">
         <!-- 名称 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="SSID"></label>
@@ -199,7 +199,7 @@
 
 
 
-      <div class="clearfix form-actions">
+      <div class="clearfix form-actions" id="button_ssid" style="display: none;">
         <div class="col-md-offset-3 col-md-9">
           <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
           &nbsp; &nbsp; &nbsp;
@@ -243,7 +243,7 @@
         securelist = v[0];
         ssid = v[1];
         ssid2 = v[2];
-
+        $("#button_ssid").show();
         /* ssid */
         if ( securelist )
         {
@@ -255,6 +255,7 @@
         }
         if ( ssid )
         {
+            $("#second_ssid").show();
             $('#status').prop( 'checked', able2boole(ssid.status) );
             $('#ssid').val( ssid.ssid || '' );
             $('#secure').val( ssid.secure || 'disable' );
@@ -327,7 +328,7 @@
           }
         }).trigger('change');
         // ACL
-        var link = '#app?page='+base64.encode("/prj/wifi/acl.html");
+        var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
         link += '&object='+sobj;
         link += '&lang='+base64.encode(langjson);
         $('#acl').attr( "href", link );
@@ -343,6 +344,7 @@
         }
         if ( ssid2 )
         {
+            $("#third_ssid").show();
             $('#status2').prop( 'checked', able2boole(ssid2.status) );
             $('#ssid2').val( ssid2.ssid || '' );
             $('#secure2').val( ssid2.secure || 'disable' );
@@ -415,7 +417,7 @@
           }
         }).trigger('change');
         // ACL
-        var link = '#app?page='+base64.encode("/prj/wifi/acl.html");
+        var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
         link += '&object='+s2obj;
         link += '&lang='+base64.encode(langjson);
         $('#acl2').attr( "href", link );
@@ -491,7 +493,8 @@
       if ( restart == true )
       {
           page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
-              if ( result )
+            if (!result) return location.reload();  
+            if ( result )
               {
                   he.exec( cmds ).then( function(){
                       page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
@@ -501,7 +504,7 @@
                           }
                           else
                           {
-                              config_load();
+                              cfg_load();
                           }
                       });
                   });

@@ -4,8 +4,8 @@
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
-    <table id="clients-grid-table"></table>
-    <div id="clients-grid-pager"></div>
+    <table id="clients-grid-table-wifi"></table>
+    <div id="clients-grid-pager-wifi"></div>
 
     <div id="grid-controls" style="display: none;">
         <div style="display: flex; align-items: center">
@@ -28,6 +28,11 @@
 
 <!-- page specific plugin scripts -->
 <script type="text/javascript">
+window.wifi_client = window.wifi_client || {
+    timer: null,
+    currentObject: null
+};
+
   var knock_object = null;
   (function () {
     var timer;
@@ -42,13 +47,29 @@
     }
     knock_object = object;
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
-    var clients_table = '#clients-grid-table';
-    var clients_pager = '#clients-grid-pager';
+    var clients_table = '#clients-grid-table-wifi';
+    var clients_pager = '#clients-grid-pager-wifi';
+
+    if (window.wifi_client.timer) {
+        clearInterval(window.wifi_client.timer);
+        window.wifi_client.timer = null;
+    }
+    // 记录当前页面正在操作的对象
+    window.wifi_client.currentObject = object;
 
     /* load the table infomation */
     function load_clients()
     {
+        if ($(clients_table).length === 0) {
+            stopRefreshTimer();
+            return;
+        }
+
         he.bkload( [ object+".stalist", 'client@station.list' ] ).then( function(v){
+            if (window.wifi_client.currentObject !== object) {
+                return; 
+            }
+
             stalist = v[0];
             clients = v[1];
             // 合并
@@ -104,8 +125,10 @@
                     rows.push( row );
                 }
             }
+            if (window.wifi_client.currentObject !== object) return;
+
             // 表头设置为在线客户端的数量
-            $(clients_table).jqGrid( "setCaption", $.i18n('Online Number') + '(' + count + ')' );
+            $(clients_table).jqGrid( "setCaption", $.i18n('Online Number') + ' (' + count + ')' );
             // 记住滚动条的位置
             var scrollPos = jqtable.getScrollPos();
             // 获取当前分页状态
@@ -126,31 +149,29 @@
     }
 
     function startRefreshTimer() {
-        // 如果定时器已经在运行，先停止
-        if (timer) {
-            clearInterval(timer);
-        }
-        var currentPage = $(clients_table).jqGrid('getGridParam', 'page');
-        
-        timer = setInterval(function() {
-            
-            currentPage = $(clients_table).jqGrid('getGridParam', 'page');
-            
-            if (currentPage === 1) {
-                //console.log('在第一页，执行刷新');
-                load_clients();
+        stopRefreshTimer();
+
+        window.wifi_client.timer = setInterval(function() {  
+            // 检查：如果对象不匹配（页面已切），停止定时器
+            if (window.wifi_client.currentObject !== object || $(clients_table).length === 0) {
+                stopRefreshTimer();
+                return;
             }
+
+            var currentPage = $(clients_table).jqGrid('getGridParam', 'page');  
+            if (currentPage === 1) {  
+                load_clients();  
+            }  
         }, 1000);
         
         //console.log('定时器已启动');
     }
 
     function stopRefreshTimer() {
-        if (timer) {
-            clearInterval(timer);
-            timer = null;
-            //console.log('定时器已暂停');
-        }
+        if (window.wifi_client.timer) {  
+            clearInterval(window.wifi_client.timer);  
+            window.wifi_client.timer = null;  
+        }  
     }
 
     $.i18n().load( page.lang(langjson) ).then( function () {
@@ -179,7 +200,7 @@
                     }
                 }
             ],
-            pager: '#clients-grid-pager',
+            pager: '#clients-grid-pager-wifi',
             rowNum: 10,
             viewrecords: true,
 
@@ -291,6 +312,9 @@
 
       // 初始启动定时器
       startRefreshTimer();
+
+      //$(window).on('unload', stopRefreshTimer);
+
       /* 设置定时器 */
     //   timer = page.timing({
     //     refresh: function ()
@@ -309,7 +333,7 @@
   function knock_client(  rowId )
   {
     // 某个选中行的数据
-    var client = $('#clients-grid-table').jqGrid( 'getRowData', rowId );
+    var client = $('#clients-grid-table-wifi').jqGrid( 'getRowData', rowId );
     var mac = client.mac;
     // 执行唤醒
     he.exec( [ knock_object+".stabeat["+mac+"]" ], $.i18n("Waking up") ).then( function(v){
