@@ -348,6 +348,14 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 5 );
         return tfalse;
 	}
+	ret = scall( ifdev, "fun", NULL );
+	if ( ret != ttrue )
+	{
+		ifname_warn( obj, "%s wait the ifdev %s fun", object, ifdev );
+		sleep( 5 );
+        return tfalse;
+	}
+
     /* get the configure */
     cfg = config_get( this, NULL ); 
     if ( cfg == NULL )
