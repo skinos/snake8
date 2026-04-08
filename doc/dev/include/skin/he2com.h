@@ -47,6 +47,15 @@ typedef he_struct* he_t;
 
 
 /**
+ * @brief parse main argv/argv into he structure (format: "project@component:attr=value" or "project@component.method[param]")
+ * @param[in] argc main argc
+ * @param[in] argv main argv
+ * @return he structure pointer (must be freed with he_free)
+ * 		@retval pointer for succeed
+ *  	@retval NULL for failed, errno will be set
+ */
+he_t        argv2he( int argc, const char **argv );
+/**
  * @brief parse he command string into he structure (format: "project@component:attr=value" or "project@component.method[param]")
  * @param[in] string he command string (e.g., "land@machine:wan/ip=192.168.1.1" or "land@machine.status[eth0]")
  * @return he structure pointer (must be freed with he_free)

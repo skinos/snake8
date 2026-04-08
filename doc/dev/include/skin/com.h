@@ -71,20 +71,37 @@ typedef struct eapi_table_st
 #define MAIN2API( table ) \
 int main( int argc, const char **argv ) \
 { \
-	int exit_code; \
-	int pipe_fd; \
-	talk_t ret; \
+	he_t h; \
+	size_t i; \
 	obj_t this; \
+	talk_t ret; \
+	int pipe_fd; \
+	int exit_code; \
 	param_t param; \
 	const char *api; \
-	size_t i; \
-	(void)argc; \
-	(void)argv; \
+					\
+	h = NULL;	\
 	this = execute_object(); \
-	param = execute_param(); \
-	api = execute_api(); \
-	pipe_fd = execute_pipe(); \
-							  \
+	if ( this != NULL ) \
+	{ \
+		param = execute_param(); \
+		api = execute_api(); \
+		pipe_fd = execute_pipe(); \
+	} \
+	else \
+	{ \
+		h = argv2he( argc, argv );  \
+		if ( h == NULL ) \
+		{ \
+			perror( "parameter" ); \
+			return -1; \
+		} \
+		this = h->o; \
+		param = h->p; \
+		api = h->m; \
+		pipe_fd = STDOUT_FILENO; \
+	} \
+								\
 	ret = terror; \
 	if ( api != NULL && *api != '\0' ) \
 	{ \
@@ -101,35 +118,88 @@ int main( int argc, const char **argv ) \
 	{ \
 		ret = (talk_t)( (table)[0].fn( this, param ) ); \
 	} \
-	exit_code = EXIT_EFUNC; \
-	if ( ret > tpanic ) \
+	if ( h == NULL ) \
+	{ \
+		exit_code = EXIT_EFUNC; \
+		if ( ret > tpanic ) \
+		{ \
+			exit_code = 0; \
+		} \
+		if ( ret == ttrue ) \
+		{ \
+			exit_code = EXIT_ttrue; \
+		} \
+		else if ( ret == tfalse ) \
+		{ \
+			exit_code = EXIT_tfalse; \
+		} \
+		else if ( ret == tnull ) \
+		{ \
+			exit_code = EXIT_tnull; \
+		} \
+		else if ( ret == terror ) \
+		{ \
+			exit_code = EXIT_terror; \
+		} \
+		if ( pipe_fd > 0 ) \
+		{ \
+			talk2fd( pipe_fd, ret, errno ); \
+			close( pipe_fd ); \
+		} \
+		param_free( param ); \
+		obj_free( this ); \
+		talk_free( ret ); \
+	} \
+	else \
 	{ \
 		exit_code = 0; \
-	} \
-	if ( ret == ttrue ) \
-	{ \
-		exit_code = EXIT_ttrue; \
-	} \
-	else if ( ret == tfalse ) \
-	{ \
-		exit_code = EXIT_tfalse; \
-	} \
-	else if ( ret == tnull ) \
-	{ \
-		exit_code = EXIT_tnull; \
-	} \
-	else if ( ret == terror ) \
-	{ \
-		exit_code = EXIT_terror; \
-	} \
-	if ( pipe_fd > 0 ) \
-	{ \
-		talk2fd( pipe_fd, ret, errno ); \
-		close( pipe_fd ); \
-	} \
-	param_free( param ); \
-	obj_free( this ); \
-	talk_free( ret ); \
+		if ( ret > tpanic )      \
+		{                         \
+			talk_print( ret );   \
+			talk_free( ret );    \
+		}                         \
+		else if ( ret == ttrue )  \
+		{                           \
+			printf( ttrue_string"\n" );  \
+		}                          \
+		else if ( ret == tfalse )   \
+		{	\
+			if ( errno == 0 )	\
+			{	\
+				printf( tfalse_string"\n" );	\
+			}	\
+			else	\
+			{	\
+				printf( tfalse_string", %s\n", strerror( errno ) );	\
+			}	\
+			exit_code = -1; \
+		}	\
+		else if ( ret == terror )	\
+		{	\
+			if ( errno == 0 )	\
+			{	\
+				printf( terror_string"\n" );	\
+			}	\
+			else	\
+			{	\
+				printf( terror_string", %s\n", strerror( errno ) );	\
+			}	\
+			exit_code = -2; \
+		}	\
+		else if ( ret == tpanic )	\
+		{	\
+			if ( errno == 0 )	\
+			{	\
+				printf( tpanic_string"\n" );   \
+			}   \
+			else   \
+			{   \
+				printf( tpanic_string", %s\n", strerror( errno ) );   \
+			}      \
+			exit_code = -3; \
+		}                 \
+		he_free( h );     \
+	}                    \
 	return exit_code; \
 }
 

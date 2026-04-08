@@ -24,77 +24,140 @@ When **`drvcom`** is **`uartdrv@dtu`**, up to **nine** of each kind are loaded u
 ```json
 // Attributes introduction of json by the component configure
 {
-    "status":"enable",                                      // [ "enable", "disable" ], disable skips driver startup on setup
-    "convert":"disable",                                    // [ "disable", "enable" ], GPIO UART conversion via GPIO_COM
-    "devcom":"usb@tty-2-3",                                 // [ string ], UART device component that exposes ttydev
-    "ttydev":"/dev/ttyS1",                                  // [ string ], Linux serial device path when not using devcom
-    "drvcom":"uartdrv@dtu",                                 // [ string ], e.g. uartdrv@dtu, uartdrv@tui (see prj.json obj)
-    "extern":"disable",                                     // [ "disable", "default", "ifname@wan", ... ], top-level uart@tty.reset binding when drvcom is uartdrv@dtu path not used
-    "speed":"57600",                                        // [ "9600", "19200", ... ]
-    "flow":"disable",                                       // [ "disable", "hard", "soft" ]
-    "parity":"disable",                                     // [ "disable", "even", "odd" ]
-    "databit":"8",                                          // [ "5", "6", "7", "8" ]
-    "stopbit":"1",                                          // [ "1", "2" ]
-    "active":"disable",                                     // [ "disable", "enable", "idle", "timing" ], DTU UART periodic TX
-    "active_interval":"60",                                 // [ number ], seconds, with enable idle timing
-    "active_string":"414243",                               // [ hex string ], payload bytes as hex
-    "frame_maxsize":"0",                                    // [ number ], max frame bytes toward network (DTU)
-    "frame_interval":"0",                                   // [ number ], inter-byte timeout in ms (DTU)
+    "status":"tty function enable or disable",                      // [ "enable", "disable" ]
+    "convert":"hardeware function custom",                          // [ "disable", "enable" ]
+    "devcom":"uart device component",                               // [ string ], only use for other project provide the ttydev
+    "ttydev":"uart tty device",                                     // [ string ], Linux serial device path when not using devcom
+    "drvcom":"use the component for function",                      // [ string ], e.g. uartdrv@dtu, uartdrv@tui (see prj.json obj)
+    "extern":"reset when the extern online",                        // [ "disable", "default", "ifname@wan", ... ]
+                                                                        // "disable" for no reset when ifname online
+                                                                        // "default" for reset when the gateway online 
+                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+
+    "speed":"tty device speed",                                       // [ "9600", "19200", ... ]
+    "flow":"tty device flow type",                                    // [ "disable", "hard", "soft" ]
+    "parity":"tty device parity",                                     // [ "disable", "even", "odd" ]
+    "databit":"tty device data bit",                                  // [ "5", "6", "7", "8" ]
+    "stopbit":"tty device stop bit",                                  // [ "1", "2" ]
+
+    "active":"enable or disable send some data to tty device for active the tty",   // [ "disable", "enable", "idle", "timing" ]
+                                                                                        // "disable" for no active data
+                                                                                        // "enable" for send active data once
+                                                                                        // "idle" for send active data when idle interval
+                                                                                        // "timing" for send active data timer
+    "active_interval":"active data send interval",                                  // [ number ], seconds, with enable idle timing
+    "active_string":"active data be send",                                          // [ hex string ], payload bytes as hex
+
+    "frame_maxsize":"read a frame the max size data from uart",                     // [ number ], max frame bytes toward network (DTU)
+    "frame_interval":"interval bewteen frame from uart",                            // [ number ], inter-byte timeout in ms (DTU)
+
     "dtu":                                                  // present when drvcom is uartdrv@dtu
     {
         "client":                                           // TCP or UDP client slot 1
         {
-            "status":"enable",                              // [ "disable", "enable" ]
-            "extern":"disable",                               // [ "disable", "default", "ifname@wan", ... ], uartdrv@dtu.reset selection
-            "proto":"tcp",                                  // [ "tcp", "udp" ]
-            "server":"192.168.1.1",                         // [ string ], host or IPv4 literal
-            "port":"800",                                   // [ number ]
-            "login":"disable",                              // [ "disable", "hex", "ascii", "mac" ]
-            "login_string":"",                              // [ string ]
-            "keeplive":"disable",                           // [ "disable", "idle", "enable", "timing" ]
-            "keeplive_interval":"30",                       // [ number ], seconds
-            "keeplive_string":"",                           // [ hex string ]
-            "frame_start":"disable",                        // [ "disable", "hex", "ascii", "mac" ]
-            "frame_start_string":"",                        // [ string ]
-            "frame_end":"disable",                          // [ "disable", "hex", "ascii", "mac" ]
-            "frame_end_string":""                           // [ string ]
+            "status":"enable or disable this client",         // [ "disable", "enable" ]
+            "extern":"reset when the extern online",          // [ "disable", "default", "ifname@wan", ... ]
+                                                                        // "disable" for no reset when ifname online
+                                                                        // "default" for reset when the gateway online 
+                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+            "proto":"tcp or udp protocol",                         // [ "tcp", "udp" ]
+            "server":"server address",                             // [ string ], domain or IPv4 literal
+            "port":"server port",                                  // [ number ]
+
+            "login":"login packet type",                           // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for no login packet
+                                                                        // "hex" login_string well be hex string
+                                                                        // "ascii" login_string well be ascii string
+                                                                        // "mac" use the device macid for login packet
+            "login_string":"login packet content",                 // [ string ]
+
+            "keeplive":"keeplive type",                            // [ "disable", "idle", "enable", "timing" ]
+                                                                        // "disable" for no keeplive packet
+                                                                        // "idle" idle to keeplive
+                                                                        // "timing" timing send keeplive    
+                                                                        // "enable" same "timing"
+            "keeplive_interval":"keeplive interval",               // [ number ], seconds
+            "keeplive_string":"keeplive packet content",           // [ hex string ]
+
+            "frame_start":"frame prefix type",                     // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for frame prefix
+                                                                        // "hex" frame_start_string well be hex string
+                                                                        // "ascii" frame_start_string well be ascii string
+                                                                        // "mac" use the device macid for frame prefix      
+            "frame_start_string":"frame prefix content",           // [ string ]
+
+            "frame_end":"frame postfix type",                      // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for frame prefix
+                                                                        // "hex" frame_end_string well be hex string
+                                                                        // "ascii" frame_end_string well be ascii string
+                                                                        // "mac" use the device macid for frame prefix      
+            "frame_end_string":"frame postfix content"             // [ string ]
+        
         },
-        "client2":{},                                       // optional client2..client9 same shape as client
-        "server":                                           // TCP or UDP listen slot 1
-        {
-            "status":"enable",
-            "extern":"disable",
-            "proto":"tcp",
-            "port":"7000",
-            "limit":"5",                                    // [ number ], max concurrent clients
-            "login":"disable",
-            "login_string":"",
-            "keeplive":"disable",
-            "keeplive_interval":"30",
-            "keeplive_string":"",
-            "frame_start":"disable",
-            "frame_start_string":"",
-            "frame_end":"disable",
-            "frame_end_string":""
-        },
+        // more the TCP or UDP client named clientX, X be number 1-9
+    
         "mqtt":                                             // MQTT client slot 1
         {
-            "status":"enable",
-            "extern":"disable",
-            "server":"broker.local",
-            "port":"1883",
-            "mqtt_id":"",
-            "mqtt_username":"",
-            "mqtt_password":"",
-            "mqtt_interval":"10",
-            "mqtt_keepalive":"60",
-            "mqtt_publish":"topic/uplink",
-            "mqtt_publish_qos":"0",
-            "mqtt_subscribe":                               // topic name -> qos string
+            "status":"enable or disable this client",         // [ "disable", "enable" ]
+            "extern":"reset when the extern online",          // [ "disable", "default", "ifname@wan", ... ]
+                                                                        // "disable" for no reset when ifname online
+                                                                        // "default" for reset when the gateway online 
+                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+            "server":"server address",                             // [ string ], domain or IPv4 literal
+            "port":"server port",                                  // [ number ]
+            "mqtt_id":"device identify",                      // [ string ]
+            "mqtt_username":"mqtt username",                  // [ string ]
+            "mqtt_password":"mqtt password",                  // [ string ]
+            "mqtt_interval":"mqtt interval",                  // [ nubmer ]
+            "mqtt_keepalive":"mqtt keepalive",                // [ number ]
+            "mqtt_publish":"mqtt publish topic",              // [ string ]
+            "mqtt_publish_qos":"mqtt publish qos",            // [ number ]
+            "mqtt_subscribe":
             {
-                "down/cmd":"0"
+                "subscribe topic":"topic qos",      // [ string ]:[ number ]
+                // "subscribe topic":"topic qos"     How many subscribe topic need setting save how many properties
             }
+        },
+        // more the mqtt client named clientX, X be number 1-9
+
+        "server":                                           // TCP or UDP listen slot 1
+        {
+            "status":"enable or disable this server",         // [ "disable", "enable" ]
+            "proto":"tcp or udp protocol",                         // [ "tcp", "udp" ]
+            "port":"server port",                                  // [ number ]
+            "limit":"concurrence client",                     // [ number ]
+
+            "login":"login packet type",                           // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for no login packet
+                                                                        // "hex" login_string well be hex string
+                                                                        // "ascii" login_string well be ascii string
+                                                                        // "mac" use the device macid for login packet
+            "login_string":"login packet content",                 // [ string ]
+
+            "keeplive":"keeplive type",                            // [ "disable", "idle", "enable", "timing" ]
+                                                                        // "disable" for no keeplive packet
+                                                                        // "idle" idle to keeplive
+                                                                        // "timing" timing send keeplive    
+                                                                        // "enable" same "timing"
+            "keeplive_interval":"keeplive interval",               // [ number ], seconds
+            "keeplive_string":"keeplive packet content",           // [ hex string ]
+
+            "frame_start":"frame prefix type",                     // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for frame prefix
+                                                                        // "hex" frame_start_string well be hex string
+                                                                        // "ascii" frame_start_string well be ascii string
+                                                                        // "mac" use the device macid for frame prefix      
+            "frame_start_string":"frame prefix content",           // [ string ]
+
+            "frame_end":"frame postfix type",                      // [ "disable", "hex", "ascii", "mac" ]
+                                                                        // "disable" for frame prefix
+                                                                        // "hex" frame_end_string well be hex string
+                                                                        // "ascii" frame_end_string well be ascii string
+                                                                        // "mac" use the device macid for frame prefix      
+            "frame_end_string":"frame postfix content"             // [ string ]
+
         }
+        // more the server named serverX, X be number 1-9
     }
 }
 ```
