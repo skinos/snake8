@@ -181,8 +181,25 @@ function status_load()
       {
           $(id+"_iccid").text( "" );
       }
-	  /* txrx */
-	  $(id+"_ip").text( info.ip||' ' );
+	 
+      $(id+"_ip").text( info.ip||' ' );
+      if ( info.delay )
+	  {
+		  if ( info.delay == "failed" || info.delay == "block" )
+		  {
+			  $(id+"_delay").text( $.i18n(info.delay) );
+		  }
+		  else
+		  {
+			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
+		  }
+	  }
+	  else
+	  {
+		  $(id+"_delay").text( "" );
+	  }
+
+      /* txrx */
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
     })
@@ -765,6 +782,9 @@ $(document).ready(function() {
               $tabContent.css('min-height', currentHeight + 'px');
           }
 
+          // 立即隐藏面板 不再等待ajax
+          $oldPane.removeClass('active');
+
           // 首页逻辑 静态内容直接切
           if (tabId === 'lte') {      
               $('.tab-pane').removeClass('active');
@@ -800,6 +820,3 @@ $(document).ready(function() {
     
     TabManager.init();    
 });
-
-
-

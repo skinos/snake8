@@ -9,7 +9,7 @@ var smslist_pager = '#smslist-grid-pager';
 function lte_sms() {
     window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
     lte = v[0];
-
+    $("#button_sms").show();
     $('#sms').prop('checked', lte.sms === "enable");  
 
     // 根据开关状态来调整表格宽度 需要处理好表格还没有正式渲染好的处理
@@ -17,9 +17,6 @@ function lte_sms() {
         if ($(this).prop('checked')) {  
             // 计算容器宽度并调整 jqGrid (防止表格错位)
             var containerWidth = $('#sms_cfg').parent().width() || $(window).width() - 100;  
-            // if ($(smslist_table).hasClass('ui-jqgrid-btable')) {  
-            //     $(smslist_table).jqGrid('setGridWidth', containerWidth);  
-            // }  
             // 修改判断逻辑
             if ($(smslist_table)[0].grid) { 
                 $(smslist_table).jqGrid('setGridWidth', containerWidth);
@@ -261,14 +258,6 @@ $.i18n().load( page.lang('lte') ).then( function () {
     }
 
     safeStart();
-
-  //page.timing({
-  //  refresh: function ()
-  //  {
-  //      smslist_load();
-  //  },
-  //  interval: 10000
-  //});
 
   /* bind the refresh */
   $('#sms_refresh').on(ace.click_event, function () {

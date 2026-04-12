@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <div id="ssid_cfg" style="display: none;">
+      <div id="ssid_cfg2" style="display: none;">
         <!-- 名称 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="SSID"></label>
@@ -89,7 +89,7 @@
             <div class="col-sm-9">
               <div class="btn-group">
                 <div class="btn-group">
-                  <a class="btn btn-second" data-i18n="ACL Settings" id="acl" href="#"></a>
+                  <a class="btn btn-second" data-i18n="ACL Settings" id="acl2" href="#"></a>
                 </div>
               </div>
             </div>
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <div id="ssid_cfg2" style="display: none;">
+      <div id="ssid_cfg3" style="display: none;">
         <!-- 名称 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="SSID"></label>
@@ -187,7 +187,7 @@
             <div class="col-sm-9">
               <div class="btn-group">
                 <div class="btn-group">
-                  <a class="btn btn-second" data-i18n="ACL Settings" id="acl2" href="#"></a>
+                  <a class="btn btn-second" data-i18n="ACL Settings" id="acl3" href="#"></a>
                 </div>
               </div>
             </div>
@@ -221,8 +221,8 @@
 <script type="text/javascript">
   (function () {
     /* get the object */
-    var ssid;
     var ssid2;
+    var ssid3;
     var object = "wifi@x";
     var index = page.param( 'object', location.hash );
     if ( index )
@@ -230,21 +230,23 @@
         object = index;
     }
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
-    var sobj = object+"ssid2";
-    var s2obj = object+"ssid3";
+    var s2obj = object+"ssid2";
+    var s3obj = object+"ssid3";
     var securelist;
+
     /* load the configure on the input */
-
-
-
     function cfg_load()
     {
-      he.load( [ object+".securelist", sobj, s2obj ] ).then( function(v){
+      he.load( [ object+".securelist", s2obj, s3obj ] ).then( function(v){
         securelist = v[0];
-        ssid = v[1];
-        ssid2 = v[2];
+        ssid2 = v[1];
+        if (!ssid2){
+          return;
+        }
+        ssid3 = v[2];
+        
         $("#button_ssid").show();
-        /* ssid */
+        /* ssid2 */
         if ( securelist )
         {
             $("#secure").empty();            
@@ -253,15 +255,15 @@
                 $("#secure").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
         }
-        if ( ssid )
+        if ( ssid2 )
         {
             $("#second_ssid").show();
-            $('#status').prop( 'checked', able2boole(ssid.status) );
-            $('#ssid').val( ssid.ssid || '' );
-            $('#secure').val( ssid.secure || 'disable' );
-            $('#wpa_encrypt').val( ssid.wpa_encrypt || 'tkipaes' );
-            $('#wpa_key').val( ssid.wpa_key || '' );
-            if ( ssid.broadcast == "disable" )
+            $('#status').prop( 'checked', able2boole(ssid2.status) );
+            $('#ssid').val( ssid2.ssid || '' );
+            $('#secure').val( ssid2.secure || 'disable' );
+            $('#wpa_encrypt').val( ssid2.wpa_encrypt || 'tkipaes' );
+            $('#wpa_key').val( ssid2.wpa_key || '' );
+            if ( ssid2.broadcast == "disable" )
             {
                 $('#hide').prop( 'checked', true );
             }
@@ -269,7 +271,7 @@
             {
                 $('#hide').prop( 'checked', false );
             }
-            $('#isolated').prop( 'checked', able2boole(ssid.isolated) );
+            $('#isolated').prop( 'checked', able2boole(ssid2.isolated) );
         }
         else
         {
@@ -295,9 +297,9 @@
 	                      $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
 	                  }
 	              }
-				  if ( ssid )
+				  if ( ssid2 )
 				  {
-  		            $('#wpa_encrypt').val( ssid.wpa_encrypt || 'aes' );
+  		            $('#wpa_encrypt').val( ssid2.wpa_encrypt || 'aes' );
 				  }
 			  }
             }).trigger('change');
@@ -320,20 +322,20 @@
         $('#status').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
-            $('#ssid_cfg').show();
+            $('#ssid_cfg2').show();
           }
           else
           {
-            $('#ssid_cfg').hide();
+            $('#ssid_cfg2').hide();
           }
         }).trigger('change');
         // ACL
         var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
-        link += '&object='+sobj;
+        link += '&object='+s2obj;
         link += '&lang='+base64.encode(langjson);
-        $('#acl').attr( "href", link );
+        $('#acl2').attr( "href", link );
 
-        /* ssid2 */
+        /* ssid3 */
         if ( securelist )
         {
             $("#secure2").empty();            
@@ -342,15 +344,15 @@
                 $("#secure2").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
             }
         }
-        if ( ssid2 )
+        if ( ssid3 )
         {
             $("#third_ssid").show();
-            $('#status2').prop( 'checked', able2boole(ssid2.status) );
-            $('#ssid2').val( ssid2.ssid || '' );
-            $('#secure2').val( ssid2.secure || 'disable' );
-            $('#wpa_encrypt2').val( ssid2.wpa_encrypt || 'tkipaes' );
-            $('#wpa_key2').val( ssid2.wpa_key || '' );
-            if ( ssid2.broadcast == "disable" )
+            $('#status2').prop( 'checked', able2boole(ssid3.status) );
+            $('#ssid2').val( ssid3.ssid || '' );
+            $('#secure2').val( ssid3.secure || 'disable' );
+            $('#wpa_encrypt2').val( ssid3.wpa_encrypt || 'tkipaes' );
+            $('#wpa_key2').val( ssid3.wpa_key || '' );
+            if ( ssid3.broadcast == "disable" )
             {
                 $('#hide2').prop( 'checked', true );
             }
@@ -358,7 +360,7 @@
             {
                 $('#hide2').prop( 'checked', false );
             }
-            $('#isolated2').prop( 'checked', able2boole(ssid2.isolated) );
+            $('#isolated2').prop( 'checked', able2boole(ssid3.isolated) );
         }
         else
         {
@@ -384,9 +386,9 @@
 	                      $("#wpa_encrypt2").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
 	                  }
 	              }
-				  if ( ssid2 )
+				  if ( ssid3 )
 				  {
-  		            $('#wpa_encrypt2').val( ssid2.wpa_encrypt || 'aes' );
+  		            $('#wpa_encrypt2').val( ssid3.wpa_encrypt || 'aes' );
 				  }
 			  }
             }).trigger('change');
@@ -409,18 +411,18 @@
         $('#status2').unbind('change').change(function () {
           if ($(this).prop('checked'))
           {
-            $('#ssid_cfg2').show();
+            $('#ssid_cfg3').show();
           }
           else
           {
-            $('#ssid_cfg2').hide();
+            $('#ssid_cfg3').hide();
           }
         }).trigger('change');
         // ACL
         var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
-        link += '&object='+s2obj;
+        link += '&object='+s3obj;
         link += '&lang='+base64.encode(langjson);
-        $('#acl2').attr( "href", link );
+        $('#acl3').attr( "href", link );
       })
     }
 
@@ -428,62 +430,62 @@
     function ssid_save()
     {
       var cmds = [];
-      var ssidcopy = null;
       var ssid2copy = null;
+      var ssid3copy = null;
       var restart = false;
 
-      if ( ssid == null )
-      {
-        ssid = {};
-      }
-      ssidcopy = JSON.parse(JSON.stringify(ssid));
-      ssid.status = boole2able( $('#status').prop('checked') );
-      if ( ssid.status == "enable" )
-      {
-        ssid.ssid = $('#ssid').val();
-        ssid.secure = $('#secure').val();
-        if ( ssid.secure != 'disable' )
-        {
-          ssid.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
-          ssid.wpa_key = $('#wpa_key').val();
-        }
-        ssid.broadcast = boole2able( ! $('#hide').prop('checked') );
-        ssid.isolated = boole2able( $('#isolated').prop('checked') );
-      }
-      if ( ssidcopy.status != ssid.status )
-      {
-      	restart = true;
-      }
       if ( ssid2 == null )
       {
         ssid2 = {};
       }
       ssid2copy = JSON.parse(JSON.stringify(ssid2));
-      ssid2.status = boole2able( $('#status2').prop('checked') );
+      ssid2.status = boole2able( $('#status').prop('checked') );
       if ( ssid2.status == "enable" )
       {
-        ssid2.ssid = $('#ssid2').val();
-        ssid2.secure = $('#secure2').val();
+        ssid2.ssid = $('#ssid').val();
+        ssid2.secure = $('#secure').val();
         if ( ssid2.secure != 'disable' )
         {
-          ssid2.wpa_encrypt = $('#wpa_encrypt2').val()||"aes";
-          ssid2.wpa_key = $('#wpa_key2').val();
+          ssid2.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
+          ssid2.wpa_key = $('#wpa_key').val();
         }
-        ssid2.broadcast = boole2able( ! $('#hide2').prop('checked') );
-        ssid2.isolated = boole2able( $('#isolated2').prop('checked') );
+        ssid2.broadcast = boole2able( ! $('#hide').prop('checked') );
+        ssid2.isolated = boole2able( $('#isolated').prop('checked') );
       }
       if ( ssid2copy.status != ssid2.status )
       {
       	restart = true;
       }
-
-      if ( !ocompare( ssid, ssidcopy ) )
+      if ( ssid3 == null )
       {
-        cmds.push( sobj+"="+JSON.stringify(ssid) );
+        ssid3 = {};
       }
+      ssid3copy = JSON.parse(JSON.stringify(ssid3));
+      ssid3.status = boole2able( $('#status2').prop('checked') );
+      if ( ssid3.status == "enable" )
+      {
+        ssid3.ssid = $('#ssid2').val();
+        ssid3.secure = $('#secure2').val();
+        if ( ssid3.secure != 'disable' )
+        {
+          ssid3.wpa_encrypt = $('#wpa_encrypt2').val()||"aes";
+          ssid3.wpa_key = $('#wpa_key2').val();
+        }
+        ssid3.broadcast = boole2able( ! $('#hide2').prop('checked') );
+        ssid3.isolated = boole2able( $('#isolated2').prop('checked') );
+      }
+      if ( ssid3copy.status != ssid3.status )
+      {
+      	restart = true;
+      }
+
       if ( !ocompare( ssid2, ssid2copy ) )
       {
-          cmds.push( s2obj+"="+JSON.stringify(ssid2) );
+        cmds.push( s2obj+"="+JSON.stringify(ssid2) );
+      }
+      if ( !ocompare( ssid3, ssid3copy ) )
+      {
+          cmds.push( s3obj+"="+JSON.stringify(ssid3) );
       }
       if ( cmds.length == 0 )
       {

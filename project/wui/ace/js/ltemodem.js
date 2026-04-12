@@ -25,6 +25,7 @@ function lte_modem()
         {
             state = {};
         }
+        $("#button_modem").show();
 		// GNSS
         if ( iconfig.gnss == "enable" )
         {

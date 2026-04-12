@@ -49,6 +49,7 @@ function status_load()
       $(id+"_mac").text( info.mac||' ' );
       /* network */
       $(id+"_ip").text( info.ip||' ' );
+      
 	  if ( info.delay )
 	  {
 		  if ( info.delay == "failed" || info.delay == "block" )

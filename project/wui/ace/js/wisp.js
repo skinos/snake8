@@ -59,6 +59,22 @@ function status_load()
       $(id+"_mac").text( info.mac||' ' );
 	  /* txrx */
 	  $(id+"_ip").text( info.ip||' ' );
+      if ( info.delay )
+	  {
+		  if ( info.delay == "failed" || info.delay == "block" )
+		  {
+			  $(id+"_delay").text( $.i18n(info.delay) );
+		  }
+		  else
+		  {
+			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
+		  }
+	  }
+	  else
+	  {
+		  $(id+"_delay").text( "" );
+	  }
+      
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
   })

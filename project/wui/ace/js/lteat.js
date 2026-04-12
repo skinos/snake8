@@ -15,7 +15,7 @@ function lte_at() {
         {
             iconfig = {};
         }
-
+        $("#button_at").show();
         // custom set
         if ( iconfig.custom_set )
         {
