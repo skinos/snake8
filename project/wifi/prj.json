@@ -32,7 +32,7 @@
             "cn":"2.4G多SSID",
             "en":"2.4G MSSID",
             "page":"mssid.html",
-            "object":"wifi@n"
+            "object":"wifi@nssid2"
         },
         "nstation":
         {
@@ -71,7 +71,7 @@
             "cn":"5.8G多SSID",
             "en":"5.8G MSSID",
             "page":"mssid.html",
-            "object":"wifi@a"
+            "object":"wifi@assid2"
         },
         "astation":
         {

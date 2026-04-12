@@ -34,12 +34,6 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
 		return ttrue;
     }
-	/* already run */
-	if ( spid( object ) > 0 )
-	{
-        talk_free( cfg );
-		return ttrue;
-	}
 	/* set the tid */
 	ptr = json_string( cfg, "tid" );
 	if ( ptr != NULL && *ptr != '\0' )
@@ -55,12 +49,14 @@ boole_t _setup( obj_t this, param_t param )
 	ifdev = reg_string( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
+		ifname_warn( obj, "%s cannot find ifdev", object );
         talk_free( cfg );
         return tfalse;
     }
 	/* need the ifdev exist */
 	if ( com_have( ifdev, NULL ) == false )
 	{
+		ifname_warn( obj, "%s ifdev %s nonexistent", object, ifdev );
         talk_free( cfg );
         return tfalse;
 	}
@@ -265,14 +261,14 @@ boole_t _service( obj_t this, param_t param )
         ifname_warn( obj, "%s up failed", object );
         talk_free( cfg );
         sleep( 5 );
-        return ret;
+        return tfalse;
     }
 	else if ( ret == terror )
 	{
 		ifname_warn( obj, "%s ifdev %s not work when up", object, ifdev );
 		talk_free( cfg );
 		sleep( 5 );
-		return ret;
+		return terror;
 	}
 	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
 
@@ -295,14 +291,14 @@ boole_t _service( obj_t this, param_t param )
         ifname_fault( obj, "%s connect failed", object );
         talk_free( cfg );
         sleep( 3 );
-        return ret;
+        return tfalse;
     }
 	else if ( ret == terror )
 	{
 		ifname_warn( obj, "%s ifdev %s not work when connect", object, ifdev );
 		talk_free( cfg );
 		sleep( 5 );
-		return ret;
+		return terror;
 	}
 
 
@@ -351,7 +347,7 @@ boole_t _service( obj_t this, param_t param )
 				ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
 				talk_free( cfg );
 				sleep( 5 );
-				return ret;
+				return terror;
 			}
 			ifname_debug( obj, "%s connect failed %d", object, check );
 			sleep( 1 );
@@ -391,7 +387,7 @@ boole_t _service( obj_t this, param_t param )
 				ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
 				talk_free( cfg );
 				sleep( 5 );
-				return ret;
+				return terror;
 			}
 			ifname_debug( obj, "%s connect failed %d", object, check );
 			sleep( 1 );

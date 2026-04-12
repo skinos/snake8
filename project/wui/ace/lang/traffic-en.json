@@ -1,0 +1,18 @@
+{
+	"ifname@lte Speed":"LTE/NR Speed",
+	"ifname@lte2 Speed":"LTE/NR2 Speed",
+	"ifname@lte3 Speed":"LTE/NR3 Speed",
+	"ifname@lte4 Speed":"LTE/NR4 Speed",
+	"ifname@wan Speed":"WAN Speed",
+	"ifname@wan2 Speed":"WAN2 Speed",
+	"ifname@wan3 Speed":"WAN3 Speed",
+	"ifname@wan4 Speed":"WAN4 Speed",
+	"ifname@wisp Speed":"WISP Speed",
+	"ifname@wisp2 Speed":"WISP2 Speed",
+	"ifname@lan Speed":"LAN Speed",
+	"ifname@lan2 Speed":"LAN2 Speed",
+	"ifname@lan3 Speed":"LAN3 Speed",
+	"ifname@lan4 Speed":"LAN4 Speed",
+	"wifi@nssid Speed":"2.4G SSID Speed",
+	"wifi@assid Speed":"5.8G SSID Speed"
+}
