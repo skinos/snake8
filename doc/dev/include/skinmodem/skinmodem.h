@@ -105,6 +105,7 @@ talk_t PARSE_CCID( void *ctx, talk_t state, talk_t cfg );
 talk_t PARSE_CREG( void *ctx, talk_t state, talk_t cfg );
 talk_t PARSE_COPS( void *ctx, talk_t state, talk_t cfg );
 talk_t PARSE_CSQ( void *ctx, talk_t state, talk_t cfg );
+talk_t PARSE_CCLK( void *ctx, talk_t state, talk_t cfg );
 /* send a at command in atd or in modem driver */
 extern atcmd_create_t atd_register;
 #define ATD_OK( timeout, retry, reply, unix, ... )                          ((atcmd_create_t)(atd_register))( false, 0, NULL, INTACT_OK, PARSE_OK, timeout, retry, NULL, reply, unix, __VA_ARGS__ )

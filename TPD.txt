@@ -3,4 +3,5 @@
 3. add the iptables mark manage
 4. add the ip rule manage
 5. add the lock for all the component setup/shut
+6. getty report setsid: Operation not permitted in srock
 

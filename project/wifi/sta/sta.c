@@ -677,52 +677,98 @@ talk_t _status( obj_t this, param_t param )
 		char readbuf[256];
 		char path[PATH_MAX];
 		
-		/* get the command result */	
+		/* use the wpa_cli */	
 		snprintf( path, sizeof(path), "/tmp/.wpa_cli_%s_status", netdev );
-		shell( "wpa_cli -i %s status > %s", netdev, path );
-		/* parse the wpa_cli */
-		fp = fopen( path, "r");
-		if( fp != NULL )
+		i = shell( "wpa_cli -i %s status > %s", netdev, path );
+		if ( i == 0 )
 		{
-			readbuf[0] = '\0';
-			while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+			/* parse the wpa_cli */
+			fp = fopen( path, "r");
+			if( fp != NULL )
 			{
-				i = strlen( readbuf );
-				if ( i > 0 && readbuf[i-1] == '\n' )
+				readbuf[0] = '\0';
+				while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
 				{
-					readbuf[i-1] = '\0';
-				}
-				if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
-				{
-					ptr = readbuf+10;
-					if ( strcmp( ptr, "SCANNING" ) == 0 )
+					i = strlen( readbuf );
+					if ( i > 0 && readbuf[i-1] == '\n' )
 					{
-						json_set_string( ret, "state", "scanning" );
+						readbuf[i-1] = '\0';
 					}
-					else if ( strcmp( ptr, "COMPLETED" ) == 0 )
+					if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
 					{
-						json_set_string( ret, "status", "up" );
+						ptr = readbuf+10;
+						if ( strcmp( ptr, "SCANNING" ) == 0 )
+						{
+							json_set_string( ret, "state", "scanning" );
+						}
+						else if ( strcmp( ptr, "COMPLETED" ) == 0 )
+						{
+							json_set_string( ret, "status", "up" );
+						}
+					}
+					else if ( strncmp( readbuf, "ssid=", 5 ) == 0 )
+					{
+						ptr = readbuf+5;
+						json_set_string( ret, "peer", ptr );
+					}
+					else if ( strncmp( readbuf, "bssid=", 6 ) == 0 )
+					{
+						ptr = readbuf+6;
+						low2upp( ptr );
+						json_set_string( ret, "peermac", ptr );
+					}
+					else if ( strncmp( readbuf, "address=", 8 ) == 0 )
+					{
+						ptr = readbuf+8;
+						low2upp( ptr );
+						json_set_string( ret, "mac", ptr );
 					}
 				}
-				else if ( strncmp( readbuf, "ssid=", 5 ) == 0 )
-				{
-					ptr = readbuf+5;
-					json_set_string( ret, "peer", ptr );
-				}
-				else if ( strncmp( readbuf, "bssid=", 6 ) == 0 )
-				{
-					ptr = readbuf+6;
-					low2upp( ptr );
-					json_set_string( ret, "peermac", ptr );
-				}
-				else if ( strncmp( readbuf, "address=", 8 ) == 0 )
-				{
-					ptr = readbuf+8;
-					low2upp( ptr );
-					json_set_string( ret, "mac", ptr );
-				}
+				fclose( fp );
 			}
-			fclose( fp );
+		}
+		else
+		{
+			/* use iw sta link */	
+			snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
+			shell( "iw dev %s link > %s", netdev, path );
+			/* parse the wpa_cli */
+			fp = fopen( path, "r");
+			if( fp != NULL )
+			{
+				char *end;
+				readbuf[0] = '\0';
+				while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+				{
+					i = strlen( readbuf );
+					if ( i > 0 && readbuf[i-1] == '\n' )
+					{
+						readbuf[i-1] = '\0';
+					}
+					if ( NULL != ( ptr = strstr( readbuf, "Connected to " ) ) )
+					{
+						ptr += 13;
+						end = strstr( ptr, " " );
+						if ( end != NULL )
+						{
+							*end = '\0';
+						}
+						low2upp( ptr );
+						if ( strlen( ptr ) == 17 )
+						{
+							json_set_string( ret, "peermac", ptr );
+							json_set_string( ret, "status", "up" );
+						}
+					}
+					else if ( NULL != ( ptr = strstr( readbuf, "SSID: " ) ) )
+					{
+						ptr += 6;
+						json_set_string( ret, "peer", ptr );
+						break;
+					}
+				}
+				fclose( fp );
+			}
 		}
 		/* parse the iwinfo */
 		snprintf( path, sizeof(path), "/tmp/.iwinfo_%s_info", netdev );
@@ -730,14 +776,23 @@ talk_t _status( obj_t this, param_t param )
 		fp = fopen( path, "r");
 		if( fp != NULL )
 		{
+			int ch = 0;
+			int rssi = 0;
+			int sinr = 0;
 			readbuf[0] = '\0';
 			while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
 			{
-				if ( strstr( readbuf, "Signal:" ) )
+				if ( NULL != ( ptr = strstr( readbuf, "Channel:" ) ) )
 				{
-					int rssi = 0;
-					int sinr = 0;
-					i = sscanf( readbuf, "%*[^:]: %d %*[^:]: %d", &rssi, &sinr );
+					i = sscanf( ptr, "%*[^:]: %d", &ch );
+					if ( i == 1 )
+					{
+						json_set_number( ret, "channel", ch );
+					}
+				}
+				else if ( NULL != ( ptr = strstr( readbuf, "Signal:" ) ) )
+				{
+					i = sscanf( ptr, "%*[^:]: %d %*[^:]: %d", &rssi, &sinr );
 					if ( i >= 1 )
 					{
 						if ( rssi != 0 )
@@ -752,22 +807,14 @@ talk_t _status( obj_t this, param_t param )
 						}
 					}
 				}
-				else if ( strstr( readbuf, "Bit Rate:" ) )
+				else if ( NULL != ( ptr = strstr( readbuf, "Bit Rate:" ) ) )
 				{
-					i = sscanf( readbuf, "%*[^:]: %s", tok );
+					i = sscanf( ptr, "%*[^:]: %s", tok );
 					if ( i == 1 && 0 != strcasecmp( tok, "unknown" ) )
 					{
 						json_set_string( ret, "rate", tok );
 					}
-				}
-				else if ( (ptr = strstr( readbuf, "Channel:" ) ) != NULL )
-				{
-					int ch = 0;
-					i = sscanf( ptr, "%*[^:]: %d", &ch );
-					if ( i == 1 )
-					{
-						json_set_number( ret, "channel", ch );
-					}
+					break;
 				}
 			}
 			fclose( fp );

@@ -93,7 +93,7 @@ static boole time_setting( const char *tt, const char *zone )
 			h = register_open( NULL, O_RDWR, 0644, 0, 0 );
 			if ( h != NULL )
 			{
-				register_value_set( h, "date_src", "set", sizeof("set"), 20 );
+				register_value_set( h, "date_src", "set", strlen("set"), 40 );
 				register_close( h );
 			}
 			/* cast joint event */
@@ -127,7 +127,7 @@ static boole ntpclient_sync( const char* server, const char* zone )
 		h = register_open( REGISTER_DEFAULT_OBJECT, O_RDWR, 0644, 0, 0 );
 		if ( h != NULL )
 		{
-			register_value_set( h, "date_src", "ntp", sizeof("ntp"), 20 );
+			register_value_set( h, "date_src", "ntp", strlen("ntp"), 40 );
 			register_close( h );
 		}
 		/* cast joint event */
