@@ -1,7 +1,34 @@
 var flush_interval = 2;
+var currentFrameData = null; 
+
+function fetchNetworkFrame() {
+    // 负责加载数据并存入全局变量 加载完后触发一次 adjustBoxLayout
+    return he.load([ "network@frame"]).then(function(v) {
+        if (v[0]) {
+            currentFrameData = v[0];
+            adjustBoxLayout(); // 数据拿到后，重新刷一遍布局
+        }
+    });
+}
 
 function adjustBoxLayout() {
     var containers = $('.responsive-flex-container');
+
+    // 排列规则1
+    var priorityMap = {};
+    if (currentFrameData) {
+        for (var i = 1; i <= 6; i++) {
+            var ifname = currentFrameData[i.toString()]; 
+            if (ifname && ifname !== "") {
+                priorityMap[ifname] = i; 
+                // 拿取图表id
+                var shortName = ifname.replace("ifname@", "");
+                if (!priorityMap[shortName]) {
+                    priorityMap[shortName] = i;
+                }
+            }
+        }
+    }
 
     var greenGradient = [
         "rgb(59, 138, 72)",
@@ -24,9 +51,24 @@ function adjustBoxLayout() {
         // 在线图表排列顺序规则
         var boxes = container.find('.pricing-box').get();
         boxes.sort(function(a, b) {
+            var aName = $(a).attr('id');
+            var bName = $(b).attr('id');
+
+            // 匹配接口 1-6 优先级 没有配置接口frame的权重为999
+            var aWeight = priorityMap[aName] || 999;
+            var bWeight = priorityMap[bName] || 999;
+
+            if (aWeight !== bWeight) {
+                // 如果接口配置了优先级 则按 1-6 排列
+                return aWeight - bWeight; 
+            }
+
             var aOnline = $(a).attr('or-online') === 'true' ? 1 : 0;
             var bOnline = $(b).attr('or-online') === 'true' ? 1 : 0;
-            return bOnline - aOnline; 
+            if (aOnline !== bOnline) {
+                return bOnline - aOnline; 
+            }
+            return 0;
         });
         $.each(boxes, function(i, box) { 
             container.append(box);
@@ -995,7 +1037,7 @@ function interface_load() {
             var wifi58Data = wifiData[1] || null;
             
             switch_show(data, wifi24Data, wifi58Data);
-            
+
             adjustBoxLayout();
         });
     });
@@ -1102,6 +1144,7 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     /* load the configure */
     interface_load();
 
+    fetchNetworkFrame();
     adjustBoxLayout();
     
     /* set the timer flush */
