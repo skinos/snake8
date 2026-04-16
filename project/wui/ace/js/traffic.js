@@ -1,4 +1,5 @@
 const FLUSH_INTERVAL = 1; // 刷新间隔
+var currentFrameData = null;
 
 // 全局缓冲区
 const buff = {};
@@ -24,8 +25,8 @@ const interfaceConfigs = {
 };
 
 // 处理extern中的图表接口
-const externChartIds = ['ifname@lte', 'ifname@lte2', 'ifname@lte3', 'ifname@lte4', 'ifname@wan', 'ifname@wan2', 
-                       'ifname@wan3', 'ifname@wan4', 'ifname@wisp', 'ifname@wisp2'];
+const externChartIds = ['ifname@lte', 'ifname@lte2', 'ifname@lte3', 'ifname@lte4','ifname@wisp', 'ifname@wisp2',
+                        'ifname@wan', 'ifname@wan2', 'ifname@wan3', 'ifname@wan4'];
 
 const localChartIds = ['ifname@lan','ifname@lan2','ifname@lan3','ifname@lan4','wifi@nssid','wifi@assid'];
 
@@ -37,6 +38,16 @@ function initBuffers() {
         buff[`${ifname}_tx`] = 0;
         buff[`${ifname}_rxdata`] = [];
         buff[`${ifname}_txdata`] = [];
+    });
+}
+
+function fetchNetworkFrame() {
+    // 负责加载数据并存入全局变量 加载完后触发一次 adjustBoxLayout
+    return he.load([ "network@frame"]).then(function(v) {
+        if (v[0]) {
+            currentFrameData = v[0];
+            chartManager.updateLayouts(); // 数据拿到后，重新刷一遍布局
+        }
     });
 }
 
@@ -156,58 +167,122 @@ const chartManager = {
     updateChartDisplay: function(ifname, show) {
         const display = show ? 'block' : 'none';
         const escapedIfname = escapeSelector(ifname);
-        const rowSelector = `#widget-${escapedIfname}-row`;
         const chartSelector = `#${escapedIfname}-charts`;
         
-        // 合并查询和设置逻辑
-        const setDisplay = selector => {
-            document.querySelectorAll(selector).forEach(el => el.style.display = display);
-        };
-        
-        setDisplay(rowSelector);
-        setDisplay(chartSelector);
-        
-        // 如果是显示，确保父容器也可见
-        if (show) {
-            document.querySelectorAll(rowSelector).forEach(el => {
-                let parent = el.parentElement;
-                while (parent) {
-                    if (parent.style && parent.style.display === 'none') {
-                        parent.style.display = 'block';
-                    }
-                    parent = parent.parentElement;
-                }
-            });
-        }
+        document.querySelectorAll(chartSelector).forEach(el => el.style.display = display);
     },
     
     // 更新布局
     updateLayouts: function() {
+        const pool = document.getElementById('widget-pool');
+        if (!pool) return;
+
+        // 统一将所有可能显示的图表先撤回到 pool 中隐藏
+        const allIfnames = Object.keys(this.chartStates).filter(id => this.chartStates[id].visible);
+        allIfnames.forEach(ifname => {
+            const widgetRow = document.querySelector(`#widget-${escapeSelector(ifname)}-row`);
+            if (widgetRow) {
+                widgetRow.style.display = 'none';
+                if (widgetRow.parentElement !== pool) {
+                    pool.appendChild(widgetRow);
+                }
+            }
+        });
+
+        // 处理 Extern
+        const sortedExternIfnames = this.getSortedExternIfnames();
+        const externCount = sortedExternIfnames.length;
+        this.updateExternLayout(externCount); // 显示 extern-layout-chart-N
+
+        if (externCount > 0) {
+            const layoutId = `extern-layout-chart-${Math.min(externCount, 10)}`;
+            const layoutEl = document.getElementById(layoutId);
+            if (layoutEl) {
+                const slots = layoutEl.querySelectorAll('.chart-slot');
+                sortedExternIfnames.forEach((ifname, index) => {
+                    const widgetRow = document.querySelector(`#widget-${escapeSelector(ifname)}-row`);
+                    if (widgetRow && slots[index]) {
+                        slots[index].appendChild(widgetRow);
+                        widgetRow.style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        // 处理 Local
+        const sortedLocalIfnames = this.getSortedLocalIfnames();
+        const localCount = sortedLocalIfnames.length;
+        this.updateLocalLayout(localCount); // 显示 local-layout-chart-N
+
+        if (localCount > 0) {
+            const layoutId = `local-layout-chart-${Math.min(localCount, 6)}`;
+            const layoutEl = document.getElementById(layoutId);
+            if (layoutEl) {
+                const slots = layoutEl.querySelectorAll('.chart-slot');
+                sortedLocalIfnames.forEach((ifname, index) => {
+                    const widgetRow = document.querySelector(`#widget-${escapeSelector(ifname)}-row`);
+                    if (widgetRow && slots[index]) {
+                        slots[index].appendChild(widgetRow);
+                        widgetRow.style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        this.updateHrVisibility(externCount,localCount);
        
-        // 处理extern布局
-        const externCount = this.getOnlineChartCount(true);
-        const prevExternLayout = this.currentLayouts.extern;
-        this.updateExternLayout(externCount);
-        
-        // 处理local布局
-        const localCount = this.getOnlineChartCount(false);
-        const prevLocalLayout = this.currentLayouts.local;
-        this.updateLocalLayout(localCount);
-        
-        // 更新分割线显示状态
-        this.updateHrVisibility();
-        
-        // 应用特殊布局调整（针对extern布局）
-        this.adjustExternLayouts();
-
-         // 应用特殊布局调整（针对local布局）
-        this.adjustLocalLayouts();
-
-        if (prevExternLayout !== this.currentLayouts.extern || 
-        prevLocalLayout !== this.currentLayouts.local) {
+        // 如果布局结构发生变化，执行重绘
+        if (this.prevExternLayout !== this.currentLayouts.extern || 
+            this.prevLocalLayout !== this.currentLayouts.local) {
+            
+            this.prevExternLayout = this.currentLayouts.extern;
+            this.prevLocalLayout = this.currentLayouts.local;
             this.drawAllVisibleCharts();
-        
-    }
+        }
+    },
+
+    getSortedExternIfnames: function() {
+        const sorted = Object.keys(this.chartStates).filter(ifname => 
+            this.chartStates[ifname].visible && this.chartStates[ifname].isExtern === true
+        );
+
+        // 排列规则1
+        var priorityMap = {};
+        if (currentFrameData) {
+            for (var i = 1; i <= 6; i++) {
+                var ifname = currentFrameData[i.toString()]; 
+                if (ifname && ifname !== "") {
+                    priorityMap[ifname] = i; 
+                    // 拿取图表id
+                    var shortName = ifname.replace("ifname@", "");
+                    if (!priorityMap[shortName]) {
+                        priorityMap[shortName] = i;
+                    }
+                }
+            }
+        }
+
+        sorted.sort((a, b) => {
+            var weightA = priorityMap[a] || 999;
+            var weightB = priorityMap[b] || 999;
+            if (weightA !== weightB) return weightA - weightB;
+            return externChartIds.indexOf(a) - externChartIds.indexOf(b);
+        });
+
+        return sorted;
+    },
+
+    getSortedLocalIfnames: function() {
+        const sorted = Object.keys(this.chartStates).filter(ifname => 
+            this.chartStates[ifname].visible && this.chartStates[ifname].isExtern === false
+        );
+
+        // 内网一般按默认定义顺序排序lan lan2 lan3 lan4 wifi
+        sorted.sort((a, b) => {
+            return localChartIds.indexOf(a) - localChartIds.indexOf(b);
+        });
+
+        return sorted;
     },
 
     // 通用布局更新函数
@@ -250,97 +325,13 @@ const chartManager = {
         });
     },
     
-    // 调整extern布局
-    adjustExternLayouts: function() {
-        const layoutNumber = this.currentLayouts.extern;
-        const layoutRules = {
-            5: { layoutId: 'extern-layout-chart-5', start: 3, count: 2, class: 'col-sm-6' },   // 第4-5个图表对半
-            7: { layoutId: 'extern-layout-chart-7', start: 6, count: 1, class: 'col-sm-12' },  // 第7个图表占满
-            8: { layoutId: 'extern-layout-chart-8', start: 6, count: 2, class: 'col-sm-6' },   // 第7-8个图表对半
-            10: { layoutId: 'extern-layout-chart-10', start: 9, count: 1, class: 'col-sm-12' },   // 第10个图表占满
-        };
-        
-        if (layoutRules[layoutNumber]) {
-            const rule = layoutRules[layoutNumber];
-            // 创建规则对象，key是图表数量
-            const rules = {};
-            rules[layoutNumber] = {
-                start: rule.start,
-                count: rule.count,
-                class: rule.class
-            };
-            this.adjustSpecificLayout(rule.layoutId, rules);
-        }
-    },
-
-    adjustLocalLayouts: function() {
-        const layoutNumber = this.currentLayouts.local;
-        const layoutRules = {
-            5: { layoutId: 'local-layout-chart-5', start: 3, count: 2, class: 'col-sm-6' },   // 第4-5个图表对半
-        };
-        
-        if (layoutRules[layoutNumber]) {
-            const rule = layoutRules[layoutNumber];
-            // 创建规则对象，key是图表数量
-            const rules = {};
-            rules[layoutNumber] = {
-                start: rule.start,
-                count: rule.count,
-                class: rule.class
-            };
-            this.adjustSpecificLayout(rule.layoutId, rules);
-        }
-    },
-
-    // 调整特定布局 
-    adjustSpecificLayout: function(layoutId, layoutRules) {
-        const layout = document.getElementById(layoutId);
-        if (!layout || layout.style.display === 'none') return;
-        
-        const allCols = Array.from(layout.querySelectorAll('.col-sm-4')).filter(col => {
-            // 检查列本身的显示状态
-            const colDisplay = window.getComputedStyle(col).display;
-            const widget = col.querySelector('.widget-box');
-            return colDisplay !== 'none' && widget;
-        });
-        
-        const visibleCount = allCols.length;
-      
-        if (visibleCount === 0) return;
-        
-        allCols.forEach((col, index) => {
-            col.className = 'col-sm-6';
-        });
-        
-        // 获取对应图表数量的规则
-        const rule = layoutRules[visibleCount];
-        if (rule) {
-            for (let i = rule.start; i < rule.start + rule.count && i < visibleCount; i++) {
-                if (allCols[i]) {
-                    allCols[i].className = rule.class;
-                }
-            }
-        }
-    },
-    
     // 更新分割线可见性
-    updateHrVisibility: function() {
+    updateHrVisibility: function(externCount,localCount) {
         const hr = document.querySelector('.hr.hr32.hr-dotted');
         if (!hr) return;
-        
-        const externCount = this.getOnlineChartCount(true);
-        const localCount = this.getOnlineChartCount(false);
       
         // 只有当有extern图表且同时有local图表时才显示分割线
         hr.style.display = (externCount > 0 && localCount > 0) ? 'block' : 'none';
-    },
-    
-    // 计算在线图表数量
-    getOnlineChartCount: function(isExtern) {
-        const count = Object.values(this.chartStates).filter(state => 
-            state.visible && state.isExtern === isExtern
-        ).length;
-        return count;
     },
     
     // 处理图表数据
@@ -835,7 +826,7 @@ function initDashboard() {
 
         // 初始启动客户端定时器
         startRefreshTimer();
-        
+
         // 加载初始数据 折线图
         dashboard_reload();
         
@@ -852,6 +843,6 @@ function initDashboard() {
 
 // 页面加载完成后初始化
 $(document).ready(function() {
-    
     initDashboard();
+    fetchNetworkFrame();
 });

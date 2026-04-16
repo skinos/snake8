@@ -57,24 +57,19 @@ function status_load()
           $(id+"_rssiimg").attr( "src", "/assets/css/images/signal_"+info.signal+".png" );            
       }
       $(id+"_mac").text( info.mac||' ' );
-	  /* txrx */
 	  $(id+"_ip").text( info.ip||' ' );
-      if ( info.delay )
-	  {
-		  if ( info.delay == "failed" || info.delay == "block" )
-		  {
-			  $(id+"_delay").text( $.i18n(info.delay) );
-		  }
-		  else
-		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
-		  }
-	  }
-	  else
-	  {
-		  $(id+"_delay").text( "" );
-	  }
+      // 延迟
+      if (info.delay) {
+          if (info.delay === "failed" || info.delay === "block") {
+              $(id + "_delay").text($.i18n(info.delay));
+          } else {
+              $(id + "_delay").text($.i18n("Delay")+":"+ info.delay + "ms");
+          }
+      } else {
+          $(id + "_delay").text("");
+      }
       
+      /* txrx */
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
   })
@@ -303,7 +298,7 @@ function config_load()
 		$('#secure').val( config.secure || 'disable' );
 		$('#secure').unbind('change').change(function (e) {
 		  var secure = e.target.value;
-		  if ( secure == "disable" || secure == "owe" )
+		  if ( secure == "disable")
 		  {
 			  $("#secure_cfg").hide();
 		  }
@@ -318,14 +313,14 @@ function config_load()
 					  $("#wpa_encrypt").append("<option value='"+b+"'>" + $.i18n(b) + "</option>");
 				  }
 			  }
-			  $('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
+			  $('#wpa_encrypt').val( config.wpa_encrypt || 'aes' );
 		  }
 		}).trigger('change');
 	}
 	else
 	{
 		$('#secure').val( config.secure || 'disable' );
-		$('#wpa_encrypt').val( config.wpa_encrypt || 'tkipaes' );
+		$('#wpa_encrypt').val( config.wpa_encrypt || 'aes' );
 		$('#secure').unbind('change').change(function (e) {
 		  var secure = e.target.value;
 		  if ( secure == 'disable' )
@@ -695,6 +690,7 @@ function config_save()
       return;
   }
   page.confirm( { message: $.i18n('The WISP connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+    if (!result) return location.reload();
     if ( result )
     {
       he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){
@@ -898,6 +894,10 @@ $.i18n().load( page.lang('wan') ).then( function () {
 /* 全局变量存储AP列表原始数据 */
  var apDataStore = {};
 
+function isOptionExist(val) {
+    return $("#secure option[value='" + val + "']").length > 0;
+}
+
 /* 必须在全局中才可以被调用到 */
 function ap_select(rowId) {
     // 隐藏表格
@@ -914,7 +914,50 @@ function ap_select(rowId) {
     $('#peer').val(ap.ssid);
     $('#peermac').val(mac);
     $('#lock').prop('checked', false).trigger('change');
-    $('#secure').val(ap.secure || 'disable');
+
+    // 处理secure安全模式的数据回退
+    var rawSecure = ap.secure || 'disable';
+    var targetSecure = 'disable';
+
+    // 精确匹配
+    if (isOptionExist(rawSecure)) {
+        targetSecure = rawSecure;
+    } 
+    else {
+        // 回退匹配逻辑
+        if (rawSecure.indexOf('wpa3psk') !== -1 || rawSecure.indexOf('wpa2pskwpa3psk') !== -1) {
+            if (isOptionExist('wpa2pskwpa3psk')){
+                targetSecure = 'wpa2pskwpa3psk';
+            }
+            else if (isOptionExist('wpa2psk')){
+                targetSecure = 'wpa2psk';
+            }
+            else if (isOptionExist('wpapsk')){
+                targetSecure = 'wpapsk';
+            }
+            else{
+                targetSecure = 'disable';
+            }
+        } 
+        else if (rawSecure.indexOf('wpa2psk') !== -1 || rawSecure.indexOf('wpapskwpa2psk') !== -1) {
+            if (isOptionExist('wpapskwpa2psk')){
+                targetSecure = 'wpapskwpa2psk';
+            }
+            else if (isOptionExist('wpa2psk')){
+                targetSecure = 'wpa2psk';
+            }
+            else if (isOptionExist('wpapsk')){
+                targetSecure = 'wpapsk';
+            }
+            else targetSecure = 'disable';
+        }
+        else {
+            // 其他无法识别的情况
+            targetSecure = 'disable';
+        }
+    }
+    // 设置选择框的值
+    $('#secure').val(targetSecure);
     
     // 处理WPA加密模式的映射
     var wpaEncryptValue = originalData ? originalData.wpa_encrypt : ap.wpa_encrypt;
@@ -925,6 +968,8 @@ function ap_select(rowId) {
         finalValue = 'tkip';
     } else if (cleanValue === 'aes') {
         finalValue = 'aes';
+    } else if (cleanValue === 'tkipaes') {
+        finalValue = 'tkipaes';
     }
     // auto 和 tkipaes 都使用默认值 tkipaes
     
@@ -933,15 +978,18 @@ function ap_select(rowId) {
     
     // 修复i18n翻译问题：直接设置选中选项的文本
     setTimeout(function() {
-        var $selected = $('#wpa_encrypt option:selected');
-        if (finalValue === 'tkip') {
-            $selected.text('TKIP');
-        } else if (finalValue === 'aes') {
-            $selected.text('AES');
-        } else {
-            $selected.text('Auto');
-        }
-    }, 0);
+        var $option = $('#wpa_encrypt option[value="' + finalValue + '"]');
+    
+    if ($option.length > 0) {
+        // 如果存在，正常赋值并触发更新
+        $('#wpa_encrypt').val(finalValue).trigger('change');
+    } else {
+        // 如果扫描到的值不存在 比如该模式下不支持TKIP，
+        // 则尝试选择默认的 'tkipaes' 或第一个可用选项
+        var fallback = $('#wpa_encrypt option[value="tkipaes"]').length > 0 ? 'tkipaes' : $('#wpa_encrypt option:first').val();
+        $('#wpa_encrypt').val(fallback).trigger('change');
+    }
+    }, 50);
     
     // 触发必要的事件
     $('#secure').trigger('change');

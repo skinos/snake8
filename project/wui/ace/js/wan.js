@@ -58,7 +58,7 @@ function status_load()
 		  }
 		  else
 		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
+			  $(id+"_delay").text( $.i18n("Delay")+":"+ info.delay + "ms" );
 		  }
 	  }
 	  else
@@ -549,6 +549,7 @@ function config_save()
       return;
   }
   page.confirm( { message: $.i18n('The WAN connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+    if (!result) return location.reload();
     if ( result )
     {
       he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){

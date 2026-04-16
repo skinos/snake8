@@ -309,7 +309,7 @@ function lte_show(info, id) {
     $(id + "_vidpid").text(info.name || "");
     $(id + "_imei").text(info.imei || "");
     $(id + "_imsi").text(info.imsi || "");
-    $(id + "_iccid").text(info.iccid || "");
+    $(id + "_iccid").text($.i18n(info.iccid));
     
     // LAC/CI/ARFCN
     $(id + "_lac").text(info.lac || "");

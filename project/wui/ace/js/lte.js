@@ -191,7 +191,7 @@ function status_load()
 		  }
 		  else
 		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+info.delay );
+			  $(id+"_delay").text( $.i18n("Delay")+":"+ info.delay + "ms" );
 		  }
 	  }
 	  else
