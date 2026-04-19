@@ -13,7 +13,13 @@
                     <span id="wisp_status"></span>&nbsp; &nbsp;
                     <a class="btn btn-mini btn-warning" id="wisp_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
                 </td>
-                <th data-i18n="Address"></th><td><span id="wisp_ip"></span>&nbsp;<span id="wisp_delay"></span></td>
+                <th data-i18n="Address"></th>
+                <td>
+                  <span id="wisp_ip"></span>&nbsp;
+                  <span id="wisp_delay_head" style="white-space: nowrap; display: none;">
+                      <span data-i18n="Delay"></span>:<span id="wisp_delay"></span>
+                  </span>
+                </td>
             </tr>
             <tr>
                 <th data-i18n="Peer SSID"></th><td id="wisp_peer"></td> 
@@ -42,94 +48,191 @@
 
         <div class="hr hr32 hr-dotted"></div>
         <!-- 扫描 -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Scan"></label>
-            <!-- <div class="col-sm-9 form-right-text"><button class="btn btn-main btn-mini" id="apscan" data-i18n="Scan"></button></div> -->
-            <div class="col-sm-9"><button class="btn btn-main" id="apscan" data-i18n="Scan" style="padding: 4px 12px; font-size: 12px;"></button></div>
-        </div>
-        <!-- 对端 -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID"></label>
-            <div class="col-sm-9"><input type="text" id="peer" class="col-xs-10 col-sm-5" maxlength="128" /></div>
-        </div>
-        <!-- 对端2 -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID2"></label>
-            <div class="col-sm-9"><input type="text" id="peer2" class="col-xs-10 col-sm-5" maxlength="128" /></div>
-        </div>
-        <!-- 对端3 -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer SSID3"></label>
-            <div class="col-sm-9"><input type="text" id="peer3" class="col-xs-10 col-sm-5" maxlength="128" /></div>
-        </div>
+        
 
-        <!-- 锁定MAC -->
         <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Lock BSSID"></label>
-            <div class="col-sm-9"><label><input id="lock" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
+   <label class="col-sm-2 control-label no-padding-right"></label>
+    <div class="col-sm-10" style="max-width: 1000px;">
+      
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th data-i18n="Lock"></th>
+                        <th style="width: 100px;" data-i18n="Peer SSID"></th>
+                        <th data-i18n="Security Mode"></th>
+                        <th data-i18n="Peer BSSID"></th>
+                        <th data-i18n="WPA Mode"></th>
+                        <th data-i18n="Password"></th>
+                        <th data-i18n="Hidden"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- SSID 1 -->
+                    <tr>
+                      <td>
+                          <label>
+                                <input type="checkbox" id="lock" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="text" id="peer" style="margin-right: 10px;" data-i18n="[placeholder]Enter SSID"  />
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-main apscan-btn" data-row-index="1" type="button" style="padding: 4px 12px; font-size: 12px;">
+                                        <i class="ace-icon fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="form-control" id="secure">
+                                <option value="disable" data-i18n="Disable"></option>
+                                <option value="wpapsk" data-i18n="WPA PSK"></option>
+                                <option value="wpa2psk" data-i18n="WPA2 PSK"></option>
+                                <option value="wpapskwpa2psk" data-i18n="WPA/WPA2 Mixed"></option>
+                            </select>
+                        </td>
+                        <td>
+                          <input type="text" id="peermac" class="form-control" data-i18n="[placeholder]Enter BSSID"  />
+                        </td>
+                        <td>
+                          <div id="secure_cfg" style="display: none;">
+                            <select class="form-control" id="wpa_encrypt">
+                                <option value="tkip" data-i18n="TKIP"></option>
+                                <option value="aes" data-i18n="AES"></option>
+                                <option value="tkipaes" data-i18n="TKIP&AES"></option>
+                            </select>
+                          </div>
+                        </td>
+                        <td>
+                          <div id="secure_cfg2" style="display: none;">
+                            <span class="input-icon input-icon-right" style="width: 100%;">
+                                <input type="password" id="wpa_key" class="form-control" maxlength="128" autocomplete="new-password" />
+                                <i class="ace-icon fa fa-eye-slash pointer" id="wpa_key-icon"></i>
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <label>
+                                <input type="checkbox" id="hidden" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <!-- SSID 2 -->
+                    <tr>
+                      <td>
+                          <label>
+                                <input type="checkbox" id="lock2" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="text" id="peer2" style="margin-right: 10px;" data-i18n="[placeholder]Enter SSID2"  />
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-main apscan-btn" data-row-index="2" type="button" style="padding: 4px 12px; font-size: 12px;">
+                                        <i class="ace-icon fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="form-control" id="secure2">
+                                <option value="disable" data-i18n="Disable"></option>
+                                <option value="wpapsk" data-i18n="WPA PSK"></option>
+                                <option value="wpa2psk" data-i18n="WPA2 PSK"></option>
+                                <option value="wpapskwpa2psk" data-i18n="WPA/WPA2 Mixed"></option>
+                            </select>
+                        </td>
+                        <td>
+                          <input type="text" id="peermac2" class="form-control" data-i18n="[placeholder]Enter BSSID2"  />
+                        </td>
+                        <td>
+                          <div id="secure2_cfg" style="display: none;">
+                            <select class="form-control" id="wpa_encrypt2">
+                                <option value="tkip" data-i18n="TKIP"></option>
+                                <option value="aes" data-i18n="AES"></option>
+                                <option value="tkipaes" data-i18n="TKIP&AES"></option>
+                            </select>
+                          </div>
+                        </td>
+                        <td>
+                          <div id="secure2_cfg2" style="display: none;">
+                            <span class="input-icon input-icon-right" style="width: 100%;">
+                                <input type="password" id="wpa_key2" class="form-control" maxlength="128" />
+                                <i class="ace-icon fa fa-eye-slash pointer" id="wpa_key2-icon"></i>
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <label>
+                                <input type="checkbox" id="hidden2" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                    </tr>
+                    <!-- SSID 3 -->
+                    <tr>
+                      <td>
+                          <label>
+                                <input type="checkbox" id="lock3" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <input type="text" id="peer3" style="margin-right: 10px;" data-i18n="[placeholder]Enter SSID3"  />
+                                <span class="input-group-btn">
+                                    <button class="btn btn-sm btn-main apscan-btn" data-row-index="3" type="button" style="padding: 4px 12px; font-size: 12px;">
+                                        <i class="ace-icon fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="form-control" id="secure3">
+                                <option value="disable" data-i18n="Disable"></option>
+                                <option value="wpapsk" data-i18n="WPA PSK"></option>
+                                <option value="wpa2psk" data-i18n="WPA2 PSK"></option>
+                                <option value="wpapskwpa2psk" data-i18n="WPA/WPA2 Mixed"></option>
+                            </select>
+                        </td>
+                        <td>
+                          <input type="text" id="peermac3" class="form-control" data-i18n="[placeholder]Enter BSSID3"  />
+                        </td>
+                        <td>
+                          <div id="secure3_cfg" style="display: none;">
+                            <select class="form-control" id="wpa_encrypt3">
+                                <option value="tkip" data-i18n="TKIP"></option>
+                                <option value="aes" data-i18n="AES"></option>
+                                <option value="tkipaes" data-i18n="TKIP&AES"></option>
+                            </select>
+                          </div>
+                        </td>
+                        <td>
+                          <div id="secure3_cfg2" style="display: none;">
+                            <span class="input-icon input-icon-right" style="width: 100%;">
+                                <input type="password" id="wpa_key3" class="form-control" maxlength="128" />
+                                <i class="ace-icon fa fa-eye-slash pointer" id="wpa_key3-icon"></i>
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          <label>
+                                <input type="checkbox" id="hidden3" class="ace" />
+                                <span class="lbl"></span>
+                            </label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <div id="lock_cfg">
-            <!-- 对端MAC -->
-            <div class="form-group">
-                <label class="col-sm-3 control-label no-padding-right" data-i18n="Peer BSSID"></label>
-                <div class="col-sm-9"><input type="text" id="peermac" class="col-xs-10 col-sm-5" maxlength="128" /></div>
-            </div>
-        </div>
-
-        <!-- 安全模式 -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Security Mode"></label>
-            <div class="col-sm-9">
-                <select class="col-xs-10 col-sm-5" id="secure">
-                    <option value="disable" data-i18n="Disable(None)"></option>
-                    <option value="wpapsk" data-i18n="WPA-PSK(Private)"></option>
-                    <option value="wpa2psk" data-i18n="WPA2-PSK(Private)"></option>
-                    <option value="wpapskwpa2psk" data-i18n="WPA/WPA2-PSK Mixed(Private)"></option>
-                </select>
-            </div>
-        </div>
-
-        <div id="secure_cfg">
-            <!-- WPA 模式 -->
-            <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="WPA Mode"></label>
-                <div class="col-sm-9">
-                    <select class="col-xs-10 col-sm-5" id="wpa_encrypt">
-                        <option value="tkip" data-i18n="TKIP"></option>
-                        <option value="aes" data-i18n="AES"></option>
-                        <option value="tkipaes" data-i18n="TKIP&AES"></option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 密码 -->
-            <div class="form-group">
-                <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
-                <div class="col-sm-9">
-                    <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
-                        <input type="password" id="wpa_key" maxlength="128" autocomplete="new-password" />
-                        <i class="ace-icon fa fa-eye-slash" id="wpa_key-icon"></i>
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hidden SSID -->
-        <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Hidden SSID"></label>
-            <div class="col-sm-9"><label><input id="hidden" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label></div>
-        </div>
-
-        <div id="hidden_cfg">
-            <!-- 信道 -->
-            <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Channel"></label>
-                <div class="col-sm-9">
-                    <select class="col-xs-10 col-sm-5" id="channel">
-                    </select>
-                </div>
-            </div>
-        </div>
+      
+    </div>
+</div>
 
         <!-- Disable local SSID -->
         <div class="form-group">

@@ -3,6 +3,7 @@
 var state;
 var config;
 var object = "ifname@wisp";
+var currentActiveRow = 1; // 记录当前操作的是第几行
 var index = page.param( 'object', location.hash );
 if ( index )
 {
@@ -63,10 +64,17 @@ function status_load()
           if (info.delay === "failed" || info.delay === "block") {
               $(id + "_delay").text($.i18n(info.delay));
           } else {
-              $(id + "_delay").text($.i18n("Delay")+":"+ info.delay + "ms");
+              $(id + "_delay").text(info.delay + "ms");
           }
       } else {
           $(id + "_delay").text("");
+      }
+
+      // 延迟头部显示控制
+      if (info.delay) {
+          $(id + "_delay_head").show();
+      } else {
+          $(id + "_delay_head").hide();
       }
       
       /* txrx */
@@ -284,10 +292,26 @@ function config_load()
     $('#peer').val( config.peer || '' );
     $('#peer2').val( config.peer2 || '' );
     $('#peer3').val( config.peer3 || '' );
-    $('#peermac').val( config.peermac || '' );
+
+   
+    [ '', '2', '3' ].forEach(function(s) {
+        var macValue = config['peermac' + s] || '';
+        var $macInput = $('#peermac' + s);
+        
+        // 加载时同时设置值和备份
+        $macInput.val(macValue).data('backup-mac', macValue);
+        
+        // 根据是否有值自动勾选 lock
+        $('#lock' + s).prop('checked', !!macValue).trigger('change');
+        $('#peer' + s).val(config['peer' + s] || '');
+    });
+
     $('#nossid').prop( 'checked', config.nossid=="enable" );
     $('#wpa_key').val( config.wpa_key || '' );
+    $('#wpa_key2').val( config.wpa_key2 || '' );
+    $('#wpa_key3').val( config.wpa_key3 || '' );
     var securelist = v[2];
+    // ssid
 	if ( securelist )
 	{
 		$("#secure").empty();			 
@@ -301,11 +325,13 @@ function config_load()
 		  if ( secure == "disable")
 		  {
 			  $("#secure_cfg").hide();
+              $("#secure_cfg2").hide();
 		  }
 		  else
 		  {
 			  $("#wpa_encrypt").empty();			
 			  $("#secure_cfg").show();
+              $("#secure_cfg2").show();
 			  if ( securelist[secure] )
 			  {
 				  for( b in securelist[secure] )
@@ -326,46 +352,96 @@ function config_load()
 		  if ( secure == 'disable' )
 		  {
 			$('#secure_cfg').hide();
+            $('#secure_cfg2').hide();
 		  }
 		  else
 		  {
 			$('#secure_cfg').show();
+            $('#secure_cfg2').show();
 		  }
 		}).trigger('change');
 	}
-    $('#lock').prop( 'checked', config.peermac );
-    $('#lock').unbind('change').change(function (e) {
-        if ($(this).prop('checked'))
-        {
-            $('#strong').prop( 'checked', false );
-            $('#lock_cfg').show();
-        }
-        else
-        {
-            $('#lock_cfg').hide();
-        }
-    }).trigger('change');
-    $('#hidden').prop( 'checked', config.peermode=="hidden" );
-    $('#hidden').unbind('change').change(function (e) {
-        if ($(this).prop('checked'))
-        {
-            $('#hidden_cfg').show();
-        }
-        else
-        {
-            $('#hidden_cfg').hide();
-        }
-    }).trigger('change');
-    /* 初始化信道select */
-    var chlist = v[1];
-    var selects = "";
-    for ( var ch in chlist )
-    {
-        selects += ('<option value="' + ch + '">' + $.i18n( ch ) + '</option>');
-    }
-    $("#channel").html( selects );
-    $('#channel').val( config.channel || '1' );
 
+    // ssid2
+    if (securelist) {
+        $("#secure2").empty();
+        for (m in securelist) {
+            $("#secure2").append("<option value='" + m + "'>" + $.i18n(m) + "</option>");
+        }
+        $('#secure2').val(config.secure2 || 'disable'); 
+        $('#secure2').unbind('change').change(function (e) {
+            var secure = e.target.value;
+            if (secure == "disable") {
+                $("#secure2_cfg").hide(); 
+                $("#secure2_cfg2").hide();
+            } else {
+                $("#wpa_encrypt2").empty();
+                $("#secure2_cfg").show();
+                $("#secure2_cfg2").show();
+                if (securelist[secure]) {
+                    for (b in securelist[secure]) {
+                        $("#wpa_encrypt2").append("<option value='" + b + "'>" + $.i18n(b) + "</option>");
+                    }
+                }
+                $('#wpa_encrypt2').val(config.wpa_encrypt2 || 'aes');
+            }
+        }).trigger('change');
+    } else {
+        $('#secure2').val(config.secure2 || 'disable');
+        $('#wpa_encrypt2').val(config.wpa_encrypt2 || 'aes');
+        $('#secure2').unbind('change').change(function (e) {
+            var secure = e.target.value;
+            if (secure == 'disable') {
+                $("#secure2_cfg").hide(); 
+                $("#secure2_cfg2").hide();
+            } else {
+                $("#secure2_cfg").show();
+                $("#secure2_cfg2").show();
+            }
+        }).trigger('change');
+    }
+
+    // ssid3
+    if (securelist) {
+        $("#secure3").empty();
+        for (m in securelist) {
+            $("#secure3").append("<option value='" + m + "'>" + $.i18n(m) + "</option>");
+        }
+        $('#secure3').val(config.secure3 || 'disable');
+        $('#secure3').unbind('change').change(function (e) {
+            var secure = e.target.value;
+            if (secure == "disable") {
+                $("#secure3_cfg").hide();
+                $("#secure3_cfg2").hide();
+            } else {
+                $("#wpa_encrypt3").empty();
+                $("#secure3_cfg").show();
+                $("#secure3_cfg2").show();
+                if (securelist[secure]) {
+                    for (b in securelist[secure]) {
+                        $("#wpa_encrypt3").append("<option value='" + b + "'>" + $.i18n(b) + "</option>");
+                    }
+                }
+                $('#wpa_encrypt3').val(config.wpa_encrypt3 || 'aes');
+            }
+        }).trigger('change');
+    } else {
+        $('#secure3').val(config.secure3 || 'disable');
+        $('#wpa_encrypt3').val(config.wpa_encrypt3 || 'aes');
+        $('#secure3').unbind('change').change(function (e) {
+            var secure = e.target.value;
+            if (secure == 'disable') {
+                $("#secure3_cfg").hide();
+                $("#secure3_cfg2").hide();
+            } else {
+                $("#secure3_cfg").show();
+                $("#secure3_cfg2").show();
+            }
+        }).trigger('change');
+    }
+    $('#hidden').prop( 'checked', config.peermode=="hidden" );
+    $('#hidden2').prop('checked', config.peermode2 == "hidden");
+    $('#hidden3').prop('checked', config.peermode3 == "hidden");
   })
 }
 
@@ -644,6 +720,8 @@ function config_save()
   config.peer2 = $('#peer2').val();
   config.peer3 = $('#peer3').val();
   config.peermac = '';
+  config.peermac2 = '';
+  config.peermac3 = '';
   if ( $('#lock').prop('checked') )
   {
     config.peermac = $('#peermac').val();
@@ -659,8 +737,41 @@ function config_save()
         return;
     }
   }
+
+  if ( $('#lock2').prop('checked') )
+  {
+    config.peermac2 = $('#peermac2').val();
+    if ( check.mac( config.peermac2, true ) == false )
+    {
+        page.alert( {
+            message: $.i18n('Peer BSSID')+" "+$.i18n('must be a valid MAC address'),
+            callback: function()
+            {
+                $('#peermac2').select();
+            }
+        } );
+        return;
+    }
+  }
+
+  if ( $('#lock3').prop('checked') )
+  {
+    config.peermac3 = $('#peermac3').val();
+    if ( check.mac( config.peermac3, true ) == false )
+    {
+        page.alert( {
+            message: $.i18n('Peer BSSID')+" "+$.i18n('must be a valid MAC address'),
+            callback: function()
+            {
+                $('#peermac3').select();
+            }
+        } );
+        return;
+    }
+  }
+
   config.secure = $('#secure').val();
-  if ( config.secure != 'disable' && config.secure != "owe" )
+  if ( config.secure != 'disable')
   {
       config.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
       config.wpa_key = $('#wpa_key').val();
@@ -670,20 +781,44 @@ function config_save()
           return;
       }
   }
-  config.nossid = boole2able( $('#nossid').prop('checked') );
-  delete config.peermode;
-  delete config.channel;
-  if ( $('#hidden').prop('checked') )
+  config.secure2 = $('#secure2').val();
+  if ( config.secure2 != 'disable')
   {
-      config.peermode = "hidden";
-      config.channel = $('#channel').val();
-      if ( !config.channel )
+      config.wpa_encrypt2 = $('#wpa_encrypt2').val()||"aes";
+      config.wpa_key2 = $('#wpa_key2').val();
+      if ( !config.wpa_key2 )
       {
-          page.alert( { message: $.i18n('Channel')+" "+$.i18n('Can not be empty') } );
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
           return;
       }
   }
-
+  config.secure3 = $('#secure3').val();
+  if ( config.secure3 != 'disable')
+  {
+      config.wpa_encrypt3 = $('#wpa_encrypt3').val()||"aes";
+      config.wpa_key3 = $('#wpa_key3').val();
+      if ( !config.wpa_key3 )
+      {
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
+          return;
+      }
+  }
+  config.nossid = boole2able( $('#nossid').prop('checked') );
+  delete config.peermode;
+  delete config.peermode2;
+  delete config.peermode3;
+  if ( $('#hidden').prop('checked') )
+  {
+      config.peermode = "hidden";
+  }
+  if ( $('#hidden2').prop('checked') )
+  {
+      config.peermode2 = "hidden";
+  }
+  if ( $('#hidden3').prop('checked') )
+  {
+      config.peermode3 = "hidden";
+  }
   if ( ocompare( config, copy ) )
   {
       page.alert( { message: $.i18n('Settings unchanged') } );
@@ -705,6 +840,8 @@ function config_save()
 /* init */
 page.password('password', 'password-icon' );
 page.password('wpa_key', 'wpa_key-icon' );
+page.password('wpa_key2', 'wpa_key2-icon' );
+page.password('wpa_key3', 'wpa_key3-icon' );
 $.i18n().load( page.lang('wan') ).then( function () {
     /* init the langauage */
     $.i18n().locale = lang; $('body').i18n();
@@ -747,7 +884,15 @@ $.i18n().load( page.lang('wan') ).then( function () {
                     name: 'secure', width: 190,
                     formatter: function ( cellvalue )
                     {
-                        return '<span data-secure="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
+                        var safeValue = cellvalue;
+                        if (!safeValue || typeof safeValue === 'object') 
+                        {
+                            safeValue = ""; // 强制设置为空字符串，避免出现 [object Object]
+                        }
+                        // 如果 safeValue 为空，则不调用 $.i18n 否则可能返回键名本身
+                        var displayText = (safeValue === "") ? "" : $.i18n(safeValue);
+                        
+                        return '<span data-secure="' + safeValue + '">' + displayText + '</span>';
                     },
                     unformat: function (cellvalue, options, cell)
                     {
@@ -756,9 +901,21 @@ $.i18n().load( page.lang('wan') ).then( function () {
                 },
                 {
                     name: 'wpa_encrypt', width: 100,
-                    formatter: function (cellvalue)
+                    formatter: function (cellvalue,rowObject)
                     {
-                        return '<span data-wpa_encrypt="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
+                        var secureMode = rowObject.secure || '';
+                        var safeValue = cellvalue;
+
+                        if (secureMode === 'disable' || !safeValue || typeof safeValue === 'object') 
+                        {
+                            safeValue = ""; // 强制设置为空字符串，避免出现 [object Object]
+                        }
+                        // 如果 safeValue 为空，则不调用 $.i18n 否则可能返回键名本身
+                        var displayText = (safeValue === "") ? "" : $.i18n(safeValue);
+                        
+                        return '<span data-wpa_encrypt="' + safeValue + '">' + displayText + '</span>';  
+                        
+                        //return '<span data-wpa_encrypt="' + cellvalue + '">' + $.i18n(cellvalue) + '</span>';
                     },
                     unformat: function (cellvalue, options, cell)
                     {
@@ -802,6 +959,19 @@ $.i18n().load( page.lang('wan') ).then( function () {
     status_load();
     config_load();
 
+    // 监听三个 lock 开关的变化
+    $('#lock, #lock2, #lock3').on('change', function() {
+        var suffix = this.id.replace('lock', '');
+        var $macInput = $('#peermac' + suffix);
+
+        if ($(this).prop('checked')) {
+            var backup = $macInput.data('backup-mac') || '';
+            if (backup) {
+                $macInput.val(backup);
+            }
+        } 
+    });
+
     /* bind the button */
     $('#wisp_btn').on(ace.click_event, function () {
         if ( state.status == "down" )
@@ -824,7 +994,9 @@ $.i18n().load( page.lang('wan') ).then( function () {
     });
 
     // scanning 修复scan赋值bug
-    $('#apscan').unbind(ace.click_event).on(ace.click_event, function () {
+    $('.apscan-btn').unbind(ace.click_event).on(ace.click_event, function () {
+        currentActiveRow = $(this).data('row-index'); 
+
         he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
             var list = v[0];
             var rows = json2array( list, {}, "mac" );
@@ -853,6 +1025,8 @@ $.i18n().load( page.lang('wan') ).then( function () {
     });
 
     $('#rescan').unbind(ace.click_event).on(ace.click_event, function () {
+        currentActiveRow = $(this).data('row-index'); 
+
         he.exec( [ object+'.aplist' ], $.i18n("Scanning") ).then( function(v){
             var list = v[0];
             var rows = json2array( list, {}, "mac" );
@@ -894,8 +1068,8 @@ $.i18n().load( page.lang('wan') ).then( function () {
 /* 全局变量存储AP列表原始数据 */
  var apDataStore = {};
 
-function isOptionExist(val) {
-    return $("#secure option[value='" + val + "']").length > 0;
+function isOptionExist(val, selSuffix) {
+    return $("#secure" + selSuffix + " option[value='" + val + "']").length > 0;
 }
 
 /* 必须在全局中才可以被调用到 */
@@ -910,29 +1084,33 @@ function ap_select(rowId) {
     // 从全局存储中获取原始数据
     var originalData = apDataStore[mac];
     
+    var suffix = (currentActiveRow === 1) ? '' : currentActiveRow;
+
     // 将选中的数据填到对应的输入框中
-    $('#peer').val(ap.ssid);
-    $('#peermac').val(mac);
-    $('#lock').prop('checked', false).trigger('change');
+    $('#peer' + suffix).val(ap.ssid);
+    var $macInput = $('#peermac' + suffix);
+    $macInput.val(mac).data('backup-mac', mac); 
+
+    $('#lock' + suffix).prop('checked', false).trigger('change');
 
     // 处理secure安全模式的数据回退
     var rawSecure = ap.secure || 'disable';
     var targetSecure = 'disable';
 
     // 精确匹配
-    if (isOptionExist(rawSecure)) {
+    if (isOptionExist(rawSecure,suffix)) {
         targetSecure = rawSecure;
     } 
     else {
         // 回退匹配逻辑
         if (rawSecure.indexOf('wpa3psk') !== -1 || rawSecure.indexOf('wpa2pskwpa3psk') !== -1) {
-            if (isOptionExist('wpa2pskwpa3psk')){
+            if (isOptionExist('wpa2pskwpa3psk',suffix)){
                 targetSecure = 'wpa2pskwpa3psk';
             }
-            else if (isOptionExist('wpa2psk')){
+            else if (isOptionExist('wpa2psk',suffix)){
                 targetSecure = 'wpa2psk';
             }
-            else if (isOptionExist('wpapsk')){
+            else if (isOptionExist('wpapsk',suffix)){
                 targetSecure = 'wpapsk';
             }
             else{
@@ -940,13 +1118,13 @@ function ap_select(rowId) {
             }
         } 
         else if (rawSecure.indexOf('wpa2psk') !== -1 || rawSecure.indexOf('wpapskwpa2psk') !== -1) {
-            if (isOptionExist('wpapskwpa2psk')){
+            if (isOptionExist('wpapskwpa2psk',suffix)){
                 targetSecure = 'wpapskwpa2psk';
             }
-            else if (isOptionExist('wpa2psk')){
+            else if (isOptionExist('wpa2psk',suffix)){
                 targetSecure = 'wpa2psk';
             }
-            else if (isOptionExist('wpapsk')){
+            else if (isOptionExist('wpapsk',suffix)){
                 targetSecure = 'wpapsk';
             }
             else targetSecure = 'disable';
@@ -957,7 +1135,7 @@ function ap_select(rowId) {
         }
     }
     // 设置选择框的值
-    $('#secure').val(targetSecure);
+    $('#secure' + suffix).val(targetSecure).trigger('change');
     
     // 处理WPA加密模式的映射
     var wpaEncryptValue = originalData ? originalData.wpa_encrypt : ap.wpa_encrypt;
@@ -978,22 +1156,22 @@ function ap_select(rowId) {
     
     // 修复i18n翻译问题：直接设置选中选项的文本
     setTimeout(function() {
+        var $targetEl = $('#wpa_encrypt' + suffix);
         var $option = $('#wpa_encrypt option[value="' + finalValue + '"]');
     
     if ($option.length > 0) {
         // 如果存在，正常赋值并触发更新
-        $('#wpa_encrypt').val(finalValue).trigger('change');
+        $targetEl.val(finalValue).trigger('change');
     } else {
         // 如果扫描到的值不存在 比如该模式下不支持TKIP，
         // 则尝试选择默认的 'tkipaes' 或第一个可用选项
-        var fallback = $('#wpa_encrypt option[value="tkipaes"]').length > 0 ? 'tkipaes' : $('#wpa_encrypt option:first').val();
-        $('#wpa_encrypt').val(fallback).trigger('change');
+        var fallback = $targetEl.find('option[value="tkipaes"]').length > 0 ? 'tkipaes' : $targetEl.find('option:first').val();
+        $targetEl.val(fallback).trigger('change');
     }
     }, 50);
     
     // 触发必要的事件
-    $('#secure').trigger('change');
-    $('#hidden').prop('checked', false).trigger('change');
+    $('#hidden' + suffix).prop('checked', false).trigger('change');
     $('#radio').val('');
     $('#channel').val('');
 }
