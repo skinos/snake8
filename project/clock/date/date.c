@@ -142,6 +142,7 @@ boole_t _setup( obj_t this, param_t param )
 {
     talk_t cfg;
     const char *ptr;
+    const char *start;
 
 	/* get the component configure */
     cfg = config_get( this, NULL );
@@ -155,9 +156,10 @@ boole_t _setup( obj_t this, param_t param )
     {
     	ptr = "8";
     }
+    start = json_string( cfg, "inittime" );
 	syslog( LOG_INFO, COM_IDPATH" init the date zone" );
 	/* set the timezone first */
-	time_setting( NULL, ptr );
+	time_setting( start, ptr );
 	/* read from the RTC when have RTC */
 
     talk_free( cfg );
