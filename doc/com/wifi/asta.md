@@ -7,13 +7,12 @@ Manage 5.8G Station
 // Attribute introduction
 {
     "status":"enable or  disable the function",     // [ "enable", "disable" ]
+    "ssid_disable":"disable the ssid",              // [ "disable", "enable" ], disable the local ssid when connected
 
-    // wireless connect
+    // wireless connect first peer
     "peer":"SSID to connect",              // [ string ]
     "peermac":"BSSID to connect",          // [ mac address ]
     "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
-    "channel":"wireless channel",          // [ number ], 0, 36-165, 0 for auto
-    "nossid":"disable the ssid",           // [ "disable", "enable" ], disable the local ssid when connected
     "secure":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
                                                             // [ disable ] for no securiyt
                                                             // [ wpapsk ]  for WPAPSK
@@ -23,7 +22,37 @@ Manage 5.8G Station
                                                             // [ aes ] for AES
                                                             // [ tkip ] for TKIP
                                                             // [ tkipaes ] for auto
-    "wpa_key":"WPA key"                    // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+    "wpa_key":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+
+    // wireless connect second peer
+    "peer2":"SSID2 to connect",            // [ string ]
+    "peermac2":"BSSID to connect",         // [ mac address ]
+    "peermode2":"mode of connection",      // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
+    "secure2":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
+                                                            // [ disable ] for no securiyt
+                                                            // [ wpapsk ]  for WPAPSK
+                                                            // [ wpa2psk ]  for WPA2PSK
+                                                            // [ wpapskwpa2psk ] for WPA Mix
+    "wpa_encrypt2":"WAP encrypt",           // [ "aes", "tkip", "tkipaes" ]
+                                                            // [ aes ] for AES
+                                                            // [ tkip ] for TKIP
+                                                            // [ tkipaes ] for auto
+    "wpa_key3":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+
+    // wireless connect second peer
+    "peer3":"SSID3 to connect",            // [ string ]
+    "peermac3":"BSSID to connect",         // [ mac address ]
+    "peermode3":"mode of connection",      // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
+    "secure3":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
+                                                            // [ disable ] for no securiyt
+                                                            // [ wpapsk ]  for WPAPSK
+                                                            // [ wpa2psk ]  for WPA2PSK
+                                                            // [ wpapskwpa2psk ] for WPA Mix
+    "wpa_encrypt3":"WAP encrypt",           // [ "aes", "tkip", "tkipaes" ]
+                                                            // [ aes ] for AES
+                                                            // [ tkip ] for TKIP
+                                                            // [ tkipaes ] for auto
+    "wpa_key3":"WPA key"                    // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
 
 }
 ```
