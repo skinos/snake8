@@ -56,27 +56,30 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 	}
 
 	/* search the match config bind */
-	axp = NULL;
-	while( NULL != ( axp = json_next( matchcfg, axp ) ) )
+	if ( matchcfg != NULL && id != NULL )
 	{
-		object = axp_name( axp );
-		v = axp_json( axp );
-		if( v == NULL )
+		axp = NULL;
+		while( NULL != ( axp = json_next( matchcfg, axp ) ) )
 		{
-			continue;
-		}
-		laxp = NULL;
-		while( NULL != ( laxp = json_next( v, laxp ) ) )
-		{
-			ptr = axp_name( laxp );
-			if ( 0 == strcmp( ptr, id ) )
+			object = axp_name( axp );
+			v = axp_json( axp );
+			if( v == NULL )
 			{
-				json_set_string( cfg, object, syspath );
-				json2file( cfg, path );
-				talk_free( cfg );
-				strncpy( buf, object, buflen-1 );
-				buf[buflen-1] = '\0';
-				return buf;
+				continue;
+			}
+			laxp = NULL;
+			while( NULL != ( laxp = json_next( v, laxp ) ) )
+			{
+				ptr = axp_name( laxp );
+				if ( 0 == strcmp( ptr, id ) )
+				{
+					json_set_string( cfg, object, syspath );
+					json2file( cfg, path );
+					talk_free( cfg );
+					strncpy( buf, object, buflen-1 );
+					buf[buflen-1] = '\0';
+					return buf;
+				}
 			}
 		}
 	}
@@ -101,17 +104,20 @@ const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, c
 		}
 		/* skip the match config */
 		axp = NULL;
-		while( NULL != ( axp = json_next( matchcfg, axp ) ) )
+		if ( matchcfg != NULL )
 		{
-			object = axp_name( axp );
-			v = axp_json( axp );
-			if( v == NULL )
+			while( NULL != ( axp = json_next( matchcfg, axp ) ) )
 			{
-				continue;
-			}
-			if ( object != NULL && 0 == strcmp( object, name ) )
-			{
-				break;
+				object = axp_name( axp );
+				v = axp_json( axp );
+				if( v == NULL )
+				{
+					continue;
+				}
+				if ( object != NULL && 0 == strcmp( object, name ) )
+				{
+					break;
+				}
 			}
 		}
 		if ( axp != NULL )
@@ -152,6 +158,7 @@ void        wifia_free( const char *object )
 
 
 /* usb network device path list find, return >0 is find device number, return 0 for nofound*/
+#define WIFIA_NETLIST_MAX 128
 int wifia_netlist( const char *syspath, char device[][NAME_MAX] )
 {
 	int ret;
@@ -182,6 +189,10 @@ int wifia_netlist( const char *syspath, char device[][NAME_MAX] )
 		if ( *pent->d_name == '\0' || *pent->d_name == '.' )
 		{
 			continue;
+		}
+		if ( ret >= WIFIA_NETLIST_MAX )
+		{
+			break;
 		}
 		snprintf( device[ret], NAME_MAX, "%s", pent->d_name );
 		ret++;
@@ -370,6 +381,10 @@ talk_t country2chlist( const char *country, int a )
     country_set_t *p;
     char buf[NAME_MAX];
 
+    if ( country == NULL )
+    {
+        return NULL;
+    }
     i = 0;
     ch = NULL;
     for ( i=0;; i++ )

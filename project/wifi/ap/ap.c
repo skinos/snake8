@@ -179,7 +179,7 @@ boole_t _down( obj_t this, param_t param )
 	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
 	unlink( path );
 
-    /* down the deivce */
+    /* down the device */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
 		wifi_info( "%s(%s) down", object, netdev );
@@ -234,7 +234,7 @@ talk_t _status( obj_t this, param_t param )
 	json_set_string( ret, "status", "up" );
     /* get the secure mode */
     json_set_string( ret, "secure", json_string( cfg, "secure" ) );
-    /* flew get */
+    /* rx/tx flow counters */
     rt_bytes = rt_packets = rt_errs = rt_drops = tt_bytes = tt_packets = tt_errs = tt_drops = 0;
     netdev_flew( netdev, &rt_bytes, &rt_packets, &rt_errs, &rt_drops, &tt_bytes, &tt_packets, &tt_errs, &tt_drops );
     snprintf( buffer, sizeof(buffer), "%llu", rt_bytes );
@@ -381,8 +381,10 @@ talk_t _stalist( obj_t this, param_t param )
             ptr = strstr( readbuf, "	signal:" );
             if ( ptr != NULL )
             {
-                sscanf( readbuf, "%*[^:]:%d", &i );
-				json_set_number( x, "rssi", i );
+                if ( sscanf( ptr, "%*[^:]:%d", &i ) == 1 )
+				{
+					json_set_number( x, "rssi", i );
+				}
                 continue;
             }
             ptr = strstr( readbuf, "connected time:" );
@@ -390,7 +392,7 @@ talk_t _stalist( obj_t this, param_t param )
             {
 				ei = 0;
                 day = hour = minute = second = 0;
-                sscanf( readbuf, "%*[^:]:%llu", &ei );
+                sscanf( ptr, "%*[^:]:%llu", &ei );
                 day = ei / (24*60*60); ei %= (24*60*60);
                 hour = ei / (60*60); ei %= (60*60);
                 minute = ei / 60; ei %= 60;

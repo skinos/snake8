@@ -1,10 +1,13 @@
 /*
- *  Description:  wireless staion management
+ *  Description:  wireless station management
  *       Author:  dimmalex (dim), dimmalex@gmail.com
  *      Company:  ASHYELF
  */
 
 #include "skin/skin.h"
+#define STA_PEER_MAX 3
+
+
 
 static int dbm2signal( int rssi )
 {
@@ -165,17 +168,17 @@ static talk_t station_dev_apresult( const char *netdev )
 					json_set_string( x, "secure", "wpa3psk" );
 					json_set_string( x, "wpa_encrypt", "aes" );
 				}
-				/* wpapskwpa2psk aes */
+				/* wpapskwpa2psk tkip (iwinfo: mixed ... TKIP) */
 				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP)" ) != NULL )
 				{
 					json_set_string( x, "secure", "wpapskwpa2psk" );
-					json_set_string( x, "wpa_encrypt", "aes" );
+					json_set_string( x, "wpa_encrypt", "tkip" );
 				}
-				/* wpapskwpa2psk tkip */
+				/* wpapskwpa2psk aes (iwinfo: mixed ... CCMP) */
 				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (CCMP)" ) != NULL )
 				{
 					json_set_string( x, "secure", "wpapskwpa2psk" );
-					json_set_string( x, "wpa_encrypt", "tkip" );
+					json_set_string( x, "wpa_encrypt", "aes" );
 				}
 				/* wpapskwpa2psk tkipaes */
 				else if ( strstr( readbuf, "mixed WPA/WPA2 PSK (TKIP, CCMP)" ) != NULL )
@@ -222,7 +225,7 @@ static talk_t station_dev_appick( talk_t result, const char *ssid, const char *b
 		return NULL;
     }
 
-	last = 0;
+	last = -200;
 	peermac = NULL;
     axp = NULL;
     while( NULL != ( axp = json_next( result, axp ) ) )
@@ -281,38 +284,72 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 }
 static int station_dev_connected( obj_t this, const char *netdev )
 {
+	int i;
 	int ret;
 	FILE *fp;
 	char *ptr;
+	char *end;
+	char path[256];
     char readbuf[256];
-	char wpa_cli[256];
 
-	/* get the command result */	
-    snprintf( wpa_cli, sizeof(wpa_cli), "/tmp/.wpa_cli_%s_status", netdev );
-    if (  shell( "wpa_cli -i %s status > %s", netdev, wpa_cli ) != 0 )
-    {
-        return 1;
-    }
-	/* parse the wpa_cli */
-    fp = fopen( wpa_cli, "r");
-    if( fp == NULL )
-    {
-        return 1;
-    }
 	ret = 1;
-    readbuf[0] = '\0';
-    while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+	/* use the wpa_cli */	
+    snprintf( path, sizeof(path), "/tmp/.wpa_cli_%s_status", netdev );
+    i = shell( "wpa_cli -i %s status > %s 2>/dev/null", netdev, path );
+	if ( i == 0 )
     {
-        if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
-        {
-        	ptr = readbuf+10;
-			if ( strncmp( ptr, "COMPLETED", 9 ) == 0 )
+		/* parse the wpa_cli */
+		fp = fopen( path, "r");
+		if( fp == NULL )
+		{
+			return 1;
+		}
+		readbuf[0] = '\0';
+		while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+		{
+			if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
 			{
-				ret = 0;
+				ptr = readbuf+10;
+				if ( strncmp( ptr, "COMPLETED", 9 ) == 0 )
+				{
+					ret = 0;
+					break;
+				}
 			}
-        }
+		}
+		fclose( fp );
     }
-    fclose( fp );
+	else
+	{
+		/* use iw sta link */	
+		snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
+		shell( "iw dev %s link > %s", netdev, path );
+		/* parse the iw sta link */
+		fp = fopen( path, "r");
+		if( fp == NULL )
+		{
+			return 1;
+		}
+		readbuf[0] = '\0';
+		while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+		{
+			if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
+			{
+				ptr += 13;
+				end = strchr( ptr, ' ' );
+				if ( end != NULL )
+				{
+					*end = '\0';
+				}
+				if ( strlen( ptr ) == 17 )
+				{
+					ret = 0;
+					break;
+				}
+			}
+		}
+		fclose( fp );
+	}
 	return ret;
 }
 
@@ -377,6 +414,7 @@ talk_t _netdev( obj_t this, param_t param )
 }
 boole_t _up( obj_t this, param_t param )
 {
+	int i;
 	int fd;
 	talk_t v;
 	talk_t cfg;
@@ -388,15 +426,14 @@ boole_t _up( obj_t this, param_t param )
 	const char *ifname;
 	const char *status;
 	const char *peer;
-	const char *peer2;
-	const char *peer3;
 	const char *peermac;
-	const char *peermode;
-	const char *channel;
 	const char *nossid;
-	const char *secure;
-	const char *wpa_encrypt;
-	const char *wpa_key;
+	char kmac[48];
+	char kpeer[48];
+	char ksecure[48];
+	char kwkey[48];
+	char kwenc[48];
+	char kpmode[48];
 	char path[PATH_MAX];
 
 	/* get the configure */
@@ -426,37 +463,6 @@ boole_t _up( obj_t this, param_t param )
 		talk_free( cfg );
 		return ttrue;
     }
-	wifi_info( "%s(%s) up", object, netdev );
-
-	/* get the configure */
-	status = NULL;
-	peer = peer2 = peer3 = peermac = NULL;
-	opt = param_talk( param, 1 );
-	if ( opt != NULL )
-	{
-		peer = json_string( opt, "peer" );
-		peer2 = json_string( opt, "peer2" );
-		peer3 = json_string( opt, "peer3" );
-		peermac = json_string( opt, "peermac" );
-	}
-	v = NULL;
-	if ( (peer != NULL && *peer != '\0')
-		|| (peer2 != NULL && *peer2 != '\0')
-		|| (peer3 != NULL && *peer3 != '\0')
-		|| (peermac != NULL && *peermac != '\0') )
-	{
-		v = opt;
-	}
-	else
-	{
-		v = cfg;
-		peer = json_string( cfg, "peer" );
-		peer2 = json_string( cfg, "peer2" );
-		peer3 = json_string( cfg, "peer3" );
-		peermac = json_string( cfg, "peermac" );
-		status = json_string( v, "status" );
-	}
-
 	/* keeplive stop */
 	sstop( "%s-keeplive", netdev );
 	/* relayd stop */
@@ -464,57 +470,122 @@ boole_t _up( obj_t this, param_t param )
 	/* wpa_supplicant stop */
 	sstop( "%s-wpa", netdev );
 
-	/* status[enable/disable] */
-	if ( status != NULL && 0 == strcmp( status, "disable" ) )
+	wifi_info( "%s(%s) up", object, netdev );
+	/* get the configure: prefer opt when any peer* or peermac is set there */
+	opt = param_talk( param, 1 );
+	v = NULL;
+	if ( opt != NULL )
 	{
-		talk_free( cfg );
-		lock_close( fd );
-		unlink( path );
-		return terror;
+		for ( i=0; i<STA_PEER_MAX; i++ )
+		{
+			if ( i == 0 )
+			{
+				snprintf( kpeer, sizeof(kpeer), "peer" );
+				snprintf( kmac, sizeof(kmac), "peermac" );
+				snprintf( ksecure, sizeof(ksecure), "secure" );
+				snprintf( kwkey, sizeof(kwkey), "wpa_key" );
+				snprintf( kwenc, sizeof(kwenc), "wpa_encrypt" );
+				snprintf( kpmode, sizeof(kpmode), "peermode" );
+			}
+			else
+			{
+				snprintf( kpeer, sizeof(kpeer), "peer%d", i+1 );
+				snprintf( kmac, sizeof(kmac), "peermac%d", i+1 );
+				snprintf( ksecure, sizeof(ksecure), "secure%d", i+1 );
+				snprintf( kwkey, sizeof(kwkey), "wpa_key%d", i+1 );
+				snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
+				snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
+			}
+			peer = json_string( opt, kpeer );
+			peermac = json_string( opt, kmac );
+			if ( (peer != NULL && *peer != '\0') || (peermac != NULL && *peermac != '\0') )
+			{
+				break;
+			}
+		}
+		if ( i < STA_PEER_MAX )
+		{
+			v = opt;
+		}
 	}
-	/* peer */
-	if ( ( peer == NULL || *peer == '\0' ) && ( peer2 == NULL || *peer2 == '\0' ) && ( peer3 == NULL || *peer3 == '\0' ) && ( peermac == NULL || *peermac == '\0' ) ) 
+	if ( v == NULL )
 	{
-		talk_free( cfg );
-		lock_close( fd );
-		unlink( path );
-		return terror;
+		v = cfg;
+		status = json_string( v, "status" );
+		if ( status != NULL && 0 == strcmp( status, "disable" ) )
+		{
+			talk_free( cfg );
+			lock_close( fd );
+			unlink( path );
+			return terror;
+		}
+		for ( i=0; i<STA_PEER_MAX; i++ )
+		{
+			if ( i == 0 )
+			{
+				snprintf( kpeer, sizeof(kpeer), "peer" );
+				snprintf( kmac, sizeof(kmac), "peermac" );
+				snprintf( ksecure, sizeof(ksecure), "secure" );
+				snprintf( kwkey, sizeof(kwkey), "wpa_key" );
+				snprintf( kwenc, sizeof(kwenc), "wpa_encrypt" );
+				snprintf( kpmode, sizeof(kpmode), "peermode" );
+			}
+			else
+			{
+				snprintf( kpeer, sizeof(kpeer), "peer%d", i+1 );
+				snprintf( kmac, sizeof(kmac), "peermac%d", i+1 );
+				snprintf( ksecure, sizeof(ksecure), "secure%d", i+1 );
+				snprintf( kwkey, sizeof(kwkey), "wpa_key%d", i+1 );
+				snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
+				snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
+			}
+			peer = json_string( v, kpeer );
+			peermac = json_string( v, kmac );
+			if ( (peer != NULL && *peer != '\0') || (peermac != NULL && *peermac != '\0') )
+			{
+				break;
+			}
+		}
+		if ( i >= STA_PEER_MAX )
+		{
+			talk_free( cfg );
+			lock_close( fd );
+			unlink( path );
+			return terror;
+		}
 	}
 
 	/* get all configure */
 	ifname = json_string( v, "ifname" );
-	peermode = json_string( v, "peermode" );
-	channel = json_string( v, "channel" );
 	nossid = json_string( v, "nossid" );
-	/* save peer configure */
-	secure = json_string( v, "secure" );
-	wpa_encrypt = json_string( v, "wpa_encrypt" );
-	wpa_key = json_string( v, "wpa_key" );
-	reg_set_string( this, "peer", peer );
-	reg_set_string( this, "secure", secure );
-	reg_set_string( this, "wpa_encrypt", wpa_encrypt );
-	reg_set_string( this, "wpa_key", wpa_key );
-	/* save peer2 configure */
-	secure = json_string( v, "secure2" );
-	wpa_encrypt = json_string( v, "wpa_encrypt2" );
-	wpa_key = json_string( v, "wpa_key2" );
-	reg_set_string( this, "peer2", peer2 );
-	reg_set_string( this, "secure2", secure );
-	reg_set_string( this, "wpa_encrypt2", wpa_encrypt );
-	reg_set_string( this, "wpa_key2", wpa_key );
-	/* save peer3 configure */
-	secure = json_string( v, "secure3" );
-	wpa_encrypt = json_string( v, "wpa_encrypt3" );
-	wpa_key = json_string( v, "wpa_key3" );
-	reg_set_string( this, "peer3", peer3 );
-	reg_set_string( this, "secure3", secure );
-	reg_set_string( this, "wpa_encrypt3", wpa_encrypt );
-	reg_set_string( this, "wpa_key3", wpa_key );
-	/* save other configure */
-	reg_set_string( this, "peermac", peermac );
+	for ( i=0; i<STA_PEER_MAX; i++ )
+	{
+		if ( i == 0 )
+		{
+			snprintf( kpeer, sizeof(kpeer), "peer" );
+			snprintf( kmac, sizeof(kmac), "peermac" );
+			snprintf( ksecure, sizeof(ksecure), "secure" );
+			snprintf( kwkey, sizeof(kwkey), "wpa_key" );
+			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt" );
+			snprintf( kpmode, sizeof(kpmode), "peermode" );
+		}
+		else
+		{
+			snprintf( kpeer, sizeof(kpeer), "peer%d", i+1 );
+			snprintf( kmac, sizeof(kmac), "peermac%d", i+1 );
+			snprintf( ksecure, sizeof(ksecure), "secure%d", i+1 );
+			snprintf( kwkey, sizeof(kwkey), "wpa_key%d", i+1 );
+			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
+			snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
+		}
+		reg_set_string( this, kpeer, json_string( v, kpeer ) );
+		reg_set_string( this, kmac, json_string( v, kmac ) );
+		reg_set_string( this, ksecure, json_string( v, ksecure ) );
+		reg_set_string( this, kwenc, json_string( v, kwenc ) );
+		reg_set_string( this, kwkey, json_string( v, kwkey ) );
+		reg_set_string( this, kpmode, json_string( v, kpmode ) );
+	}
 	reg_set_string( this, "ifname", ifname );
-	reg_set_string( this, "peermode", peermode );
-	reg_set_string( this, "channel", channel );
 	reg_set_string( this, "nossid", nossid );
 
 	/* up the device */
@@ -576,7 +647,7 @@ boole_t _down( obj_t this, param_t param )
 	sdelete( "%s-relayd", netdev );
 	/* delete wpa_supplicant */
 	sdelete( "%s-wpa", netdev );
-    /* down the deivce */
+    /* down the device */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
 		wifi_debug( "%s(%s) down", object, netdev );
@@ -673,13 +744,14 @@ talk_t _status( obj_t this, param_t param )
 		int i;
 		FILE *fp;
 		char *ptr;
+		char *end;
 		char tok[64];
 		char readbuf[256];
 		char path[PATH_MAX];
 		
 		/* use the wpa_cli */	
 		snprintf( path, sizeof(path), "/tmp/.wpa_cli_%s_status", netdev );
-		i = shell( "wpa_cli -i %s status > %s", netdev, path );
+		i = shell( "wpa_cli -i %s status > %s 2>/dev/null", netdev, path );
 		if ( i == 0 )
 		{
 			/* parse the wpa_cli */
@@ -732,11 +804,10 @@ talk_t _status( obj_t this, param_t param )
 			/* use iw sta link */	
 			snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
 			shell( "iw dev %s link > %s", netdev, path );
-			/* parse the wpa_cli */
+			/* parse the iw sta link */
 			fp = fopen( path, "r");
 			if( fp != NULL )
 			{
-				char *end;
 				readbuf[0] = '\0';
 				while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
 				{
@@ -745,10 +816,10 @@ talk_t _status( obj_t this, param_t param )
 					{
 						readbuf[i-1] = '\0';
 					}
-					if ( NULL != ( ptr = strstr( readbuf, "Connected to " ) ) )
+					if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
 					{
 						ptr += 13;
-						end = strstr( ptr, " " );
+						end = strchr( ptr, ' ' );
 						if ( end != NULL )
 						{
 							*end = '\0';
@@ -809,7 +880,7 @@ talk_t _status( obj_t this, param_t param )
 				}
 				else if ( NULL != ( ptr = strstr( readbuf, "Bit Rate:" ) ) )
 				{
-					i = sscanf( ptr, "%*[^:]: %s", tok );
+					i = sscanf( ptr, "%*[^:]: %63s", tok );
 					if ( i == 1 && 0 != strcasecmp( tok, "unknown" ) )
 					{
 						json_set_string( ret, "rate", tok );
@@ -893,7 +964,7 @@ talk_t _aplist( obj_t this, param_t param )
 		return NULL;
 	}
 
-	/* get the paramter */
+	/* get the parameter */
 	peer = param_string( param, 1 );
 	peermac = param_string( param, 2 );
 	peer2 = param_string( param, 3 );
@@ -937,17 +1008,25 @@ talk_t _securelist( obj_t this, param_t param )
 
 boole_t _wpa( obj_t this, param_t param )
 {
+	int i;
 	FILE *fp;
+	char kmac[48];
+	char kpeer[48];
+	char ksecure[48];
+	char kwkey[48];
+	char kwenc[48];
+	char kpmode[48];
+	char path[PATH_MAX];
+	char pidfile[PATH_MAX];
     const char *radio;
     const char *netdev;
 	const char *peer;
-	const char *peer2;
-	const char *peer3;
 	const char *peermac;
+	const char *peermode;
 	const char *secure;
+	const char *wpa_encrypt;
 	const char *wpa_key;
-	char path[PATH_MAX];
-	char pidfile[PATH_MAX];
+	const char *pairwise;
 	const char *hostapdctl = NULL;
 	char *wap_dir = "/var/run/wpa_supplicant";
 
@@ -975,157 +1054,105 @@ boole_t _wpa( obj_t this, param_t param )
     }
     fprintf( fp, "ap_scan=1\n" );
     fprintf( fp, "fast_reauth=1\n" );
-	
-    /* set the peer */
-	peer = reg_string( this, "peer" );
-	peer2 = reg_string( this, "peer2" );
-	peer3 = reg_string( this, "peer3" );
-	peermac = reg_string( this, "peermac" );
-	if ( peer != NULL && *peer != '\0' )
+
+	for ( i = 0; i < STA_PEER_MAX; i++ )
 	{
-	    fprintf( fp, "network={\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "scan_ssid=1\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "ssid=\"%s\"\n", peer );
-		if ( peermac != NULL && *peermac != '\0' )
+		if ( i == 0 )
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "bssid=%s\n", peermac );
-		}
-		secure = reg_string( this, "secure" );
-		wpa_key = reg_string( this, "wpa_key" );
-		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=WPA\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
-		}
-		else if ( secure != NULL && 0 == strcmp( secure, "wpa2psk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=RSN\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
-		}
-		else if ( secure != NULL && 0 == strcmp( secure, "wpapskwpa2psk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
+			snprintf( kpeer, sizeof(kpeer), "peer" );
+			snprintf( kmac, sizeof(kmac), "peermac" );
+			snprintf( ksecure, sizeof(ksecure), "secure" );
+			snprintf( kwkey, sizeof(kwkey), "wpa_key" );
+			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt" );
+			snprintf( kpmode, sizeof(kpmode), "peermode" );
 		}
 		else
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=NONE\n" );
+			snprintf( kpeer, sizeof(kpeer), "peer%d", i+1 );
+			snprintf( kmac, sizeof(kmac), "peermac%d", i+1 );
+			snprintf( ksecure, sizeof(ksecure), "secure%d", i+1 );
+			snprintf( kwkey, sizeof(kwkey), "wpa_key%d", i+1 );
+			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
+			snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
 		}
-		fprintf( fp, "\t\t");
-		fprintf( fp, "priority=1\n" );
-	    fprintf( fp, "}\n" );
-	}
-    /* set the peer2 */
-	if ( peer2 != NULL && *peer2 != '\0' )
-	{
-	    fprintf( fp, "network={\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "scan_ssid=1\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "ssid=\"%s\"\n", peer2 );
+		peer = reg_string( this, kpeer );
+		peermac = reg_string( this, kmac );
+		if ( (peer == NULL || *peer == '\0') && (peermac == NULL || *peermac == '\0') )
+		{
+			continue;
+		}
+		fprintf( fp, "network={\n" );
+		if ( peer != NULL && *peer != '\0' )
+		{
+			fprintf( fp, "\t\t ssid=\"%s\"\n", peer );
+		}
 		if ( peermac != NULL && *peermac != '\0' )
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "bssid=%s\n", peermac );
+			fprintf( fp, "\t\t bssid=%s\n", peermac );
 		}
-		secure = reg_string( this, "secure2" );
-		wpa_key = reg_string( this, "wpa_key2" );
+		peermode = reg_string( this, kpmode );
+		if ( peermode != NULL && 0 == strcmp( peermode, "hidden" ) )
+		{
+			fprintf( fp, "\t\t scan_ssid=1\n" );
+		}
+		secure = reg_string( this, ksecure );
+		wpa_key = reg_string( this, kwkey );
+		wpa_encrypt = reg_string( this, kwenc );
 		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=WPA\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
+			fprintf( fp, "\t\t key_mgmt=WPA-PSK\n" );
+			fprintf( fp, "\t\t proto=WPA\n" );
+			fprintf( fp, "\t\t psk=\"%s\"\n", wpa_key );
 		}
 		else if ( secure != NULL && 0 == strcmp( secure, "wpa2psk" ) )
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=RSN\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
+			fprintf( fp, "\t\t key_mgmt=WPA-PSK\n" );
+			fprintf( fp, "\t\t proto=RSN\n" );
+			fprintf( fp, "\t\t psk=\"%s\"\n", wpa_key );
 		}
 		else if ( secure != NULL && 0 == strcmp( secure, "wpapskwpa2psk" ) )
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
+			fprintf( fp, "\t\t key_mgmt=WPA-PSK\n" );
+			fprintf( fp, "\t\t psk=\"%s\"\n", wpa_key );
+		}
+		else if ( secure != NULL && 0 == strcmp( secure, "wpa3psk" ) )
+		{
+			fprintf( fp, "\t\t key_mgmt=SAE\n" );
+			fprintf( fp, "\t\t proto=RSN\n" );
+			fprintf( fp, "\t\t pairwise=CCMP\n" );
+			fprintf( fp, "\t\t ieee80211w=2\n" );
+			fprintf( fp, "\t\t psk=\"%s\"\n", wpa_key );
+		}
+		else if ( secure != NULL && 0 == strcmp( secure, "wpa2pskwpa3psk" ) )
+		{
+			pairwise = "CCMP TKIP";
+			if ( wpa_encrypt != NULL && 0 == strcmp( wpa_encrypt, "aes" ) )
+			{
+				pairwise = "CCMP";
+			}
+			if ( wpa_encrypt != NULL && 0 == strcmp( wpa_encrypt, "tkip" ) )
+			{
+				pairwise = "TKIP";
+			}
+			fprintf( fp, "\t\t key_mgmt=WPA-PSK SAE\n" );
+			fprintf( fp, "\t\t proto=RSN\n" );
+			fprintf( fp, "\t\t ieee80211w=1\n" );
+			fprintf( fp, "\t\t pairwise=%s\n", pairwise );
+			fprintf( fp, "\t\t psk=\"%s\"\n", wpa_key );
+		}
+		else if ( secure != NULL && 0 == strcmp( secure, "owe" ) )
+		{
+			fprintf( fp, "\t\t key_mgmt=OWE\n" );
+			fprintf( fp, "\t\t proto=RSN\n" );
+			fprintf( fp, "\t\t ieee80211w=2\n" );
+			fprintf( fp, "\t\t pairwise=CCMP\n" );
 		}
 		else
 		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=NONE\n" );
-		}	
-		fprintf( fp, "\t\t");
-		fprintf( fp, "priority=2\n" );
-	    fprintf( fp, "}\n" );
-	}
-    /* set the peer3 */
-	if ( peer3 != NULL && *peer3 != '\0' )
-	{
-	    fprintf( fp, "network={\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "scan_ssid=1\n" );
-	    fprintf( fp, "\t\t");
-	    fprintf( fp, "ssid=\"%s\"\n", peer3 );
-		if ( peermac != NULL && *peermac != '\0' )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "bssid=%s\n", peermac );
+			fprintf( fp, "\t\t key_mgmt=NONE\n" );
 		}
-		secure = reg_string( this, "secure3" );
-		wpa_key = reg_string( this, "wpa_key3" );
-		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=WPA\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
-		}
-		else if ( secure != NULL && 0 == strcmp( secure, "wpa2psk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "proto=RSN\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
-		}
-		else if ( secure != NULL && 0 == strcmp( secure, "wpapskwpa2psk" ) )
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=WPA-PSK\n" );
-			fprintf( fp, "\t\t");
-			fprintf( fp, "psk=\"%s\"\n", wpa_key );
-		}
-		else
-		{
-			fprintf( fp, "\t\t");
-			fprintf( fp, "key_mgmt=NONE\n" );
-		}	
-		fprintf( fp, "\t\t");
-		fprintf( fp, "priority=2\n" );
-	    fprintf( fp, "}\n" );
+		fprintf( fp, "\t\t priority=%d\n", i == 0 ? 1 : 2 );
+		fprintf( fp, "}\n" );
 	}
     fclose( fp );
 
@@ -1134,7 +1161,7 @@ boole_t _wpa( obj_t this, param_t param )
 	sstop( "%s-hostapd", radio );
 
     /* exec the wpa_supplicant */
-#if defined gPLATFORM__smtk || defined gPLATFORM__mtk || defined gPLATFORM__smtk2 || defined gPLATFORM__mtk2
+#if defined gPLATFORM__smtk2 || defined gPLATFORM__mtk2
 	if ( hostapdctl == NULL )
 	{
 		wifi_debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, wap_dir );
@@ -1178,19 +1205,19 @@ boole_t _relayd( obj_t this, param_t param )
 	{
 		return terror;
 	}
-	/* brdige id */
+	/* bridge id */
 	ptr = scalls_string( bridge, sizeof(bridge), BRIDGE_COM, "bridge", object );
 	if ( ptr == NULL )
 	{
 		return ttrue;
 	}
-	/* brdige netdev */
+	/* bridge netdev */
 	ptr = scalls_string( bridge_netdev, sizeof(bridge_netdev), bridge, "netdev", NULL );
 	if ( ptr == NULL )
 	{
 		return ttrue;
 	}
-	/* brdige ifname */
+	/* bridge ifname */
 	ptr = scalls_string( ifname, sizeof(ifname), NETWORK_COM, "ifname", bridge );
 	if ( ptr == NULL )
 	{
@@ -1198,7 +1225,7 @@ boole_t _relayd( obj_t this, param_t param )
 	}
 	/* get the gateway when have */
 	gateway = reg_sstring( ifname, "gateway" );
-	/* brdige status */
+	/* bridge status */
 	ip[0] = '\0';
 	netdev_info( bridge_netdev, ip, sizeof(ip), NULL, 0, NULL, 0, NULL, 0 );
 	sleep( 3 );
@@ -1328,7 +1355,7 @@ boole_t _keeplive( obj_t this, param_t param )
 			{
 				continue;
 			}
-			wifi_info( "%s(%s) connection lost 4 time", object, netdev );
+			wifi_info( "%s(%s) connection lost 5 time", object, netdev );
 			sleep( 2 );
 			if ( station_dev_connected( this, netdev ) == 0 )
 			{
