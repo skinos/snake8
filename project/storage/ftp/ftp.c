@@ -154,7 +154,6 @@ boole_t _service( obj_t this, param_t param )
     string3file( cfgpath, \
         "ServerType  standalone\n"\
         "DefaultServer on\n"\
-        "AuthUserFile /etc/passwd\n"\
         "Port 21\n"\
         "Umask 022\n"\
         "MaxInstances 100\n"\
