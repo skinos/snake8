@@ -26,6 +26,8 @@ function load_syslog()
         $('#location').val( syslog.location );
         $('#size').val( syslog.size );
         $('#level').val( syslog.level );
+        $('#debug').val( syslog.debug );
+        $('#verb').val( syslog.verb );
         $('#remote').prop('checked', !!syslog.remote);
         $('#server').val(syslog.remote);
         $('#port').val(syslog.port);
@@ -102,6 +104,8 @@ function save_syslog()
         }
         syslog.size = $('#size').val();
         syslog.level = $('#level').val();
+        syslog.debug = $('#debug').val();
+        syslog.verb = $('#verb').val();
         // 启用远程日志
         if ( $('#remote').prop('checked') )
         {

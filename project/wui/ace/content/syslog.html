@@ -43,11 +43,30 @@
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Level"></label>
           <div class="col-sm-9">
             <select class="col-xs-10 col-sm-5" id="level">
-              <option value="error" data-i18n="Error"></option>
+              <option value="fault" data-i18n="Fault"></option>
               <option value="warn" data-i18n="Warn"></option>
               <option value="info" data-i18n="Info"></option>
-              <option value="debug" data-i18n="Debug"></option>
             </select>
+          </div>
+        </div>
+
+        <!-- debug -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Debug Mask"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="debug" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+
+        <!-- verb -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Verb Mask"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="verb" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
           </div>
         </div>
 
