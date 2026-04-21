@@ -1381,6 +1381,9 @@ reset:
 		sreset( NULL, NULL, NULL, ifname );
 		return ttrue;
 	}
+	/* reup the netdev */
+	ifconfig( "%s down", netdev );
+	ifconfig( "%s up", netdev );
 	/* restart the wpa_supplicant when lan bridge */
 	sstart( NULL, NULL, NULL, "%s-wpa", netdev );
 

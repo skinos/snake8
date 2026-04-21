@@ -208,144 +208,149 @@ typedef struct country_set_st
     const char *country;
     int n;
     int a;
+    int a_bw_max_mhz;
 } country_set_t;
 static country_set_t country_list[] =
 {
-    {"DB", 5, 7 },
-    {"AL", 1, 0 },
-    {"DZ", 1, 0},
+    /*
+     * a_bw_max_mhz: 5 GHz 规则在 linux wireless-regdb(db.txt) 中各频段 @ 后的最大带宽(MHz)取最大值；
+     * 无 5 GHz 条目时记 20。CN 按国内在售/核准常见能力记 160（主线 regdb 曾为 80，若内核未放宽需自配 regdb）。
+     */
+    {"DB", 5, 7, 160 },
+    {"AL", 1, 0, 160 },
+    {"DZ", 1, 0, 160 },
 
-    {"AR", 1, 3},
-    {"AM", 1, 2},
-    {"AU", 1, 0},
+    {"AR", 1, 3, 160 },
+    {"AM", 1, 2, 20 },
+    {"AU", 1, 0, 160 },
 
-    {"AT", 1, 1},
-    {"AZ", 1, 2},
-    {"BH", 1, 0},
+    {"AT", 1, 1, 160 },
+    {"AZ", 1, 2, 80 },
+    {"BH", 1, 0, 20 },
 
-    {"BY", 1, 0},
-    {"BE", 1, 1},
-    {"BZ", 1, 4},
+    {"BY", 1, 0, 160 },
+    {"BE", 1, 1, 160 },
+    {"BZ", 1, 4, 80 },
 
-    {"BO", 1, 4},
-    {"BR", 1, 1},
-    {"BN", 1, 4},
+    {"BO", 1, 4, 80 },
+    {"BR", 1, 1, 160 },
+    {"BN", 1, 4, 80 },
 
-    {"BG", 1, 1},
-    {"CA", 0, 0},
-    {"CL", 1, 0},
+    {"BG", 1, 1, 160 },
+    {"CA", 0, 0, 80 },
+    {"CL", 1, 0, 80 },
 
-    {"CN", 1, 0},
-    {"CO", 0, 0},
-    {"CR", 1, 0},
+    {"CN", 1, 0, 160 },
+    {"CO", 0, 0, 160 },
+    {"CR", 1, 0, 20 },
 
-    {"HR", 1, 2},
-    {"CY", 1, 1},
-    {"CZ", 1, 2},
+    {"HR", 1, 2, 160 },
+    {"CY", 1, 1, 160 },
+    {"CZ", 1, 2, 160 },
 
-    {"DK", 1, 1},
-    {"DO", 0, 0},
-    {"EC", 1, 0},
+    {"DK", 1, 1, 160 },
+    {"DO", 0, 0, 80 },
+    {"EC", 1, 0, 20 },
 
-    {"EG", 1, 2},
-    {"SV", 1, 0},
-    {"EE", 1, 1},
+    {"EG", 1, 2, 40 },
+    {"SV", 1, 0, 20 },
+    {"EE", 1, 1, 160 },
 
-    {"FI", 1, 1},
-    {"FR", 1, 2},
-    {"GE", 1, 2},
+    {"FI", 1, 1, 160 },
+    {"FR", 1, 2, 160 },
+    {"GE", 1, 2, 80 },
 
-    {"DE", 1, 1},
-    {"GR", 1, 1},
-    {"GT", 0, 0},
+    {"DE", 1, 1, 160 },
+    {"GR", 1, 1, 160 },
+    {"GT", 0, 0, 80 },
 
-    {"HN", 1, 0},
-    {"HK", 1, 0},
-    {"HU", 1, 1},
+    {"HN", 1, 0, 160 },
+    {"HK", 1, 0, 160 },
+    {"HU", 1, 1, 160 },
 
-    {"IS", 1, 1},
-    {"IN", 1, 0},
-    {"ID", 1, 4},
+    {"IS", 1, 1, 160 },
+    {"IN", 1, 0, 160 },
+    {"ID", 1, 4, 20 },
 
-    {"IR", 1, 4},
-    {"IE", 1, 1},
-    {"IL", 1, 0},
+    {"IR", 1, 4, 80 },
+    {"IE", 1, 1, 160 },
+    {"IL", 1, 0, 80 },
 
-    {"IT", 1, 1},
-    {"JP", 5, 9},
-    {"JO", 1, 0},
+    {"IT", 1, 1, 160 },
+    {"JP", 5, 9, 160 },
+    {"JO", 1, 0, 80 },
 
-    {"KZ", 1, 0},
-    {"KP", 1, 5},
-    {"KR", 1, 5},
+    {"KZ", 1, 0, 80 },
+    {"KP", 1, 5, 20 },
+    {"KR", 1, 5, 160 },
 
-    {"KW", 1, 0},
-    {"LV", 1, 1},
-    {"LB", 1, 1},
+    {"KW", 1, 0, 80 },
+    {"LV", 1, 1, 160 },
+    {"LB", 1, 1, 160 },
 
-    {"LI", 1, 1},
-    {"LT", 1, 1},
-    {"LU", 1, 1},
+    {"LI", 1, 1, 160 },
+    {"LT", 1, 1, 160 },
+    {"LU", 1, 1, 160 },
 
-    {"MO", 1, 0},
-    {"MK", 1, 0},
-    {"MY", 1, 0},
+    {"MO", 1, 0, 160 },
+    {"MK", 1, 0, 160 },
+    {"MY", 1, 0, 160 },
 
-    {"MX", 0, 0},
-    {"MC", 1, 2},
-    {"MA", 1, 0},
+    {"MX", 0, 0, 160 },
+    {"MC", 1, 2, 160 },
+    {"MA", 1, 0, 80 },
 
-    {"NL", 1, 1},
-    {"NZ", 1, 0},
-    {"NO", 0, 0},
+    {"NL", 1, 1, 160 },
+    {"NZ", 1, 0, 160 },
+    {"NO", 0, 0, 160 },
 
-    {"OM", 1, 0},
-    {"PK", 1, 0},
-    {"PA", 0, 0},
+    {"OM", 1, 0, 160 },
+    {"PK", 1, 0, 80 },
+    {"PA", 0, 0, 160 },
 
-    {"PE", 1, 4},
-    {"PH", 1, 4},
-    {"PL", 1, 1},
+    {"PE", 1, 4, 160 },
+    {"PH", 1, 4, 160 },
+    {"PL", 1, 1, 160 },
 
-    {"PT", 1, 1},
-    {"PR", 0, 0},
-    {"QA", 1, 0},
+    {"PT", 1, 1, 160 },
+    {"PR", 0, 0, 160 },
+    {"QA", 1, 0, 80 },
 
-    {"RO", 1, 0},
-    {"RU", 1, 0},
-    {"SA", 1, 0},
+    {"RO", 1, 0, 160 },
+    {"RU", 1, 0, 80 },
+    {"SA", 1, 0, 160 },
 
-    {"SG", 1, 0},
-    {"SK", 1, 1},
-    {"SI", 1, 1},
+    {"SG", 1, 0, 160 },
+    {"SK", 1, 1, 160 },
+    {"SI", 1, 1, 160 },
 
-    {"ZA", 1, 1},
-    {"ES", 1, 1},
-    {"SE", 1, 1},
+    {"ZA", 1, 1, 160 },
+    {"ES", 1, 1, 160 },
+    {"SE", 1, 1, 160 },
 
-    {"CH", 1, 1},
-    {"SY", 1, 0},
-    {"TW", 1, 3},
+    {"CH", 1, 1, 160 },
+    {"SY", 1, 0, 20 },
+    {"TW", 1, 3, 160 },
 
-    {"TH", 1, 0},
-    {"TT", 1, 2},
-    {"TN", 1, 1},
+    {"TH", 1, 0, 160 },
+    {"TT", 1, 2, 160 },
+    {"TN", 1, 1, 80 },
 
-    {"TR", 1, 2},
-    {"UA", 1, 0},
-    {"AE", 1, 0},
+    {"TR", 1, 2, 160 },
+    {"UA", 1, 0, 160 },
+    {"AE", 1, 0, 160 },
 
-    {"GB", 1, 1},
-    {"US", 0, 7},
-    {"UY", 1, 5},
+    {"GB", 1, 1, 160 },
+    {"US", 0, 7, 160 },
+    {"UY", 1, 5, 80 },
 
-    {"UZ", 0, 1},
-    {"VE", 1, 5},
-    {"VN", 1, 0},
+    {"UZ", 0, 1, 80 },
+    {"VE", 1, 5, 80 },
+    {"VN", 1, 0, 80 },
 
-    {"YE", 1, 0},
-    {"ZW", 1, 0},
-    {NULL, 0, 0},
+    {"YE", 1, 0, 20 },
+    {"ZW", 1, 0, 160 },
+    {NULL, 0, 0, 160 },
 };
 static int a_band[12][30] =
 {
@@ -373,6 +378,222 @@ static int n_band[8][20] =
     {3, 4, 5, 6, 7, 8, 9, 0},
     {5, 6, 7, 8, 9, 10, 11, 12, 13,0},
 };
+/*
+ * 5 GHz 主信道一行一条：max_bw = 几何上该 primary 能到的最大带宽(MHz)；
+ * seg40/seg80/seg160 = vht & he 的 oper_centr_freq_seg0_idx；he160_seg1 = 连续 160 MHz 时 he seg1(连续 160 为 "0")。
+ */
+typedef struct
+{
+	int ch;
+	int max_bw_mhz;
+	const char *seg40;
+	const char *seg80;
+	const char *seg160;
+	const char *he160_seg1;
+} a_chan_t;
+static const a_chan_t a_chan[] = {
+	{ 36, 160, "38", "42", "50", "0" },
+	{ 40, 160, "38", "42", "50", "0" },
+	{ 44, 160, "46", "42", "50", "0" },
+	{ 48, 160, "46", "42", "50", "0" },
+	{ 52, 160, "54", "58", "50", "0" },
+	{ 56, 160, "54", "58", "50", "0" },
+	{ 60, 160, "62", "58", "50", "0" },
+	{ 64, 160, "62", "58", "50", "0" },
+
+	{ 100, 160, "102", "106", "114", "0" },
+	{ 104, 160, "102", "106", "114", "0" },
+	{ 108, 160, "110", "106", "114", "0" },
+	{ 112, 160, "110", "106", "114", "0" },
+	{ 116, 160, "118", "122", "114", "0" },
+	{ 120, 160, "118", "122", "114", "0" },
+	{ 124, 160, "126", "122", "114", "0" },
+	{ 128, 160, "126", "122", "114", "0" },
+
+	{ 132, 160, "134", "138", "114", "0" },
+	{ 136, 160, "134", "138", "114", "0" },
+	{ 140, 160, "142", "138", "114", "0" },
+	{ 144, 80, "142", "138", "", "" },
+
+	{ 149, 80, "151", "155", "", "" },
+	{ 153, 80, "151", "155", "", "" },
+	{ 157, 80, "159", "155", "", "" },
+	{ 161, 80, "159", "155", "", "" },
+
+	{ 165, 20, "", "", "", "" },
+};
+
+const char *wireless_11ac_segt_idx( int bw_mhz, int ch )
+{
+	unsigned int i;
+
+	if ( ch <= 0 )
+	{
+		if ( bw_mhz <= 40 )
+		{
+			return "-2";
+		}
+		return "-6";
+	}
+	if ( bw_mhz != 40 && bw_mhz != 80 && bw_mhz != 160 )
+	{
+		return "";
+	}
+	for ( i = 0; i < sizeof( a_chan ) / sizeof( a_chan[0] ); i++ )
+	{
+		if ( a_chan[i].ch != ch )
+		{
+			continue;
+		}
+		if ( bw_mhz == 40 )
+		{
+			return a_chan[i].seg40;
+		}
+		if ( bw_mhz == 80 )
+		{
+			return a_chan[i].seg80;
+		}
+		return a_chan[i].seg160;
+	}
+	return "";
+}
+
+const char *wireless_11ax_he_chwidth( int bw_mhz )
+{
+	if ( bw_mhz >= 160 )
+	{
+		return "2";
+	}
+	if ( bw_mhz >= 80 )
+	{
+		return "1";
+	}
+	return "0";
+}
+
+const char *wireless_11ax_he_seg0_idx( int bw_mhz, int ch )
+{
+	if ( bw_mhz <= 20 )
+	{
+		return "0";
+	}
+	return wireless_11ac_segt_idx( bw_mhz, ch );
+}
+
+const char *wireless_11ax_he_seg1_idx( int bw_mhz, int ch )
+{
+	unsigned int i;
+
+	if ( bw_mhz != 160 )
+	{
+		return "0";
+	}
+	if ( ch <= 0 )
+	{
+		return "0";
+	}
+	for ( i = 0; i < sizeof( a_chan ) / sizeof( a_chan[0] ); i++ )
+	{
+		if ( a_chan[i].ch != ch )
+		{
+			continue;
+		}
+		if ( a_chan[i].seg160 == NULL || a_chan[i].seg160[0] == '\0' )
+		{
+			return "0";
+		}
+		if ( a_chan[i].he160_seg1 != NULL && a_chan[i].he160_seg1[0] != '\0' )
+		{
+			return a_chan[i].he160_seg1;
+		}
+		return "0";
+	}
+	return "0";
+}
+
+const char *wireless_11ac_bandwidth( const char *bandwidth, int ch, const char *country )
+{
+	int want;
+	int max_mhz;
+	int reg_cap;
+	unsigned int i;
+
+	want = 20;
+
+	if ( bandwidth != NULL && *bandwidth != '\0' )
+	{
+		want = atoi( bandwidth );
+	}
+	if ( ch <= 0 )
+	{
+		max_mhz = 160;
+	}
+	else
+	{
+		max_mhz = 20;
+
+		for ( i = 0; i < sizeof( a_chan ) / sizeof( a_chan[0] ); i++ )
+		{
+			if ( a_chan[i].ch == ch )
+			{
+				max_mhz = a_chan[i].max_bw_mhz;
+				break;
+			}
+		}
+	}
+
+	reg_cap = country2mhza( country );
+
+	if ( max_mhz > reg_cap )
+	{
+		max_mhz = reg_cap;
+	}
+	if ( want > max_mhz )
+	{
+		want = max_mhz;
+	}
+	if ( want >= 160 )
+	{
+		return "160";
+	}
+	if ( want >= 80 )
+	{
+		return "80";
+	}
+	if ( want >= 40 )
+	{
+		return "40";
+	}
+	return "20";
+}
+
+int country2mhza( const char *country )
+{
+	int i;
+	country_set_t *p;
+
+	if ( country == NULL || *country == '\0' )
+	{
+		return 160;
+	}
+	for ( i = 0;; i++ )
+	{
+		p = &country_list[i];
+		if ( p->country == NULL )
+		{
+			return 160;
+		}
+		if ( 0 == strcasecmp( p->country, country ) )
+		{
+			if ( p->a_bw_max_mhz == 20 || p->a_bw_max_mhz == 40
+					|| p->a_bw_max_mhz == 80 || p->a_bw_max_mhz == 160 )
+			{
+				return p->a_bw_max_mhz;
+			}
+			return 160;
+		}
+	}
+}
 talk_t country2chlist( const char *country, int a )
 {
     int i;

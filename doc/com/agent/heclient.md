@@ -10,7 +10,6 @@ Connects to the remote Heport service for administration: remote commands, statu
     "port":"heport server port",                                 // [ number ], default 20002
     "user":"username for bindding to the account",               // [ string ]
     "vcode":"verification code for the account",                 // [ string ], optional
-    "type":"device type",                                        // [ string ], default "router"
 
     // bindding extern network
     "extern":"bindding extern ifname to connect server",         // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], optional
@@ -21,6 +20,13 @@ Connects to the remote Heport service for administration: remote commands, statu
     "connect_timeout":"timeout for connection in seconds",       // [ number ], default 20
     "keeplive_interval":"keeplive interval in seconds",          // [ number ], default 10
     "keeplive_timeout":"timeout for keeplive in seconds"         // [ number ], default 35
+
+    // heart beat
+    "heart":
+    {
+        "he command":"update internal"                           // [ string ]:[ number ]
+        // ... more the object
+    }
 }
 ```
 
