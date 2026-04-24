@@ -3,5 +3,11 @@
     "intro":"host platform layer for skin os",
     "type":"root",
     "version":"8.0.0",
-    "author":"dimmalex@gmail.com"
+    "author":"dimmalex@gmail.com",
+
+    "exe":
+    {
+        "data":"data management",
+        "gpio":"gpio management"
+    }
 }

@@ -14,7 +14,6 @@ FPK_CONFIG_DIR:=$(PKG_BUILD_DIR)/.fpk/config
 export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FPK_LIB_DIR FPK_BIN_DIR FPK_ROOTFS_DIR
 #
 all:
-	$(call Build/Prepare/Default)
 	# copy custom to config
 	$(INSTALL_DIR) $(FPK_CONFIG_DIR)
 	if [ -d ${gPLATFORM_DIR}/config ]; then \

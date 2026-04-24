@@ -115,7 +115,7 @@ sdk_distclean: sdk_clean
 
 sdk_install:
 	if [ -f /usr/share/skinos/shut.sh ]; then \
-		/usr/share/skinos/shut.sh; \
+		/usr/share/skinos/shut.sh >/dev/null 2>&1; \
 	fi
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos

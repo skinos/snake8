@@ -38,7 +38,7 @@ define Build/Prepare/Default
 	if [ -d ./lib ]; then \
 		$(CP) ./lib $(PKG_BUILD_DIR); \
 	fi
-	@if [ "X" = "X$(1)" ]; then \
+	if [ "X" = "X$(1)" ]; then \
 		for i in ${LIB_LIST} ${COM_LIST} ${EXE_LIST} ${OSC_LIST} ${CMD_LIST} ${KO_LIST} ;do \
 			if [ -e $$i ]; then \
 				$(CP) $$i $(PKG_BUILD_DIR); \
@@ -70,7 +70,7 @@ endef
 #     确认要配置的目录中有configure文件
 #     NeedBeConfigureSubdirList指定要配置的子目录列表, 如未给出默认只配置${OSC_LIST} ${CMD_LIST}
 define Build/Configure/dep
-	@if [ "X" == "X$(1)" ];then \
+	@if [ "X" = "X$(1)" ];then \
 		for i in ${OSC_LIST} ;do \
 			if [ -e $$i ];then \
 				$(call Build/Configure/Default,,,$$i); \
@@ -101,7 +101,7 @@ define Build/Compile/bin
 	for i in $(1) ;do \
 		if [ -f $(PKG_BUILD_DIR)/$$i/Makefile ]; then \
 			$(MAKE) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$$i $(MAKE_FLAGS) $(3) || exit -1; \
-		else \
+		elif [ -d $(PKG_BUILD_DIR)/$$i ];then \
 			$(MAKE) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) -f $(2) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$$i $(MAKE_FLAGS) $(3) || exit -1; \
 		fi \
 	done
@@ -121,13 +121,13 @@ endef
 #     NeedBeCompileOSCList给出测编译此子目录列表, 如未给出测编译${OSC_LIST} ${CMD_LIST}
 #     编译$(OSC_LIST) ${CMD_LIST}时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Compile/Default
-	$(FIND) $(PKG_BUILD_DIR) -name \*.o -or -name \*.a | $(XARGS) rm -f
+	$(FIND) $(PKG_BUILD_DIR) \( -name '*.o' -o -name '*.a' \) -exec rm -f {} +
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE})
 	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE},install)
 	$(call Build/Compile/bin,${COM_LIST},${gCOM_MAKEFILE})
 	$(call Build/Compile/bin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/ko,${KO_LIST})
-	if [ "X" == "X$(1)" ]; then \
+	if [ "X" = "X$(1)" ]; then \
 		$(call Build/Compile/bin,${OSC_LIST},${gEXE_MAKEFILE}); \
 		$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE}); \
 	fi
@@ -142,7 +142,7 @@ endef
 #     NeedBeCompileOSCList给出测安装此子目录列表, 如未给出测编译${OSC_LIST} ${CMD_LIST}
 #     安装$(OSC_LIST)时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Install/Default
-	@if [ "X" == "X$(1)" ]; then \
+	@if [ "X" = "X$(1)" ]; then \
 		$(call Build/Compile/bin,${OSC_LIST},${gEXE_MAKEFILE},install); \
 		$(call Build/Compile/bin,${CMD_LIST},${gEXE_MAKEFILE},install); \
 	fi
@@ -237,6 +237,8 @@ define Build/Install/fpk
 			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
 			fi; \
+		elif [ -e $(PKG_BUILD_DIR)/$$i ]; then \
+			$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i $(FPK_BUILD_DIR); \
 		fi; \
 	done
 	for i in ${OSC_LIST};do \
@@ -244,6 +246,8 @@ define Build/Install/fpk
 			if [ -e $(PKG_BUILD_DIR)/$$i/$$i ]; then \
 				$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i/$$i $(FPK_BUILD_DIR); \
 			fi; \
+		elif [ -e $(PKG_BUILD_DIR)/$$i ]; then \
+			$(INSTALL_BIN) $(PKG_BUILD_DIR)/$$i $(FPK_BUILD_DIR); \
 		fi; \
 	done
 	for i in ${CMD_LIST};do \
