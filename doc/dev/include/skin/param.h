@@ -284,10 +284,33 @@ int         param_size( param_t parameter );
  * const char *invalid = param_string(p, 10); // returns NULL (out of range)
  * param_free(p);  // After this, all returned pointers become invalid!
  * @endcode
+ * @see param_number for getting integer options
  * @see param_talk for getting talk_t options
  * @see param_pointer for getting pointer options
  */
 const char *param_string( param_t parameter, int serial );
+
+/**
+ * @brief get integer option at specified position from parameter
+ * @param[in] parameter the parameter structure
+ * @param[in] serial serial number (starts from 1), use -1 to get the last option
+ * @return integer option
+ * 	@retval integer value of the option
+ * 	@retval 0  if serial is out of range or parameter is NULL, errno will be set
+ * @note Special values for serial:
+ * @code
+ * param_t p = param_create("12,sssd,100"); 
+ * int first = param_number(p, 1);   // returns 12
+ * int second = param_number(p, 2);  // returns 0
+ * int last = param_number(p, -1);   // returns 100 (last option)
+ * int invalid = param_number(p, 10); // returns 0 (out of range, errno set)
+ * param_free(p);  // After this, all returned values become invalid!
+ * @endcode
+ * @see param_string for getting string options
+ * @see param_talk for getting talk_t options
+ * @see param_pointer for getting pointer options
+ */
+int         param_number( param_t parameter, int serial );
 
 /**
  * @brief get talk_t option at specified position from parameter
@@ -302,9 +325,11 @@ const char *param_string( param_t parameter, int serial );
  * @note String options created by param_create() are NOT talk_t options
  * @see param_insertt, param_addt for creating talk_t options
  * @see param_string for getting string options
+ * @see param_number for getting integer options
  * @see param_pointer for getting pointer options
  */
 talk_t      param_talk( param_t parameter, int serial );
+#define     param_json(param, serial) param_talk( param, serial )
 
 /**
  * @brief get pointer option at specified position from parameter
@@ -317,6 +342,7 @@ talk_t      param_talk( param_t parameter, int serial );
  * @warning The returned pointer is the original pointer passed to param_insertp/addp, ownership remains with caller
  * @see param_insertp, param_addp for creating pointer options
  * @see param_string for getting string options
+ * @see param_number for getting integer options
  * @see param_talk for getting talk_t options
  */
 void       *param_pointer( param_t parameter, int serial );

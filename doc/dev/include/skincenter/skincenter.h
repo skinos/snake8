@@ -17,6 +17,7 @@
 #define USER_UDPMAP_FILENAME   "udpmap"              /// DEVPORT_DIR/username/udpmap
 #define DEVICE_REG_FILENAME    "reg"                 /// DEVPORT_DIR/username/dev/00037f121240/reg
 #define DEVICE_CONFIG_FILENAME "config"              /// DEVPORT_DIR/username/dev/00037f121240/config
+#define DEVICE_HEARTBEAT_FILENAME    "heartbeat"     /// DEVPORT_DIR/username/dev/00037f121240/heartbeat
 
 
 
