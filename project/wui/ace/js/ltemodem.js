@@ -118,7 +118,7 @@ function lte_modem()
         $('#failed_threshold').val( iconfig.failed_threshold||'' );
         $('#failed_threshold2').val( iconfig.failed_threshold2||'' );
         $('#failed_threshold3').val( iconfig.failed_threshold3||'' );
-        $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
+        $('#failed_everytime').val( iconfig.failed_everytime||'' );
       })
 }
 

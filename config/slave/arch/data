@@ -57,6 +57,9 @@ setup()
     $LANDDIR/bin/he land@register.set_string[scope,$gSCOPE]
     $LANDDIR/bin/he land@register.set_string[version,$gVERSION]
     NETDEV=`$LANDDIR/bin/he arch@data:local_netdev`
+    if [ "X${NETDEV}" = "X" ]; then
+        NETDEV=`ip -o route get 8.8.8.8 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}'`
+    fi
     if [ "X${NETDEV}" != "X" ]; then
         $LANDDIR/bin/he land@register.set_string[local_ifname,ifname@lan]
         $LANDDIR/bin/he land@register.set_string[local_netdev,$NETDEV]
