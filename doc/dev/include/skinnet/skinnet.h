@@ -10,6 +10,7 @@
 
 #include "skin/skin.h"
 
+#define KEEPLIVE_RECV_MODE -1000
 
 
 /**

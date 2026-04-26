@@ -1249,10 +1249,31 @@ talk_t _state( obj_t this, param_t param )
         {
 			/* get the keeplive */
 			ptr = reg_string( this, "keeplive" );
-			if ( ptr != NULL && ( 0 == strcmp( ptr, "icmp" ) || 0 == strcmp( ptr, "dns" ) || 0 == strcmp( ptr, "auto" ) ) )
+			if ( ptr != NULL && ( 0 == strcmp( ptr, "icmp" ) || 0 == strcmp( ptr, "dns" ) ) )
 			{
 				delay = reg_int( this, "delay" );
 				if ( delay > 0 )
+				{
+					json_set_string( ret, "status", "up" );
+                    json_set_number( ret, "delay", delay );
+				}
+				else if ( delay < 0 )
+				{
+                    json_set_string( ret, "status", "failed" );
+				}
+				else
+				{
+                    json_set_string( ret, "status", "block" );
+				}
+			}
+			else if ( ptr != NULL && 0 == strcmp( ptr, "auto" ) )
+			{
+				delay = reg_int( this, "delay" );
+				if ( delay == KEEPLIVE_RECV_MODE )
+				{
+					json_set_string( ret, "status", "up" );
+				}
+				else if ( delay > 0 )
 				{
 					json_set_string( ret, "status", "up" );
                     json_set_number( ret, "delay", delay );
