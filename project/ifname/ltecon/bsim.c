@@ -6,7 +6,7 @@
 
 
 
-boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int switch_times )
+boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int bsim_times )
 {
 	int i;
 	int check;
@@ -169,15 +169,15 @@ simagain:
 	}
 	else
 	{
-		if ( switch_times == 0 )
+		if ( bsim_times == 0 )
 		{
 			failed_timeout = failed_threshold;
 		}
-		else if ( switch_times == 1 )
+		else if ( bsim_times == 1 )
 		{
 			failed_timeout = failed_threshold2;
 		}
-		else if ( switch_times == 2 )
+		else if ( bsim_times == 2 )
 		{
 			failed_timeout = failed_threshold3;
 		}
@@ -248,7 +248,7 @@ simagain:
 	{
 		reg_set_string( this, "switch_reason", NULL );
 		scall( ifdev, "bsim_clear", NULL );
-		switch_times = 0;
+		bsim_times = 0;
 	}
 
 	/*****************************************/
@@ -344,15 +344,15 @@ simagain:
 	}
 	else
 	{
-		if ( switch_times == 0 )
+		if ( bsim_times == 0 )
 		{
 			failed_timeout = failed_threshold;
 		}
-		else if ( switch_times == 1 )
+		else if ( bsim_times == 1 )
 		{
 			failed_timeout = failed_threshold2;
 		}
-		else if ( switch_times == 2 )
+		else if ( bsim_times == 2 )
 		{
 			failed_timeout = failed_threshold3;
 		}
@@ -479,7 +479,7 @@ simagain:
 	{
 		reg_set_string( this, "switch_reason", NULL );
 		scall( ifdev, "bsim_clear", NULL );
-		switch_times = 0;
+		bsim_times = 0;
 	}
 	ifname_info( obj, "%s get the plmn %s signal %s", object, plmn_string, signal_string );
 
@@ -553,15 +553,15 @@ simagain:
 		}
 		else
 		{
-			if ( switch_times == 0 )
+			if ( bsim_times == 0 )
 			{
 				failed_timeout = failed_threshold;
 			}
-			else if ( switch_times == 1 )
+			else if ( bsim_times == 1 )
 			{
 				failed_timeout = failed_threshold2;
 			}
-			else if ( switch_times == 2 )
+			else if ( bsim_times == 2 )
 			{
 				failed_timeout = failed_threshold3;
 			}
@@ -605,7 +605,7 @@ simagain:
 		{
 			reg_set_string( this, "switch_reason", NULL );
 			scall( ifdev, "bsim_clear", NULL );
-			switch_times = 0;
+			bsim_times = 0;
 		}
 	}
 

@@ -130,6 +130,7 @@
 
 
 	"Switch":"有线端口",
+	"lan0":"内部LAN",
 	"lan":"LAN",
 	"lan1":"LAN1",
 	"lan2":"LAN2",

@@ -367,8 +367,8 @@ boole_t _service( obj_t this, param_t param )
 	ptr = json_string( cfg, "bsim" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 	{
+		int bsim_times;
 		talk_t bsim_cfg;
-		int switch_times;
 		const char *sim_set;
 		const char *sim_state;
 		char sim_buffer[NAME_MAX];
@@ -397,9 +397,9 @@ boole_t _service( obj_t this, param_t param )
 		}
 		else
 		{
-			boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int switch_times );
-			switch_times = reg_sint( ifdev, "switch_times" );
-			return bsim_service( this, param, cfg, ifdev, object, obj, sim_state, switch_times );
+			boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int bsim_times );
+			bsim_times = reg_sint( ifdev, "bsim_times" );
+			return bsim_service( this, param, cfg, ifdev, object, obj, sim_state, bsim_times );
 		}
 	}
 	/***********************************/

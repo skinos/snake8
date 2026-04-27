@@ -66,6 +66,7 @@
 	"mmcblk0p4":"TF Card4",
 
 
+	"lan0":"Internal LAN",
 	"lan":"LAN",
 	"lan1":"LAN1",
 	"lan2":"LAN2",

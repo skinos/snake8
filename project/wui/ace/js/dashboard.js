@@ -870,184 +870,197 @@ function wifi_58g(info) {
     $("#wifi_58g_channel").text(info.channel || "");
 }
 
-function switch_show(ethInfo, wifi24Info, wifi58Info) {
-    var hasEthData = ethInfo && Object.keys(ethInfo).length > 0;
-    var hasWifi24Data = wifi24Info && Object.keys(wifi24Info).length > 0;
-    var hasWifi58Data = wifi58Info && Object.keys(wifi58Info).length > 0;
+function createPortItem(index, name, value, phyStatus) {  
+    var portItem = $('<div>', {  
+        'class': 'compact-port-item',  
+        'id': 'compact-port-' + index,  
+        'style': 'display: block;'  
+    });  
+      
+    var portWrapper = $('<div>', {  
+        'class': 'compact-port-wrapper'  
+    });  
+      
+    var imgContainer = $('<span>', {  
+        'class': 'port-img-container'  
+    });  
+      
+    var isDisabled = phyStatus === 'disable';
+    var isOnline = value.status === 'up';
     
-    // 显示WiFi信息
-    wifi_24g(wifi24Info);
-    wifi_58g(wifi58Info);
-
-    if (!hasEthData && !hasWifi24Data && !hasWifi58Data) {
-        $("#switch").hide();
-        return;
-    }
+    var disableImg = $('<img>', {  
+        'src': '/assets/css/images/net_disable.jpg',  
+        'class': 'port-img disable-img',  
+        'style': isDisabled ? 'display: block;' : 'display: none;'  
+    });
     
-    $("#switch").show();
+    var offlineImg = $('<img>', {  
+        'src': '/assets/css/images/net_offline.jpg',  
+        'class': 'port-img offline-img',  
+        'style': (!isDisabled && !isOnline) ? 'display: block;' : 'display: none;'  
+    });  
+      
+    var onlineImg = $('<img>', {  
+        'src': '/assets/css/images/net_online.jpg',  
+        'class': 'port-img online-img',  
+        'style': (!isDisabled && isOnline) ? 'display: block;' : 'display: none;'  
+    });  
+      
+    imgContainer.append(disableImg).append(offlineImg).append(onlineImg);  
+      
+    var portLabel = $('<span>', {  
+        'class': 'compact-port-label',  
+        'id': 'sport' + index + 't',  
+        'text': $.i18n(name) || name,  
+    });  
+      
+    portWrapper.append(imgContainer);  
+    portItem.append(portWrapper).append(portLabel);  
+      
+    return portItem;  
+}  
 
-    if (hasEthData) {
-        var container = $("#compact-ports-container");
-        container.empty();
-        
-        var portCount = 0;
-        
-        // 遍历所有网口信息
-        for (var name in ethInfo) {
-            if (!ethInfo.hasOwnProperty(name)) continue;
+function switch_show(ethInfo, wifi24Info, wifi58Info, phyInfo) {  
+    var hasEthData = ethInfo && Object.keys(ethInfo).length > 0;  
+    var hasWifi24Data = wifi24Info && Object.keys(wifi24Info).length > 0;  
+    var hasWifi58Data = wifi58Info && Object.keys(wifi58Info).length > 0;  
+      
+    wifi_24g(wifi24Info);  
+    wifi_58g(wifi58Info);  
+  
+    if (!hasEthData && !hasWifi24Data && !hasWifi58Data) {  
+        $("#switch").hide();  
+        return;  
+    }  
+      
+    $("#switch").show();  
+  
+    if (hasEthData) {  
+        var container = $("#compact-ports-container");  
+        container.empty();  
+          
+        var portCount = 0;  
+          
+        for (var name in ethInfo) {  
+            if (!ethInfo.hasOwnProperty(name)) continue;  
+              
+            var value = ethInfo[name];  
+            if (!value) continue;  
+              
+            portCount++;  
             
-            var value = ethInfo[name];
-            if (!value) continue;
-            
-            portCount++;
-            
-            var portItem = createPortItem(portCount, name, value);
-            container.append(portItem);
-        }
-        
-        if (portCount === 0) {
-            $("#switch").hide();
-        }
-    }
+            // 状态为disable才显示net_disable 其余状态enable或是字段值为空 都走up down判断
+            var phyStatus = phyInfo && phyInfo[name] ? phyInfo[name].status : null;
+              
+            var portItem = createPortItem(portCount, name, value, phyStatus);  
+            container.append(portItem);  
+        }  
+          
+        if (portCount === 0) {  
+            $("#switch").hide();  
+        }  
+    }  
 }
 
-function createPortItem(index, name, value) {
-    var portItem = $('<div>', {
-        'class': 'compact-port-item',
-        'id': 'compact-port-' + index,
-        'style': 'display: block;'
-    });
-    
-    var portWrapper = $('<div>', {
-        'class': 'compact-port-wrapper'
-    });
-    
-    var imgContainer = $('<span>', {
-        'class': 'port-img-container'
-    });
-    
-    var offlineImg = $('<img>', {
-        'src': '/assets/css/images/net_offline.jpg',
-        'class': 'port-img offline-img',
-        'style': value.status === 'up' ? 'display: none;' : 'display: block;'
-    });
-    
-    var onlineImg = $('<img>', {
-        'src': '/assets/css/images/net_online.jpg',
-        'class': 'port-img online-img',
-        'style': value.status === 'up' ? 'display: block;' : 'display: none;'
-    });
-    
-    imgContainer.append(offlineImg).append(onlineImg);
-    
-    var portLabel = $('<span>', {
-        'class': 'compact-port-label',
-        'id': 'sport' + index + 't',
-        'text': $.i18n(name) || name,
-    });
-    
-    portWrapper.append(imgContainer);
-    portItem.append(portWrapper).append(portLabel);
-    
-    return portItem;
-}
-
-function interface_load() {
-    // 获取外网数据
-    he.bkload(['network@frame.extern']).then(function(externData) {
-        if (!externData) return;
+function interface_load() {  
+    he.bkload(['network@frame.extern']).then(function(externData) {  
+        if (!externData) return;  
+          
+        var data = externData[0];  
+        if (!data) return;  
+          
+        if (data['ifname@lte']) {  
+            lte_show(data['ifname@lte'], "#lte");  
+        }  
+          
+        if (data['ifname@lte2']) {  
+            lte_show(data['ifname@lte2'], "#lte2");  
+        }  
+          
+        if (data['ifname@lte3']) {  
+            lte_show(data['ifname@lte3'], "#lte3");  
+        }  
+          
+        if (data['ifname@lte4']) {  
+            lte_show(data['ifname@lte4'], "#lte4");  
+        }  
+          
+        if (window.ifdev && window.ifdev["wifi@n"] === true && data['ifname@wisp']) {  
+            wisp_show(data['ifname@wisp'], "#wisp");  
+        }  
+          
+        if (window.ifdev && window.ifdev["wifi@a"] === true && data['ifname@wisp2']) {  
+            wisp_show(data['ifname@wisp2'], "#wisp2");  
+        }  
+  
+        if (data['ifname@wan']) {  
+            wan_show(data['ifname@wan'], "#wan");  
+        }  
+          
+        if (data['ifname@wan2']) {  
+            wan_show(data['ifname@wan2'], "#wan2");  
+        }  
+          
+        if (data['ifname@wan3']) {  
+            wan_show(data['ifname@wan3'], "#wan3");  
+        }  
+          
+        if (data['ifname@wan4']) {  
+            wan_show(data['ifname@wan4'], "#wan4");  
+        }  
+          
+        adjustBoxLayout();  
+    });  
+      
+    he.bkload(['network@frame.local']).then(function(localData) {  
+        if (!localData) return;  
+          
+        var data = localData[0];  
+        if (!data) return;  
+          
+        if (data['ifname@lan']) {  
+            lan_show(data['ifname@lan'], "#lan");  
+        }  
+          
+        if (data['ifname@lan2']) {  
+            lan_show(data['ifname@lan2'], "#lan2");  
+        }  
+          
+        if (data['ifname@lan3']) {  
+            lan_show(data['ifname@lan3'], "#lan3");  
+        }  
+          
+        if (data['ifname@lan4']) {  
+            lan_show(data['ifname@lan4'], "#lan4");  
+        }  
+        adjustBoxLayout();  
+    });  
+      
+    he.bkload(['arch@ethernet.status', 'arch@ethernet']).then(function(ethData) {  
+        if (!ethData) return;  
+          
+        var statusData = ethData[0];
+        var configData = ethData[1];
         
-        var data = externData[0];
-        if (!data) return;
-        
-        // LTE
-        if (data['ifname@lte']) {
-            lte_show(data['ifname@lte'], "#lte");
+        var phyInfo = null;
+        if (configData) {
+            for (var mode in configData) {
+                if (configData[mode] && configData[mode].phy) {
+                    phyInfo = configData[mode].phy;
+                    break;
+                }
+            }
         }
-        
-        if (data['ifname@lte2']) {
-            lte_show(data['ifname@lte2'], "#lte2");
-        }
-        
-        if (data['ifname@lte3']) {
-            lte_show(data['ifname@lte3'], "#lte3");
-        }
-        
-        if (data['ifname@lte4']) {
-            lte_show(data['ifname@lte4'], "#lte4");
-        }
-        
-        // WISP
-        if (window.ifdev && window.ifdev["wifi@n"] === true && data['ifname@wisp']) {
-            wisp_show(data['ifname@wisp'], "#wisp");
-        }
-        
-        if (window.ifdev && window.ifdev["wifi@a"] === true && data['ifname@wisp2']) {
-            wisp_show(data['ifname@wisp2'], "#wisp2");
-        }
-
-        // WAN
-        if (data['ifname@wan']) {
-            wan_show(data['ifname@wan'], "#wan");
-        }
-        
-        if (data['ifname@wan2']) {
-            wan_show(data['ifname@wan2'], "#wan2");
-        }
-        
-        if (data['ifname@wan3']) {
-            wan_show(data['ifname@wan3'], "#wan3");
-        }
-        
-        if (data['ifname@wan4']) {
-            wan_show(data['ifname@wan4'], "#wan4");
-        }
-        
-        adjustBoxLayout();
-    });
-    
-    // 获取本地数据
-    he.bkload(['network@frame.local']).then(function(localData) {
-        if (!localData) return;
-        
-        var data = localData[0];
-        if (!data) return;
-        
-        // LAN
-        if (data['ifname@lan']) {
-            lan_show(data['ifname@lan'], "#lan");
-        }
-        
-        if (data['ifname@lan2']) {
-            lan_show(data['ifname@lan2'], "#lan2");
-        }
-        
-        if (data['ifname@lan3']) {
-            lan_show(data['ifname@lan3'], "#lan3");
-        }
-        
-        if (data['ifname@lan4']) {
-            lan_show(data['ifname@lan4'], "#lan4");
-        }
-        adjustBoxLayout();
-    });
-    
-    // 获取以太网状态
-    he.bkload(['arch@ethernet.status']).then(function(ethData) {
-        if (!ethData) return;
-        
-        var data = ethData[0];
-
-         // 获取WiFi信息
-        he.bkload(['wifi@nssid.status', 'wifi@assid.status']).then(function(wifiData) {
-            var wifi24Data = wifiData[0] || null;
-            var wifi58Data = wifiData[1] || null;
-            
-            switch_show(data, wifi24Data, wifi58Data);
-
-            adjustBoxLayout();
-        });
-    });
+  
+        he.bkload(['wifi@nssid.status', 'wifi@assid.status']).then(function(wifiData) {  
+            var wifi24Data = wifiData[0] || null;  
+            var wifi58Data = wifiData[1] || null;  
+              
+            switch_show(statusData, wifi24Data, wifi58Data, phyInfo);  
+  
+            adjustBoxLayout();  
+        });  
+    });  
 }
 
 // 按钮事件绑定函数
