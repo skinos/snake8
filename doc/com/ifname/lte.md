@@ -20,7 +20,7 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
         "dial":"dial number",                     // [ number ]
         "cid":"dial CID",                         // [ number ], default is 1
         "type":"ip address type",                 // [ "ipv4", "ipv6", "ipv4v6" ]
-        "auth":"authentication method",           // [ "pap", "chap", "papchap" ]
+        "auth":"authentication method",           // // [ "auto","disable","pap", "chap", "papchap" ]
         "apn":"APN name",                         // [ string ]
         "user":"user name",                       // [ string ]
         "passwd":"user password"                  // [ string ]
@@ -32,11 +32,12 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
     "bsim":"backup simcard function",                         // [ "disable", "enable" ]
     "bsim_cfg":                                               // backup SIM settings, used when "bsim" is "enable"
     {
-        "mode":"specify active SIM card",                           // [ "auto", "bsim", "msim", "detect" ]
+        "mode":"specify active SIM card",                           // [ "auto", "back", "main", "detect" ]
                                                                         // "auto" for automatic switching based on rules
-                                                                        // "bsim" for backup simcard
-                                                                        // "msim" for main simcard
+                                                                        // "back" for backup simcard
+                                                                        // "main" for main simcard
                                                                         // "detect" the IO for auto that need detect IO support
+        "simcard_failed":"Check the simcard failed how many times to switch the simcard",   // [ number ]
         "signal_failed":"Check the signal failed how many times to switch the simcard",   // [ number ]
         "attach_failed":"attach to internet failed how many times to switch the simcard", // [ number ]
         "failed":"connect to internet failed how many times to switch the simcard",       // [ number ]
@@ -53,7 +54,8 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
             "type":"ip address type",                 // [ "ipv4", "ipv6", "ipv4v6" ]
             "apn":"APN name",                         // [ string ]
             "user":"user name",                       // [ string ]
-            "passwd":"user password"                  // [ string ]
+            "passwd":"user password",              // [ string ]
+            "auth":"authentication method",           // [ "auto","disable","pap", "chap", "papchap" ]
         }
     },
 

@@ -13,18 +13,20 @@
         <a href="#ltesms" data-i18n="SMS Settings"></a>
       </li>
       <li>
+        <a href="#simcard" data-i18n="Backup SIM"></a>
+      </li>
+      <li>
         <a href="#ltemodem" data-i18n="Modem Settings"></a>
       </li>
       <li style="display: none;">
         <a href="#atproxy" data-i18n="AT Proxy"></a>
       </li>
-      <li style="display: none;">
-        <a href="#simcard" data-i18n="SIM Card Settings"></a>
-      </li>
     </ul>
 
+    <!-- 重点：添加 tab-content 容器 -->
     <div class="tab-content">
       
+      <!-- 基础信息标签页（原有的页面内容） -->
       <div class="tab-pane active" id="lte">
         <!-- PAGE CONTENT BEGINS -->
         <div class="form-horizontal" role="form" style="margin-top: 20px;">
@@ -37,7 +39,13 @@
                     <span id="lte_status"></span>&nbsp; &nbsp;
                     <a class="btn btn-mini btn-warning" id="lte_btn"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
                 </td>
-                <th data-i18n="Address"></th><td><span id="lte_ip"></span>&nbsp;<span id="lte_delay"></span></td>
+                <th data-i18n="Address"></th>
+                <td>
+                  <span id="lte_ip"></span>&nbsp;
+                  <span id="lte_delay_head" style="white-space: nowrap; display: none;">
+                      <span data-i18n="Delay"></span>:<span id="lte_delay"></span>
+                  </span>
+                </td>
             </tr>
             <tr>
                 <th data-i18n="Network"></th>
@@ -61,6 +69,9 @@
             </tr>
         </tbody>
         </table>            
+
+
+       
 
         <!-- APN自定义 -->
         <div class="form-group">
@@ -298,7 +309,7 @@
                   <div class="col-sm-9">
                     <select class="col-xs-10 col-sm-5" id="method">
                       <option value="disable" data-i18n="Disable"></option>
-                      <!-- <option value="slaac" data-i18n="SLAAC"></option> -->
+                      <option value="slaac" data-i18n="SLAAC"></option>
                       <option value="automatic" data-i18n="Automatic"></option>
                       <option value="manual" data-i18n="Manual"></option>
                     </select>
@@ -484,7 +495,7 @@
 
         </div> <!-- status_config -->
 
-      <div class="clearfix form-actions">
+      <div class="clearfix form-actions" id="button_lte">
             <div class="col-md-offset-3 col-md-9">
               <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
               &nbsp; &nbsp; &nbsp;
@@ -496,10 +507,17 @@
       </div>
 
       <div class="tab-pane" id="lteat"></div>
+      
+      <!-- Modem设置标签页（内容通过AJAX加载） -->
       <div class="tab-pane" id="ltemodem"></div>
+      
+      <!-- SMS设置标签页（内容通过AJAX加载） -->
       <div class="tab-pane" id="ltesms"></div>
       
+      <!-- AT代理标签页（内容通过AJAX加载） -->
       <div class="tab-pane" id="atproxy"></div>
+      
+      <!-- SIM卡设置标签页（内容通过AJAX加载） -->
       <div class="tab-pane" id="simcard"></div>
       
     </div> <!-- tab-content 结束 -->
@@ -509,6 +527,9 @@
 <script src="/js/lte.js"></script>
 
 <style>
+/* 像firewll框架那样 没有边框 只有标签页顶部导航栏 */
+/* 加上标签页自带的框架边框 就可能会导致切换标签页时高度塌陷 导致强烈白光的效果 也就是页面被刷新了几次所导致 */
+/* 每个标签页内容不同 边框高度也就不同 切换时会有高度塌陷的情况 */
 .tab-content {
     background-color: transparent !important; /* 设为透明 */
     border: none !important;

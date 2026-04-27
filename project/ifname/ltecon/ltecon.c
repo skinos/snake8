@@ -8,8 +8,6 @@
 #include "skinnet/skinnet.h"
 #include <ifaddrs.h>
 
-
-
 boole_t _setup( obj_t this, param_t param )
 {
 	int tid;
@@ -108,7 +106,6 @@ boole_t _shut( obj_t this, param_t param )
 			profile = json_json( cfg, "profile_cfg" );
 		}
     	scallt( ifdev, "down", profile );
-		scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
 	}
 
 	talk_free( cfg );
@@ -298,12 +295,13 @@ talk_t _netdev( obj_t this, param_t param )
 boole_t _service( obj_t this, param_t param )
 {
     int i;
-    int check;
-    talk_t v;
+	int check;
+	talk_t v;
 	talk_t ret;
     talk_t cfg;
-    talk_t profile;
-    const char *ptr;
+	talk_t mcfg;
+	talk_t profile;
+	const char *ptr;
 	const char *obj;
 	const char *pin;
 	const char *mode;
@@ -361,6 +359,54 @@ boole_t _service( obj_t this, param_t param )
     }
     /* get the ifdev reset times */
 	reset_times = reg_sint( ifdev, "reset_times" );
+
+	/***********************************/
+	/******** Backup SIM START *********/
+	/***********************************/
+	mcfg = cfg;
+	ptr = json_string( cfg, "bsim" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	{
+		talk_t bsim_cfg;
+		int switch_times;
+		const char *sim_set;
+		const char *sim_state;
+		char sim_buffer[NAME_MAX];
+		
+		bsim_cfg = json_json( cfg, "bsim_cfg" );
+		sim_set = json_string( bsim_cfg, "mode" );
+		sim_state = scall_string( sim_buffer, sizeof(sim_buffer), ifdev, "bsim_state", NULL );
+		if ( sim_set != NULL && 0 == strcmp( sim_set, "main" ) )
+		{
+			if ( sim_state != NULL && 0 != strcmp( sim_state, "main" ) )
+			{
+				scall( ifdev, "bsim_main", NULL );
+				talk_free( cfg );
+				return ttrue;
+			}
+		}
+		if ( sim_set != NULL && 0 == strcmp( sim_set, "back" ) )
+		{
+			if ( sim_state == NULL || 0 != strcmp( sim_state, "back" ) )
+			{
+				scall( ifdev, "bsim_back", NULL );
+				talk_free( cfg );
+				return ttrue;
+			}
+			mcfg = bsim_cfg;
+		}
+		else
+		{
+			boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int switch_times );
+			switch_times = reg_sint( ifdev, "switch_times" );
+			return bsim_service( this, param, cfg, ifdev, object, obj, sim_state, switch_times );
+		}
+	}
+	/***********************************/
+	/******** Backup SIM END ***********/
+	/***********************************/
+
+
 
 	/*****************************************/
 	/***** get the connect mode **************/
@@ -458,7 +504,7 @@ simagain:
 				ptr = x2string( ret );
 				if ( ptr != NULL && 0 == strcmp( ptr, "pin" ) )
 				{
-					pin = json_string( cfg, "pin" );
+					pin = json_string( mcfg, "pin" );
 					ret = scalls( ifdev, "pin", pin );
 					if ( ret == ttrue )
 					{
@@ -523,7 +569,7 @@ simagain:
 				ptr = x2string( ret );
 				if ( ptr != NULL && 0 == strcmp( ptr, "pin" ) )
 				{
-					pin = json_string( cfg, "pin" );
+					pin = json_string( mcfg, "pin" );
 					ret = scalls( ifdev, "pin", pin );
 					if ( ret == ttrue )
 					{
@@ -569,10 +615,10 @@ simagain:
 	/**** get the custom profile for up ******/
 	/*****************************************/
 	profile = NULL;
-	ptr = json_string( cfg, "profile" );
+	ptr = json_string( mcfg, "profile" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 	{
-		profile = json_json( cfg, "profile_cfg" );
+		profile = json_json( mcfg, "profile_cfg" );
 	}
 
 	/*****************************************/
@@ -782,7 +828,6 @@ simagain:
 			return terror;
 		}
 	}
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
 	reason = reg_string( this, "reset_reason" );
 	if ( reason != NULL && 0 == strcmp( reason, "signal" ) )
 	{
@@ -888,6 +933,7 @@ simagain:
 				else if ( ret == terror )
 				{
 					ifname_warn( obj, "%s ifdev %s not work when connected", object, ifdev );
+					talk_free( cfg );
 					return terror;
 				}
 				ifname_info( obj, "%s attach failed %d", object, check );
@@ -902,7 +948,6 @@ simagain:
 				return terror;
 			}
 		}
-		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
 		reason = reg_string( this, "reset_reason" );
 		if ( reason != NULL && 0 == strcmp( reason, "attach" ) )
 		{
@@ -1631,6 +1676,19 @@ boole_t _online( obj_t this, param_t param )
 		scalls( GPIO_COM, "action", "network/online,%s", ifdev );
 	}
 
+	/***********************************/
+	/******** Backup SIM START *********/
+	/***********************************/
+	ptr = json_string( cfg, "bsim" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	{
+		boole bsim_online( const char *ifdev, talk_t cfg );
+		bsim_online( ifdev, cfg );
+	}
+	/***********************************/
+	/******** Backup SIM END ***********/
+	/***********************************/
+
 	talk_free( cfg );
 	return ttrue;
 }
@@ -1679,6 +1737,8 @@ talk_t _offline( obj_t this, param_t param )
 	{
 		scalls( ifdev, "offline", object );
 	}
+	/* led */
+	scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
 
 	return ttrue;
 }
@@ -1777,6 +1837,7 @@ boole_t _keepon( obj_t this, param_t param )
 boole_t _keepoff( obj_t this, param_t param )
 {
 	talk_t cfg;
+	talk_t keeplive;
 	unsigned long i;
 	const char *ptr;
 	const char *ifdev;
@@ -1784,11 +1845,32 @@ boole_t _keepoff( obj_t this, param_t param )
 
 	object = obj_name( this );
     cfg = config_sgets( object, "keeplive" );
-	if ( cfg == NULL )
+	keeplive = json_json( cfg, "keeplive" );
+	if ( keeplive == NULL )
 	{
+		talk_free( cfg );
 		return tfalse;
 	}
-	ptr = json_string( cfg, "action" );
+
+	/***********************************/
+	/******** Backup SIM START *********/
+	/***********************************/
+	ptr = json_string( cfg, "bsim" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	{
+		ifdev = reg_string( this, "ifdev" );
+		boole bsim_keepoff( const char *ifdev, talk_t cfg );
+		if ( bsim_keepoff( ifdev, cfg ) == true )
+		{
+			talk_free( cfg );
+			return ttrue;
+		}
+	}
+	/***********************************/
+	/******** Backup SIM END ***********/
+	/***********************************/
+
+	ptr = json_string( keeplive, "action" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "reboot" ) )
 	{
 		i = uptime_int();

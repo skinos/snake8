@@ -183,21 +183,23 @@ function status_load()
       }
 	 
       $(id+"_ip").text( info.ip||' ' );
-      if ( info.delay )
-	  {
-		  if ( info.delay == "failed" || info.delay == "block" )
-		  {
-			  $(id+"_delay").text( $.i18n(info.delay) );
-		  }
-		  else
-		  {
-			  $(id+"_delay").text( $.i18n("Delay")+":"+ info.delay + "ms" );
-		  }
-	  }
-	  else
-	  {
-		  $(id+"_delay").text( "" );
-	  }
+      // 延迟
+      if (info.delay) {
+          if (info.delay === "failed" || info.delay === "block") {
+              $(id + "_delay").text($.i18n(info.delay));
+          } else {
+              $(id + "_delay").text(info.delay + "ms");
+          }
+      } else {
+          $(id + "_delay").text("");
+      }
+
+      // 延迟头部显示控制
+      if (info.delay) {
+          $(id + "_delay_head").show();
+      } else {
+          $(id + "_delay_head").hide();
+      }
 
       /* txrx */
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
@@ -211,6 +213,17 @@ function lte_basic(v)
     config = v[0];
     if(!config){
       config = {}
+    }
+    // bsim 字段不存在、为空字符串时隐藏标签页
+    var bsimVal = config.bsim;
+    var simcardTabLi = $('#lteTabs a[href="#simcard"]').parent();
+
+    if ( bsimVal && bsimVal !== "") {
+        /* bsim 有值enable" 或disable值显示标签页 */
+        simcardTabLi.show();
+    } else {
+        /* bsim 不存在、为空隐藏标签页 */
+        simcardTabLi.hide();
     }
 
     /* init the network mode select */
@@ -707,7 +720,7 @@ $(document).ready(function() {
             ltemodem: { htmlUrl: '/content/ltemodem.html'},    
             ltesms:   { htmlUrl: '/content/ltesms.html'},    
             lteat:  { htmlUrl: '/content/lteat.html'},    
-            simcard:  { htmlUrl: '/content/ltesim.html'}    
+            simcard:  { htmlUrl: '/content/ltesim.html'} 
         },    
         
         // 初始化

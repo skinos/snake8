@@ -20,7 +20,7 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
         "dial":"dial number",                     // [ number ]
         "cid":"dial CID",                         // [ number ], default is 1
         "type":"ip address type",                 // [ "ipv4", "ipv6", "ipv4v6" ]
-        "auth":"authentication method",           // [ "pap", "chap", "papchap" ]
+        "auth":"authentication method",           // // [ "auto","disable","pap", "chap", "papchap" ]
         "apn":"APN name",                         // [ string ]
         "user":"user name",                       // [ string ]
         "passwd":"user password"                  // [ string ]
@@ -32,17 +32,33 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
     "bsim":"backup simcard function",                         // [ "disable", "enable" ]
     "bsim_cfg":                                               // backup SIM settings, used when "bsim" is "enable"
     {
-        "mode":"specify active SIM card",                           // [ "auto", "bsim", "msim", "detect" ]
+        "mode":"specify active SIM card",                           // [ "auto", "back", "main", "detect" ]
                                                                         // "auto" for automatic switching based on rules
-                                                                        // "bsim" for backup simcard
-                                                                        // "msim" for main simcard
+                                                                        // "back" for backup simcard
+                                                                        // "main" for main simcard
                                                                         // "detect" the IO for auto that need detect IO support
-        "signal_failed":"Check the signal failed how many times to switch the simcard",   // [ number ]
-        "attach_failed":"attach to internet failed how many times to switch the simcard", // [ number ]
-        "failed":"connect to internet failed how many times to switch the simcard",       // [ number ]
+        "simcard_failed_threshold":"first failed time to switch",                                  // [ number ], default 60 seconds
+        "simcard_failed_threshold2":"second failed time to switch",                                // [ number ], default 180 seconds
+        "simcard_failed_threshold3":"third failed time to switch",                                 // [ number ], default 300 seconds
+        "simcard_failed_everytime":"every failed time to switch",                                  // [ number ], default 1800 seconds
+
+        "signal_failed_threshold":"first failed time to switch",                                    // [ number ], default 120 seconds
+        "signal_failed_threshold2":"second failed time to switch",                                  // [ number ], default 300 seconds
+        "signal_failed_threshold3":"third failed to time switch",                                   // [ number ], default 600 seconds
+        "signal_failed_everytime":"every failed to time switch",                                    // [ number ], default 1800 seconds
+
+        "attach_failed_threshold":"first failed time to switch",                                    // [ number ], default 60 seconds
+        "attach_failed_threshold2":"second failed time to switch",                                  // [ number ], default 180 seconds
+        "attach_failed_threshold3":"third failed time to switch",                                   // [ number ], default 600 seconds
+        "attach_failed_everytime":"every failed time to switch",                                    // [ number ], default 1800 seconds
+
+        "failed_threshold":"first failed time to switch",                                   // [ number ]
+        "failed_threshold2":"second failed time to switch",                                 // [ number ]
+        "failed_threshold3":"third failed time to switch",                                  // [ number ]
+        "failed_everytime":"every failed time to switch",                                   // [ number ]
+
         "failover":"backup simcard usage duration",                                       // [ number ], the unit is second
         "keeplive_switch":"keeplive failed to switch",                                    // [ "disable", "enable" ]
-
         // backup profile attributes
         "pin":"simcard pin",                       // [ string ]
         "profile":"custom the profile",            // [ "disable", "enable" ]
@@ -53,7 +69,8 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
             "type":"ip address type",                 // [ "ipv4", "ipv6", "ipv4v6" ]
             "apn":"APN name",                         // [ string ]
             "user":"user name",                       // [ string ]
-            "passwd":"user password"                  // [ string ]
+            "passwd":"user password",              // [ string ]
+            "auth":"authentication method",           // [ "auto","disable","pap", "chap", "papchap" ]
         }
     },
 
