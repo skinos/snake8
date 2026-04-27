@@ -20,7 +20,7 @@
               <label class="col-sm-3 control-label no-padding-right" data-i18n="Mode"></label>
               <div class="col-sm-9">
                 <select class="col-xs-10 col-sm-5" id="simmode">
-                    <option value="" data-i18n="Auto"></option>
+                    <option value="auto" data-i18n="Auto"></option>
                     <option value="main" data-i18n="Main"></option>
                     <option value="back" data-i18n="Back"></option>
                 </select>
@@ -29,116 +29,8 @@
 
             <div id="mode_cfg" style="display: none;">
 
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="1st Switch Simcard Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="simcard_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="2nd Switch Simcard Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="simcard_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="3rd Switch Simcard Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="simcard_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="simcard_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-
-        <div class="hr hr32 hr-dotted"></div>
-
-         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="1st Switch Signal Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="signal_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="2nd Switch Signal Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="signal_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="3rd Switch Signal Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="signal_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="signal_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-
-        <div class="hr hr32 hr-dotted"></div>
-
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="1st Switch Attach Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="attach_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="2nd Switch Attach Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="attach_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="3rd Switch Attach Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="attach_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="attach_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-
-
-        <div class="hr hr32 hr-dotted"></div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="1st Switch Dial Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="2nd Switch Dial Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="3rd Switch Dial Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval Fail Limit"></label>
-          <div class="col-sm-9">
-            <input type="text" id="failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
-          </div>
-        </div>
-
-        <div class="hr hr32 hr-dotted"></div>
-
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="SIM Duration"></label>
+              <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failover"></label>
           <div class="col-sm-9">
             <input type="text" id="failover" class="col-xs-10 col-sm-5" maxlength="128" />
           </div>
@@ -154,12 +46,115 @@
           </div>
         </div>
 
+         <div class="hr hr32 hr-dotted"></div>
+
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="PIN Code"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Simcard Switch 1st"></label>
           <div class="col-sm-9">
-            <input type="text" id="simpin" class="col-xs-10 col-sm-5" maxlength="128" />
+            <input type="text" id="simcard_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
           </div>
         </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Simcard Switch 2nd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Simcard Switch 3rd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Simcard Switch Interval"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simcard_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+        <div class="hr hr32 hr-dotted"></div>
+
+         <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Signal Switch 1st"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Signal Switch 2nd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Signal Switch 3rd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Signal Switch Interval"></label>
+          <div class="col-sm-9">
+            <input type="text" id="signal_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+        <div class="hr hr32 hr-dotted"></div>
+
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Attach Switch 1st"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Attach Switch 2nd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Attach Switch 3rd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Attach Switch Interval"></label>
+          <div class="col-sm-9">
+            <input type="text" id="attach_failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Dial Switch 1st"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Dial Switch 2nd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold2_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Dial Switch 3rd"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_threshold3_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Failure Dial Switch Interval"></label>
+          <div class="col-sm-9">
+            <input type="text" id="failed_everytime_sim" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+
+        <div class="hr hr32 hr-dotted"></div>
 
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="APN Custom"></label>
@@ -230,6 +225,13 @@
             </div>
 
           </div>
+
+           <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="PIN Code"></label>
+          <div class="col-sm-9">
+            <input type="text" id="simpin" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
 
             </div>
         </div>

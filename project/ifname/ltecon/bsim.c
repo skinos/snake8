@@ -9,6 +9,8 @@
 boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, const char *object, const char *obj, const char *sim_state, int bsim_times )
 {
 	int i;
+	int sig;
+	int plmn;
 	int check;
 	talk_t v;
 	talk_t ret;
@@ -232,11 +234,11 @@ simagain:
 			reg_set_string( this, "switch_reason", "sim" );
 			if ( sim_state == NULL || 0 == strcmp( sim_state, "main" ) )
 			{
-				scall( ifdev, "sim_back", NULL );
+				scall( ifdev, "bsim_back", NULL );
 			}
 			else
 			{
-				scall( ifdev, "sim_main", NULL );
+				scall( ifdev, "bsim_main", NULL );
 			}
 			talk_free( cfg );
 			return terror;
@@ -331,8 +333,12 @@ simagain:
 			{
 				ptr = x2string( ret );
 				strncpy( plmn_string, ptr, sizeof(plmn_string) );
+				plmn = atoi( ptr );
 				talk_free( ret );
-				break;
+				if ( plmn > 0 )
+				{
+					break;
+				}
 			}
 			ifname_info( obj, "%s plmn failed", object );
 			sleep( 1 );
@@ -379,8 +385,12 @@ simagain:
 				{
 					ptr = x2string( ret );
 					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					plmn = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( plmn > 0 )
+					{
+						break;
+					}
 				}
 				ifname_info( obj, "%s plmn failed %d", object, check );
 			}
@@ -401,8 +411,12 @@ simagain:
 				{
 					ptr = x2string( ret );
 					strncpy( signal_string, ptr, sizeof(signal_string) );
+					sig = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( sig > 0 )
+					{
+						break;
+					}
 				}
 				ifname_info( obj, "%s signal failed %d", object, check );
 			}
@@ -418,11 +432,16 @@ simagain:
 				{
 					ptr = x2string( v );
 					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					plmn = atoi( ptr );
 					talk_free( v );
 					ptr = x2string( ret );
 					strncpy( signal_string, ptr, sizeof(signal_string) );
+					sig = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( plmn > 0 && sig > 0 )
+					{
+						break;
+					}
 				}
 				if ( v == terror )
 				{
@@ -464,11 +483,11 @@ simagain:
 			reg_set_string( this, "switch_reason", "signal" );
 			if ( sim_state == NULL || 0 == strcmp( sim_state, "main" ) )
 			{
-				scall( ifdev, "sim_back", NULL );
+				scall( ifdev, "bsim_back", NULL );
 			}
 			else
 			{
-				scall( ifdev, "sim_main", NULL );
+				scall( ifdev, "bsim_main", NULL );
 			}
 			talk_free( cfg );
 			return terror;
@@ -590,11 +609,11 @@ simagain:
 				reg_set_string( this, "switch_reason", "attach" );
 				if ( sim_state == NULL || 0 == strcmp( sim_state, "main" ) )
 				{
-					scall( ifdev, "sim_back", NULL );
+					scall( ifdev, "bsim_back", NULL );
 				}
 				else
 				{
-					scall( ifdev, "sim_main", NULL );
+					scall( ifdev, "bsim_main", NULL );
 				}
 				talk_free( cfg );
 				return terror;
@@ -647,11 +666,11 @@ simagain:
 			reg_set_int( this, "connect_failed", connect_failed );
 			if ( sim_state == NULL || 0 == strcmp( sim_state, "main" ) )
 			{
-				scall( ifdev, "sim_back", NULL );
+				scall( ifdev, "bsim_back", NULL );
 			}
 			else
 			{
-				scall( ifdev, "sim_main", NULL );
+				scall( ifdev, "bsim_main", NULL );
 			}
 			talk_free( cfg );
 			return terror;

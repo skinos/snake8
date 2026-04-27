@@ -295,6 +295,8 @@ talk_t _netdev( obj_t this, param_t param )
 boole_t _service( obj_t this, param_t param )
 {
     int i;
+	int sig;
+	int plmn;
 	int check;
 	talk_t v;
 	talk_t ret;
@@ -385,7 +387,7 @@ boole_t _service( obj_t this, param_t param )
 				return ttrue;
 			}
 		}
-		if ( sim_set != NULL && 0 == strcmp( sim_set, "back" ) )
+		else if ( sim_set != NULL && 0 == strcmp( sim_set, "back" ) )
 		{
 			if ( sim_state == NULL || 0 != strcmp( sim_state, "back" ) )
 			{
@@ -691,8 +693,12 @@ simagain:
 			{
 				ptr = x2string( ret );
 				strncpy( plmn_string, ptr, sizeof(plmn_string) );
+				plmn = atoi( ptr );
 				talk_free( ret );
-				break;
+				if ( plmn > 0 )
+				{
+					break;
+				}
 			}
 			ifname_info( obj, "%s plmn failed", object );
 			sleep( 1 );
@@ -739,8 +745,12 @@ simagain:
 				{
 					ptr = x2string( ret );
 					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					plmn = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( plmn > 0 )
+					{
+						break;
+					}
 				}
 				ifname_info( obj, "%s plmn failed %d", object, check );
 			}
@@ -761,8 +771,12 @@ simagain:
 				{
 					ptr = x2string( ret );
 					strncpy( signal_string, ptr, sizeof(signal_string) );
+					sig = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( sig > 0 )
+					{
+						break;
+					}
 				}
 				ifname_info( obj, "%s signal failed %d", object, check );
 			}
@@ -778,11 +792,16 @@ simagain:
 				{
 					ptr = x2string( v );
 					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					plmn = atoi( ptr );
 					talk_free( v );
 					ptr = x2string( ret );
 					strncpy( signal_string, ptr, sizeof(signal_string) );
+					sig = atoi( ptr );
 					talk_free( ret );
-					break;
+					if ( plmn > 0 && sig > 0 )
+					{
+						break;
+					}
 				}
 				if ( v == terror )
 				{
@@ -989,7 +1008,7 @@ simagain:
 	connect_failed = reg_int( this, "connect_failed" );
 	if ( connect_failed > 0 )
 	{
-		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (connect_failed%failed_everytime) == 0 )
+		if ( connect_failed == failed_threshold || connect_failed == failed_threshold2 || connect_failed == failed_threshold3|| (failed_everytime > 0 && (connect_failed%failed_everytime) == 0 ) )
 		{
 			ifname_fault( obj, "%s reset the %s when connect failed for %d times", object, ifdev, connect_failed );
 			connect_failed++;

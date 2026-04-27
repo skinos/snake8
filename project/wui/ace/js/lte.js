@@ -214,16 +214,42 @@ function lte_basic(v)
     if(!config){
       config = {}
     }
-    // bsim 字段不存在、为空字符串时隐藏标签页
-    var bsimVal = config.bsim;
-    var simcardTabLi = $('#lteTabs a[href="#simcard"]').parent();
+    modem = v[1];
+    if(!modem){
+      modem = {};
+    }
+    window.modem = modem;
 
-    if ( bsimVal && bsimVal !== "") {
-        /* bsim 有值enable" 或disable值显示标签页 */
+    var simcardTabLi = $('#lteTabs a[href="#simcard"]').parent();
+    var shouldShowSimcard = false;
+
+    // 从 window.modem 中提取 modem 名称 modem@lte 或 modem@lte2
+    // 然后拼接 _sim 字段
+    if (window.modem && window.gpio) {
+        var simGpioKey = window.modem + "_sim";
+        // 检查 gpio 中是否存在该字段，且该字段有值
+        if (window.gpio[simGpioKey] && window.gpio[simGpioKey] !== "") {
+            shouldShowSimcard = true;
+        }
+    }
+
+    if (shouldShowSimcard) {
         simcardTabLi.show();
     } else {
-        /* bsim 不存在、为空隐藏标签页 */
         simcardTabLi.hide();
+
+        var currentTab = page.param('tab', window.location.hash);
+        if (currentTab === 'simcard') {
+            $('#simcard').html('').removeClass('active');
+            $('#lteTabs li').removeClass('active');
+            $('#lteTabs a[href="#lte"]').parent().addClass('active');
+            $('#lte').addClass('active');
+            // 直接更新 url，不依赖 TabManager
+            var mainRoute = window.location.hash.split('?')[0];
+            var newHash = mainRoute + '?tab=lte' +'&modem=' + encodeURIComponent(window.modem) +
+                          '&object=' + encodeURIComponent(window.object);
+            history.replaceState(null, '', window.location.pathname + newHash);
+        }
     }
 
     /* init the network mode select */
@@ -284,12 +310,6 @@ function lte_basic(v)
 		}
       }
     }).trigger('change');
-	
-    modem = v[1];
-    if(!modem){
-      modem = {};
-    }
-    window.modem = modem;
 
     /* status */
     if ( config.status && config.status == "disable" )

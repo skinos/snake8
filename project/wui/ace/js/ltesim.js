@@ -6,7 +6,6 @@ function lte_sim() {
     window.LteConfigManager.loadStatus(object, true).then(function(v) {
         lte = v[0];
         $("#button_sim").show();
-
         /* bsim 主开关 */
         $('#bsim').off('change').on('change', function () {
             $(this).prop('checked') ? $('#bsim_cfg').show() : $('#bsim_cfg').hide();
@@ -16,7 +15,7 @@ function lte_sim() {
         $('#simmode').off('change').on('change', function (e) {
             var type = e.target.value;
             switch (type) {
-                case '':       /* Auto */
+                case 'auto':       /* Auto */
                     $('#mode_cfg').show();
                     break;
                 case 'main':
@@ -38,7 +37,7 @@ function lte_sim() {
 
         if (lte.bsim_cfg) {
             /* mode赋值 */
-            $('#simmode').val(lte.bsim_cfg.mode || "");
+            $('#simmode').val(lte.bsim_cfg.mode || "auto");
 
             /* mode_cfg 内各字段赋值 */
             $('#simcard_failed_threshold_sim').val(lte.bsim_cfg.simcard_failed_threshold || '');
@@ -107,7 +106,7 @@ function sim_save()
         lte.bsim_cfg = {};
       }
       lte.bsim_cfg.mode = $('#simmode').val();
-      if ( lte.bsim_cfg.mode === "" )   /* Auto 模式才有切卡规则 */
+      if ( lte.bsim_cfg.mode === "auto" )   /* Auto 模式才有切卡规则 */
         {
       lte.bsim_cfg.simcard_failed_threshold = $('#simcard_failed_threshold_sim').val();
       lte.bsim_cfg.simcard_failed_threshold2 = $('#simcard_failed_threshold2_sim').val();
