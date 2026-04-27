@@ -200,7 +200,7 @@ function lte_show(info, id) {
         $(id).hide().attr('or-online', 'false'); // 隐藏并标记非在线;
         return;
     }
-    var isOnline = (info.status === "up");
+    var isOnline = (info.status === "up" || info.status === "block");
     $(id).attr('or-online', isOnline ? 'true' : 'false');
 
     // 状态和按钮
@@ -212,7 +212,8 @@ function lte_show(info, id) {
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
-            info.status === "connecting") {
+            info.status === "connecting" ||
+            info.status === "block") {
             // 状态正常
         } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
@@ -495,7 +496,7 @@ function wan_show(info, id) {
         $(id).hide().attr('or-online', 'false');
         return;
     }
-    var isOnline = (info.status === "up");
+    var isOnline = (info.status === "up" || info.status === "block");
     $(id).attr('or-online', isOnline ? 'true' : 'false');
 
     // 状态和按钮
@@ -507,7 +508,8 @@ function wan_show(info, id) {
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
-            info.status === "connecting") {
+            info.status === "connecting" ||
+            info.status === "block") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
@@ -691,7 +693,7 @@ function wisp_show(info, id) {
         $(id).hide().attr('or-online', 'false');
         return;
     }
-    var isOnline = (info.status === "up");
+    var isOnline = (info.status === "up" || info.status === "block");
     $(id).attr('or-online', isOnline ? 'true' : 'false');
 
     // 状态和按钮
@@ -703,7 +705,8 @@ function wisp_show(info, id) {
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
-            info.status === "connecting") {
+            info.status === "connecting" ||
+            info.status === "block") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
@@ -1110,7 +1113,7 @@ function bindButtonEvents() {
 function toggleLteInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect")) {
+    if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect") && status !== $.i18n("block")) {
         he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
             location.reload();
         });
