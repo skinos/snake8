@@ -1053,15 +1053,7 @@ function interface_load() {
         var statusData = ethData[0];
         var configData = ethData[1];
         
-        var phyInfo = null;
-        if (configData) {
-            for (var mode in configData) {
-                if (configData[mode] && configData[mode].phy) {
-                    phyInfo = configData[mode].phy;
-                    break;
-                }
-            }
-        }
+        var phyInfo = (configData && configData.phy) ? configData.phy : null;
   
         he.bkload(['wifi@nssid.status', 'wifi@assid.status']).then(function(wifiData) {  
             var wifi24Data = wifiData[0] || null;  
