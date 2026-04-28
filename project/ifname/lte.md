@@ -44,8 +44,8 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
 
         "signal_failed_threshold":"first failed time to switch",                                    // [ number ], default 120 seconds
         "signal_failed_threshold2":"second failed time to switch",                                  // [ number ], default 300 seconds
-        "signal_failed_threshold3":"third failed to time switch",                                   // [ number ], default 600 seconds
-        "signal_failed_everytime":"every failed to time switch",                                    // [ number ], default 1800 seconds
+        "signal_failed_threshold3":"third failed time to switch",                                   // [ number ], default 600 seconds
+        "signal_failed_everytime":"every failed time to switch",                                    // [ number ], default 1800 seconds
 
         "attach_failed_threshold":"first failed time to switch",                                    // [ number ], default 60 seconds
         "attach_failed_threshold2":"second failed time to switch",                                  // [ number ], default 180 seconds
@@ -273,7 +273,7 @@ ifname@lte2
     "keeplive":                                      # keeplive mechanism configure save here
     {
         "type":"dns",                               # use count dns to keeplive
-        "dns":                                      # dectet the DNS server timeout 8 second, when failed 4 times hint failed, sleep 5 second after dectet succeed
+        "dns":                                      # detect DNS timeout 8 seconds; after 4 failures report failure; sleep 5 seconds after detection succeeds
         {
             "timeout":"8",
             "failed":"4",
@@ -373,10 +373,10 @@ ttrue
         "delay":"delay time",           // [ "failed", "block", number ], Optional, "failed" for network test failed, "block" for testing
         "ontime":"online uptime",       // [ string ], Optional, online system uptime
         "livetime":"online time",       // [ string ], format is hour:minute:second:day
-        "rx_bytes":"send bytes",        // [ number ]
-        "rx_packets":"send packets",    // [ number ]
-        "tx_bytes":"receive bytes",     // [ number ]
-        "tx_packets":"receive packets", // [ number ]
+        "rx_bytes":"received bytes",      // [ number ]
+        "rx_packets":"received packets",  // [ number ]
+        "tx_bytes":"sent bytes",          // [ number ]
+        "tx_packets":"sent packets",      // [ number ]
         "mac":"MAC address",            // [ mac address ]
 
         "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], optional, present when IPv6 is enabled
@@ -484,9 +484,9 @@ ttrue
         "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
 
         "imei":"867160040494084",          # imei is 867160040494084
-        "imsi":"460015356123463",          # imei is 460015356123463
-        "iccid":"89860121801097564807",    # imei is 89860121801097564807
-        "csq":"3",                         # CSQ nubmer is 3
+        "imsi":"460015356123463",          # imsi is 460015356123463
+        "iccid":"89860121801097564807",    # iccid is 89860121801097564807
+        "csq":"3",                         # CSQ number is 3
         "signal":"3",                      # signal level is 3
         "plmn":"46001",                    # plmn is 46001
         "nettype":"WCDMA",                 # nettype is WCDMA

@@ -527,7 +527,7 @@ simagain:
 				}
 				talk_free( ret );
 			}
-			ifname_warn( obj, "%s simcard failed %d", object, check );
+			ifname_warn( obj, "%s simcard failed %d/%d", object, check, failed_timeout );
 			sleep( 1 );
 		}
 		if ( check > failed_timeout )
@@ -592,7 +592,7 @@ simagain:
 				}
 				talk_free( ret );
 			}
-			ifname_warn( obj, "%s simcard failed %d", object, check );
+			ifname_warn( obj, "%s simcard failed %d/%d", object, check, failed_timeout );
 			sleep( 1 );
 		}
 		if ( check > failed_timeout )
@@ -692,8 +692,16 @@ simagain:
 			else if ( ret > tpanic )
 			{
 				ptr = x2string( ret );
-				strncpy( plmn_string, ptr, sizeof(plmn_string) );
-				plmn = atoi( ptr );
+				if ( ptr != NULL )
+				{
+					strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
+					plmn_string[sizeof(plmn_string) - 1] = '\0';
+					plmn = atoi( ptr );
+				}
+				else
+				{
+					plmn = 0;
+				}
 				talk_free( ret );
 				if ( plmn > 0 )
 				{
@@ -744,15 +752,23 @@ simagain:
 				else if ( ret > tpanic )
 				{
 					ptr = x2string( ret );
-					strncpy( plmn_string, ptr, sizeof(plmn_string) );
-					plmn = atoi( ptr );
+					if ( ptr != NULL )
+					{
+						strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
+						plmn_string[sizeof(plmn_string) - 1] = '\0';
+						plmn = atoi( ptr );
+					}
+					else
+					{
+						plmn = 0;
+					}
 					talk_free( ret );
 					if ( plmn > 0 )
 					{
 						break;
 					}
 				}
-				ifname_info( obj, "%s plmn failed %d", object, check );
+				ifname_info( obj, "%s plmn failed %d/%d", object, check, failed_timeout );
 			}
 			else if ( i == 0b10 )
 			{
@@ -770,15 +786,23 @@ simagain:
 				else if ( ret > tpanic )
 				{
 					ptr = x2string( ret );
-					strncpy( signal_string, ptr, sizeof(signal_string) );
-					sig = atoi( ptr );
+					if ( ptr != NULL )
+					{
+						strncpy( signal_string, ptr, sizeof(signal_string) - 1 );
+						signal_string[sizeof(signal_string) - 1] = '\0';
+						sig = atoi( ptr );
+					}
+					else
+					{
+						sig = 0;
+					}
 					talk_free( ret );
 					if ( sig > 0 )
 					{
 						break;
 					}
 				}
-				ifname_info( obj, "%s signal failed %d", object, check );
+				ifname_info( obj, "%s signal failed %d/%d", object, check, failed_timeout );
 			}
 			else
 			{
@@ -790,13 +814,23 @@ simagain:
 				}
 				if ( v > tpanic && ret > tpanic )
 				{
+					plmn = 0;
+					sig = 0;
 					ptr = x2string( v );
-					strncpy( plmn_string, ptr, sizeof(plmn_string) );
-					plmn = atoi( ptr );
+					if ( ptr != NULL )
+					{
+						strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
+						plmn_string[sizeof(plmn_string) - 1] = '\0';
+						plmn = atoi( ptr );
+					}
 					talk_free( v );
 					ptr = x2string( ret );
-					strncpy( signal_string, ptr, sizeof(signal_string) );
-					sig = atoi( ptr );
+					if ( ptr != NULL )
+					{
+						strncpy( signal_string, ptr, sizeof(signal_string) - 1 );
+						signal_string[sizeof(signal_string) - 1] = '\0';
+						sig = atoi( ptr );
+					}
 					talk_free( ret );
 					if ( plmn > 0 && sig > 0 )
 					{
@@ -812,12 +846,16 @@ simagain:
 				else if ( v > tpanic )
 				{
 					ptr = x2string( v );
-					strncpy( plmn_string, ptr, sizeof(plmn_string) );
+					if ( ptr != NULL )
+					{
+						strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
+						plmn_string[sizeof(plmn_string) - 1] = '\0';
+					}
 					talk_free( v );
 				}
 				else
 				{
-					ifname_info( obj, "%s plmn failed %d", object, check );
+					ifname_info( obj, "%s plmn failed %d/%d", object, check, failed_timeout );
 				}
 				if ( ret == terror )
 				{
@@ -828,12 +866,16 @@ simagain:
 				else if ( ret > tpanic )
 				{
 					ptr = x2string( ret );
-					strncpy( signal_string, ptr, sizeof(signal_string) );
+					if ( ptr != NULL )
+					{
+						strncpy( signal_string, ptr, sizeof(signal_string) - 1 );
+						signal_string[sizeof(signal_string) - 1] = '\0';
+					}
 					talk_free( ret );
 				}
 				else
 				{
-					ifname_info( obj, "%s signal failed %d", object, check );
+					ifname_info( obj, "%s signal failed %d/%d", object, check, failed_timeout );
 				}
 			}
 			sleep( 1 );
@@ -916,7 +958,7 @@ simagain:
 				{
 					break;
 				}
-				ifname_info( obj, "%s attach failed %d", object, check );
+				ifname_info( obj, "%s attach failed %d/%d", object, check, failed_timeout );
 				sleep( 1 );
 			}
 			if ( check > failed_timeout )
@@ -955,7 +997,7 @@ simagain:
 					talk_free( cfg );
 					return terror;
 				}
-				ifname_info( obj, "%s attach failed %d", object, check );
+				ifname_info( obj, "%s attach failed %d/%d", object, check, failed_timeout );
 				sleep( 1 );
 			}
 			if ( check > failed_timeout )
@@ -1863,13 +1905,7 @@ boole_t _keepoff( obj_t this, param_t param )
 	const char *object;
 
 	object = obj_name( this );
-    cfg = config_sgets( object, "keeplive" );
-	keeplive = json_json( cfg, "keeplive" );
-	if ( keeplive == NULL )
-	{
-		talk_free( cfg );
-		return tfalse;
-	}
+    cfg = config_sgets( object, NULL );
 
 	/***********************************/
 	/******** Backup SIM START *********/
@@ -1889,6 +1925,12 @@ boole_t _keepoff( obj_t this, param_t param )
 	/******** Backup SIM END ***********/
 	/***********************************/
 
+	keeplive = json_json( cfg, "keeplive" );
+	if ( keeplive == NULL )
+	{
+		talk_free( cfg );
+		return tfalse;
+	}
 	ptr = json_string( keeplive, "action" );
 	if ( ptr != NULL && 0 == strcmp( ptr, "reboot" ) )
 	{
