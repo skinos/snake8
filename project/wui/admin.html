@@ -103,7 +103,24 @@
     function load_config()
     {
         he.load( [ object ] ).then( function(v){
-            config = v[0];
+            config = v[0] || {};
+            var manager = "";
+            if ( typeof config.manager === "string" )
+            {
+                manager = config.manager;
+            }
+            else if ( config.manager && typeof config.manager === "object" )
+            {
+                var manager_list = [];
+                for ( var k in config.manager )
+                {
+                    if ( config.manager[k] )
+                    {
+                        manager_list.push(config.manager[k]);
+                    }
+                }
+                manager = manager_list.join(';');
+            }
 
             $('#status').prop('checked', able2boole(config.status));
             $('#status').unbind('change').change(function () {
@@ -165,8 +182,8 @@
                 }
             }).trigger('change');
 
-            $('#manager').val( config.manager||"" );
-            if ( config.manager )
+            $('#manager').val(manager);
+            if ( manager )
             {
                 $('#manager_status').prop('checked', true );
             }
@@ -191,7 +208,7 @@
     {
         if ( config == null )
         {
-            return;
+            config = {};
         }
         var configcopy = JSON.parse(JSON.stringify(config));
 

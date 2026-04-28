@@ -14,7 +14,7 @@ var timezones =  [
 	{label: $.i18n('UTC-6(CST - Central North America Standard Time)'),value: '-6'}, 
 	{label: $.i18n('UTC-5(EST - Eastern North America Standard Time)'),value: '-5'}, 
 	{label: $.i18n('UTC-4(AST - Atlantic Ocean Standard Time)'),value: '-4'}, 
-	{label: $.i18n('UTC-3:30(NST -	Newfoundland Standard Time)'),value: '-3:30'}, 
+	{label: $.i18n('UTC-3:30(NST - Newfoundland Standard Time)'),value: '-3:30'}, 
 	{label: $.i18n('UTC-3(SAT -  South America Standard Time)'),value: '-3'}, 
 	{label: $.i18n('UTC-2(BRT - Brazil Time)'),value: '-2'}, 
 	{label: $.i18n('UTC-1(CVT - Cape Verde Standard Time)'),value: '-1'}, 

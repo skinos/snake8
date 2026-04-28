@@ -444,7 +444,7 @@
       {
         ssid2.ssid = $('#ssid').val();
         ssid2.secure = $('#secure').val();
-        if ( ssid2.secure != 'disable' )
+        if ( ssid2.secure != 'disable' && ssid2.secure != 'owe' )
         {
           ssid2.wpa_encrypt = $('#wpa_encrypt').val()||"aes";
           ssid2.wpa_key = $('#wpa_key').val();
@@ -466,7 +466,7 @@
       {
         ssid3.ssid = $('#ssid2').val();
         ssid3.secure = $('#secure2').val();
-        if ( ssid3.secure != 'disable' )
+        if ( ssid3.secure != 'disable' && ssid3.secure != 'owe' )
         {
           ssid3.wpa_encrypt = $('#wpa_encrypt2').val()||"aes";
           ssid3.wpa_key = $('#wpa_key2').val();

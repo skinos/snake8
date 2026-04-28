@@ -27,10 +27,12 @@ Administration of equipment Management web page. The admin web stack is configur
         "command match":"compare type"
         // ... more the command match
     },
-
+    
     "manager":                              // Only the specified IP address or MAC address is allowed for access
     {
         // "...":"..." You can configure multiple host who can access
+        // (1) JSON object — values are IPv4 or MAC strings
+        // (2) Single string — semicolon-separated list (WUI textarea)
         "host name":"IP address or MAC address", // [ string ]: [ IP/MAC address ]
         "host name2":"IP address or MAC address" // [ string ]: [ IP/MAC address ]
     },
