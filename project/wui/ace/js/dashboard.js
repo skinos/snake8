@@ -1,5 +1,14 @@
 var flush_interval = 2;
-var currentFrameData = null; 
+var currentFrameData = null;
+
+/** Preload compact switch port icons so first paint matches online/offline (avoid lazy/delay on hidden imgs). */
+function preloadCompactPortIcons() {
+    var bases = ['/assets/css/images/net_disable.jpg', '/assets/css/images/net_offline.jpg', '/assets/css/images/net_online.jpg'];
+    for (var i = 0; i < bases.length; i++) {
+        var im = new Image();
+        im.src = bases[i];
+    }
+}
 
 function fetchNetworkFrame() {
     // 负责加载数据并存入全局变量 加载完后触发一次 adjustBoxLayout
@@ -890,31 +899,30 @@ function createPortItem(index, name, value, phyStatus) {
       
     var isDisabled = phyStatus === 'disable';
     var isOnline = value.status === 'up';
-    
-    var disableImg = $('<img>', {  
-        'src': '/assets/css/images/net_disable.jpg',  
-        'class': 'port-img disable-img',  
-        'style': isDisabled ? 'display: block;' : 'display: none;'  
+    var iconSrc = '/assets/css/images/net_online.jpg';
+    if (isDisabled) {
+        iconSrc = '/assets/css/images/net_disable.jpg';
+    } else if (!isOnline) {
+        iconSrc = '/assets/css/images/net_offline.jpg';
+    }
+
+    var portImg = $('<img>', {
+        'src': iconSrc,
+        'class': 'port-img',
+        'alt': ''
     });
-    
-    var offlineImg = $('<img>', {  
-        'src': '/assets/css/images/net_offline.jpg',  
-        'class': 'port-img offline-img',  
-        'style': (!isDisabled && !isOnline) ? 'display: block;' : 'display: none;'  
-    });  
-      
-    var onlineImg = $('<img>', {  
-        'src': '/assets/css/images/net_online.jpg',  
-        'class': 'port-img online-img',  
-        'style': (!isDisabled && isOnline) ? 'display: block;' : 'display: none;'  
-    });  
-      
-    imgContainer.append(disableImg).append(offlineImg).append(onlineImg);  
-      
+
+    imgContainer.append(portImg);
+
+    var portText = $.i18n(name) || name;
+    if (isOnline  && value.speed) {
+        portText += '(' + value.speed + ')';
+    }
+
     var portLabel = $('<span>', {  
         'class': 'compact-port-label',  
         'id': 'sport' + index + 't',  
-        'text': $.i18n(name) || name,  
+        'text': portText,  
     });  
       
     portWrapper.append(imgContainer);  
@@ -1163,6 +1171,8 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     
     /* button bind */
     bindButtonEvents();
+
+    preloadCompactPortIcons();
 
     /* load the configure */
     interface_load();
