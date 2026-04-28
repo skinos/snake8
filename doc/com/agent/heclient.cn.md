@@ -14,7 +14,7 @@
 
     // 绑定外部网络
     "extern":"绑定外部 ifname 以连接服务器",         // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], 可选
-                                                                    // 调用 network@frame.local[extern] 获取列表
+                                                                    // 调用 network@frame.list[extern] 获取列表
                                                                     // 未设置时，使用默认网关连接服务器
 
     // 连接控制

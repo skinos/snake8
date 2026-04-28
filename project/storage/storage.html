@@ -246,7 +246,7 @@
         {
             ftpcopy = JSON.parse( JSON.stringify(ftp) );
             ftp.status = boole2able( $('#ftp-status').prop('checked') );
-            if ( ftp.status )
+            if ( ftp.status === "enable" )
             {
                 ftp.mode = $('#ftp-mode').val();
                 if ( ftp.mode == "anonymous" )
@@ -280,7 +280,7 @@
         {
             sambacopy = JSON.parse( JSON.stringify(samba) );
             samba.status = boole2able( $('#samba-status').prop('checked') );
-            if ( samba.status )
+            if ( samba.status === "enable" )
             {
                 samba.mode = $('#samba-mode').val();
                 if ( samba.mode == "anonymous" )
@@ -374,6 +374,10 @@
             {
                 cmds.push('land@auth.delete[' + key + ']');
             }
+        }
+        if (cmds.length === 0)
+        {
+            return;
         }
         // 执行删除
         he.exec( cmds ).then(function (){

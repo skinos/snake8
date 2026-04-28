@@ -82,7 +82,6 @@
         "proto":"传输协议",                      // [ "tcp", "udp" ]
         "port":"监听端口",                              // [ number ]
         "timeout":"客户端连接超时时间（秒）",  // [ number ], 0 表示无超时
-        "interval":"重试间隔（秒）",            // [ number ], 默认 10
         "limit":"最大 TCP 连接数（仅 TCP 服务器）",   // [ number ]
         "id":"设备标识",                            // [ string ], 可选
         "user":"用户名",                                 // [ string ], 可选

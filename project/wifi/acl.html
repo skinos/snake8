@@ -147,7 +147,7 @@
             $("input[name='acl_type'][value=drop]").attr("checked",true);  
         }
 
-        var list = ssid['acl_table'];
+        var list = ssid['acl_table'] || {};
         var rows = [];
         for ( var index in list )
         {

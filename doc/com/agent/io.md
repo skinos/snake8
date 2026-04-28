@@ -82,7 +82,6 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
         "proto":"transport protocol",                      // [ "tcp", "udp" ]
         "port":"listen port",                              // [ number ]
         "timeout":"client connection timeout in seconds",  // [ number ], 0 for no timeout
-        "interval":"retry interval in seconds",            // [ number ], default 10
         "limit":"max TCP connections (tcp server only)",   // [ number ]
         "id":"device identify",                            // [ string ], optional
         "user":"username",                                 // [ string ], optional

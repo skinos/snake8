@@ -12,9 +12,12 @@ Connects to the remote Heport service for administration: remote commands, statu
     "vcode":"verification code for the account",                 // [ string ], optional
 
     // bindding extern network
-    "extern":"bindding extern ifname to connect server",         // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], optional
-                                                                    // call network@frame.local[extern] get the list
-                                                                    // when not set, use default gateway to connect server
+    "extern":"bindding extern ifname to connect server",             // call network@frame.list[extern] get the list
+                                                                   // [ "disable", "default", "ifname@wan", ... ]
+                                                                        // "disable" for no reset when ifname online
+                                                                        // "default" for reset when the gateway online 
+                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+
 
     // connection control
     "connect_timeout":"timeout for connection in seconds",       // [ number ], default 20

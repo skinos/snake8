@@ -557,7 +557,7 @@
       }
       ssidcopy = JSON.parse(JSON.stringify(ssid));
       ssid.status = boole2able( $('#status').prop('checked') );
-      if ( ssid.status )
+      if ( ssid.status == "enable" )
       {
         ssid.ssid = $('#ssid').val();
         ssid.secure = $('#secure').val();

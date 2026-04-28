@@ -56,6 +56,16 @@
         </div>
       </div>
 
+      <!-- 通用延迟 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay(sec)"></label>
+        <div class="col-sm-9">
+          <div class="clearfix">
+            <input type="text" id="delay" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+      </div>
+
       <!-- 间隔重启 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Reboot time interval(sec)"></label>
@@ -68,15 +78,6 @@
 
       <!-- 定点重启 -->
     <div id="pointSets">
-        <!-- 最小运行时长 -->
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Minimum running time(sec)"></label>
-          <div class="col-sm-9">
-            <div class="clearfix">
-              <input type="text" id="point_start" class="col-xs-10 col-sm-5" maxlength="128" />
-            </div>
-          </div>
-        </div>
         <!-- 时间点 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Point Reboot Time"></label>
@@ -121,8 +122,9 @@
     function load_cfg()
     {
         he.load( [ object ] ).then( function( v ){
-            cfg = v[0];
+            cfg = v[0] || {};
             $('#mode').val( cfg.mode || 'disable')
+            $('#delay').val(cfg.delay || '');
 
             $('#idle_start').val(cfg.idle_start);
             $('#idle_time').val(cfg.idle_time);
@@ -132,7 +134,6 @@
            
             $('#age').val(cfg.age);
            
-            $('#point_start').val(cfg.point_start);
             $('#point_hour').val(cfg.point_hour);
             $('#point_minute').val(cfg.point_minute);
             $('#point_age').val(cfg.point_age);
@@ -177,6 +178,7 @@
 
         // 重启模式
         cfg.mode = $('#mode').val();
+        cfg.delay = $('#delay').val();
         switch ( cfg.mode )
         {
             case 'idle':
@@ -190,7 +192,6 @@
                 cfg.age = $('#age').val();
                 break;
             case 'point':
-                cfg.point_start = $('#point_start').val();
                 cfg.point_hour = $('#point_hour').val();
                 cfg.point_minute = $('#point_minute').val();
                 cfg.point_age = $('#point_age').val();

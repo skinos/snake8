@@ -71,7 +71,15 @@ window.wifi_client = window.wifi_client || {
             }
 
             stalist = v[0];
+            if ( !stalist )
+            {
+                stalist = {};
+            }
             clients = v[1];
+            if ( !clients )
+            {
+                clients = {};
+            }
             // 合并
             var count = 0;
             var rows = [];
