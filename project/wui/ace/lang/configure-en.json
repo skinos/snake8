@@ -1,3 +1,13 @@
 {
-	"default":"Default"
+	"default": "Default",
+	"Are you sure you want to default the system configure": "Are you sure you want to default the system configure",
+	"Change": "Change",
+	"Choose": "Choose",
+	"Make sure that the device is reconnected": "Make sure that the device is reconnected",
+	"Need to restart, whether to continue": "Need to restart, whether to continue",
+	"No File": "No File",
+	"Restarting...": "Restarting...",
+	"Restore Failure": "Restore Failure",
+	"Restore the configuration is successful, now restarting...": "Restore the configuration is successful, now restarting...",
+	"Restore...": "Restore..."
 }

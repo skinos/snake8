@@ -62,7 +62,7 @@
 	"Count Times":"统计次数",
 	"Received packets":"要求包数",
 
-	"The WAN connecttion will be disconneted because of the change of configuration":"设备WAN配置将导致网络断开重连",
+	"The WAN connection will be disconnected because of the change of configuration":"设备WAN配置将导致网络断开重连",
 
 
 	"MAC Address":"MAC地址",
@@ -106,7 +106,7 @@
 	"Rescan":"重新扫描",
 	"Scanning":"扫描中",
 	
-	"The WISP connecttion will be disconneted because of the change of configuration":"设备无线连接配置将导致网络断开重连"
+	"The WISP connection will be disconnected because of the change of configuration":"设备无线连接配置将导致网络断开重连"
 	
 
 }

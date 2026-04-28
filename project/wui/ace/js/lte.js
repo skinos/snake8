@@ -165,14 +165,6 @@ function status_load()
       {
         $(id+"_imei").text( info.imei||' ' );
       }
-      if ( info.imei == "noimsi" )
-      {
-          $(id+"_imei").text( $.i18n("noimsi") );
-      }
-      else
-      {
-          $(id+"_imsi").text( info.imsi||' ' );
-      }
       if ( info.iccid )
       {
           $(id+"_iccid").text( $.i18n(info.iccid) );
@@ -287,7 +279,7 @@ function lte_basic(v)
 			$('#dial').val(operator.dial);
 			$('#apn').val(operator.apn);
 			$('#user').val(operator.user);
-			$('#password').val(operator.passwd);
+			$('#passwd').val(operator.passwd);
 			$('#type').val(operator.type||"ipv4");
 			$('#auth').val(operator.auth);
 		}
@@ -669,7 +661,7 @@ function config_save() {
             return;
         }
 
-        var msg = $.i18n('The LTE connection will be disconneted because of the change of configuration');
+        var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
         page.confirm({ message: msg }).then(function(result) {
             if (!result) return location.reload();
             he.exec([object + "=" + JSON.stringify(config)]).then(function() {
@@ -689,7 +681,7 @@ function config_save() {
 /* init */
 page.password('passwd', 'password-icon' );
 $.i18n().load( page.lang('lte') ).then( function () {
-    /* init the langauage */
+    /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 
     status_load();

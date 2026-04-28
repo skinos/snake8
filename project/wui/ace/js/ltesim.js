@@ -15,12 +15,14 @@ function lte_sim() {
         $('#simmode').off('change').on('change', function (e) {
             var type = e.target.value;
             switch (type) {
-                case 'auto':       /* Auto */
+                case 'auto':
                     $('#mode_cfg').show();
                     break;
+                case 'detect':
                 case 'main':
                 case 'back':
                 default:
+                    /* detect is not implemented in UI yet — same as fixed SIM slots */
                     $('#mode_cfg').hide();
                     break;
             }
@@ -96,7 +98,7 @@ function sim_save()
   {
     return;
   }
-  var ltecopy = JSON.parse(JSON.stringify(lte));;
+  var ltecopy = JSON.parse(JSON.stringify(lte));
 
   lte.bsim = boole2able( $('#bsim').prop('checked') );
   if ( lte.bsim == "enable" )
@@ -106,31 +108,35 @@ function sim_save()
         lte.bsim_cfg = {};
       }
       lte.bsim_cfg.mode = $('#simmode').val();
-      if ( lte.bsim_cfg.mode === "auto" )   /* Auto 模式才有切卡规则 */
-        {
-      lte.bsim_cfg.simcard_failed_threshold = $('#simcard_failed_threshold_sim').val();
-      lte.bsim_cfg.simcard_failed_threshold2 = $('#simcard_failed_threshold2_sim').val();
-      lte.bsim_cfg.simcard_failed_threshold3 = $('#simcard_failed_threshold3_sim').val();
-      lte.bsim_cfg.simcard_failed_everytime = $('#simcard_failed_everytime_sim').val();
 
-      lte.bsim_cfg.signal_failed_threshold = $('#signal_failed_threshold_sim').val();
-      lte.bsim_cfg.signal_failed_threshold2 = $('#signal_failed_threshold2_sim').val();
-      lte.bsim_cfg.signal_failed_threshold3 = $('#signal_failed_threshold3_sim').val();
-      lte.bsim_cfg.signal_failed_everytime = $('#signal_failed_everytime_sim').val();
+      /* Threshold switching rules apply when mode is auto (lte.md bsim_cfg.mode) */
+      if ( lte.bsim_cfg.mode === "auto" )
+      {
+          lte.bsim_cfg.simcard_failed_threshold = $('#simcard_failed_threshold_sim').val();
+          lte.bsim_cfg.simcard_failed_threshold2 = $('#simcard_failed_threshold2_sim').val();
+          lte.bsim_cfg.simcard_failed_threshold3 = $('#simcard_failed_threshold3_sim').val();
+          lte.bsim_cfg.simcard_failed_everytime = $('#simcard_failed_everytime_sim').val();
 
-      lte.bsim_cfg.attach_failed_threshold = $('#attach_failed_threshold_sim').val();
-      lte.bsim_cfg.attach_failed_threshold2 = $('#attach_failed_threshold2_sim').val();
-      lte.bsim_cfg.attach_failed_threshold3 = $('#attach_failed_threshold3_sim').val();
-      lte.bsim_cfg.attach_failed_everytime = $('#attach_failed_everytime_sim').val();
+          lte.bsim_cfg.signal_failed_threshold = $('#signal_failed_threshold_sim').val();
+          lte.bsim_cfg.signal_failed_threshold2 = $('#signal_failed_threshold2_sim').val();
+          lte.bsim_cfg.signal_failed_threshold3 = $('#signal_failed_threshold3_sim').val();
+          lte.bsim_cfg.signal_failed_everytime = $('#signal_failed_everytime_sim').val();
 
-      lte.bsim_cfg.failed_threshold = $('#failed_threshold_sim').val();
-      lte.bsim_cfg.failed_threshold2 = $('#failed_threshold2_sim').val();
-      lte.bsim_cfg.failed_threshold3 = $('#failed_threshold3_sim').val();
-      lte.bsim_cfg.failed_everytime = $('#failed_everytime_sim').val();
+          lte.bsim_cfg.attach_failed_threshold = $('#attach_failed_threshold_sim').val();
+          lte.bsim_cfg.attach_failed_threshold2 = $('#attach_failed_threshold2_sim').val();
+          lte.bsim_cfg.attach_failed_threshold3 = $('#attach_failed_threshold3_sim').val();
+          lte.bsim_cfg.attach_failed_everytime = $('#attach_failed_everytime_sim').val();
 
-      lte.bsim_cfg.failover = $('#failover').val();
+          lte.bsim_cfg.failed_threshold = $('#failed_threshold_sim').val();
+          lte.bsim_cfg.failed_threshold2 = $('#failed_threshold2_sim').val();
+          lte.bsim_cfg.failed_threshold3 = $('#failed_threshold3_sim').val();
+          lte.bsim_cfg.failed_everytime = $('#failed_everytime_sim').val();
+
+          lte.bsim_cfg.failover = $('#failover').val();
+          lte.bsim_cfg.keeplive_switch = boole2able( $('#keeplive_switch').prop('checked') );
+      }
+
       lte.bsim_cfg.pin = $('#simpin').val();
-      lte.bsim_cfg.keeplive_switch = boole2able( $('#keeplive_switch').prop('checked') );
       lte.bsim_cfg.profile = boole2able( $('#simprofile').prop('checked') );
       if ( lte.bsim_cfg.profile == "enable" )
       {
@@ -145,7 +151,6 @@ function sim_save()
         lte.bsim_cfg.profile_cfg.passwd = $('#simpasswd').val();
         lte.bsim_cfg.profile_cfg.type = $('#simtype').val();
       }
-    }
   }
   if ( ocompare( lte, ltecopy ) )
   {
@@ -153,7 +158,7 @@ function sim_save()
       return;
   }
 
-  var msg = $.i18n('The LTE connecttion will be disconneted because of the change of configuration');
+  var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
   page.confirm( { message: msg } ).then( function(result){
     if (!result) return location.reload();
     
@@ -167,9 +172,9 @@ function sim_save()
 }
 
 /* init */
-page.password('passwd', 'password-icon' );
+page.password('simpasswd', 'password-icon');
 $.i18n().load( page.lang('lte') ).then( function () {
-  /* init the langauage */
+  /* init the language */
   $.i18n().locale = lang; $('body').i18n();
   /* init the table */
 

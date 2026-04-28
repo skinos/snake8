@@ -939,7 +939,7 @@
         {
             if ( list["ifname@lte4"].status )
             {
-                $('#lte2_status').html( $.i18n(list["ifname@lte4"].status) );
+                $('#lte4_status').html( $.i18n(list["ifname@lte4"].status) );
             }
             if ( list["ifname@lte4"].inuse == "enable" )
             {
@@ -1058,7 +1058,7 @@
             page.alert( { message: $.i18n('Settings unchanged') } );
             return;
         }
-        page.confirm( { message: $.i18n('The connection will be disconneted because of the change of configuration') } ).then( function(result){
+        page.confirm( { message: $.i18n('The connection will be disconnected because of the change of configuration') } ).then( function(result){
             if ( result )
             {
                 he.exec( [ "network@frame="+JSON.stringify(frame) ] ).then( function(){
@@ -1076,7 +1076,7 @@
 
     /* init */
     $.i18n().load( page.lang('mix') ).then( function () {
-      /* init the langauage */
+      /* init the language */
       $.i18n().locale = lang; $('body').i18n();
 
       status_load();

@@ -35,14 +35,9 @@ Administration of equipment Management web page. The admin web stack is configur
         "host name2":"IP address or MAC address" // [ string ]: [ IP/MAC address ]
     },
 
-    // custom the webpage html
-    "css_file":"CSS file path",                   // [ string ], Fill in the file name must be in located on /PRJ/wui/admin/assets/css/ or /mnt/config/wui/, via <%csspath(); %> show
-    "logo_file":"LOGO file path",                 // [ string ], Fill in the file name must be in located on /PRJ/wui/admin/assets/css/ or /mnt/config/wui/
-    "login_file":"file path",                     // [ string ], read only, Fill in the file name must be in located on /PRJ/wui/admin/ or /mnt/config/wui/
-    "index_file":"file path",                     // [ string ], read only, Fill in the file name must be in located on /PRJ/wui/admin/ or /mnt/config/wui/
-
     // custom the webpage frame
-    "logo_title":"Text in the middle of page",    // [ string ]
+    "logo_file":"LOGO file path",                 // [ string ], file under project admin assets or device config path as deployed
+    "logo_title":"Text in the middle of page",    // [ string ], or use "#NAME" / "#MODEL" for dynamic text (index.js)
     "logo_width":"LOGO width",                    // [ string ]
     "logo_height":"LOGO height",                  // [ string ]
     "logo_align":"center",                        // [ center, right ]
@@ -56,28 +51,18 @@ Administration of equipment Management web page. The admin web stack is configur
     "repo_online":"show or not",                  // [ disable, enable ]
     "upgrade_online":"show or not",               // [ disable, enable ]
 
-    // custom the web menu
+    // custom the web menu — value "disable" hides the item; omit or other = show (ace/js)
     "menu":
     {
-        "wan":"show or not",                      // [ enable, disable  ]
-        "wan2":"show or not",                     // [ enable, disable  ]
-        "wisp":"show or not",                     // [ enable, disable  ]
-        "wisp2":"show or not",                    // [ enable, disable  ]
-        "lte":"show or not",                      // [ enable, disable  ]
-        "lte2":"show or not",                     // [ enable, disable  ]
-        "lan":"show or not",                      // [ enable, disable  ]
-        "sta":"show or not",                      // [ enable, disable  ]
-        "connection":"show or not",               // [ enable, disable  ]
-        "opmode":"show or not",                   // [ enable, disable  ]
-        "language":"show or not",                 // [ enable, disable  ]
-
-        "terminal":"show or not",                 // [ enable, disable  ]
-        "development":"show or not"               // [ enable, disable  ]
+        "opmode":"show or not",                   // [ enable, disable ] — device page: run mode selector (device.js)
+        "model":"show or not",                    // [ enable, disable ] — device page: model line (device.js)
+        "development":"show or not"               // [ enable, disable ] — sidebar Development; non-std scope needs "enable" to show (index.js)
     }
 
 }
 ```
 
+Optional **`menu`** keys also used by the stock Ace UI (same `"disable"` rule): **`dashboard`**, **`utilization`**, **`interface`**, **`connection`**, **`wan`** … **`wan4`**, **`wisp`**, **`wisp2`**, **`lte`** … **`lte4`**, **`lwan`**, **`lan2`** … **`lan4`**, **`configure`**, **`software`**, **`terminal`**, **`download_log`** — see **`ace/js/index.js`**, **`ace/js/device.js`**, **`ace/js/syslog.js`**. FPK app entries may be hidden via **`menu[ "<fpk index>" ]`** matching **`land@fpk.wui_menu`**.
 
 HTTPS uses certificate files named for the component, e.g. **`<component>.ca`**, **`<component>.crt`**, **`<component>.key`** in project configuration, when **`sslport`** is non-zero.
 

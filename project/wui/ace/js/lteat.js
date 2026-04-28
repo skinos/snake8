@@ -138,7 +138,7 @@ function at_save() {
 	}
 
 	// save
-    var msg = $.i18n('The LTE connecttion will be disconneted because of the change of configuration');
+    var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
 	page.confirm( { message: msg } ).then( function(result){
     if ( result )
     {
@@ -285,7 +285,7 @@ function init_at() {
 }
 
 $.i18n().load( page.lang('lte') ).then( function () {
-	/* init the langauage */
+	/* init the language */
 	$.i18n().locale = lang; $('body').i18n();
 
 	/* init the table */

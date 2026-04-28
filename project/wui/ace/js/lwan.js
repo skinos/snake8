@@ -374,7 +374,7 @@ function config_save()
 
 /* init */
 $.i18n().load( page.lang('lan') ).then( function () {
-	/* init the langauage */
+	/* init the language */
 	$.i18n().locale = lang; $('body').i18n();
 
 	/* load the configure */

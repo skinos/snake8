@@ -25,7 +25,7 @@ function project_load()
       $(project_table).jqGrid( "setCaption", $.i18n('FPK Number') + '(' + count + ')' );
       // 记住滚动条的位置
       var scrollPos = jqtable.getScrollPos();
-      // 给proejcts表格设置数据
+      // load data into the projects grid
       $(project_table).jqGrid( 'clearGridData' ).jqGrid( 'setGridParam', { data: rows } ).trigger( 'reloadGrid' );
       // 恢复滚动条的位置
       jqtable.setScrollPos(scrollPos);
@@ -67,7 +67,7 @@ function delete_project( indexStr )
 /* init */
 $.i18n().load( page.lang('software') ).then( function () {
 
-  /* init the langauage */
+  /* init the language */
   $.i18n().locale = lang; $('body').i18n();
 
   /* load the firmware info */

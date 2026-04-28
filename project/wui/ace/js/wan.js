@@ -548,7 +548,7 @@ function config_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The WAN connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('The WAN connection will be disconnected because of the change of configuration') } ).then( function(result){
     if (!result) return location.reload();
     if ( result )
     {
@@ -565,7 +565,7 @@ function config_save()
 /* init */
 page.password('password', 'password-icon' );
 $.i18n().load( page.lang('wan') ).then( function () {
-    /* init the langauage */
+    /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 
     /* load the configure */

@@ -11,28 +11,28 @@
 
 
 
-    <h4 data-i18n="a. How to download SDK and compile upgrade package"></h4>
-    <p data-i18n="1. It is recommended to download this SDK after setting up the compilation environment in Ubuntu"></p>
-    <p data-i18n="2. Enter the following command line to download from the Ubuntu terminal command line" ></p>
+    <h4 data-i18n="a. How to download the SDK and compile an upgrade package"></h4>
+    <p data-i18n="1. It is recommended to download this SDK after setting up the build environment in Ubuntu."></p>
+    <p data-i18n="2. Run the following command in an Ubuntu terminal to download the SDK:" ></p>
     <p data-i18n="git clone https://github.com/snake8/snake8.git" ></p>
-    <p data-i18n="3. After waiting for the download, enter the snake8 directory and input the following instructions to update the SDK to the latest state" ></p>
+    <p data-i18n="3. After the download is complete, enter the snake8 directory and run the following commands to update the SDK to the latest version:" ></p>
       cd snake8 <br>
       make preset</br>
       make pid gBOARDID=<span id="gBOARDID"></span><br>
       make update</br>
       make menu</br>
-    <p data-i18n="4. After waiting for the update, you can input the following instructions to compile the corresponding products" ></p>
+    <p data-i18n="4. After the update is complete, run the following commands to compile the target product:" ></p>
       make dep <br>
       make
-    <p data-i18n="5. After waiting for the compilation, an upgrade package file ending with.zz will be generated in the./build directory, which can be upgraded through the upgrade interface"></p>
+    <p data-i18n="5. After compilation, an upgrade package file ending with .zz will be generated in the ./build directory. You can upload it from the upgrade page."></p>
 
 
 
-    <h4 data-i18n="b. How to develop their own program"></h4>
-    <p data-i18n="1. Readme.md in SDK directory is a basic introduction to the whole SDK and its development"></p>
-    <p data-i18n="2. https://github.com/snake8/doc.git, there are detailed step-by-step documents to guide the development of components (under preparation)."></p>
-    <p data-i18n="3. These documents will be updated from time to time, please execute make update in the SDK directory to update"></p>
-    <p data-i18n="4. Visit www.ashyelf.com for more development help (under construction)"></p>
+    <h4 data-i18n="b. How to develop your own program"></h4>
+    <p data-i18n="1. The Readme.md file in the SDK directory provides a basic introduction to the SDK and development flow."></p>
+    <p data-i18n="2. https://github.com/snake8/doc.git provides step-by-step component development documentation (under preparation)."></p>
+    <p data-i18n="3. These documents are updated from time to time. Run make update in the SDK directory to refresh them."></p>
+    <p data-i18n="4. Visit www.ashyelf.com for more development help (under construction)."></p>
 
 
 
@@ -44,7 +44,7 @@
 <script type="text/javascript">
 (function () {
     $.i18n().load( page.lang('sdk') ).then( function () {
-      /* init the langauage */
+      /* init the language */
       $.i18n().locale = lang; $('body').i18n();
 
       he.load( [ 'land@machine.status' ] ).then( function(v){

@@ -71,7 +71,7 @@ function load_syslog()
         $(syslogs_table).jqGrid( "setCaption", $.i18n('Log List') + ' (' + count + ')' );
         // 记住滚动条的位置
         var scrollPos = jqtable.getScrollPos();
-        // 给proejcts表格设置数据
+        // load data into the grid
         $(syslogs_table).jqGrid( 'clearGridData' ).jqGrid( 'setGridParam', { data: rows } ).trigger( 'reloadGrid' );
         // 恢复滚动条的位置
         jqtable.setScrollPos(scrollPos);
@@ -181,7 +181,7 @@ function syslog_down( rowId )
 }
   
 $.i18n().load( page.lang('syslog') ).then( function () {
-  /* init the langauage */
+  /* init the language */
   $.i18n().locale = lang; $('body').i18n();
   /* init the clients table */
   jqtable.create(  syslogs_table, syslogs_pager,

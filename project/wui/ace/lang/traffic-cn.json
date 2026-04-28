@@ -1,0 +1,16 @@
+{
+	"Connected Clients": "在线终端",
+	"Enter Hostname": "输入主机名",
+	"Enter MAC Address": "输入MAC地址",
+	"Fields marked with * are required": "带 * 字段为必填项",
+	"Hostname": "主机名",
+	"IP Address": "IP地址",
+	"Interface": "接口",
+	"Interface Device": "接口设备",
+	"Leave": "离开",
+	"Live Time": "在线时长",
+	"MAC Address": "MAC地址",
+	"RX byte": "接收字节",
+	"Rx/Tx": "收/发(字节)",
+	"TX byte": "发送字节"
+}

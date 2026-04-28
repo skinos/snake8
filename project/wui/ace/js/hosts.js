@@ -81,7 +81,7 @@ var customInline = $.extend(true, {}, jqtable.actionOptions, {
 
 /* init */
 $.i18n().load( page.lang('hosts') ).then( function () {
-    /* init the langauage */
+    /* init the language */
     $.i18n().locale = window.lang; $('body').i18n();
 
     //初始化表格

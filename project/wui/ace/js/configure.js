@@ -1,6 +1,6 @@
 
 $.i18n().load( page.lang('configure') ).then( function () {
-    /* init the langauage */
+    /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 
     /* load the info */

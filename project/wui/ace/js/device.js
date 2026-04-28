@@ -206,7 +206,7 @@ function date_save()
 
 /* init */
 $.i18n().load( page.lang('device') ).then( function () {
-  /* init the langauage */
+  /* init the language */
   $.i18n().locale = lang; $('body').i18n();
 
   // load hostname

@@ -46,5 +46,5 @@
 	"Statistics <Delay Statistics> times, in the link average delay are located in <Delay Boundary(ms)> different sides and the average delay between links is greater than <Delay Difference(ms)> disables the link with high average delay":"统计<延迟统计次数>次, 在链路平均延迟分别位于<延迟分界(毫秒)>不同侧并且链路之间的平均延迟大于<延迟差值(毫秒)>禁用平均延迟大的链路",
 
 
-	"The connection will be disconneted because of the change of configuration":"设备配置将导致网络断开重连"
+	"The connection will be disconnected because of the change of configuration":"设备配置将导致网络断开重连"
 }

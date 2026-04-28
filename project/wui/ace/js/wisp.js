@@ -824,7 +824,7 @@ function config_save()
       page.alert( { message: $.i18n('Settings unchanged') } );
       return;
   }
-  page.confirm( { message: $.i18n('The WISP connecttion will be disconneted because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('The WISP connection will be disconnected because of the change of configuration') } ).then( function(result){
     if (!result) return location.reload();
     if ( result )
     {
@@ -843,7 +843,7 @@ page.password('wpa_key', 'wpa_key-icon' );
 page.password('wpa_key2', 'wpa_key2-icon' );
 page.password('wpa_key3', 'wpa_key3-icon' );
 $.i18n().load( page.lang('wan') ).then( function () {
-    /* init the langauage */
+    /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 
     // jqgrid

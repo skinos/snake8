@@ -796,6 +796,19 @@ jQuery(function($) {
 					//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
 				}
 			}
+			else
+			{
+				if ( wuimenu && wuimenu.development == "enable" )
+					{
+						menu.add( false, menus, $.i18n( 'Development' ), 'sdk', 'menu-icon fa fa-gavel' );
+						menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'SDK' ), 'sdk' );
+						menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Inittab' ), 'inittab' );
+						menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Uninittab' ), 'uninittab' );
+						menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Jointtab' ), 'jointtab' );
+						menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Daemon' ), 'daemon' );
+						//menu.addlink( menus, $.i18n( 'Development' ), $.i18n( 'Crontab' ), 'crontab' );
+					}
+			}
 
 			// Load the FPK html
 			var almark = false;

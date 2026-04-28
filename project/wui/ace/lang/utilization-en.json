@@ -1,0 +1,18 @@
+{
+  "CPU":"CPU",
+  "CPU User":"CPU User",
+  "CPU system":"CPU System",
+  "CPU IRQ":"CPU IRQ",
+  "CPU Softirq":"CPU Softirq",
+  "Memory":"Memory",
+  "Memory Total":"Memory Total",
+  "Memory Free":"Memory Free",
+  "Memory Buffers":"Memory Buffers",
+  "Memory Cached":"Memory Cached",
+  "Storage":"Storage",
+  "Type":"Type",
+  "Available":"Available",
+  "Size":"Size",
+  "Free":"Free",
+  "Internal":"Internal"
+}

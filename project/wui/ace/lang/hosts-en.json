@@ -1,0 +1,12 @@
+{
+  "Hosts Table":"Hosts Table",
+  "Hostname":"Hostname",
+  "IP Address":"IP Address",
+  "Operation":"Operation",
+  "Settings unchanged":"Settings unchanged",
+  "Modify successfully":"Modified successfully",
+  "Fields marked with * are required":"Fields marked with * are required",
+  "Enter Hostname":"Enter hostname",
+  "Enter IP":"Enter IP",
+  "Warning: To use this mapping, intranet devices must set DNS to this router.":"Warning: To use this mapping, intranet devices must set DNS to this router."
+}

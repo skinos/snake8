@@ -208,6 +208,15 @@
 	"Interval number of dial failures reset modem":"间隔拨号失败次数重置模块",
 
 
-	"The LTE connection will be disconneted because of the change of configuration":"设备LTE配置将导致网络断开重连"
+	"The LTE connection will be disconnected because of the change of configuration":"设备LTE配置将导致网络断开重连",
+
+	"IMSI":"IMSI",
+	"ICCID":"ICCID",
+	"IMEI":"IMEI",
+	"Address":"地址",
+
+	"Main":"主卡",
+	"Back":"备卡",
+	"Detect":"检测"
 
 }
