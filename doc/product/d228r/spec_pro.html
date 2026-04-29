@@ -1,0 +1,301 @@
+<!DOCTYPE html><html><head>
+      <title>d228r professional spec</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////home/dimmalex/.vscode-server/extensions/shd101wyy.markdown-preview-enhanced-0.8.24/crossnote/dependencies/katex/katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-details{margin:0;padding:0;border:none}.markdown-preview .md-toc summary.md-toc-link-wrapper{cursor:pointer;list-style-position:outside}.markdown-preview .md-toc summary.md-toc-link-wrapper::marker{font-size:.85em}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='0']{margin-left:12px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='1']{margin-left:28px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='2']{margin-left:44px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='3']{margin-left:60px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='4']{margin-left:76px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='5']{margin-left:80px}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-details{margin:0;padding:0;border:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='0']{padding-left:0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='1']{padding-left:16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='2']{padding-left:32px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='3']{padding-left:48px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='4']{padding-left:64px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='5']{padding-left:80px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h2 id="d228r-产品规格书">D228R 产品规格书 </h2>
+<h2 id="1-产品概述">1. 产品概述 </h2>
+<p>D228R 是面向工业与车载场景的 NR/LTE 网关模块，集成蜂窝、双频 Wi-Fi 和双千兆以太网，支持多链路并发、备份与负载均衡，并提供串口/IO/I2C/GPS 边缘接入能力。</p>
+<p>核心定位：</p>
+<ul>
+<li>工业数据采集与远程管理网关</li>
+<li>面向移动与复杂网络环境的视频传输网关</li>
+<li>多链路冗余与高可用通信节点</li>
+<li>支持二次开发与协议定制的开放平台</li>
+</ul>
+<h2 id="2-外观与机械信息">2. 外观与机械信息 </h2>
+<h3 id="21-模块图">2.1 模块图 </h3>
+<p><img src="./m_20.jpeg" alt="avatar"> <img src="./m_22.jpeg" alt="avatar"> <img src="./m_23.jpeg" alt="avatar"> <img src="./m_21.jpeg" alt="avatar"></p>
+<h3 id="22-外形与安装">2.2 外形与安装 </h3>
+<ul>
+<li>尺寸：73.4 mm x 42 mm x 15 mm</li>
+<li>定位孔：8 个</li>
+<li>机械尺寸基准：以 DXF 文件为准</li>
+</ul>
+<h3 id="23-接口图">2.3 接口图 </h3>
+<p><img src="./%E6%AD%A3%E9%9D%A2%E6%8E%A5%E5%8F%A3%E5%9B%BE.jpeg" alt="avatar"><br>
+<img src="./%E8%83%8C%E9%9D%A2%E6%8E%A5%E5%8F%A3%E5%9B%BE.jpeg" alt="avatar"></p>
+<p>连接器规格图：</p>
+<p><img src="./8PIN%E6%8E%A5%E5%8F%A3%E8%A7%84%E6%A0%BC.png" alt="avatar"><br>
+<img src="./8PIN%E6%8E%A5%E5%8F%A3%E8%A7%84%E6%A0%BC-%E7%AB%8B.png" alt="avatar"></p>
+<h2 id="3-硬件规格">3. 硬件规格 </h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">规格</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">蜂窝基带</td>
+<td style="text-align:left">默认 RM500U-CN（支持按项目替换）</td>
+</tr>
+<tr>
+<td style="text-align:left">蜂窝制式</td>
+<td style="text-align:left">3G/4G/5G（LTE/NR）</td>
+</tr>
+<tr>
+<td style="text-align:left">5G 频段</td>
+<td style="text-align:left">NR NSA: n41/n78/n79；NR SA: n1/n28*/n41/n77/n78/n79</td>
+</tr>
+<tr>
+<td style="text-align:left">4G 频段</td>
+<td style="text-align:left">FDD: B1/B2/B3/B5/B7/B8/B20/B28；TDD: B34/B38/B39/B40/B41</td>
+</tr>
+<tr>
+<td style="text-align:left">3G 频段</td>
+<td style="text-align:left">WCDMA: B1/B2/B5/B8</td>
+</tr>
+<tr>
+<td style="text-align:left">5G 带宽能力</td>
+<td style="text-align:left">SA: DL 2Gbps / UL 1Gbps；NSA: DL 2.2Gbps / UL 575Mbps</td>
+</tr>
+<tr>
+<td style="text-align:left">LTE 带宽能力</td>
+<td style="text-align:left">DL 600Mbps / UL 150Mbps</td>
+</tr>
+<tr>
+<td style="text-align:left">Wi-Fi 2.4G</td>
+<td style="text-align:left">IEEE 802.11b/g/n，2T2R，300Mbps</td>
+</tr>
+<tr>
+<td style="text-align:left">Wi-Fi 5.8G</td>
+<td style="text-align:left">IEEE 802.11a/n/ac，2T2R，866Mbps</td>
+</tr>
+<tr>
+<td style="text-align:left">以太网接口</td>
+<td style="text-align:left">2 x 100/1000Mbps（WAN/LAN）</td>
+</tr>
+<tr>
+<td style="text-align:left">串口接口</td>
+<td style="text-align:left">3 x TTL 串口</td>
+</tr>
+<tr>
+<td style="text-align:left">IO 接口</td>
+<td style="text-align:left">3 路 IO（可配置 I2C）</td>
+</tr>
+<tr>
+<td style="text-align:left">天线接口</td>
+<td style="text-align:left">2 x IPEX-1（Wi-Fi 2.4/5.8G），4 x IPEX-4（LTE/NR）</td>
+</tr>
+<tr>
+<td style="text-align:left">SIM</td>
+<td style="text-align:left">Nano SIM（可选 eSIM）</td>
+</tr>
+<tr>
+<td style="text-align:left">电源</td>
+<td style="text-align:left">7-15V，立式/卧式 4PIN 电源接口各 1 个</td>
+</tr>
+<tr>
+<td style="text-align:left">典型功耗</td>
+<td style="text-align:left">满负荷小于 5W（峰值与环境相关）</td>
+</tr>
+<tr>
+<td style="text-align:left">工作温度</td>
+<td style="text-align:left">-40℃ ~ +65℃</td>
+</tr>
+<tr>
+<td style="text-align:left">工业保护</td>
+<td style="text-align:left">硬件看门狗、防静电保护、多路独立电源监控</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-接口资源与电气定义">4. 接口资源与电气定义 </h2>
+<h3 id="41-网络与射频接口">4.1 网络与射频接口 </h3>
+<ul>
+<li>WAN：8PIN（1.25mm），100/1000Mbps 自适应</li>
+<li>LAN：8PIN（1.25mm），100/1000Mbps 自适应</li>
+<li>Wi-Fi 天线：WIFI-1/WIFI-2（IPEX-1）</li>
+<li>蜂窝天线：LTE/NR-1~4（IPEX-4）</li>
+</ul>
+<h3 id="42-串口与-io">4.2 串口与 IO </h3>
+<ul>
+<li>UART：3 路 TTL（UART1/UART2/UART3），支持并行工作</li>
+<li>IO：3 路可编程输入/输出，支持远程协议与 MQTT 控制</li>
+<li>I2C：IO 可复用为 I2C 引脚，用于外设扩展</li>
+</ul>
+<h3 id="43-供电-sim-按键与指示灯">4.3 供电、SIM、按键与指示灯 </h3>
+<ul>
+<li>供电：VCC+/VCC-，支持立式与卧式 4PIN 供电接口</li>
+<li>SIM：Nano SIM 卡槽</li>
+<li>按键：RESET（恢复出厂）</li>
+<li>指示灯：
+<ul>
+<li>SYS（蓝）：上电、启动、拨号、联网状态</li>
+<li>Weak（红）：蜂窝信号弱</li>
+<li>Strong（绿）：蜂窝信号强</li>
+</ul>
+</li>
+</ul>
+<h2 id="5-联网与路由能力">5. 联网与路由能力 </h2>
+<h3 id="51-单链路接入">5.1 单链路接入 </h3>
+<ul>
+<li>3G/4G/5G 蜂窝接入</li>
+<li>蜂窝 Modem 透传模式</li>
+<li>有线 WAN 接入互联网</li>
+<li>2.4G/5.8G 无线接入、桥接、中继、多 SSID 优先连接</li>
+</ul>
+<h3 id="52-多链路与策略路由">5.2 多链路与策略路由 </h3>
+<ul>
+<li>蜂窝 + 有线 WAN 同时工作（冷备份/热备份/负载均衡）</li>
+<li>蜂窝 + 无线接入同时工作（冷备份/热备份/负载均衡）</li>
+<li>无线 + 有线 WAN 同时工作（冷备份/热备份/负载均衡）</li>
+<li>支持按客户端或应用强制指定出口链路</li>
+<li>支持按场景策略扩展更复杂的接入编排</li>
+</ul>
+<h2 id="6-业务协议与应用能力">6. 业务协议与应用能力 </h2>
+<h3 id="60-视频传输定位与场景">6.0 视频传输定位与场景 </h3>
+<ul>
+<li>核心定位：作为前端摄像设备到平台侧的稳定视频传输链路节点</li>
+<li>典型场景：车载移动视频回传、无人值守点位视频上行、临时布控视频接入</li>
+<li>价值重点：在蜂窝/有线/Wi-Fi 多网络间实现更稳定的视频上行与链路连续性</li>
+</ul>
+<h3 id="61-串口协议能力">6.1 串口协议能力 </h3>
+<ul>
+<li>透传：注册包/激活包/保活包、包前后缀、流量统计</li>
+<li>ModbusRTU 转 ModbusTCP</li>
+<li>MQTT 数据透传</li>
+<li>HTTP POST 数据上报</li>
+<li>指令模式网关管理</li>
+<li>支持串口外接 GPS/北斗及温感、烟感等传感器</li>
+</ul>
+<h3 id="62-io-与工业控制">6.2 IO 与工业控制 </h3>
+<ul>
+<li>IO 实时输入/输出切换</li>
+<li>IO 电平变化事件上报</li>
+<li>MQTT 订阅发布控制 IO</li>
+<li>支持远程协议控制 IO 模式与状态</li>
+<li>支持通过底座扩展更多 IO</li>
+</ul>
+<h3 id="63-定位能力">6.3 定位能力 </h3>
+<ul>
+<li>GPS/北斗定位采集</li>
+<li>NMEA 原始数据上报（可配置报头与间隔）</li>
+<li>MQTT 上报定位信息</li>
+<li>HTTP JSON 上报定位信息</li>
+<li>JT/T808 上报定位信息</li>
+</ul>
+<h3 id="64-网络应用能力">6.4 网络应用能力 </h3>
+<ul>
+<li>防火墙、NAT/DMZ、端口代理</li>
+<li>静态路由与高级路由（源地址/端口路由）</li>
+<li>DDNS、UPnP、域名重定向</li>
+<li>IGMP 正/反向代理</li>
+<li>动态路由：RIPv1/RIPv2/RIPng/OSPFv2/OSPFv3</li>
+<li>SNMP（支持自定义 OID）</li>
+<li>终端流量监控、访问控制、WOL</li>
+</ul>
+<h3 id="65-vpn-与专网">6.5 VPN 与专网 </h3>
+<ul>
+<li>PPTP、L2TP、IPSEC、GRE、OpenVPN、WireGuard</li>
+<li>自组网与内网穿透</li>
+<li>多网关 HA（VRRP）</li>
+</ul>
+<h2 id="7-管理-运维与开放能力">7. 管理、运维与开放能力 </h2>
+<h3 id="71-本地与远程管理">7.1 本地与远程管理 </h3>
+<ul>
+<li>本地 TCP 控制、本地 HTTP 状态查询、局域网广播发现</li>
+<li>短信管理（重启/重置/查询/配置）</li>
+<li>远程 HTTP 状态上报与控制</li>
+<li>远程 MQTT 状态上报、告警与管理</li>
+<li>云平台批量管理、远程登录、远程维护</li>
+</ul>
+<h3 id="72-升级与可靠性">7.2 升级与可靠性 </h3>
+<ul>
+<li>支持本地升级、在线升级、局域网批量升级</li>
+<li>OTA 升级与升级失败恢复</li>
+<li>定时/定点/空闲自动重启</li>
+<li>多路供电单元互监控</li>
+</ul>
+<h3 id="73-开发与定制">7.3 开发与定制 </h3>
+<ul>
+<li>提供本地管理工具包与编程 API</li>
+<li>提供远程管理服务器 SDK</li>
+<li>支持 x86/aarch64 平台管理工具与 OTA 工具</li>
+<li>支持在线脚本开发、定时任务、事件触发脚本</li>
+<li>支持协议组件定制与客户项目二次开发</li>
+</ul>
+<h2 id="8-型号配置">8. 型号配置 </h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">配置项</th>
+<th style="text-align:center">D228R 标准版</th>
+<th style="text-align:center">D228R-GPS</th>
+<th style="text-align:center">D228R 核心版</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">4G/5G（LTE/NR）全网通基带</td>
+<td style="text-align:center">V</td>
+<td style="text-align:center">V</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td style="text-align:left">GPS 定位</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">V</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td style="text-align:left">M.2 座子（自配 5G 模块）</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">V</td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-系统与交付说明">9. 系统与交付说明 </h2>
+<ul>
+<li>系统平台：Skin 嵌入式系统（支持组件化开发与接口扩展）</li>
+<li>文档配套：接口图、规格图、DXF</li>
+<li>DXF 文件：<code>D228R_DXF.dxf</code></li>
+<li>备注：如需特殊频段、接口、电源或协议能力，可按项目定制</li>
+</ul>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>

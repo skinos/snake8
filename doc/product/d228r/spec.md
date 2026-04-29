@@ -92,7 +92,7 @@ output:
 
 ## 模块实物图
 
-![avatar](./m_20.jpg) ![avatar](./m_21.jpg) ![avatar](./m_22.jpg) ![avatar](./m_23.jpg)
+![avatar](./m_20.jpg) ![avatar](./m_21.jpg) ![avatar](./m_22.png) ![avatar](./m_23.jpg)
 
 
 
