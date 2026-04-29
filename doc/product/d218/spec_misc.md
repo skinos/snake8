@@ -18,7 +18,7 @@ output:
 ![avatar](./底座接口图.png) 
 
 ###### 12V/GND： **共4根供电头4根GND**
-- 支持7-12V的供电
+- 支持7-15V的供电
 - 因单PIN的管脚过细, 因此需要使用至少两对以上的12V与GND来对板子供电, 最好是4对全接
 ###### SIMRST/SIMVPP/SIMIO/SIMCLK/SIMPWR： **SIM卡座接线**
 - 与218板子上的SIM卡接线共用, 因此如要外接SIM座与218板子上的SIM卡不能同时使用
@@ -40,8 +40,6 @@ output:
 - 与218板子上的IO口接线共用
 ###### I2SWS/I2SDI/GPIO0： **SYS灯/strong signal灯/poor signal灯**
 - 与218板子上的SYS/strong signal/poor signal灯一致
-###### I2CSCLK/I2CSD/I2CDO： **IO口G1/G2/G3**
-- 与218板子上的IO口接线共用
 ###### WPS-RST-PBC： **Reset按键**
 - 与218板子上的RESET-Button接线共用
 ###### P0LED： **LWAN口link灯**
