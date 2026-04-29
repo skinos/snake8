@@ -54,8 +54,32 @@
     //'JSON对象类属性介绍, 多个子属性在一个JSON中'
     "<attribute>":
     {
-        "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>        
+        //'可选值的属性介绍, 当些属性只有几个可选值是使用此方式描述'
+        "<attribute>": "<attribute introduce>",                   // [ "<选项>", "<选项2>", "<选项3>", ... ]
+                                                                    // "<选项>": <关于当attribute的值为选项时作用及介绍>
+                                                                    // "<选项2>": <关于当attribute的值为选项时作用及介绍>
+                                                                    // "<选项>3": <关于当attribute的值为选项时作用及介绍
+                                                                    // <介绍默认值>
+        //'类型值的属性介绍, 当些属性是string, number, ip address, mac address, port, 等通用属性时可以使用此值'
+        "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ mac address ], <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ tcp port ], <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ udp port ], <介绍默认值>
+        "<attribute>": "<attribute introduce>",                   // [ tcp/udp port ], <介绍默认值>
+        //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'  
     }
+
+    //'JSON对象类属性介绍, 子属性名也像值一样可变化'
+    "<attribute>":
+    {
+        //'item name可自定义的可选值的属性'
+        "<item name>":"item value introduce", // [ string ] : [ "<选项>", "<选项2>", "<选项3>", ... ]
+    }
+
+
+
 
 
 
