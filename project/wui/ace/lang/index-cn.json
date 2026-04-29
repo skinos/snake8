@@ -267,5 +267,7 @@
     "Traffic": "流量",
     "VPN": "VPN",
     "Enable": "启用",
-    "Disable": "禁用"
+    "Disable": "禁用",
+    "Auto Test": "自动测试",
+    "Status View": "状态查看"
 }

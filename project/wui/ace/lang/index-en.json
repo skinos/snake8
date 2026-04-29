@@ -179,5 +179,7 @@
     "value must be greater than or equal to": "value must be greater than or equal to",
     "value must be less than or equal to": "value must be less than or equal to",
     "Enable": "Enable",
-    "Disable": "Disable"
+    "Disable": "Disable",
+    "Auto Test": "Auto Test",
+    "Status View": "Status View"
 }

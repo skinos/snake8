@@ -9,6 +9,13 @@
     
     "Designated Address Access":"指定地址访问",
     "Address(separated by semicolon)":"地址(多个以;号分隔)",
+    "Refresh":"刷新",
+    "Apply":"应用",
+    "Settings unchanged":"配置未修改，不需要应用",
+    "The system will restart because of the change of settings":"设置变更将导致系统重启",
+    "Restart the system to apply":"重启系统以应用配置",
+    "Restarting to apply...":"正在重启以应用配置...",
+    "Make sure that the device is reconnected":"请确保设备已重新连接",
 
 
 

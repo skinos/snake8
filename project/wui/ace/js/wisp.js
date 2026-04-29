@@ -842,7 +842,7 @@ page.password('password', 'password-icon' );
 page.password('wpa_key', 'wpa_key-icon' );
 page.password('wpa_key2', 'wpa_key2-icon' );
 page.password('wpa_key3', 'wpa_key3-icon' );
-$.i18n().load( page.lang('wan') ).then( function () {
+$.i18n().load( page.lang('wisp') ).then( function () {
     /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 

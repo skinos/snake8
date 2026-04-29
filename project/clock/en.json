@@ -1,0 +1,17 @@
+{
+    "Reboot Mode": "Reboot mode",
+    "Disable": "Disable",
+    "Idle Reboot": "Idle reboot",
+    "Age": "Interval reboot",
+    "Point": "Scheduled reboot",
+    "Minimum running time(sec)": "Minimum running time (sec)",
+    "None Client duration(sec)": "No client duration (sec)",
+    "Point Reboot Time": "Scheduled reboot time",
+    "Maximum running time(sec)": "Maximum running time (sec)",
+    "Delay(sec)": "Delay (sec)",
+    "Reboot time interval(sec)": "Reboot interval (sec)",
+    "Refresh": "Refresh",
+    "Apply": "Apply",
+    "Settings unchanged": "Settings unchanged",
+    "Modify successfully": "Modified successfully"
+}

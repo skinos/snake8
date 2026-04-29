@@ -1,17 +1,25 @@
-{  
-	"FTP Server": "FTP服务器",
-	"Status":"状态",
-	"Login Mode": "登录方式",
-	"Anonymous": "匿名登录",
-	"Username And Password": "用户名密码登录",
-	"Writable": "可写",
-
-	"SAMBA Server": "SAMBA服务器",
-	
-	"User Management": "用户管理",
-	"User Table": "用户列表",
-	"Username": "用户名",
-	"Password":"密码",
-	"Operation":"操作",
-	"Invalid username":"非法的用户名"
+{
+    "FTP Server": "FTP服务器",
+    "Status": "状态",
+    "Login Mode": "登录方式",
+    "Anonymous": "匿名登录",
+    "Username And Password": "用户名密码登录",
+    "Writable": "可写",
+    "SAMBA Server": "SAMBA服务器",
+    "User Management": "用户管理",
+    "User Table": "用户列表",
+    "Display": "显示",
+    "Refresh": "刷新",
+    "Apply": "应用",
+    "Settings unchanged": "配置未修改，不需要应用",
+    "Modify successfully": "修改成功",
+    "Add successfully": "添加成功",
+    "Delete successfully": "删除成功",
+    "Username": "用户名",
+    "Password": "密码",
+    "Operation": "操作",
+    "Invalid username": "非法的用户名",
+    "Fields marked with * are required": "带 * 的字段为必填项",
+    "Enter Username": "输入用户名",
+    "Enter Password": "输入密码"
 }
