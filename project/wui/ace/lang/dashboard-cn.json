@@ -120,7 +120,7 @@
     "ifname@lan4 Speed": "本地网络4速率",
     "wifi@nssid Speed": "2.4G热点速率",
     "wifi@assid Speed": "5.8G热点速率",
-    "Utilization": "资源利用率",
+    "Utilization": "效能",
     "CPU": "处理器",
     "Memory": "内存",
     "CPU User": "处理器应用",

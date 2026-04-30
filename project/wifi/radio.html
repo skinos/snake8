@@ -16,7 +16,33 @@
         </div>
       </div>
 
-      <div id="ssid_cfg">
+      <div class="tabbable" id="ssid_cfg" style="display: none;">
+        <ul class="nav nav-tabs">
+            <li class="active">
+                <a data-toggle="tab" href="#tab-ssid">
+                    <span data-i18n="SSID Setup"></span>
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-mode">
+                    <span data-i18n="Advanced Setup"></span>
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-acl">
+                    <span data-i18n="ACL Setup"></span>
+                </a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#tab-clients">
+                    <span data-i18n="Clients Table"></span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content" style="border: none !important; padding: 0 !important; margin-top: 20px;">
+            <div id="tab-ssid" class="tab-pane in active">
+
         <!-- 名称 -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="SSID"></label>
@@ -83,29 +109,11 @@
             </label>
           </div>
         </div>
-        <!-- ACL -->
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Clients ACL"></label>
-            <div class="col-sm-9">
-              <div class="btn-group">
-                <div class="btn-group">
-                  <a class="btn btn-second" data-i18n="ACL Settings" id="acl" href="#"></a>
-                </div>
-              </div>
-            </div>
+            
         </div>
+    
 
-      </div> <!-- ssid_cfg -->
-
-
-
-
-
-
-
-
-      <div class="hr hr32 hr-dotted"></div>
-
+    <div id="tab-mode" class="tab-pane">
       <!-- 模式 -->
       <div class="form-group" id="mode_set" style="display: none;">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Mode"></label>
@@ -332,9 +340,109 @@
           </select>
         </div>
       </div>
+      <!-- 标签页结束符 -->
+    </div>
 
+    <div id="tab-acl" class="tab-pane">
+      <!-- 渲染acl界面 -->
+       <div class="form-group" id="clients_acl" style="display: none;">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Clients ACL"></label>
+            <div class="col-sm-9">
+                <label><input id="status_acl" class="ace ace-switch ace-switch-6" type="checkbox" /><span class="lbl"></span></label>
+            </div>
+        </div>
 
+        <div id="wifi_config" style="display: none;"> 
+            <div class="form-group " id="acl_type_div">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="ACL Type"></label>
+                <div class="col-sm-9">
+                    <label><input name="acl_type" value="drop" type="radio" class="ace"><span class="lbl" data-i18n="Black List"></span></label>
+                    &nbsp;&nbsp;&nbsp;
+                    <label><input name="acl_type" value="accept" type="radio" class="ace"><span class="lbl" data-i18n="White List"></span></label>
+                    &nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
 
+            <table id="acl-grid-table"></table>
+            <div id="acl-grid-pager"></div>
+
+            <div id="grid-controls-acl" style="display: none;">
+                <div style="display: flex; align-items: center">
+                <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+                <select id="rowNums-acl" style="width: 60px;">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+                </div>
+            </div>
+
+            <div id="modal-stalist" class="modal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 data-i18n="Add"></h4></div>
+
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <table id="stalist-grid-table"></table>
+                                    <div id="stalist-grid-pager"></div>
+
+                                    <div id="grid-controls2-modal" style="display: none;">
+                                        <div style="display: flex; align-items: center">
+                                        <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+                                        <select id="rowNums-modal" style="width: 60px;">
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="30">30</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                            <option value="200">200</option>
+                                        </select>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button class="btn btn-sm btn-second" data-dismiss="modal" data-i18n="Cancel"></button>
+                            <button id="add" class="btn btn-sm btn-main" data-i18n="Add"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- wifi_config -->
+
+    </div>
+
+    <div id="tab-clients" class="tab-pane">
+      <table id="clients-grid-table-wifi"></table>
+      <div id="clients-grid-pager-wifi"></div>
+
+      <div id="grid-controls" style="display: none;">
+          <div style="display: flex; align-items: center">
+          <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+          <select id="rowNums" style="width: 60px;">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+          </select>
+          </div>
+      </div>
+      <!-- 标签页结束符 -->
+    </div>
+
+    </div>
+
+    </div>
 
       <div class="clearfix form-actions">
         <div class="col-md-offset-3 col-md-9">
@@ -345,7 +453,7 @@
       </div>
 
 
-    </div>
+    
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
 </div><!-- /.row -->
@@ -356,6 +464,12 @@
 
 <!-- page specific plugin scripts -->
 <script type="text/javascript">
+  window.wifi_client = window.wifi_client || {
+    timer: null,
+    currentObject: null
+  };
+  var knock_object = null;
+
   (function () {
     /* get the object */
     var ssid;
@@ -374,6 +488,36 @@
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
     var robj = object;
     var sobj = object+"ssid";
+
+    // about clients
+    var timer;
+    var stalist;
+    var clients;
+    var inputFocused = false;
+    knock_object = object;
+    var clients_table = '#clients-grid-table-wifi';
+    var clients_pager = '#clients-grid-pager-wifi';
+
+    if (window.wifi_client.timer) {
+        clearInterval(window.wifi_client.timer);
+        window.wifi_client.timer = null;
+    }
+    // 记录当前页面正在操作的对象
+    window.wifi_client.currentObject = object;
+
+    // about acl
+    var ssidcopy;
+    var stalist;
+    var clientlist;
+    // 使用拼接的sobj
+
+    // 统一tab解决定时器刷新两个表格的问题
+    var activeWifiTab = '#tab-ssid';
+    var aclLoading = false;
+    var clientsLoading = false;
+
+    // 标签页状态保存
+    var wifiTabStorageKey = 'wifi_active_tab';
     /* load the configure on the input */
 
     function flash_channel( mode, country, channel, acs )
@@ -465,6 +609,13 @@
           if ($(this).prop('checked'))
           {
             $('#ssid_cfg').show();
+            var containerWidth = $('#ssid_cfg').parent().width() || $(window).width() - 100;
+            if ($('#clients-grid-table-wifi')[0].grid) { 
+                $('#clients-grid-table-wifi').jqGrid('setGridWidth', containerWidth);
+            }
+            if ($('#acl-grid-table')[0].grid) { 
+                $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
+            }
           }
           else
           {
@@ -485,6 +636,8 @@
         flash_channel( "", "", radio.channel, acs );
         if ( modelist )
         {
+            $('#ssid_cfg a[href="#tab-mode"]').closest('li').show();
+
             $("#mode").empty();            
             for( m in modelist )
             {
@@ -513,6 +666,11 @@
         }
         else
         {
+            // 异常情况 tab 标签隐藏了，但是内容区域还停留在 #tab-mode
+            if ($('#ssid_cfg .nav-tabs li.active a').attr('href') === '#tab-mode') {
+                $('#ssid_cfg a[href="#tab-ssid"]').tab('show');
+            }
+            $('#ssid_cfg a[href="#tab-mode"]').closest('li').hide();
             $("#mode_set").hide();
         }
         if ( powerlist )
@@ -536,12 +694,246 @@
         {
             $("#txpower_set").hide();
         }
-        // ACL
-        var link = '#app?page='+base64.encode("/skinos/wifi/acl.html");
-        link += '&object='+sobj;
-        link += '&lang='+base64.encode(langjson);
-        $('#acl').attr( "href", link );
       })
+    }
+
+    function wifiacl_load(force)
+    {
+      he.load( [ sobj, sobj+'.stalist', 'client@station.list' ] ).then( function(v){
+        ssid = v[0];
+        $("#button_acl").show();
+
+        if ( ssid == null )
+        {
+            return;
+        }
+        ssidcopy = JSON.parse( JSON.stringify(ssid) );
+        stalist = v[1];
+        if ( !stalist )
+        {
+            stalist = {};
+        }
+        clientlist = v[2];
+        if ( !clientlist )
+        {
+            clientlist = {};
+        }
+
+        $("#clients_acl").show();
+        $('#status_acl').prop( 'checked', able2boole( ssid.acl ) );
+        if ( ssid.acl =="accept" )
+        {
+            $("input[name='acl_type'][value=accept]").attr("checked",true); 
+        }
+        else
+        {
+            $("input[name='acl_type'][value=drop]").attr("checked",true);  
+        }
+
+        var list = ssid['acl_table'];
+        var rows = [];
+        for ( var index in list )
+        {
+            var name = list[index];
+            var x = stalist[index];
+            var info = clientlist[index];
+            if ( x )
+            {
+                if ( info )
+                {
+                    if ( !name )
+                    {
+                        name = info.name;
+                    }
+                    rows.push( { mac:index||'', name:name||'', ip:info.ip||'', livetime:(x.livetime?x.livetime:$.i18n('Leave')), rssi:x.rssi||'' } );
+                }
+                else
+                {
+                    rows.push( { mac:index||'', name:name||'', ip:'', livetime:(x.livetime?x.livetime:$.i18n('Leave')), rssi:x.rssi||'' } );
+                }
+            }
+            else
+            {
+                rows.push( { mac:index||'', name:name||'', ip:'', livetime:$.i18n('Leave'), rssi:'' } );
+            }
+        }
+        var scrollPos = jqtable.getScrollPos();
+        $('#acl-grid-table').jqGrid('clearGridData').jqGrid('setGridParam',{data: rows}).trigger('reloadGrid');
+        jqtable.setScrollPos(scrollPos);
+        
+        $('#status_acl').unbind('change').change(function () {
+            if ($(this).prop('checked'))
+            {
+                $('#wifi_config').show();
+                var containerWidth = $('#wifi_config').parent().width() || $(window).width() - 100;
+                if ($('#acl-grid-table')[0].grid) { 
+                    $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
+                }
+            }
+            else
+            {
+                $('#wifi_config').hide();
+            }
+        }).trigger('change'); 
+      });
+    }
+
+
+    function load_clients(force)
+    {
+        if (!force && activeWifiTab !== '#tab-clients') {
+            return;
+        }
+
+        if (!$(clients_table)[0] || !$(clients_table)[0].grid) {
+            return;
+        }
+
+        if (clientsLoading) {
+            return;
+        }
+
+        clientsLoading = true;
+
+        he.bkload( [ object+".stalist", 'client@station.list' ] ).then( function(v){
+            clientsLoading = false;
+
+            if (window.wifi_client.currentObject !== object) {
+                return; 
+            }
+
+            if (!force && activeWifiTab !== '#tab-clients') {
+                return;
+            }
+
+            if (!$(clients_table)[0] || !$(clients_table)[0].grid) {
+                return;
+            }
+
+            stalist = v[0];
+            clients = v[1];
+            // 合并
+            var count = 0;
+            var rows = [];
+            for ( var index in stalist )
+            {
+                var sta = stalist[index];
+                var client = clients[index];
+                var row = {};
+                row[ 'mac'] =  index;
+				if ( client )
+				{
+	                row[ 'name'] = client.name || '';
+	                row[ 'ip'] = client.ip || '';
+				}
+                if ( sta.rx_bytes || sta.tx_bytes )
+                {
+                    row[ 'rxtx' ] = byte2readable( sta.rx_bytes ) + " / " + byte2readable(sta.tx_bytes);
+                }
+                else
+                {
+                	if ( client )
+					{
+	                    if ( !client.rx_bytes )
+	                    {
+	                        client.rx_bytes = "0";
+	                    }
+	                    if ( !client.tx_bytes )
+	                    {
+	                        client.tx_bytes = "0";
+	                    }
+	                    row[ 'rxtx' ] = byte2readable( client.rx_bytes ) + " / " + byte2readable(client.tx_bytes);
+					}
+                }
+                if ( sta.rssi )
+                {
+                    row[ 'rssi'] = sta.rssi+'dBm';
+                }
+                else
+                {
+                    row[ 'rssi'] = '';
+                }
+				if ( sta.livetime )
+                {
+                    row[ 'livetime'] = time2string(sta.livetime);
+                    count++;
+                    rows.unshift( row );
+				}
+				else
+                {
+                    row[ 'livetime'] = $.i18n('Leave');
+                    rows.push( row );
+                }
+            }
+            if (window.wifi_client.currentObject !== object) return;
+
+            // 表头设置为在线客户端的数量
+            $(clients_table).jqGrid( "setCaption", $.i18n('Online Number') + ' (' + count + ')' );
+            // 记住滚动条的位置
+            var scrollPos = jqtable.getScrollPos();
+            // 获取当前分页状态
+            var currentPage = $(clients_table).jqGrid('getGridParam', 'page');
+            var currentRowNum = $(clients_table).jqGrid('getGridParam', 'rowNum');
+            
+            // 给clients表格设置数据
+            $(clients_table).jqGrid('setGridParam', {
+                data: rows,
+                page: currentPage,
+                rowNum: currentRowNum
+            }).trigger('reloadGrid');
+            // 恢复滚动条的位置
+            jqtable.setScrollPos(scrollPos);
+            // 改变离线行的颜色
+            $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({color: '#888'});
+        },function(){
+          // 函数回调保护
+          clientsLoading = false;
+        });
+    }
+
+    function startRefreshTimer() {
+        stopRefreshTimer();
+
+        activeWifiTab = activeWifiTab || '#tab-ssid';
+        /*
+        * 只有 ACL 和 Clients 需要定时刷新
+        * SSID Setup / Advanced Setup 不启动 timer
+        */
+        if (activeWifiTab !== '#tab-acl' && activeWifiTab !== '#tab-clients') {
+            return;
+        }
+
+        window.wifi_client.timer = setInterval(function() {
+          /*
+          * 2.4G / 5.8G 相同页面切换保护
+          * 如果当前 object 已经不是这个页面的 object，停止旧 timer
+          */
+          if (window.wifi_client.currentObject !== object) {
+              stopRefreshTimer();
+              return;
+          }
+
+          if (activeWifiTab === '#tab-clients') {
+              if (!$(clients_table)[0] || !$(clients_table)[0].grid) {
+                  return;
+              }
+
+              var currentPage = $(clients_table).jqGrid('getGridParam', 'page');
+
+              if (currentPage === 1) {
+                  load_clients(false);
+              }
+          }
+      }, 1000);
+        
+        //console.log('定时器已启动');
+    }
+
+    function stopRefreshTimer() {
+        if (window.wifi_client.timer) {  
+            clearInterval(window.wifi_client.timer);  
+            window.wifi_client.timer = null;  
+        }  
     }
 
     /* save the configure */
@@ -557,7 +949,28 @@
       }
       ssidcopy = JSON.parse(JSON.stringify(ssid));
       ssid.status = boole2able( $('#status').prop('checked') );
-      if ( ssid.status == "enable" )
+
+      if ( $('#status_acl').prop('checked') )
+      {
+          ssid.acl = $('input[name="acl_type"]:checked').val();
+          ssid.acl_table = {};
+          var rowNum =  $('#acl-grid-table').jqGrid('getGridParam', 'rowNum');                   //获取当前页条数
+          var total = $('#acl-grid-table').jqGrid('getGridParam', 'records');                    //获取总数 （包含未显示的数据）
+          $('#acl-grid-table').jqGrid('setGridParam', { rowNum: total }).trigger('reloadGrid');  //把grid重新加载成全部数据（前端不会变化）
+          var rows =  $('#acl-grid-table').jqGrid('getDataIDs');
+          for ( var i = 0; i < rows.length; i++ )
+          {
+              var row = $('#acl-grid-table').jqGrid('getRowData', rows[i] );
+              ssid.acl_table[row.mac] = row.name;
+          }
+          $('#acl-grid-table').jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态        
+      }
+      else
+      {
+          ssid.acl = "disable";
+      }
+
+      if ( ssid.status )
       {
         ssid.ssid = $('#ssid').val();
         ssid.secure = $('#secure').val();
@@ -618,21 +1031,483 @@
         {
           he.exec( cmds ).then( function(){
             page.alert( {message:$.i18n('Make sure that the device is reconnected')} );
+            var activeTab = $('#ssid_cfg .nav-tabs li.active a').attr('href') || '#tab-ssid';
+            sessionStorage.setItem('wifi_active_tab', activeTab);
             location.reload();
           });
         }
       });
     }
 
+    // 表单自定义逻辑
+    var customForm = {
+        afterShowForm: function(form) {
+            var $form = $(form);
+            var $macInput = $("#mac", $form);
+            
+            $("label[for='mac']", $form).append('<span style="color: red; margin-left: 3px;">*</span>');
+            var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+                '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
+                '</div>';
+            $("table > tbody > tr:first", $form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
+
+            // datalist 元素用于搜索推荐
+            var listId = "mac_datalist";
+            if ($("#" + listId).length === 0) {
+                $("<datalist id='" + listId + "'></datalist>").appendTo("body");
+            }
+            $macInput.attr("list", listId); // 绑定输入框与下拉列表
+
+            // 异步获取数据并填充 datalist
+            he.load([object + '.stalist', 'client@station.list']).then(function(v) {
+                var list = v[0];
+                var clientlist = v[1] || {};
+                var $datalist = $("#" + listId).empty();
+                var deviceMap = {}; // 缓存详细数据，用于选中后查询
+
+                for (var mac in list) {
+                    var info = clientlist[mac] || {};
+                    var hostname = info.name || '';
+                    var label = mac + (hostname ? " (" + hostname + ")" : "");
+                    
+                    // 将数据存入 Map 结构，方便匹配
+                    deviceMap[mac] = {
+                        name: hostname,
+                        ip: info.ip || '',
+                        livetime: list[mac].livetime || '',
+                        rssi: list[mac].rssi || ''
+                    };
+
+                    // 添加到下拉选项 value 是填入框的值，label 是描述文案
+                    $("<option>").attr("value", mac).text(label).appendTo($datalist);
+                }
+
+                // 监听 mac 输入框的变化
+                // 当用户选择下拉项或输入时触发
+                $macInput.off("input.autocomplete").on("input.autocomplete", function() {
+                    var val = $(this).val();
+                    var data = deviceMap[val]; // 根据当前值匹配数据
+                    
+                    if (data) {
+                        // 如果匹配到 MAC，自动填充其他输入框
+                        $("#name", $form).val(data.name);
+                        $("#ip", $form).val(data.ip);
+                        $("#livetime", $form).val(data.livetime);
+                        $("#rssi", $form).val(data.rssi);
+                    }
+                });
+            });
+
+            // 设置 Placeholder
+            $macInput.attr("placeholder", $.i18n('Enter MAC Address'));
+            $("#name", $form).attr("placeholder", $.i18n('Enter Hostname'));
+            $("#ip", $form).attr("placeholder", $.i18n('Enter IP Address'));
+            $("#livetime", $form).attr("placeholder", $.i18n('Enter Time'));
+            $("#rssi", $form).attr("placeholder", $.i18n('Enter Rssi'));
+        }
+    };
+
+
     /* init */
     page.password('wpa_key', 'wpa_key-icon' );
     $.i18n().load( page.lang(langjson) ).then( function () {
       /* init the langauage */
-      $.i18n().locale = lang; $('body').i18n();
+      $.i18n().locale = lang; 
+      $('body').i18n();
+
+      //初始化表格
+      jqtable.create( '#acl-grid-table', '#acl-grid-pager',
+          {
+              caption: $.i18n('Station List'),
+              toolbar: [true, "top"],
+              colNames: [  $.i18n('MAC Address'), $.i18n('Hostname'), $.i18n('IP Address'), $.i18n('Live Time'), $.i18n('RSSI'),$.i18n('Operation') ],
+              colModel:
+              [
+                  {
+                      name:'mac', width:120, editable: true, 
+                      editrules:
+                      {
+                          required: true
+                      }
+                  },
+                  {
+                      name:'name', width:150, editable: true
+                  },
+                  {
+                      name:'ip', width:120, editable: true
+                  },
+                  {
+                      name:'livetime', width:120, editable: true
+                  },
+                  {
+                      name:'rssi', width:70, editable: true
+                  },
+                  {
+                      name:'mynav', width:70,
+                      fixed:true,
+                      sortable:false,
+                      resize:false,
+                      formatter:'actions'
+                  }
+              ],
+              pager: '#acl-grid-pager',
+              rowNum: 10,
+              viewrecords: true,
+
+              pgbuttons: true,
+              pagerpos:'center',
+              pginput:true,
+
+              autowidth:true,
+              loadonce:true,
+              shrinkToFit:true,
+              responsive:true,
+              
+          }
+      ).jqGrid( 'navGrid', '#acl-grid-pager',
+          $.extend(true, {}, jqtable.navOptions, 
+              {
+                  add: true,addicon : 'ace-icon fa fa-plus-circle purple',
+                  del: true,delicon : 'ace-icon fa fa-trash-o red',
+                  edit: true,editicon : 'ace-icon fa fa-pencil blue',
+                  search: false, refresh: false, view: false
+              }
+          ),
+          $.extend(true,{},jqtable.editOptions,customForm),
+          $.extend(true,{},jqtable.addOptions,customForm),
+          jqtable.deleteOptions
+      ).navButtonAdd( '#acl-grid-pager',
+          {
+              caption: $.i18n('Scan'),
+              title: $.i18n('Scan'),
+              buttonicon: 'ace-icon fa fa-users',
+              onClickButton: function()
+              {
+                  he.load( [ object+'.stalist', 'client@station.list' ] ).then( function(v){
+                      var list = v[0];
+                      clientlist = v[1];
+                      if ( !clientlist )
+                      {
+                          clientlist = {};
+                      }
+                      var count = 0;
+                      var rows = [];
+                      for ( var index in list )
+                      {
+                          var x = list[index];
+                          var info = clientlist[index];
+                          if ( info )
+                          {
+                              rows.push( { mac:index||'', name:info.name||'', ip:info.ip||'', livetime:x.livetime, rssi:x.rssi||'' } );
+                          }
+                          else
+                          {
+                              rows.push( { mac:index||'', name:'', ip:'', livetime:x.livetime||'', rssi:x.rssi||'' } );
+                          }
+                          count++;
+                      }
+                      
+                      // 表头设置为在线客户端的数量
+                      $('#stalist-grid-table').jqGrid( "setCaption", $.i18n('Station List') + '(' + count + ')' );
+                      // 给表格赋值
+                      $('#stalist-grid-table').jqGrid('clearGridData').jqGrid('setGridParam', {
+                          data: rows
+                      }).trigger('reloadGrid');
+                      // 显示对话框
+                      $('#modal-stalist').modal('show');
+                  });
+              }
+          }
+      );
+      //初始化扫描客户端表格
+      jqtable.create( '#stalist-grid-table', '#stalist-grid-pager',
+          {
+              caption: $.i18n('Station List'),
+              toolbar: [true, "top"],
+              colNames: [  $.i18n('MAC'), $.i18n('Hostname'), $.i18n('IP Address'), $.i18n('Live Time'), $.i18n('RSSI') ],
+              colModel:
+              [
+                  { name:'mac', width:120 },
+                  { name:'name', width:150 },
+                  { name:'ip', width:100 },
+                  { name:'livetime', width:100 },
+                  { name:'rssi', width:60 } 
+              ],
+            pager: '#stalist-grid-pager',
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
+          }
+      );
+      $('#add').on(ace.click_event, function () {
+          // 隐藏modal
+          $('#modal-stalist').modal('hide');
+          // 获取当前表内容
+          var existlist =  $('#acl-grid-table').jqGrid('getGridParam', 'data');
+          // acl表格的所有id
+          var ids= $('#acl-grid-table').jqGrid('getDataIDs');
+          // 新的id, acl表格最大的id加一
+          var newid = Math.max.apply(Math,ids) + 1;
+          // 选中的所有行的id
+          var selRows = $('#stalist-grid-table').jqGrid('getGridParam','selarrrow');
+          for (var key in selRows)
+          {
+              // 某个选中行的id
+              var id = selRows[key];
+              // 某个选中行的数据
+              var data = $('#stalist-grid-table').jqGrid('getRowData', id);
+              var had_exist = false;
+              for ( var index in existlist )
+              {
+                  var row = existlist[index];
+                  if( row.mac == data.mac )
+                  {
+                      had_exist = true;
+                  }
+              }
+              if( had_exist == false )
+              {
+                  // 将要添加到acl表的数据
+                  var newData = { mac: data.mac, name:data.name, ip:data.ip, livetime:data.livetime, rssi:data.rssi };
+                  // 添加到acl表
+                  $('#acl-grid-table').jqGrid('addRowData', newid++, newData, 'first');
+              }
+          }
+      });
+
+
+        var $toolbar = $("#t_" + "acl-grid-table");
+        $toolbar.append($('#grid-controls-acl').children());
+        $toolbar.css({
+            'display': 'flex',
+            'justify-content': 'space-between', // 撑开两端
+            'align-items': 'center',            // 垂直居中
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto',                   // 覆盖默认高度
+            //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+        });
+
+        var $toolbar = $("#t_" + "stalist-grid-table");
+        $toolbar.append($('#grid-controls2-modal').children());
+        $toolbar.css({
+            'display': 'flex',
+            'justify-content': 'space-between', // 撑开两端
+            'align-items': 'center',            // 垂直居中
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto',                   // 覆盖默认高度
+            //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+        });
+
+      $('#rowNums-acl').on('change',function(){
+                var newRowNum = parseInt($(this).val(),10);
+                $('#acl-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+
+        $('#rowNums-modal').on('change',function(){
+                var newRowNum = parseInt($(this).val(),10);
+                $('#stalist-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+
+
+       /* load the configure */
+      jqtable.create(  clients_table, clients_pager,
+        {
+            caption: ' ', // 必需设置值, 防止表格不能折叠
+            toolbar: [true, "top"],
+            multiselect: false,
+            colNames: [ $.i18n('Hostname'), $.i18n('MAC Address'), $.i18n('IP Address'), $.i18n('Live Time'), $.i18n('Rx/Tx'), $.i18n('RSSI'), $.i18n('Operation') ],
+            colModel: [
+                { name:'name', width:200, editable:true },
+                { name:'mac', width:120, editable:true, editrules:{ required:true } },
+                { name:'ip', width:110 },
+                { name:'livetime', width:90 },
+                { name:'rxtx', width:150 },
+                { name:'rssi', width:150 },
+                {
+                    name: 'wakeup', width: 80,
+                    fixed: true, sortable: false,
+                    formatter: function ( cellvalue, options, rowObject )
+                    {
+                        return '<button class="btn btn-warning btn-xs btn-choose" onclick="knock_client( ' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Knock') + '</button>'
+                    }
+                }
+            ],
+            pager: '#clients-grid-pager-wifi',
+            rowNum: 10,
+            viewrecords: true,
+
+            pgbuttons: true,
+            pagerpos:'center',
+            pginput:true,
+
+            autowidth:true,
+            loadonce:true,
+            shrinkToFit:true,
+            responsive:true,
+
+            // 当用户进行分页操作时触发
+            onPaging: function(pgButton) {
+                //console.log('用户操作分页，按钮:', pgButton);
+
+                // 如果用户输入页码
+                if (pgButton === 'user') {
+                    // 获取输入的页码
+                    var inputPage = null;
+                    var pagerInput = $(this).closest('.ui-jqgrid')
+                                .find('.ui-pg-table .ui-pg-input');
+        
+                    if (pagerInput.length > 0) {
+                        inputPage = parseInt(pagerInput.val(), 10);
+                        //console.log('获取到输入页码:', inputPage);
+                    }
+                        // 如果输入的是第一页，设置标记
+                        if (inputPage === 1) {
+                            //console.log('用户输入页码1 重启定时器');
+                            if (activeWifiTab === '#tab-clients') {
+                              startRefreshTimer('#tab-clients');
+                          }
+                        }
+                    }
+                    // 如果是点击第一页按钮
+                    else if (pgButton === 'first') {
+                        //console.log('点击第一页按钮 重启定时器');
+                        if (activeWifiTab === '#tab-clients') {
+                              startRefreshTimer('#tab-clients');
+                          }
+                    }
+                    // 如果是点击上一页按钮且当前在第二页
+                    else if (pgButton === 'prev') {
+                        var currentPage = $(this).getGridParam('page');
+                        if (currentPage === 2) {
+                            //console.log('从第二页点击上一页 重启定时器');
+                            if (activeWifiTab === '#tab-clients') {
+                              startRefreshTimer('#tab-clients');
+                          }
+                        }
+                    }
+                    
+                    return true;
+                },
+
+            gridComplete: function() {
+                // 绑定分页输入框事件
+                var pagerInput = $(this).closest('.ui-jqgrid')
+                                       .find('.ui-pg-table .ui-pg-input');
+                
+                if (pagerInput.length > 0) {
+                    // 焦点获得时暂停定时器
+                    pagerInput.on('focus', function() {
+                        //console.log('分页输入框获得焦点，暂停定时器');
+                        stopRefreshTimer();
+                        inputFocused = true;
+                    });
+                    
+                    // 焦点失去时处理
+                    pagerInput.on('blur', function() {
+                        //console.log('分页输入框失去焦点');
+                        inputFocused = false;
+                        
+                        setTimeout(function() {
+                            var currentPage = $(clients_table).getGridParam('page');
+                            //console.log('失去焦点后检查，当前页:', currentPage, '输入框焦点:', inputFocused);
+                            
+                            if (activeWifiTab === '#tab-clients' && currentPage === 1 && !inputFocused) {
+                                //console.log('在第一页且输入框无焦点，重启定时器');
+                                startRefreshTimer('#tab-clients');
+                            }
+                        }, 100);
+                    });
+                }
+                
+                // 检查是否应该重启定时器
+                var currentPage = $(this).getGridParam('page');
+                if (activeWifiTab === '#tab-clients' && currentPage === 1 && !inputFocused) {
+                    //console.log('在第一页且输入框无焦点，重启定时器');
+                    startRefreshTimer('#tab-clients');
+                }
+            },
+        }
+      );
+
+        var $toolbar = $("#t_" + clients_table.replace('#', ''));
+        $toolbar.append($('#grid-controls').children());
+        $toolbar.css({
+            'display': 'flex',
+            'justify-content': 'space-between', // 撑开两端
+            'align-items': 'center',            // 垂直居中
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto',                   // 覆盖默认高度
+            //'border-bottom': '1px solid #e1e1e1' // 加个分割线
+        });
+
+      $('#rowNums').on('change',function(){
+            var newRowNum = parseInt($(this).val(),10);
+            $(clients_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        });
+
       /* load the configure */
       cfg_load();
+      wifiacl_load();
+      /*
+      * 初始化当前 tab
+      */
+      activeWifiTab = $('#ssid_cfg .nav-tabs li.active a').attr('href') || '#tab-ssid';
+
+      if (activeWifiTab === '#tab-clients') {
+          load_clients(true);
+          startRefreshTimer('#tab-clients');
+      } else {
+          stopRefreshTimer();
+      }
+
+      /*
+      * 切换 tab 时，只启动当前 tab 的刷新
+      */
+      $('#ssid_cfg a[data-toggle="tab"]').off('shown.bs.tab.wifiRefresh').on('shown.bs.tab.wifiRefresh', function(e) {
+          activeWifiTab = $(e.target).attr('href');
+
+          stopRefreshTimer();
+
+          if (activeWifiTab === '#tab-clients') {
+              setTimeout(function() {
+                  if ($(clients_table)[0] && $(clients_table)[0].grid) {
+                      $(clients_table).jqGrid('setGridWidth', $('#tab-clients').width());
+                  }
+
+                  load_clients(true);
+                  startRefreshTimer('#tab-clients');
+              }, 100);
+          } 
+      });
+
+      // 浏览器刷新前保存当前 tab
+      $(window).off('beforeunload.wifiTab').on('beforeunload.wifiTab', function () {
+          var currentTab = $('#ssid_cfg .nav-tabs li.active a').attr('href') || '#tab-ssid';
+          sessionStorage.setItem(wifiTabStorageKey, currentTab);
+      });
+
+      // 页面加载后恢复 tab
+      var savedTab = sessionStorage.getItem(wifiTabStorageKey);
+      if (savedTab) {
+          var $tab = $('#ssid_cfg a[href="' + savedTab + '"]');
+          if ($tab.length) {
+              $tab.tab('show');
+          }
+      }
+      // 初始启动定时器
+      // startRefreshTimer();
+
       /* bind the refresh */
       $('#refresh').on(ace.click_event, function () {
+        var activeTab = $('#ssid_cfg .nav-tabs li.active a').attr('href') || '#tab-ssid';
+        sessionStorage.setItem('wifi_active_tab', activeTab);
         location.reload();
       });
       /* bind the apply */
@@ -642,4 +1517,25 @@
     });
 
   })();
+
+  /* 必须在全局中才可以被调用到 */
+  function knock_client(  rowId )
+  {
+    // 某个选中行的数据
+    var client = $('#clients-grid-table-wifi').jqGrid( 'getRowData', rowId );
+    var mac = client.mac;
+    // 执行唤醒
+    he.exec( [ knock_object+".stabeat["+mac+"]" ], $.i18n("Waking up") ).then( function(v){
+        var ret = v[0];
+        if ( ret == true )
+        {
+            page.alert( { message: $.i18n('Knock it succeed'), callback: function( result ){location.reload();} } );
+        }
+        else
+        {
+            page.alert( { message: $.i18n('Knock it failed') } );
+        }
+    });
+  }
+
 </script>

@@ -101,7 +101,19 @@ jQuery(function($) {
 					}
 					else
 					{
-						page.alert( { message:$.i18n('Incorrect password') } ).then( function(){ window.location.href = 'login.html'; } );
+						page.alert( { message:$.i18n('Incorrect password') } ).then( function()
+						{ window.location.href = 'login.html'; } );
+						// 弹窗出来后，监听回车键
+						setTimeout(function() {
+							$(document).off('keydown.incorrectPassword').on('keydown.incorrectPassword', function(e) {
+								if (e.key === 'Enter' || e.keyCode === 13) {
+									e.preventDefault();
+
+									$(document).off('keydown.incorrectPassword');
+									window.location.href = 'login.html';
+								}
+							});
+						}, 200);
 					}
 	            }
 	        }

@@ -91,7 +91,7 @@
             {
                 name: name,
                 call: rule.call || '',
-                joint: rule.joint || ''
+                level: rule.level || ''
             };
             rows.push(row);
         }
@@ -108,7 +108,7 @@
         cmd += 'land@joint.add[';
         cmd += (rule.name + ',');
         cmd += (rule.call + ',');
-        cmd += (rule.joint + ']');
+        cmd += (rule.level + ']');
 
         // 执行添加
         he.exec( [ cmd ] ).then(function () {
@@ -126,7 +126,7 @@
         cmd += 'land@joint.add[';
         cmd += (rule.name + ',');
         cmd += (rule.call + ',');
-        cmd += (rule.joint + ']');
+        cmd += (rule.level + ']');
       
         // 执行添加
         he.exec( [ cmd ] ).then(function () {
@@ -172,7 +172,7 @@
         {
             caption: $.i18n('Joint Table'),
             toolbar: [true, "top"],
-            colNames:[ $.i18n('Name(unique)'), $.i18n('Call'), $.i18n('Joint'), $.i18n('Operation') ],
+            colNames:[ $.i18n('Name(unique)'), $.i18n('Call'), $.i18n('Level'), $.i18n('Operation') ],
             colModel:
             [
                 {
@@ -192,7 +192,7 @@
                     }
                 },
                 {
-                    name: 'joint',
+                    name: 'level',
                     width: 150,
                     editable: true,
                     formatter: 'select',
@@ -259,7 +259,7 @@
                 // 添加自定义样式和提示
                     $("label[for='name']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
                     $("label[for='call']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
-                    $("label[for='joint']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
+                    $("label[for='level']", form).append('<span style="color: red; margin-left: 3px;">*</span>');
 
                     var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
                         '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +

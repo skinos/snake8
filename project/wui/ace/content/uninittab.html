@@ -58,7 +58,7 @@
     /* load the configure on the input */
     function rule_load()
     {
-      he.load( [ 'land@uninit' ] ).then( function(v){
+      he.load( [ 'land@uninit:list' ] ).then( function(v){
         rule_status = v[0];
         if ( !rule_status )
         {
