@@ -5,14 +5,22 @@
 **/.vscode/
 
 /core/
-/project/agent/
-/project/client/
-/project/forward/
-/project/land/
-/project/modem/
-/project/network/
-/project/uart/
-/project/webs/
+/project/agent/*
+!/project/agent/.gitignore
+/project/client/*
+!/project/client/.gitignore
+/project/forward/*
+!/project/forward/.gitignore
+/project/land/*
+!/project/land/.gitignore
+/project/modem/*
+!/project/modem/.gitignore
+/project/network/*
+!/project/network/.gitignore
+/project/uart/*
+!/project/uart/.gitignore
+/project/webs/*
+!/project/webs/.gitignore
 /tools/fpktools/
 /project/wui/ace/arch
 /rice/
@@ -54,4 +62,8 @@
 /config/rock/dl/
 /config/rock/repo.config
 
-
+!/project/storage/.gitignore
+!/project/tmptools/.gitignore
+!/project/tui/.gitignore
+!/project/wifi/.gitignore
+!/project/wui/.gitignore
