@@ -214,5 +214,10 @@
     "Modify successfully": "Modified successfully",
     "AP List": "AP List",
     "Signal": "Signal",
-    "Scanning": "Scanning"
+    "Scanning": "Scanning",
+    
+    "SSID Setup":"SSID Setup",
+    "Advanced Setup":"Advanced Setup",
+    "ACL Setup":"ACL Setup",
+    "Clients Table":"Clients Table"
 }

@@ -14,5 +14,12 @@
   "Available":"Available",
   "Size":"Size",
   "Free":"Free",
-  "Internal":"Internal"
+  "Internal":"Internal",
+  "oem": "OEM",
+  "config": "Config",
+  "internal": "Internal",
+  "CPU0": "CPU0",
+  "CPU1": "CPU1",
+  "CPU2": "CPU2",
+  "CPU3": "CPU3"
 }

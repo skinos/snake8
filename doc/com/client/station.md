@@ -2,6 +2,10 @@
 Management of all local client  
 Shows **who is on the LAN**: which devices are online, names from DHCP where available, and your saved per-MAC settings (nickname, fixed IP, etc.). **`list`** returns this combined view. Notifications when a client appears or leaves are under **Joint Events** below.
 
+### UI Routing Parameter
+- `station.html` requires URL hash parameter `mac` (for example: `#app?page=.../station.html&mac=00:11:22:33:44:55&lang=...`).
+- The value is the selected row's MAC from `list.html`. If `mac` is missing, the page returns early and cannot load or delete that client record.
+
 ### Configuration ( `client@station` )
 ```json
 // Attributes introduction 

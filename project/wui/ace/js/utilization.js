@@ -230,7 +230,7 @@ function sg_show(storageGroups) {
         percentElement.textContent = usage;
 
         availableElement.textContent = info.available || '0';
-        usedElement.textContent = name;
+        usedElement.textContent = $.i18n ? $.i18n(name) : name;
         sizeElement.textContent = info.size || '0';
         freeElement.textContent = free;
         

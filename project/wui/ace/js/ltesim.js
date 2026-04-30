@@ -1,6 +1,7 @@
 var lte;
-var modem = page.param('modem', location.hash);   
-var ifname = page.param('object', location.hash);
+var modem = page.param('modem', location.hash);
+/* Same target as lte.js TabManager: hash wins, then session default from parent page */
+var object = page.param('object', location.hash)  || 'ifname@lte';
 
 function lte_sim() {
     window.LteConfigManager.loadStatus(object, true).then(function(v) {
@@ -132,6 +133,7 @@ function sim_save()
           lte.bsim_cfg.failed_threshold3 = $('#failed_threshold3_sim').val();
           lte.bsim_cfg.failed_everytime = $('#failed_everytime_sim').val();
 
+          /* failover / keeplive_switch: bsim_cfg fields used regardless of mode (lte.md) */
           lte.bsim_cfg.failover = $('#failover').val();
           lte.bsim_cfg.keeplive_switch = boole2able( $('#keeplive_switch').prop('checked') );
       }

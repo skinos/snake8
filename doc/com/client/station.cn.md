@@ -2,6 +2,10 @@
 管理所有本地客户端  
 显示 **谁在局域网上**：哪些设备在线，可用时显示来自 DHCP 的名称，以及您保存的每个 MAC 的设置（昵称、固定 IP 等）。**`list`** 返回此组合视图。客户端出现或离开时的通知请参见下方的 **Joint 事件**。
 
+### UI 路由参数
+- `station.html` 依赖 URL hash 参数 `mac`（例如：`#app?page=.../station.html&mac=00:11:22:33:44:55&lang=...`）。
+- 该值来自 `list.html` 当前行的 MAC。若 `mac` 缺失，页面会直接返回，无法加载或删除该客户端记录。
+
 ### 配置 ( `client@station` )
 ```json
 // Attributes introduction 

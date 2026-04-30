@@ -13,5 +13,12 @@
     "Memory Total": "内存总计",
     "Size": "大小",
     "Storage": "外部存储",
-    "Type": "类型"
+    "Type": "类型",
+    "oem": "OEM区",
+    "config": "配置区",
+    "internal": "存储区",
+    "CPU0": "核心0",
+    "CPU1": "核心1",
+    "CPU2": "核心2",
+    "CPU3": "核心3"
 }

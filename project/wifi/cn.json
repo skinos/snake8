@@ -259,7 +259,11 @@
 	"AP Client":"AP客户端",
 	"must be a valid MAC address":"必须是合法的MAC地址",
 	"Can not be empty":"不能为空",
-	"Modify successfully":"修改成功"
+	"Modify successfully":"修改成功",
 	
+	"SSID Setup":"热点设置",
+    "Advanced Setup":"高级设置",
+    "ACL Setup":"访问控制",
+    "Clients Table":"终端列表"
 
 }

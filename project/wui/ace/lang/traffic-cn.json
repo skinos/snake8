@@ -14,7 +14,7 @@
     "Rx/Tx": "收/发",
     "TX byte": "发送字节",
     "Display": "显示",
-    "This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray.": "该表显示了所有已连接的客户端，在线客户端显示在顶部，离线客户端显示为灰色。",
+    "This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray.": "该表显示了所有已连接的客户端，在线客户端显示在顶部，离线客户端显示为灰色",
     "ifname@lan Speed": "本地网络速率",
     "ifname@lan2 Speed": "本地网络2速率",
     "ifname@lan3 Speed": "本地网络4速率",

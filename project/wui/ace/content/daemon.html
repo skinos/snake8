@@ -24,7 +24,7 @@
     </div>
 
 
-      <div class="clearfix form-actions">
+      <div class="clearfix form-actions" id="service_button" style="display: none;">
         <div class="col-md-offset-3 col-md-9">
           <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
         </div>
@@ -52,6 +52,7 @@
         {
             return;
         }
+        $("#service_button").show();
         // 表格的所有行数据
         var count = 0;
         var rows = [];
