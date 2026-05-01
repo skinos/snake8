@@ -15,7 +15,7 @@
     "ifname@lan4 Speed": "LAN4 Speed",
     "wifi@nssid Speed": "2.4G SSID Speed",
     "wifi@assid Speed": "5.8G SSID Speed",
-    "Connected Clients": "Connected Clients",
+    "Clients Table": "Clients Table",
     "Enter Hostname": "Enter hostname",
     "Enter MAC Address": "Enter MAC Address",
     "Fields marked with * are required": "Fields marked with * are required",

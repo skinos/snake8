@@ -588,7 +588,7 @@ var clients_pager = '#clients-grid-pager';
                 }
             }
             // 表头设置为在线客户端的数量
-            $(clients_table).jqGrid( "setCaption", '<i class="ace-icon fa fa-users"></i> ' + $.i18n('Connected Clients') + ' (' + count + ')' );
+            $(clients_table).jqGrid( "setCaption", '<i class="ace-icon fa fa-users"></i> ' + $.i18n('Clients Table') + ' (' + count + ')' );
             // 记住滚动条的位置
             var scrollPos = jqtable.getScrollPos();
             // 获取当前分页状态
