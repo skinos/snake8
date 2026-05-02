@@ -869,6 +869,13 @@ function wifi_24g(info) {
     $("#wifi_24g_ssid").text(info.ssid || "");
     $("#wifi_24g_bssid").text(info.bssid || "");
     $("#wifi_24g_channel").text(info.channel || "");
+    $("#wifi_24g_secure").text($.i18n(info.secure) || "");
+
+    // 流量统计
+    $("#wifi_24g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+    $("#wifi_24g_packets").text(byte2readable(info.rx_packets || "0") + " / " + byte2readable(info.tx_packets || "0"));
+    $("#wifi_24g_drops").text(byte2readable(info.rx_drops || "0") + " / " + byte2readable(info.tx_drops || "0"));
+    $("#wifi_24g_errs").text(byte2readable(info.rx_errs || "0") + " / " + byte2readable(info.tx_errs|| "0"));
 }
 
 function wifi_58g(info) {
@@ -880,6 +887,13 @@ function wifi_58g(info) {
     $("#wifi_58g_ssid").text(info.ssid || "");
     $("#wifi_58g_bssid").text(info.bssid || "");
     $("#wifi_58g_channel").text(info.channel || "");
+    $("#wifi_58g_secure").text($.i18n(info.secure) || "");
+
+    // 流量统计
+    $("#wifi_58g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
+    $("#wifi_58g_packets").text(byte2readable(info.rx_packets || "0") + " / " + byte2readable(info.tx_packets || "0"));
+    $("#wifi_58g_drops").text(byte2readable(info.rx_drops || "0") + " / " + byte2readable(info.tx_drops || "0"));
+    $("#wifi_58g_errs").text(byte2readable(info.rx_errs || "0") + " / " + byte2readable(info.tx_errs|| "0"));
 }
 
 function createPortItem(index, name, value, phyStatus) {  
