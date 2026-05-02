@@ -8,7 +8,7 @@
     "Channel": "信道",
     "Online Time": "在线时长",
     "Rate": "速率",
-    "Rx/Tx": "收/发",
+    "Rx/Tx": "收/发(字节)",
     "MAC Address": "MAC地址",
     "Lock": "锁定",
     "Security Mode": "安全模式",

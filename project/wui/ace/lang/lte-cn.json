@@ -33,7 +33,7 @@
     "unspecified": "未指定",
     "RSSI": "信号强度",
     "Online Time": "在线时长",
-    "Rx/Tx": "收/发",
+    "Rx/Tx": "收/发(字节)",
     "Delay": "延迟",
     "failed": "访问失败",
     "block": "暂未通信",

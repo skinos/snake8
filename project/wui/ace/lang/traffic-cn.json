@@ -11,7 +11,7 @@
     "Live Time": "在线时长",
     "MAC Address": "MAC地址",
     "RX byte": "接收字节",
-    "Rx/Tx": "收/发",
+    "Rx/Tx": "收/发(字节)",
     "TX byte": "发送字节",
     "Display": "显示",
     "This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray.": "该表显示了所有已连接的客户端，在线客户端显示在顶部，离线客户端显示为灰色",

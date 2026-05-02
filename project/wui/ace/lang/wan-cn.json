@@ -6,7 +6,7 @@
     "up": "连接成功",
     "nodevice": "无基带",
     "RSSI": "信号强度",
-    "Rx/Tx": "收/发",
+    "Rx/Tx": "收/发(字节)",
     "Online Time": "在线时长",
     "Live Time": "在线时长",
     "Channel": "信道",
