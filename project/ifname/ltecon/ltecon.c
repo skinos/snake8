@@ -1735,7 +1735,7 @@ boole_t _online( obj_t this, param_t param )
 	/* tell the ifdev */
 	if ( ifdev != NULL )
 	{
-		scalls( ifdev, "online", object );
+		scallst( ifdev, "online", object, v );
 		scalls( GPIO_COM, "action", "network/online,%s", ifdev );
 	}
 

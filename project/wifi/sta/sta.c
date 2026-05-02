@@ -599,8 +599,9 @@ boole_t _up( obj_t this, param_t param )
 	{
 		write( fd, ptr, strlen(ptr) );
 	}
-	talk_free( cfg );
 	lock_close( fd );
+
+	talk_free( cfg );
 	return ttrue;
 }
 boole_t _connect( obj_t this, param_t param )
@@ -632,7 +633,7 @@ boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
 	const char *netdev;
-    char path[PATH_MAX];
+	char path[PATH_MAX];
 
 	object = obj_name( this );
 	/* get the netdev */
@@ -641,18 +642,20 @@ boole_t _down( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
+
 	/* delete the keeplive */
 	sdelete( "%s-keeplive", netdev );
 	/* delete the relayd */
 	sdelete( "%s-relayd", netdev );
 	/* delete wpa_supplicant */
 	sdelete( "%s-wpa", netdev );
-    /* down the device */
+	/* down the device */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
 		wifi_debug( "%s(%s) down", object, netdev );
 		ifconfig( "%s down", netdev );
 	}
+
 	/* delete the mark file */
 	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
 	unlink( path );
@@ -1283,6 +1286,7 @@ boole_t _keeplive( obj_t this, param_t param )
 	ifname = reg_string( this, "ifname" );
 	/* get the ssid_disable */
 	nossid = reg_string( this, "nossid" );
+
     /* first check */
     wifi_debug( "check %s(%s) connect state", object, netdev );
     for ( i=0; i<90; i++ )

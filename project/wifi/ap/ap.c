@@ -166,7 +166,7 @@ boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
 	const char *netdev;
-    char path[PATH_MAX];
+	char path[PATH_MAX];
 
 	object = obj_name( this );
 	netdev = reg_string( this, "netdev" );
@@ -182,7 +182,7 @@ boole_t _down( obj_t this, param_t param )
     /* down the device */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
-		wifi_info( "%s(%s) down", object, netdev );
+		wifi_debug( "%s(%s) down", object, netdev );
 		if ( netdev_flags( netdev, IFF_UP ) > 0 )
 		{
 			ifconfig( "%s down", netdev );
@@ -199,10 +199,10 @@ talk_t _status( obj_t this, param_t param )
 	talk_t ret;
 	talk_t cfg;
 	const char *netdev;
-    char mac[NAME_MAX];
-    char path[PATH_MAX];
-    char buffer[NAME_MAX];
-    unsigned long long rt_bytes, rt_packets, rt_errs, rt_drops, tt_bytes, tt_packets, tt_errs, tt_drops;
+	char mac[NAME_MAX];
+	char path[PATH_MAX];
+	char buffer[NAME_MAX];
+	unsigned long long rt_bytes, rt_packets, rt_errs, rt_drops, tt_bytes, tt_packets, tt_errs, tt_drops;
 
 	/* get the configure */
 	netdev = reg_string( this, "netdev" );
@@ -216,7 +216,7 @@ talk_t _status( obj_t this, param_t param )
 		return NULL;
 	}
 
-    ret = json_create( NULL );
+	ret = json_create( NULL );
 	/* get the state */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) <= 0 )
 	{
@@ -232,39 +232,39 @@ talk_t _status( obj_t this, param_t param )
 		return ret;
 	}
 	json_set_string( ret, "status", "up" );
-    /* get the secure mode */
-    json_set_string( ret, "secure", json_string( cfg, "secure" ) );
-    /* rx/tx flow counters */
-    rt_bytes = rt_packets = rt_errs = rt_drops = tt_bytes = tt_packets = tt_errs = tt_drops = 0;
-    netdev_flew( netdev, &rt_bytes, &rt_packets, &rt_errs, &rt_drops, &tt_bytes, &tt_packets, &tt_errs, &tt_drops );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_bytes );
-    json_set_string( ret, "rx_bytes", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_packets );
-    json_set_string( ret, "rx_packets", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_errs );
-    json_set_string( ret, "rx_errs", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", rt_drops );
-    json_set_string( ret, "rx_drops", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_bytes );
-    json_set_string( ret, "tx_bytes", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_packets );
-    json_set_string( ret, "tx_packets", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_errs );
-    json_set_string( ret, "tx_errs", buffer );
-    snprintf( buffer, sizeof(buffer), "%llu", tt_drops );
-    json_set_string( ret, "tx_drops", buffer );
-    /* get the mac */
-    if ( netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) ) == 0 )
+	/* get the secure mode */
+	json_set_string( ret, "secure", json_string( cfg, "secure" ) );
+	/* rx/tx flow counters */
+	rt_bytes = rt_packets = rt_errs = rt_drops = tt_bytes = tt_packets = tt_errs = tt_drops = 0;
+	netdev_flew( netdev, &rt_bytes, &rt_packets, &rt_errs, &rt_drops, &tt_bytes, &tt_packets, &tt_errs, &tt_drops );
+	snprintf( buffer, sizeof(buffer), "%llu", rt_bytes );
+	json_set_string( ret, "rx_bytes", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", rt_packets );
+	json_set_string( ret, "rx_packets", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", rt_errs );
+	json_set_string( ret, "rx_errs", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", rt_drops );
+	json_set_string( ret, "rx_drops", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", tt_bytes );
+	json_set_string( ret, "tx_bytes", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", tt_packets );
+	json_set_string( ret, "tx_packets", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", tt_errs );
+	json_set_string( ret, "tx_errs", buffer );
+	snprintf( buffer, sizeof(buffer), "%llu", tt_drops );
+	json_set_string( ret, "tx_drops", buffer );
+	/* get the mac */
+	if ( netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) ) == 0 )
 	{
 		json_set_string( ret, "mac", mac );
 	}
-    /* get uptime and livetime_string */
+	/* get uptime and livetime_string */
 	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-    if ( file2string( path, buffer, sizeof(buffer) ) > 0 )
-    {
-        json_set_string( ret, "ontime", buffer );
-        json_set_string( ret, "livetime", livetime_desc( atoi(buffer), path, sizeof(path) ) );
-    }
+	if ( file2string( path, buffer, sizeof(buffer) ) > 0 )
+	{
+		json_set_string( ret, "ontime", buffer );
+		json_set_string( ret, "livetime", livetime_desc( atoi(buffer), path, sizeof(path) ) );
+	}
 
 	{
 		FILE *fp;
@@ -409,7 +409,32 @@ talk_t _stalist( obj_t this, param_t param )
 }
 boole_t _stabeat( obj_t this, param_t param )
 {
-    return tfalse;
+	const char *mac;
+	const char *landev;
+	const char *netdev;
+
+	netdev = reg_string( this, "netdev" );
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		return tfalse;
+	}
+	/* get the mac */
+	mac = param_string( param, 1 );
+	if ( mac == NULL )
+	{
+		return tfalse;
+	}
+
+	/* beat it */
+	shell( "iw dev %s station del %s", netdev, mac );
+	/* clear the arp table */
+	landev = reg_string( NULL, "local_netdev" );
+	if ( landev != NULL && *landev != '\0' )
+	{
+		shell( "ip neigh flush dev %s", landev );
+	}
+
+	return ttrue;
 }
 
 
