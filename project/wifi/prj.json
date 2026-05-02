@@ -48,14 +48,6 @@
                 "mwm":"disable"
             }
         },
-        "nclient":
-        {
-            "menu":"Wireless",
-            "cn":"2.4G客户端",
-            "en":"2.4G Clients",
-            "page":"client.html",
-            "object":"wifi@n"
-        },
 
         "aradio":
         {
@@ -86,14 +78,6 @@
                 "dwisp":"disable",
                 "mwm":"disable"
             }
-        },
-        "aclient":
-        {
-            "menu":"Wireless",
-            "cn":"5.8G客户端",
-            "en":"5.8G Clients",
-            "page":"client.html",
-            "object":"wifi@a"
         }
 
     }
