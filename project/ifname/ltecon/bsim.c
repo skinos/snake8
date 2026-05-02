@@ -477,45 +477,48 @@ simagain:
 						break;
 					}
 				}
-				if ( v == terror )
-				{
-					ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
-					talk_free( cfg );
-					return terror;
-				}
-				else if ( v > tpanic )
-				{
-					ptr = x2string( v );
-					if ( ptr != NULL )
-					{
-						strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
-						plmn_string[sizeof(plmn_string) - 1] = '\0';
-					}
-					talk_free( v );
-				}
 				else
 				{
-					ifname_info( obj, "%s plmn failed %d/%d", object, check, failed_timeout );
-				}
-				if ( ret == terror )
-				{
-					ifname_warn( obj, "%s ifdev %s not work when signal", object, ifdev );
-					talk_free( cfg );
-					return terror;
-				}
-				else if ( ret > tpanic )
-				{
-					ptr = x2string( ret );
-					if ( ptr != NULL )
+					if ( v == terror )
 					{
-						strncpy( signal_string, ptr, sizeof(signal_string) - 1 );
-						signal_string[sizeof(signal_string) - 1] = '\0';
+						ifname_warn( obj, "%s ifdev %s not work when plmn", object, ifdev );
+						talk_free( cfg );
+						return terror;
 					}
-					talk_free( ret );
-				}
-				else
-				{
-					ifname_info( obj, "%s signal failed %d/%d", object, check, failed_timeout );
+					else if ( v > tpanic )
+					{
+						ptr = x2string( v );
+						if ( ptr != NULL )
+						{
+							strncpy( plmn_string, ptr, sizeof(plmn_string) - 1 );
+							plmn_string[sizeof(plmn_string) - 1] = '\0';
+						}
+						talk_free( v );
+					}
+					else
+					{
+						ifname_info( obj, "%s plmn failed %d/%d", object, check, failed_timeout );
+					}
+					if ( ret == terror )
+					{
+						ifname_warn( obj, "%s ifdev %s not work when signal", object, ifdev );
+						talk_free( cfg );
+						return terror;
+					}
+					else if ( ret > tpanic )
+					{
+						ptr = x2string( ret );
+						if ( ptr != NULL )
+						{
+							strncpy( signal_string, ptr, sizeof(signal_string) - 1 );
+							signal_string[sizeof(signal_string) - 1] = '\0';
+						}
+						talk_free( ret );
+					}
+					else
+					{
+						ifname_info( obj, "%s signal failed %d/%d", object, check, failed_timeout );
+					}
 				}
 			}
 			sleep( 1 );

@@ -195,7 +195,7 @@ boole_t _service( obj_t this, param_t param )
 	/********** get the infomation ***********/
 	/*****************************************/
     /* get the ifdev */
-	ifdev = register_pointer( this, "ifdev" );
+	ifdev = reg_string( this, "ifdev" );
     if ( ifdev == NULL || *ifdev == '\0' )
     {
 		ifname_fault( obj, "%s cannot find ifdev", object );
