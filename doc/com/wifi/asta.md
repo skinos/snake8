@@ -7,7 +7,7 @@ Manage 5.8G Station
 // Attribute introduction
 {
     "status":"enable or  disable the function",     // [ "enable", "disable" ]
-    "ssid_disable":"disable the ssid",              // [ "disable", "enable" ], disable the local ssid when connected
+    "nossid":"disable the ssid",                    // [ "disable", "enable" ], disable the local ssid when connected
 
     // wireless connect first peer
     "peer":"SSID to connect",              // [ string ]
@@ -37,9 +37,9 @@ Manage 5.8G Station
                                                             // [ aes ] for AES
                                                             // [ tkip ] for TKIP
                                                             // [ tkipaes ] for auto
-    "wpa_key3":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+    "wpa_key2":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
 
-    // wireless connect second peer
+    // wireless connect third peer
     "peer3":"SSID3 to connect",            // [ string ]
     "peermac3":"BSSID to connect",         // [ mac address ]
     "peermode3":"mode of connection",      // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
