@@ -873,9 +873,9 @@ function wifi_24g(info) {
 
     // 流量统计
     $("#wifi_24g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
-    $("#wifi_24g_packets").text(byte2readable(info.rx_packets || "0") + " / " + byte2readable(info.tx_packets || "0"));
-    $("#wifi_24g_drops").text(byte2readable(info.rx_drops || "0") + " / " + byte2readable(info.tx_drops || "0"));
-    $("#wifi_24g_errs").text(byte2readable(info.rx_errs || "0") + " / " + byte2readable(info.tx_errs|| "0"));
+    $("#wifi_24g_packets").text((info.rx_packets ?? "0") + " / " + (info.tx_packets ?? "0"));
+    $("#wifi_24g_drops").text((info.rx_drops ?? "0") + " / " + (info.tx_drops ?? "0"));
+    $("#wifi_24g_errs").text((info.rx_errs ?? "0") + " / " + (info.tx_errs ?? "0"));
 }
 
 function wifi_58g(info) {
@@ -888,12 +888,31 @@ function wifi_58g(info) {
     $("#wifi_58g_bssid").text(info.bssid || "");
     $("#wifi_58g_channel").text(info.channel || "");
     $("#wifi_58g_secure").text($.i18n(info.secure) || "");
-
+    
     // 流量统计
     $("#wifi_58g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
-    $("#wifi_58g_packets").text(byte2readable(info.rx_packets || "0") + " / " + byte2readable(info.tx_packets || "0"));
-    $("#wifi_58g_drops").text(byte2readable(info.rx_drops || "0") + " / " + byte2readable(info.tx_drops || "0"));
-    $("#wifi_58g_errs").text(byte2readable(info.rx_errs || "0") + " / " + byte2readable(info.tx_errs|| "0"));
+    $("#wifi_58g_packets").text((info.rx_packets ?? "0") + " / " + (info.tx_packets ?? "0"));
+    $("#wifi_58g_drops").text((info.rx_drops ?? "0") + " / " + (info.tx_drops ?? "0"));
+    $("#wifi_58g_errs").text((info.rx_errs ?? "0") + " / " + (info.tx_errs ?? "0"));
+}
+
+// wifi按钮跳转到radio.html
+function getWifiLangJson() {
+    var language = window.lang || 'cn';
+    return '/skinos/wifi/' + language + '.json';
+}
+
+function buildWifiRadioLink(objectName) {
+    var link = '#app?page=' + base64.encode('/skinos/wifi/radio.html');
+    link += '&object=' + objectName;
+    link += '&lang=' + base64.encode(getWifiLangJson());
+
+    return link;
+}
+
+function setupWifiRadioLinks() {
+    $('#wifi_24g_setup').attr('href', buildWifiRadioLink('wifi@n'));
+    $('#wifi_58g_setup').attr('href', buildWifiRadioLink('wifi@a'));
 }
 
 function createPortItem(index, name, value, phyStatus) {  
@@ -1177,6 +1196,8 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     
     /* button bind */
     bindButtonEvents();
+
+    setupWifiRadioLinks();
 
     preloadCompactPortIcons();
 
