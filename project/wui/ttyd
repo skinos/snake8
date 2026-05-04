@@ -14,7 +14,6 @@ port()
     if [ ! -x "$TTYD" ]; then
         creturn NULL
     fi
-    echo $TTYD_PORT
     creturn $TTYD_PORT
 }
 
@@ -25,6 +24,7 @@ setup()
         creturn ttrue
     fi
     /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
+    sleep 1
     creturn ttrue
 }
 shut()
@@ -39,7 +39,7 @@ service()
         creturn terror
     fi
     logger "ttyd running: $TTYD -p $TTYD_PORT"
-    exec $TTYD -p $TTYD_PORT /usr/bin/eline
+    exec $TTYD -W -p $TTYD_PORT /usr/bin/eline
     creturn tfalse
 }
 
