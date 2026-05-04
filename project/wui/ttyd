@@ -1,0 +1,24 @@
+#!/bin/sh
+# Copyright (C) 2020-2022 ASHYELF
+# include fundamental function support, you cannot delete this
+. $cheader
+
+TTYD=$(which ttyd 2>/dev/null) || true
+[ -z "$TTYD" ] && TTYD="/usr/sbin/ttyd"
+TTYD_PORT=$(he wui@admin:ttydport 2>/dev/null)
+[ -z "$TTYD_PORT" ] && TTYD_PORT="81"
+
+he()
+{
+    if [ ! -x "$TTYD" ]; then
+        logger "ttyd not found: $TTYD"
+        creturn tfalse
+    fi
+    killall -9 ttyd
+    $TTYD -p $TTYD_PORT /usr/bin/eline > /dev/null 2>&1 &
+    creturn ttrue
+}
+
+# call the method, you cannot delete this
+cend
+

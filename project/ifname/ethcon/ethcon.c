@@ -1029,7 +1029,7 @@ boole_t _online( obj_t this, param_t param )
 		}
 		reg_set_string( this, "custom_dns", "disable" );
 	}
-	if ( dns != NULL && *dns != '\0' )
+    if ( dns != NULL && *dns != '\0' && 0 != strcmp( dns, "0.0.0.0" ) )
 	{
 		string3file( path, "nameserver %s\n", dns );
 		if ( gateway == NULL || 0 != strcmp( gateway, dns ) )
@@ -1038,7 +1038,7 @@ boole_t _online( obj_t this, param_t param )
 		}
 	}
 	reg_set_string( this, "dns", dns );
-	if ( dns2 != NULL && *dns2 != '\0' )
+    if ( dns2 != NULL && *dns2 != '\0' && 0 != strcmp( dns2, "0.0.0.0" ) )
 	{
 		string3file( path, "nameserver %s\n", dns2 );
 		if ( gateway == NULL || 0 != strcmp( gateway, dns2 ) )
@@ -1097,7 +1097,7 @@ boole_t _online( obj_t this, param_t param )
 		ptr = json_string( value, "txqueuelen" );
 		if ( ptr == NULL || *ptr == '\0' )
 		{
-			ptr = "500";
+			ptr = "1000";
 		}
 		txqueue_set_ifname( object, netdev, ptr );
 	}

@@ -89,6 +89,7 @@ typedef atcmd_st* atcmd_t;
 /* checking completeness the ack of at command */
 #define INTACT_FAILED      0x00
 #define INTACT_SUCCEED     0x01
+extern int PARSE_creg_code;
 int INTACT_OK( void *ctx, talk_t state, talk_t cfg );
 int INTACT_LINE( void *ctx, talk_t state, talk_t cfg );
 int INTACT_LINE2( void *ctx, talk_t state, talk_t cfg );

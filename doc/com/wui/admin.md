@@ -9,7 +9,7 @@ Administration of equipment Management web page. The admin web stack is configur
 
     "port":"service port",                  // [ number ], 1-65535; omit or 0 = no plain HTTP listener
     "sslport":"https port",                 // [ number ], 1-65535; omit or 0 = no HTTPS listener
-    "termport":"Terminal port",             // [ number ], 1-65535, default is 81
+    "ttydport":"Terminal ttyd port",        // [ number ], 1-65535, default is 81
     "session_timeout":"session timeout",    // [ number ] seconds (evhttp idle); typical default 300
     "talk_timeout":"talk timeout",          // [ number ] seconds for /public, /he, /upload, /download; typical default 61
     "key_lifetime":"key life time",         // [ number ] seconds for session key validity; typical default 600

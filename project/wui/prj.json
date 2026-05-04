@@ -5,6 +5,10 @@
     "version":"8.0.0",
     "author":"dimmalex@gmail.com",
 
+    "exe":
+    {
+        "ttyd":"ttyd for web term"
+    },
     "obj":
     {
         "wui@admin":"webs@httpd"
