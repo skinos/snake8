@@ -767,6 +767,7 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
 			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
+			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
 			if ( window.ttyd_port && ( !wuimenu || wuimenu.terminal != "disable" ) )
 			{
 				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
