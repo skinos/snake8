@@ -65,7 +65,7 @@
       $.i18n().locale = lang; $('body').i18n();
 
       /* load the configure */
-      he.load( [ 'wui@ttyd_setup', "uart@serial", "uart@serial2", "uart@serial3" ] ).then( function(v){
+      he.load( [ 'wui@ttyd.setup', "uart@serial", "uart@serial2", "uart@serial3" ] ).then( function(v){
           if ( v[1] && v[1].ttydev )
           {
             $('#serial_line').show();

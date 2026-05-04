@@ -11,10 +11,6 @@ Connects to the port-proxy service so remote sessions can reach local **TCP**, *
     "user":"username for registration",                                    // [ string ], if not set, use heclient's user
     "vcode":"verification code",                                           // [ string ], if not set, use heclient's vcode
 
-    // bindding extern network
-    "extern":"bindding extern ifname to connect server",                   // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], optional
-                                                                              // when not set, use default gateway to connect server
-
     // connection pool
     "pond":"number of idle connections in the pool",                       // [ number ], default 3
 
@@ -53,11 +49,6 @@ agent@portc:idle_keeplive_interval=15
 ttrue
 ```
 
-Example, set the extern network interface
-```shell
-agent@portc:extern=ifname@lte
-ttrue
-```
 
 
 ### Component API

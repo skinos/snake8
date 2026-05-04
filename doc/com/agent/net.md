@@ -13,10 +13,6 @@ Each **`agent@net`**, **`agent@net2`**, … is one mesh VPN membership, usually 
     "port":"gtog network server port",                         // [ number ], default 20002
     "key":"shared key for traffic with the mesh coordinator", // [ string ], product default if omitted
 
-    // bindding extern network
-    "extern":"bindding extern ifname to connect server",       // [ "ifname@lte", "ifname@wan", "ifname@wisp", ... ], optional
-                                                                  // when not set, use default gateway to connect server
-
     // network identify
     "netid":"network identify string",                         // [ string ], unique network identifier assigned by server
     "network":"network address (CIDR format)",                 // [ string ], e.g. "10.0.0.0/24", assigned by server or config
@@ -72,12 +68,6 @@ ttrue
 Example, configure with custom route table
 ```shell
 agent@net={"port":"20002","netid":"office-vpn","network":"10.0.1.0/24","route_table":{"r1":{"target":"192.168.10.0","mask":"255.255.255.0"},"r2":{"target":"172.16.0.0","mask":"255.255.0.0"}}}
-ttrue
-```
-
-Example, set the extern interface
-```shell
-agent@net:extern=ifname@lte
 ttrue
 ```
 

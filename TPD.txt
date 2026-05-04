@@ -5,4 +5,5 @@
 5. add the lock for all the component setup/shut
 6. getty report setsid: Operation not permitted in srock
 7. arch@gpio use configure for action
+8. use the nft for iptables
 
