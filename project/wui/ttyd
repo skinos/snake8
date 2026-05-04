@@ -4,19 +4,43 @@
 . $cheader
 
 TTYD=$(which ttyd 2>/dev/null) || true
-[ -z "$TTYD" ] && TTYD="/usr/sbin/ttyd"
-TTYD_PORT=$(he wui@admin:ttydport 2>/dev/null)
+[ -z "$TTYD" ] && TTYD="/usr/bin/ttyd"
+TTYD_PORT=$(/usr/bin/he wui@admin:ttydport 2>/dev/null)
 [ -z "$TTYD_PORT" ] && TTYD_PORT="81"
 
-he()
+
+port()
 {
     if [ ! -x "$TTYD" ]; then
-        logger "ttyd not found: $TTYD"
-        creturn tfalse
+        creturn NULL
     fi
-    killall -9 ttyd
-    $TTYD -p $TTYD_PORT /usr/bin/eline > /dev/null 2>&1 &
+    echo $TTYD_PORT
+    creturn $TTYD_PORT
+}
+
+setup()
+{
+    if [ ! -x "$TTYD" ]; then
+        logger "ttyd not found, skip service.start: $TTYD"
+        creturn ttrue
+    fi
+    /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
     creturn ttrue
+}
+shut()
+{
+    /usr/bin/he land@service.stop[ttyd] >/dev/null
+    creturn ttrue
+}
+service()
+{
+    if [ ! -x "$TTYD" ]; then
+        logger "ttyd not found, skip service.start: $TTYD"
+        creturn terror
+    fi
+    logger "ttyd running: $TTYD -p $TTYD_PORT"
+    exec $TTYD -p $TTYD_PORT /usr/bin/eline
+    creturn tfalse
 }
 
 # call the method, you cannot delete this

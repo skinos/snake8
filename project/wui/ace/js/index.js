@@ -377,6 +377,7 @@ jQuery(function($) {
 			'network@frame.list[outer]',
 			'network@hosts',
 			'land@fpk.wui_menu',
+			'wui@ttyd.port',
 			'.wifi@n',
 			'.wifi@a',
 			'.modem@lte.status',
@@ -411,28 +412,29 @@ jQuery(function($) {
 		window.outer_list = v[10];
 		window.hosts = v[11];
 		window.fpk_menu = v[12];
+		window.tty_dport = v[13];
 		window.ifdev = {};
-		window.ifdev["wifi@n"] = v[13];
-		window.ifdev["wifi@a"] = v[14];
-		window.ifdev["modem@lte"] = v[15];
-		window.ifdev["modem@lte2"] = v[16];
-		window.ifdev["modem@lte3"] = v[17];
-		window.ifdev["modem@lte4"] = v[18];
+		window.ifdev["wifi@n"] = v[14];
+		window.ifdev["wifi@a"] = v[15];
+		window.ifdev["modem@lte"] = v[16];
+		window.ifdev["modem@lte2"] = v[17];
+		window.ifdev["modem@lte3"] = v[18];
+		window.ifdev["modem@lte4"] = v[19];
 		window.ifname = {};
-		window.ifname["ifname@lan"] = v[19];
-		window.ifname["ifname@lan2"] = v[20];
-		window.ifname["ifname@lan3"] = v[21];
-		window.ifname["ifname@lan4"] = v[22];
-		window.ifname["ifname@wan"] = v[23];
-		window.ifname["ifname@wan2"] = v[24];
-		window.ifname["ifname@wan3"] = v[25];
-		window.ifname["ifname@wan4"] = v[26];
-		window.ifname["ifname@lte"] = v[27];
-		window.ifname["ifname@lte2"] = v[28];
-		window.ifname["ifname@lte3"] = v[29];
-		window.ifname["ifname@lte4"] = v[30];
-		window.ifname["ifname@wisp"] = v[31];
-		window.ifname["ifname@wisp2"] = v[32];
+		window.ifname["ifname@lan"] = v[20];
+		window.ifname["ifname@lan2"] = v[21];
+		window.ifname["ifname@lan3"] = v[22];
+		window.ifname["ifname@lan4"] = v[23];
+		window.ifname["ifname@wan"] = v[24];
+		window.ifname["ifname@wan2"] = v[25];
+		window.ifname["ifname@wan3"] = v[26];
+		window.ifname["ifname@wan4"] = v[27];
+		window.ifname["ifname@lte"] = v[28];
+		window.ifname["ifname@lte2"] = v[29];
+		window.ifname["ifname@lte3"] = v[30];
+		window.ifname["ifname@lte4"] = v[31];
+		window.ifname["ifname@wisp"] = v[32];
+		window.ifname["ifname@wisp2"] = v[33];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
 
@@ -765,23 +767,9 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
 			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
-			if ( window.wuiterm && ( !wuimenu || wuimenu.terminal != "disable" ) )
+			if ( window.ttydport && ( !wuimenu || wuimenu.terminal != "disable" ) )
 			{
 				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
-				if ( window.ifdev["modem@lte"] )
-				{
-					if ( !wuimenu || wuimenu.lte != "disable" )
-					{
-						menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE)' ), 'atcommand?object=modem@lte' );
-					}
-				}
-				if ( window.ifdev["modem@lte2"] )
-				{
-					if ( !wuimenu || wuimenu.lte2 != "disable" )
-					{
-						menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'AT command(LTE/NR)' ), 'atcommand?object=modem@lte2' );
-					}
-				}
 			}
 			if ( window.machines.scope == "std" )
 			{
