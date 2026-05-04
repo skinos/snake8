@@ -412,7 +412,7 @@ jQuery(function($) {
 		window.outer_list = v[10];
 		window.hosts = v[11];
 		window.fpk_menu = v[12];
-		window.tty_dport = v[13];
+		window.ttyd_port = v[13];
 		window.ifdev = {};
 		window.ifdev["wifi@n"] = v[14];
 		window.ifdev["wifi@a"] = v[15];
