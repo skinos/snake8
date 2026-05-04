@@ -35,16 +35,14 @@
         } 
         else
         {
-          setTimeout(function () {
-            var wh = $(window).height();
-            $('#terminal').attr('height', wh - 130 + 'px');
-            $('#terminal').attr(
-                'src',
-                window.location.protocol + "//" + window.location.hostname + ':' + (window.ttyd_port || '81')
-            );
-            $('#terminal').show();
-            $('#tips').hide();
-        }, 300);
+          var wh = $(window).height();
+          $('#terminal').attr('height', wh - 130 + 'px');
+          $('#terminal').attr(
+              'src',
+              window.location.protocol + "//" + window.location.hostname + ':' + (window.ttyd_port || '81')
+          );
+          $('#terminal').show();
+          $('#tips').hide();
         }
     }
 
