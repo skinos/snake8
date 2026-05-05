@@ -23,8 +23,11 @@ setup()
         logger "ttyd not found, skip service.start: $TTYD"
         creturn ttrue
     fi
-    /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
-    sleep 1
+    TTYD_PID=$(/usr/bin/he land@service.pid[ttyd] 2>/dev/null)
+    if [ -z "$TTYD_PID" ]; then
+        /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
+        sleep 1
+    fi
     creturn ttrue
 }
 shut()
