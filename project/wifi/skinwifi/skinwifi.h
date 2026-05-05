@@ -9,6 +9,10 @@
 
 
 #define WIFI_OBJECT_MAX 10
+#define WIFI_NSTA_MAC_OFFSET 8
+#define WIFI_NSSID_MAC_OFFSET 9
+#define WIFI_ASTA_MAC_OFFSET 12
+#define WIFI_ASSID_MAC_OFFSET 13
 /* modem object name allocation */
 const char *wifia_alloc( const char *syspath, const char *id, talk_t matchcfg, char *buf, int buflen );
 /* modem object name free */
