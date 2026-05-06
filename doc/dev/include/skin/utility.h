@@ -519,14 +519,21 @@ boole lsmod( const char *module );
 /*************** util_network.c ***********************/
 /******************************************************/
 /******************************************************/
+// main table
 #define MAIN_TABLE_NAME       "main"
 #define MAIN_TABLE_ID         254
 #define MAIN_TABLE_PREF       32766
+// dns table
+#define DNS_TABLE_ID          252
+#define DNS_TABLE_NAME        "252"
+#define DNS_TABLE_PREF        33000
+// ifname mark rule
 #define IFNAME_TABLE_PREF     35000
-#define RULE_TABLE_PREF       40000
+// default table
 #define DEFAULT_TABLE_NAME    "default"
 #define DEFAULT_TABLE_ID      253
 #define DEFAULT_TABLE_PREF    50000
+// metric
 #define EXTERN_METRIC         "10"
 #define VPN_METRIC            "5"
 /**
