@@ -35,13 +35,17 @@
 ```json
 // 
 {
-    //'可选值的属性介绍, 当些属性只有几个可选值是使用此方式描述'
-    "<attribute>": "<attribute introduce>",                   // [ "<选项>", "<选项2>", "<选项3>", ... ]
+    //'首先要确认属性属于以下哪几种, 然后确定有哪种格式描述, 注意当属性值是一个JSON时,  JSON下又同样是属性, 可以一层层嵌套'
+
+    //'可选值属性, 当属性值只有几个可选值是使用此方式描述, 属性名由组件约定不可变, 属性值为几个可选值'
+    //' "属性名":"属性名作用简介",                                 // [ 列出所有可选值 ]'
+    "<attribute>": "<attribute value introduce>",                  // [ "<选项>", "<选项2>", "<选项3>", ... ]
                                                                    // "<选项>": <关于当attribute的值为选项时作用及介绍>
                                                                    // "<选项2>": <关于当attribute的值为选项时作用及介绍>
                                                                    // "<选项>3": <关于当attribute的值为选项时作用及介绍
                                                                    // <介绍默认值>
-    //'类型值的属性介绍, 当些属性是string, number, ip address, mac address, port, 等通用属性时可以使用此值'
+
+    //'类型值属性介绍, 当些属性值是string(字符串), number(字符串的数字), ip address, mac address, port, 等通用属性时可以使用此值'
     "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
     "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
     "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>

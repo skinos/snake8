@@ -17,6 +17,8 @@ do
         do
             echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
             rm -fr ${DIR_ROOT}/${dir}/skinos_*
+            echo "rm -fr ${DIR_ROOT}/${dir}/root*"
+            rm -fr ${DIR_ROOT}/${dir}/root*
         done
     fi
 done

@@ -1,11 +1,12 @@
-## 此文件为如何编译组件接口文件的格式, 章节, 风格指导, 此条章节内容不需要添加到接口文档中
+## 此文件为说明如何编写组件接口文件的格式, 章节, 风格指导
 
 1. 通常组件接口文档存放于项目目录下, 与组件源代码目录存放于相同的目录, 用于专门描述此组件的使用逻辑及向外提供的配置及接口
 2. 组件接口文档名称通常以 <组件名称>.md 命名
 3. 所有组件接口文档的风格及章节必须与此指导文档一致, 对应的章节内的内容跟据组件的实际实现会不同
-4. 以下文档描述的章节如对应的组件不提供则不应包括些章节
+4. 以下文档描述的章节如对应的组件不提供则不应包括此章节
 5. <>内的内容需要跟据组件的实际信息填充
-6. //'' 内的内容是给编写接口文档的人介绍这种编写风格, 不应出现在接口文档中
+6. //'' 内的内容是给编写接口文档的人或AI介绍如何编写此段内容, 不应出现在接口文档中
+---
 
 
 
@@ -18,7 +19,7 @@
 
 ### Architecture
 
-<此处可以详细描述此组件在系统的的使用或是设计逻辑以及向上或向下层的关系, 或者会提供一些什么概念>
+<此处可以详细描述此组件在系统的的使用或是设计逻辑以及向上或向下层的关系, 或者会提供什么概念>
 
 
 ### Dependencies
@@ -28,6 +29,8 @@
 
 ---
 
+
+
 ### Configuration ( <组件全名> )
 
 #### Configuration attributes
@@ -35,126 +38,263 @@
 ```json
 // 
 {
-    //'可选值的属性介绍, 当些属性只有几个可选值是使用此方式描述'
-    "<attribute>": "<attribute introduce>",                   // [ "<选项>", "<选项2>", "<选项3>", ... ]
-                                                                   // "<选项>": <关于当attribute的值为选项时作用及介绍>
-                                                                   // "<选项2>": <关于当attribute的值为选项时作用及介绍>
-                                                                   // "<选项>3": <关于当attribute的值为选项时作用及介绍
-                                                                   // <介绍默认值>
-    //'类型值的属性介绍, 当些属性是string, number, ip address, mac address, port, 等通用属性时可以使用此值'
-    "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ mac address ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ tcp port ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ udp port ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ tcp/udp port ], <介绍默认值>
-    //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'
 
-    //'JSON对象类属性介绍, 多个子属性在一个JSON中'
-    "<attribute>":
-    {
-        //'可选值的属性介绍, 当些属性只有几个可选值是使用此方式描述'
-        "<attribute>": "<attribute introduce>",                   // [ "<选项>", "<选项2>", "<选项3>", ... ]
-                                                                    // "<选项>": <关于当attribute的值为选项时作用及介绍>
-                                                                    // "<选项2>": <关于当attribute的值为选项时作用及介绍>
-                                                                    // "<选项>3": <关于当attribute的值为选项时作用及介绍
-                                                                    // <介绍默认值>
-        //'类型值的属性介绍, 当些属性是string, number, ip address, mac address, port, 等通用属性时可以使用此值'
-        "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ mac address ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ tcp port ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ udp port ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ tcp/udp port ], <介绍默认值>
-        //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'  
-    }
-
-    //'JSON对象类属性介绍, 子属性名也像值一样可变化'
-    "<attribute>":
-    {
-        //'item name可自定义的可选值的属性'
-        "<item name>":"item value introduce", // [ string ] : [ "<选项>", "<选项2>", "<选项3>", ... ]
-    }
+    //'组件配置中会有很多属性, 每个属性都各不相同, 在编写此属性时首先要确认属性属于以下哪种类型, 然后确定用哪种格式描述, 注意当属性值是一个JSON时,  这个JSON内又同样可以有很多属性, 可以一层层嵌套'
 
 
+    //'1, 属性名固定的属性, 即属性名由组件代码约定不可变
+
+        //'a. 可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性名由组件代码约定不可变, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",             // [ "<value>", "<value2>", "value3>", ... ]
+                                                                      // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                      // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                      // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                      // <介绍默认值>
+
+        //'b. 字符串值属性: 当属性值是字符串时使用此方式描述, 属性名由组件代码约定不可变, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ string ], <attribute value的附加介绍, 如默认值等>
+
+        //'c. 数字值属性: 当属性值是数字时使用此方式描述, 属性名由组件代码约定不可变, 属性值为数字'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+
+        //'d. IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性名由组件代码约定不可变, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ ip address ], <attribute value的附加介绍, 如默认值等>
+
+        //'e. MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性名由组件代码约定不可变, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ mac address ], <attribute value的附加介绍, 如默认值等>
+
+        //'f. JSON值属性: 当属性值是JSON时使用此方式描述, 属性名由组件代码约定不可变, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute>": { JSON },                                        // [ json ], <这个JSON的概要性介绍>
+
+
+    //'2, 可选名属性, 即属性名只有几个可选项, 通常这种属性存在于一个列表中, 最常用于接口列表的属性介绍, 这种情况下接口名称会作为属性的可选名
+
+        //'a. 可选名可选值属性: 当属性值只有几个可选值是使用此方式描述, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ "<name>", "<name2>", "name3>", ... ]:  [ "<value>", "<value2>", "value3>", ... ]
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                            // <...>
+                                                                            // <介绍默认值或其它附加介绍>
+
+        //'b. 可选名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ "<name>", "<name2>", "name3>", ... ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+
+        //'c. 可选名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ "<name>", "<name2>", "name3>", ... ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+
+        //'d. 可选名IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ "<name>", "<name2>", "name3>", ... ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+
+        //'e. 可选名MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ "<name>", "<name2>", "name3>", ... ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+
+        //'f. 可选名JSON值属性: 当属性值是JSON时使用此方式描述, 属性名由组件代码约定不可变, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ "<name>", "<name2>", "name3>", ... ]: [ json ], <这个JSON的概要性介绍>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍
+                                                                       // <...>
+
+
+    //'3, 字符串名属性, 即属性名是任意字符串时使用此方式描述, 通常这种属性存在于一个列表中, 最常用于规则名, 这种情况下规则名可以是任意的字符串
+
+        //'a. 字符串名可选值属性: 当属性值只有几个可选值是使用此方式描述, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ string ]: [ "<value>", "<value2>", "value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                            // <...>
+                                                                            // <介绍默认值或其它附加介绍>
+
+        //'b. 字符串名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ string ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. 字符串名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ string ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. 字符串名IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ string ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. 字符串名MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ string ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. 字符串名JSON值属性: 当属性值是JSON时使用此方式描述, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ string ]: [ json ], <这个JSON的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+
+    //'4, 数字名属性, 即属性名是数字时使用此方式描述, 通常这种属性存在于一个列表中, 最常用于有顺序的规则名, 这种情况下规则名可以是数字
+
+        //'a. 数字名可选值属性: 当属性值只有几个可选值是使用此方式描述, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ number ]: [ "<value>", "<value2>", "value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                            // <...>
+                                                                            // <介绍默认值或其它附加介绍>
+
+        //'b. 数字名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ number ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. 数字名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ number ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. 数字名IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ number ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. 数字名MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ number ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. 数字名JSON值属性: 当属性值是JSON时使用此方式描述, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ number ]: [ json ], <这个JSON的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+
+    //'5, IP地址属性, 即属性名是IP地址时使用此方式描述, 通常这种属性存在于一个列表中, 列表内都是指定的IP地址为规则名组成的规则定义等
+
+        //'a. IP地址名可选值属性: 当属性值只有几个可选值是使用此方式描述, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ "<value>", "<value2>", "value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                            // <...>
+                                                                            // <介绍默认值或其它附加介绍>
+
+        //'b. IP地址名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. IP地址名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. IP地址名IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. IP地址名MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. IP地址名JSON值属性: 当属性值是JSON时使用此方式描述, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ ip address ]: [ json ], <这个JSON的概要性介绍>
+                                                                       // <attribute name的附加介绍>
 
 
 
+    //'6, MAC地址属性, 即属性名是MAC地址时使用此方式描述, 通常这种属性存在于一个列表中, 列表内都是指定的MAC地址为规则名组成的规则定义等
 
-    //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'
+        //'a. MAC地址名可选值属性: 当属性值只有几个可选值是使用此方式描述, 属性值约定的为几个可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ "<value>", "<value2>", "value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍
+                                                                            // <...>
+                                                                            // <介绍默认值或其它附加介绍>
 
+        //'b. MAC地址名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
 
+        //'c. MAC地址名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
 
-    "concom": "Multiple link connection management components",    // [ string ], You can customize the data scheduling component to implement more personalized requirements
+        //'d. MAC地址名IP地址值属性: 当属性值是IP地址时使用此方式描述, 属性值为IP地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
 
-    "1": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
-    "2": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "3": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "4": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "5": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "6": "ifname object of extern",          // [ "ifname@wan", ... ]
-    "7": "ifname object of extern",          // optional; same conventions as "1".."6" (system supports up to slot "10")
-    "8": "ifname object of extern",
-    "9": "ifname object of extern",
-    "10": "ifname object of extern",
+        //'e. MAC地址名MAC地址值属性: 当属性值是MAC地址时使用此方式描述, 属性值为MAC地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute introduce>",         // [ ip address ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
 
-    // Configure parameters of the delay switchover function, only use in dbdc mode(reserved), the function can control the data via low delay connection
-    "delay_count": "Statistical delay times of last",   // [ number ]
-    "delay_divide": "delay divide line",                // [ number ], the unit is ms
-    "delay_diff": "Delay differential",                 // [ number ], the unit is ms
+        //'f. MAC地址名JSON值属性: 当属性值是JSON时使用此方式描述, 属性值为JSON, JSON为下层性的集合, 其又可包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {}                              // [ ip address ]: [ json ], <这个JSON的概要性介绍>
+                                                                       // <attribute name的附加介绍>
 
-    // DNS custom when Multiple DNS
-    "custom_dns": "Custom DNS",                       // [ "disable", "enable", "ifname@lte", "ifname@lte2", ... ]
-    "dns": "Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
-    "dns2": "Custom DNS2"                             // [ ip address ], This is valid when "custom_dns" is "enable"
 }
 ```
 
 Example, show all the configure
 ```shell
-network@frame
+<组件全名>
 {
-    "type":"hot",                              # multi-link scheduling mode: hot backup
-    "1":"ifname@wan",                          # priority slot 1: WAN (Ethernet)
-    "2":"ifname@lte",                          # priority slot 2: LTE modem
-    "3":"ifname@lte2",                         # priority slot 3: second LTE modem
-    "4":"ifname@wisp",                         # priority slot 4: WISP (wireless relay)
-    "custom_dns":"disable"                     # use DNS from the active uplink (not custom)
+    //'典型的尽可能多的属性的示例'
+    "<attribute>":"<value>",                    # <当前属性当前值时的介绍>
+    <...>
 }
+
 ```
 
-### Connection Types
-
-| Type | Description | Priority slots considered by the scheduler |
-|------|-------------|-----------------------------------------------|
-| `cold` | Cold backup — only one uplink active at a time; others are brought down | `"1"` .. `"10"` |
-| `hot` | Hot backup — several uplinks may stay up; default route prefers the smallest-numbered online slot | `"1"` .. `"10"` |
-| `hot2` | Hot backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
-| `hot3` | Hot backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
-| `hot4` | Hot backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
-| `hot5` | Hot backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
-| `lazy` | Lazy hot backup — after a switch to a backup, it does not move back to a higher-priority link until that backup fails | `"1"` .. `"10"` |
-| `lazy2` | Lazy backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
-| `lazy3` | Lazy backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
-| `lazy4` | Lazy backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
-| `lazy5` | Lazy backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
-
-### Configuration Example
-
-```json
-{
-    "type": "hot4",                  // multi-link scheduling on 4 extern connections
-    "1": "ifname@lte",
-    "2": "ifname@lte2",
-    "3": "ifname@wan",
-    "4": "ifname@wisp",
-    "delay_count": "10",             // Collect statistics on the latest 10 delays and schedule traffic based on the delay
-    "delay_divide": "150", 
-    "delay_diff": "100"
-}
-```
 
 ---
 
