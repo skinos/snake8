@@ -153,10 +153,10 @@ all:
 	else \
 		make dep; \
 		make kernel_dep app_dep; \
-		make kernel||exit -1; \
-		make app||exit -1; \
-		make kernel_install||exit-1; \
-		make app_install||exit-1; \
+		make kernel||exit 1; \
+		make app||exit 1; \
+		make kernel_install||exit 1; \
+		make app_install||exit 1; \
 	fi
 	headdir=`ls ${gINSTALL_DIR}/include`; \
 	if [ "X$${headdir}" != "X" ]; then \
