@@ -4,6 +4,7 @@ window.hepath = "/he";
 window.talkkey = sessionStorage.getItem( "talkkey" );
 console.log( "GET:"+window.talkkey );
 window.username = sessionStorage.getItem( "username" );
+
 // disable load the subpage, loading when after i18n loaded
 ace.demo.functions.enableDemoAjax= function () {};
 
@@ -329,6 +330,18 @@ function jquery_setup()
 // frame url location
 function frame_url( hash )
 {
+
+	// 存在ill异常 页面不允许跳转到其他任何页面
+	if ( machine_status_has_ill(window.machines) )
+	{
+		if ( hash !== "factory" )
+		{
+			window.history.replaceState(null, document.title, window.location.pathname + window.location.search + "#factory");
+		}
+
+		return "content/factory.html";
+	}
+	
 	var name = '';
 	var index = hash.indexOf('?');
 	// get object name
@@ -359,7 +372,170 @@ function frame_url( hash )
 	return 'content/' + name + '.html';
 }
 
+// 判断 machine.status 中是否存在 ill 字段，并且 ill 不为空
+function machine_status_has_ill(status)
+{
+	if ( !status )
+	{
+		return false;
+	}
 
+	if ( !Object.prototype.hasOwnProperty.call(status, "ill") )
+	{
+		return false;
+	}
+
+	if ( String(status.ill).trim() === "" )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+// 从 sessionStorage 获取最新 talkkey
+function get_current_talkkey()
+{
+	window.talkkey = sessionStorage.getItem( "talkkey" );
+	return window.talkkey;
+}
+
+// 更新 talkkey
+function update_talkkey(new_key)
+{
+	if ( new_key && new_key !== window.talkkey )
+	{
+		window.talkkey = new_key;
+		sessionStorage.setItem( "talkkey", new_key );
+	}
+}
+
+// 静默请求 land@machine.status
+function request_machine_status_silent()
+{
+	var key = get_current_talkkey();
+
+	if ( !key )
+	{
+		return Promise.reject( "talkkey is empty" );
+	}
+
+	return fetch( window.location.origin + window.hepath + "?rand=" + Math.random(), {
+		method: "POST",
+		headers: {
+			"accept": "application/json, text/javascript, */*; q=0.01",
+			"content-type": "application/json",
+			"x-requested-with": "XMLHttpRequest"
+		},
+		body: JSON.stringify({
+			he: "land@machine.status",
+			key: key,
+			username: window.username || "admin"
+		})
+	})
+	.then(function(res){
+		return res.json();
+	})
+	.then(function(data){
+
+		// 后端每次会返回新 key，必须更新
+		if ( data && data.key )
+		{
+			update_talkkey( data.key );
+		}
+
+		return data;
+	});
+}
+
+// 根据 ill 状态决定是否跳转到 #factory
+// ill 从空变成非空时，跳转一次 #factory
+// ill 持续非空时，不重复跳转
+// 用户离开 #factory 后，如果ill还存在不能跳转其他页面 如果异常不存在 就不会被强制拉回
+// ill 重新变空后，再次变非空，会再次跳转
+function check_ill_and_goto_factory(status)
+{
+	var has_ill = machine_status_has_ill(status);
+
+	// 第一次进入页面时，如果 ill 已经非空，也需要跳转一次
+	if ( window.last_ill_has_value === undefined )
+	{
+		window.last_ill_has_value = false;
+	}
+
+	// 只有从 false -> true 的瞬间才跳转
+	if ( has_ill === true && window.last_ill_has_value === false )
+	{
+		console.warn( "machine.status.ill changed to non-empty:", status.ill );
+
+		if ( window.location.hash !== "#factory" )
+		{
+			window.location.hash = "factory";
+		}
+	}
+
+	// 记录本次状态，用于下次判断是否发生变化
+	window.last_ill_has_value = has_ill;
+
+	return has_ill;
+}
+
+// 定时检测 machine.status.ill
+// 使用 fetch + talkkey 静默请求，不刷新页面，不切换子页面
+function start_ill_status_watch()
+{
+	if ( window.ill_status_timer )
+	{
+		clearTimeout( window.ill_status_timer );
+	}
+
+	window.ill_status_loading = false;
+
+	function poll()
+	{
+		// 防止上一次请求未结束时重复发起请求
+		if ( window.ill_status_loading === true )
+		{
+			window.ill_status_timer = setTimeout( poll, 5000 );
+			return;
+		}
+
+		window.ill_status_loading = true;
+
+		request_machine_status_silent()
+		.then(function(data){
+
+			if ( !data )
+			{
+				return;
+			}
+
+			// data.he 就是 land@machine.status
+			if ( data.he )
+			{
+				window.machines = data.he;
+				// 测试
+				// window.machines.ill = "10";
+				check_ill_and_goto_factory( window.machines );
+			}
+		})
+		.catch(function(err){
+
+			console.warn( "request land@machine.status failed:", err );
+
+			// 如果失败，下一轮重新从 sessionStorage 读取 talkkey
+			// 不在这里强制跳转，也不刷新页面
+			window.talkkey = sessionStorage.getItem( "talkkey" );
+		})
+		.finally(function(){
+
+			window.ill_status_loading = false;
+			window.ill_status_timer = setTimeout( poll, 5000 );
+		});
+	}
+
+	poll();
+}
 
 jQuery(function($) {
 
@@ -402,6 +578,27 @@ jQuery(function($) {
 		window.wui = v[0];
 		window.machine = v[1];
 		window.machines = v[2];
+
+		// window.machines.ill = "10";
+
+		// 页面刚加载时，如果 ill 非空，直接强制进入 factory
+		if ( machine_status_has_ill(window.machines) ) {
+			if ( window.location.hash !== "#factory" ) {
+				// 先用 replaceState 清除历史记录 避免后退回到 #dashboard
+				window.history.replaceState(null, document.title, window.location.pathname + "#factory");
+				// 再强制更新 hash
+				window.location.hash = "factory";
+			}
+		}
+
+		// 初始化时检测一次
+		// 如果页面刚打开时 ill 已经是非空，则自动跳转 #factory
+		check_ill_and_goto_factory( window.machines );
+
+		// 启动定时检测
+		// 后续只有 ill 从空变成非空时，才会再次跳转 #factory
+		start_ill_status_watch();
+
 		window.custom = v[3];
 		window.gpio = v[4];
 		window.network_frame = v[5];
@@ -885,5 +1082,4 @@ jQuery(function($) {
 
 	// Logout2 event
 	$('#logout2').on( ace.click_event, logout_system );
-
 });

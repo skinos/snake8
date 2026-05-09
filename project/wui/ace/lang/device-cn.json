@@ -119,5 +119,17 @@
     "UTC-3:30(NST - Newfoundland Standard Time)": "UTC-3:30(NST - 纽芬兰标准时间)",
     "Version": "版本",
     "Apply": "应用",
-    "Refresh": "刷新"
+    "Refresh": "刷新",
+    "lan0": "内部LAN",
+    "lan": "LAN",
+    "lan1": "LAN1",
+    "lan2": "LAN2",
+    "lan3": "LAN3",
+    "lan4": "LAN4",
+    "lan5": "LAN5",
+    "wan": "WAN",
+    "wan2": "WAN2",
+    "wan3": "WAN3",
+    "wan4": "WAN4",
+    "Ethernet Status":"网口状态"
 }

@@ -8,6 +8,14 @@ sessionStorage.setItem( "talkkey", window.talkkey );
 sessionStorage.setItem( "username", window.username );
 console.log( "CLEAR: talkkey" );
 
+function machine_status_has_ill(status)
+{
+    if ( !status ) return false;
+    if ( !Object.prototype.hasOwnProperty.call(status, "ill") ) return false;
+    if ( String(status.ill).trim() === "" ) return false;
+    return true;
+}
+
 jQuery(function($) {
 
 	// load
@@ -16,6 +24,18 @@ jQuery(function($) {
 		window.custom = v[1];
 		window.machine = v[2];
 		window.machines = v[3];
+
+		// window.machines = {"ill":"10"};
+		// 判断是否存在ill异常值
+		if ( machine_status_has_ill(window.machines) )
+		{
+			console.warn("ill detected, jump directly to index.html#factory");
+
+			sessionStorage.setItem("ill_direct_entry", "true");
+			window.location.replace("index.html#factory");
+			return;
+		}
+
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
 		// prompt

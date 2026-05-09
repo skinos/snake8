@@ -7,6 +7,10 @@
 *  http://www.ashyelf.com/
 *
 **/
+function shouldIgnoreAuthError()
+{
+    return sessionStorage.getItem("ill_direct_entry") === "true";
+}
 var he =
 {
     /* excute cmd api */
@@ -105,11 +109,17 @@ var he =
                     {
                         console.log( "Server Async Response String: "+x.responseText );
 						if ( x.responseText == "Auth Error" )
-						{
-							console.log( "Auth Error" );
-							window.location.href = 'login.html';
-							return;
-						}
+                        {
+                            console.log("Auth Error");
+                            if (shouldIgnoreAuthError())
+                            {
+                                console.warn("Auth Error ignored in ill factory mode");
+                                func(x.responseText);
+                                return;
+                            }
+                            window.location.href = 'login.html';
+                            return;
+                        }
 						else if ( x.responseText == "Data Error"  )
 						{
 							console.log( "Data Error" );
@@ -182,11 +192,17 @@ var he =
             {
                 console.log( "Server Response String: "+htmlobj.responseText );
 				if ( htmlobj.responseText == "Auth Error" )
-				{
-					console.log( "Auth Error" );
-					window.location.href = 'login.html';
-					return;
-				}
+                {
+                    console.log("Auth Error");
+                    if (shouldIgnoreAuthError())
+                    {
+                        console.warn("Auth Error ignored in ill factory mode");
+                        ret = htmlobj.responseText;
+                        return ret;
+                    }
+                    window.location.href = 'login.html';
+                    return;
+                }
 				else if ( htmlobj.responseText == "Data Error"  )
 				{
 					console.log( "Data Error" );

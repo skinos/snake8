@@ -116,5 +116,17 @@
     "Sync Now    ": "Sync Now    ",
     "Sys Reboot  ": "Sys Reboot  ",
     "Time Source": "Time Source",
-    "Time Zone": "Time Zone"
+    "Time Zone": "Time Zone",
+    "lan0": "Internal LAN",
+    "lan": "LAN",
+    "lan1": "LAN1",
+    "lan2": "LAN2",
+    "lan3": "LAN3",
+    "lan4": "LAN4",
+    "lan5": "LAN5",
+    "wan": "WAN",
+    "wan2": "WAN2",
+    "wan3": "WAN3",
+    "wan4": "WAN4",
+    "Ethernet Status":"Ethernet Status"
 }
