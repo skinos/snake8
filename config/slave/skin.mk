@@ -110,9 +110,9 @@ endef
 # $(call Build/Compile/ko, MakeArgs);
 #     MakeArgs给出Make编译时的参数
 define Build/Compile/ko
-    +$(MAKE_VARS); \
-    for i in $(1) ;do \
-        $(MAKE) $(2) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) -C $(LINUX_DIR) SUBDIRS="$(PKG_BUILD_DIR)/$$i" ARCH="$(LINUX_KARCH)" CROSS_COMPILE="$(TARGET_CROSS)" modules; \
+	+$(MAKE_VARS); \
+	for i in $(1) ;do \
+		$(MAKE) $(2) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) -C $(LINUX_DIR) SUBDIRS="$(PKG_BUILD_DIR)/$$i" ARCH="$(LINUX_KARCH)" CROSS_COMPILE="$(TARGET_CROSS)" modules; \
 	done
 endef
 # 定义项目编译函数
@@ -174,14 +174,14 @@ endef
 define Build/Install/doc
 	$(INSTALL_DIR) $(gCOMFACE_DIR)/$(PROJECT_ID)
 	for i in ${MKD_LIST};do \
-        if [ -e ./$$i ]; then \
-            $(CP) $$i $(gCOMFACE_DIR)/$(PROJECT_ID); \
-        fi; \
+		if [ -e ./$$i ]; then \
+			$(CP) $$i $(gCOMFACE_DIR)/$(PROJECT_ID); \
+		fi; \
 	done
 	for i in ${PNG_LIST};do \
-        if [ -e ./$$i ]; then \
-            $(CP) $$i $(gCOMFACE_DIR)/$(PROJECT_ID); \
-        fi; \
+		if [ -e ./$$i ]; then \
+			$(CP) $$i $(gCOMFACE_DIR)/$(PROJECT_ID); \
+		fi; \
 	done
 endef
 
