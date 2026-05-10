@@ -745,104 +745,122 @@ talk_t _status( obj_t this, param_t param )
 
 	{
 		int i;
+		int bandwidth_done;
 		FILE *fp;
 		char *ptr;
 		char *end;
 		char tok[64];
 		char readbuf[256];
 		char path[PATH_MAX];
-		
-		/* use the wpa_cli */	
-		snprintf( path, sizeof(path), "/tmp/.wpa_cli_%s_status", netdev );
-		i = shell( "wpa_cli -i %s status > %s 2>/dev/null", netdev, path );
-		if ( i == 0 )
+
+		/* use iw sta link */	
+		snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
+		shell( "iw dev %s link > %s", netdev, path );
+		/* parse the iw sta link */
+		fp = fopen( path, "r");
+		if( fp != NULL )
 		{
-			/* parse the wpa_cli */
-			fp = fopen( path, "r");
-			if( fp != NULL )
+			bandwidth_done = 0;
+			readbuf[0] = '\0';
+			while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
 			{
-				readbuf[0] = '\0';
-				while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+				i = strlen( readbuf );
+				if ( i > 0 && readbuf[i-1] == '\n' )
 				{
-					i = strlen( readbuf );
-					if ( i > 0 && readbuf[i-1] == '\n' )
+					readbuf[i-1] = '\0';
+				}
+				if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
+				{
+					ptr += 13;
+					end = strchr( ptr, ' ' );
+					if ( end != NULL )
 					{
-						readbuf[i-1] = '\0';
+						*end = '\0';
 					}
-					if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
+					low2upp( ptr );
+					if ( strlen( ptr ) == 17 )
 					{
-						ptr = readbuf+10;
-						if ( strcmp( ptr, "SCANNING" ) == 0 )
-						{
-							json_set_string( ret, "state", "scanning" );
-						}
-						else if ( strcmp( ptr, "COMPLETED" ) == 0 )
-						{
-							json_set_string( ret, "status", "up" );
-						}
-					}
-					else if ( strncmp( readbuf, "ssid=", 5 ) == 0 )
-					{
-						ptr = readbuf+5;
-						json_set_string( ret, "peer", ptr );
-					}
-					else if ( strncmp( readbuf, "bssid=", 6 ) == 0 )
-					{
-						ptr = readbuf+6;
-						low2upp( ptr );
 						json_set_string( ret, "peermac", ptr );
-					}
-					else if ( strncmp( readbuf, "address=", 8 ) == 0 )
-					{
-						ptr = readbuf+8;
-						low2upp( ptr );
-						json_set_string( ret, "mac", ptr );
+						json_set_string( ret, "status", "up" );
 					}
 				}
-				fclose( fp );
-			}
-		}
-		else
-		{
-			/* use iw sta link */	
-			snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
-			shell( "iw dev %s link > %s", netdev, path );
-			/* parse the iw sta link */
-			fp = fopen( path, "r");
-			if( fp != NULL )
-			{
-				readbuf[0] = '\0';
-				while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+				else if ( NULL != ( ptr = strstr( readbuf, "SSID: " ) ) )
 				{
-					i = strlen( readbuf );
-					if ( i > 0 && readbuf[i-1] == '\n' )
+					ptr += 6;
+					json_set_string( ret, "peer", ptr );
+				}
+				else if ( NULL != ( ptr = strstr( readbuf, "beacon interval:" ) ) )
+				{
+					ptr += 16;
+					while ( *ptr == ' ' || *ptr == '\t' )
 					{
-						readbuf[i-1] = '\0';
+						ptr++;
 					}
-					if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
+					if ( sscanf( ptr, "%63[^ \t\n]", tok ) == 1 )
 					{
-						ptr += 13;
-						end = strchr( ptr, ' ' );
-						if ( end != NULL )
-						{
-							*end = '\0';
-						}
-						low2upp( ptr );
-						if ( strlen( ptr ) == 17 )
-						{
-							json_set_string( ret, "peermac", ptr );
-							json_set_string( ret, "status", "up" );
-						}
-					}
-					else if ( NULL != ( ptr = strstr( readbuf, "SSID: " ) ) )
-					{
-						ptr += 6;
-						json_set_string( ret, "peer", ptr );
-						break;
+						json_set_string( ret, "beacon", tok );
 					}
 				}
-				fclose( fp );
+				else if ( NULL != ( ptr = strstr( readbuf, "beacon int:" ) ) )
+				{
+					ptr += 11;
+					while ( *ptr == ' ' || *ptr == '\t' )
+					{
+						ptr++;
+					}
+					if ( sscanf( ptr, "%63[^ \t\n]", tok ) == 1 )
+					{
+						json_set_string( ret, "beacon", tok );
+					}
+				}
+				else if ( bandwidth_done == 0 && NULL != strstr( readbuf, "rx bitrate:" ) )
+				{
+					if ( NULL != strstr( readbuf, "160MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "160" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "80MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "80" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "40MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "40" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "20MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "20" );
+						bandwidth_done = 1;
+					}
+				}
+				else if ( bandwidth_done == 0 && NULL != strstr( readbuf, "tx bitrate:" ) )
+				{
+					if ( NULL != strstr( readbuf, "160MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "160" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "80MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "80" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "40MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "40" );
+						bandwidth_done = 1;
+					}
+					else if ( NULL != strstr( readbuf, "20MHz" ) )
+					{
+						json_set_string( ret, "bandwidth", "20" );
+						bandwidth_done = 1;
+					}
+				}
 			}
+			fclose( fp );
 		}
 		/* parse the iwinfo */
 		snprintf( path, sizeof(path), "/tmp/.iwinfo_%s_info", netdev );
@@ -1044,8 +1062,6 @@ boole_t _wpa( obj_t this, param_t param )
 		return terror;
 	}
 
-	/* get the hostapd ctrl file */
-	hostapdctl = reg_sstring( radio, "ctl" );
     /* get the configure */
 	project_var_path( pidfile, sizeof(pidfile), PROJECT_ID, "wpa_supplicant_%s.pid", netdev );
     project_var_path( path, sizeof(path), PROJECT_ID, "wpa_supplicant_%s.conf", netdev );
@@ -1058,6 +1074,11 @@ boole_t _wpa( obj_t this, param_t param )
     fprintf( fp, "ap_scan=1\n" );
     fprintf( fp, "fast_reauth=1\n" );
 
+	/* stop the hostapd to update the channel */
+	scall( radio, "stop_hostapd", NULL );
+	//hostapdctl = reg_sstring( radio, "ctl" );
+
+	/* make the configure for mutil-peer */
 	for ( i = 0; i < STA_PEER_MAX; i++ )
 	{
 		if ( i == 0 )
@@ -1095,6 +1116,10 @@ boole_t _wpa( obj_t this, param_t param )
 		}
 		peermode = reg_string( this, kpmode );
 		if ( peermode != NULL && 0 == strcmp( peermode, "hidden" ) )
+		{
+			fprintf( fp, "\t\t scan_ssid=1\n" );
+		}
+		else
 		{
 			fprintf( fp, "\t\t scan_ssid=1\n" );
 		}
@@ -1159,13 +1184,9 @@ boole_t _wpa( obj_t this, param_t param )
 	}
     fclose( fp );
 
-	/* stop the hostapd to update the channel */
-	hostapdctl = NULL;
-	sstop( "%s-hostapd", radio );
-
     /* exec the wpa_supplicant */
 #if defined gPLATFORM__smtk2 || defined gPLATFORM__mtk2
-	if ( hostapdctl == NULL )
+	if ( hostapdctl == NULL || *hostapdctl == '\0' )
 	{
 		wifi_debug( "wpa_supplicant -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, wap_dir );
     	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, (char *)0 );
@@ -1176,7 +1197,7 @@ boole_t _wpa( obj_t this, param_t param )
     	execlp( "wpa_supplicant", "wpa_supplicant", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, "-H", hostapdctl, (char *)0 );
 	}
 #else
-	if ( hostapdctl == NULL )
+	if ( hostapdctl == NULL || *hostapdctl == '\0' )
 	{
 		wifi_debug( "wpa_supplicant -s -D nl80211 -i %s -c %s -P %s -C %s", netdev, path, pidfile, wap_dir );
 		execlp( "wpa_supplicant", "wpa_supplicant", "-s", "-D", "nl80211", "-i", netdev, "-c", path, "-P", pidfile, "-C", wap_dir, (char *)0 );
@@ -1267,7 +1288,9 @@ boole_t _keeplive( obj_t this, param_t param )
 	const char *netdev;
 	const char *ifname;
 	const char *nossid;
+	const char *beacon;
 	const char *channel;
+	const char *bandwidth;
 	char path[PATH_MAX];
 
 	object = obj_name( this );
@@ -1311,10 +1334,20 @@ boole_t _keeplive( obj_t this, param_t param )
 	v = _status( this, param );
 	if ( v != NULL )
 	{
+		bandwidth = json_string( v, "bandwidth" );
+		if ( bandwidth != NULL )
+		{
+			reg_sset_string( radio, "bandwidth", bandwidth );
+		}
 		channel = json_string( v, "channel" );
 		if ( channel != NULL )
 		{
 			reg_sset_string( radio, "channel", channel );
+		}
+		beacon = json_string( v, "beacon" );
+		if ( beacon != NULL )
+		{
+			reg_sset_string( radio, "beacon", beacon );
 		}
 		talk_free( v );
 	}
@@ -1322,8 +1355,8 @@ boole_t _keeplive( obj_t this, param_t param )
 	/* start the hostapd */
 	if ( nossid == NULL || 0 != strcmp( nossid, "enable" ) )
 	{
-		sleep( 3 );
-		sstart( NULL, NULL, NULL, "%s-hostapd", radio );
+		sleep( 2 );
+		scall( radio, "start_hostapd", NULL );
 	}
 
 	/* check and check forever */
