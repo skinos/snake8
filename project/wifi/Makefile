@@ -8,6 +8,7 @@ PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
 DESC_STR:=$(shell prj-read desc)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+PKG_BUILD_DEPENDS:=+PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +PACKAGE_skinos_arch
 
 # 包含Openwrt的一些有关包处理的函数
 include $(INCLUDE_DIR)/package.mk
@@ -19,11 +20,15 @@ $(eval $(call Package/Define))
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+librt +libopenssl +libevent2 +libreadline +PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network
+  DEPENDS:=+skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
   $(INTRO_STR):$(DESC_STR)
+endef
+# 跳过依赖
+define Package/skinos_wifi/extra_provides
+echo libskin.so
 endef
 
 # 安装到系统运行目录中( 注意必须要有这个函数才会执行Build/Compile )
