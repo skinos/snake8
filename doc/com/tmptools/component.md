@@ -1,609 +1,448 @@
-## 此文件为如何编译组件接口文件的格式, 章节, 风格指导, 此条章节内容不需要添加到接口文档中
+## 本文件说明组件接口文档的格式、章节结构与风格要求; 以下内容不写入各组件的正式文档
 
-1. 通常组件接口文档存放于项目目录下, 与组件源代码目录存放于相同的目录, 用于专门描述此组件的使用逻辑及向外提供的配置及接口
-2. 组件接口文档名称通常以 <组件名称>.md 命名
-3. 所有组件接口文档的风格及章节必须与此指导文档一致, 对应的章节内的内容跟据组件的实际实现会不同
-4. 以下文档描述的章节如对应的组件不提供则不应包括些章节
-5. <>内的内容需要跟据组件的实际信息填充
-6. //'' 内的内容是给编写接口文档的人介绍这种编写风格, 不应出现在接口文档中
+1. 组件接口文档与组件实现通常位于同一项目内且路径上相邻 (同一父目录或项目约定的同级位置); 文档用于描述使用逻辑、对外配置与接口, 具体目录布局以仓库约定为准
+2. 文档名称通常为 <组件名称>.md; 对应实现代码常见为与组件同名的子目录, 或与组件同名的 shell 脚本文件, 若实际结构不同须在组件文档 Dependencies 或 Architecture 中说明
+3. 所有组件接口文档的风格及章节必须与此指导文档一致, 包括缩进方式也必须一致
+4. 以下各章节若组件无对应内容则整节省略, 勿保留空标题或无信息小节
+5. <> 内的占位须按组件实际信息填写; 定稿中勿保留 `<组件名称>` 等字面量, 须为真实名称 (全文统一用此占位表示该组件在标题、Configuration Reference、命令与输出示例及文件名中的名称; 若项目里简称与全称不同, 仍填真实名, 勿留尖括号占位)
+6. //'' 内的内容是给编写接口文档的人或 AI 介绍如何编写此段内容, 不应出现在接口文档中
+7. 虽然本指导为中英文混合, 实际编写的组件接口文档必须为全英文 (含章节标题、正文与表格); 指导中的中文及占位说明在定稿时须改写为英文
+8. **Configuration attributes** 里那种带 `json` 标记的片段只是**排版用的示意**（可含 // 注释、占位的属性与值）, 属 JSONC / 伪代码, 不是严格可 `json.parse` 的 JSON; 与下文**通过命令行查询本组件配置的示例**不是同一类内容
+9. **Joint Events Hook** 与 **Published Joint Events** 中的表格仅为列数示例; 事件参数或字段多于表头时需扩展列或在单元格内用列表/附段说明. 组件文档定稿时这两节须按 §7 全英文撰写 (表头与单元格); 勿把本指导里仅用于说明的 `//''` 整句复制进组件文档
+10. **`get` / `set`**: 用于对 **Configuration** 做查询或修改时会进入组件侧对应实现; 二者**不是**对使用方暴露的接口. 组件接口定稿中**不要**对这两个符号做任何专门描述
+11. 接口文档不应过多描述组件内部实现, 专注于接口功能, 而不是描述内部实现, 不应出现源代码文件名等信息
+
+---
 
 
 
-## <组件全名> — <简单介绍>
+## <组件名称> — <简单介绍>
 
 ### Overview
 
-<此处介绍此组件实现什么功能, 有什么特点, 等等>
+//'定稿英文: 面向**使用者**说明「这个组件解决什么问题、不负责什么」, 用能力与场景概括即可; 避免从源码复述初始化顺序或文件名'
+<概述组件职责、能力边界与主要特性>
 
 
 ### Architecture
 
-<此处可以详细描述此组件在系统的的使用或是设计逻辑以及向上或向下层的关系, 或者会提供一些什么概念>
+//'定稿英文: **系统级**职责与主要数据去向 (配置、状态、事件) 的**概括**, 控制在少量段落或短列表; **禁止**把 **Architecture** 写成实现 walkthrough (逐函数、逐文件、逐寄存器写入顺序)'
+<说明组件在系统中的职责、设计要点及与上下层的关系, 并界定对外暴露的核心概念>
 
 
 ### Dependencies
 
-<介绍依赖关系>
+//'定稿英文: 列出**对外协作方** (其它组件、子系统、运行环境前提) 及**依赖方向**; 用产品或配置名指称即可; 避免罗列内部头文件或实现源文件, 除非该依赖本身就是集成契约 (例如必须链接的 SDK)'
+<列出依赖与关联: 上下层组件、同类型多实例、功能相近组件等, 并说明依赖方向或协作关系>
 
 
 ---
 
-### Configuration ( <组件全名> )
+
+
+### Configuration Reference ( <组件名称> )
 
 #### Configuration attributes
 
 ```json
 // 
 {
-    //'首先要确认属性属于以下哪几种, 然后确定有哪种格式描述, 注意当属性值是一个JSON时,  JSON下又同样是属性, 可以一层层嵌套'
 
-    //'可选值属性, 当属性值只有几个可选值是使用此方式描述, 属性名由组件约定不可变, 属性值为几个可选值'
-    //' "属性名":"属性名作用简介",                                 // [ 列出所有可选值 ]'
-    "<attribute>": "<attribute value introduce>",                  // [ "<选项>", "<选项2>", "<选项3>", ... ]
-                                                                   // "<选项>": <关于当attribute的值为选项时作用及介绍>
-                                                                   // "<选项2>": <关于当attribute的值为选项时作用及介绍>
-                                                                   // "<选项>3": <关于当attribute的值为选项时作用及介绍
-                                                                   // <介绍默认值>
+    //'配置项类型多样, 须先判定**属性名**与**值**的形态类别, 再按下列约定书写; 若值为 JSON 对象, 其内部可继续嵌套, 递归适用同类规则'
 
-    //'类型值属性介绍, 当些属性值是string(字符串), number(字符串的数字), ip address, mac address, port, 等通用属性时可以使用此值'
-    "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ mac address ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ tcp port ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ udp port ], <介绍默认值>
-    "<attribute>": "<attribute introduce>",                   // [ tcp/udp port ], <介绍默认值>
-    //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'
 
-    //'JSON对象类属性介绍, 多个子属性在一个JSON中'
-    "<attribute>":
+    //'1, 属性名固定的属性, 即属性名由组件代码约定不可变'
+
+        //'a. 可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性名由组件代码约定不可变, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",             // [ "<value>", "<value2>", "<value3>", ... ]
+                                                                      // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                      // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                      // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                      // <介绍默认值>
+
+        //'b. 字符串值属性: 当属性值是字符串时使用此方式描述, 属性名由组件代码约定不可变, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ string ], <attribute value的附加介绍, 如默认值等>
+
+        //'c. 数字值属性: 当属性值是数字时使用此方式描述, 属性名由组件代码约定不可变, 属性值为数字'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+
+        //'d. IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性名由组件代码约定不可变, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ ip address ], <attribute value的附加介绍, 如默认值等>
+
+        //'e. MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性名由组件代码约定不可变, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute>": "<attribute value introduce>",                   // [ mac address ], <attribute value的附加介绍, 如默认值等>
+
+        //'f. JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性名由组件代码约定不可变, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute>": { JSON },                                        // [ json ], <这个 JSON 的概要性介绍>
+
+
+    //'2, 可选名属性, 即属性名只有几个可选项, 通常这种属性存在于一个列表中, 最常用于接口列表的属性介绍, 这种情况下接口名称会作为属性的可选名'
+
+        //'a. 可选名可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ "<name>", "<name2>", "<name3>", ... ]:  [ "<value>", "<value2>", "<value3>", ... ]
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // <...>
+                                                                            // <介绍默认值或其他附加介绍>
+
+        //'b. 可选名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ "<name>", "<name2>", "<name3>", ... ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+
+        //'c. 可选名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ "<name>", "<name2>", "<name3>", ... ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+
+        //'d. 可选名IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ "<name>", "<name2>", "<name3>", ... ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+
+        //'e. 可选名MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ "<name>", "<name2>", "<name3>", ... ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+
+        //'f. 可选名JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性名为上文所列可选名之一, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ "<name>", "<name2>", "<name3>", ... ]: [ json ], <这个 JSON 的概要性介绍>
+                                                                       // "<name>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name2>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // "<name3>": <关于当attribute name为此选项时作用及介绍>
+                                                                       // <...>
+
+
+    //'3, 字符串名属性, 即属性名是任意字符串时使用此方式描述, 通常这种属性存在于一个列表中, 最常用于规则名, 这种情况下规则名可以是任意的字符串'
+
+        //'a. 字符串名可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ string ]: [ "<value>", "<value2>", "<value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // <...>
+                                                                            // <介绍默认值或其他附加介绍>
+
+        //'b. 字符串名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ string ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. 字符串名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ string ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. 字符串名IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ string ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. 字符串名MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ string ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. 字符串名JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ string ]: [ json ], <这个 JSON 的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+
+    //'4, 数字名属性, 即属性名是数字时使用此方式描述, 通常这种属性存在于一个列表中, 最常用于有顺序的规则名, 这种情况下规则名可以是数字'
+
+        //'a. 数字名可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ number ]: [ "<value>", "<value2>", "<value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // <...>
+                                                                            // <介绍默认值或其他附加介绍>
+
+        //'b. 数字名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ number ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. 数字名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ number ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. 数字名IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ number ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. 数字名MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ number ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. 数字名JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ number ]: [ json ], <这个 JSON 的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+
+    //'5, IP地址属性, 即对象键为 IP 地址时使用此方式描述, 常见于以地址为键的规则表或映射类配置块'
+
+        //'a. IP地址名可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ "<value>", "<value2>", "<value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // <...>
+                                                                            // <介绍默认值或其他附加介绍>
+
+        //'b. IP地址名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ ip address ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. IP地址名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ ip address ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. IP地址名IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ ip address ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. IP地址名MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ ip address ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. IP地址名JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ ip address ]: [ json ], <这个 JSON 的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+
+
+    //'6, MAC地址属性, 即对象键为 MAC 地址时使用此方式描述, 常见于以地址为键的规则表或映射类配置块'
+
+        //'a. MAC地址名可选值属性: 当属性值只有几个可选值时使用此方式描述, 属性值约定为若干可选值'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ mac address ]: [ "<value>", "<value2>", "<value3>", ... ]
+                                                                       // <attribute name的附加介绍>
+                                                                            // "<value>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value2>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // "<value3>": <关于当attribute value为此选项时作用及介绍>
+                                                                            // <...>
+                                                                            // <介绍默认值或其他附加介绍>
+
+        //'b. MAC地址名字符串值属性: 当属性值是字符串时使用此方式描述, 属性值为任意字符串'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",   // [ mac address ]: [ string ], <attribute value的附加介绍, 如默认值>
+                                                                       // <attribute name的附加介绍>
+
+        //'c. MAC地址名数字值属性: 当属性值是数字时使用此方式描述, 属性值为数字'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ mac address ]: [ number ], <attribute value的附加介绍, 如默认值等, 如有取值范围也需介绍>
+                                                                       // <attribute name的附加介绍>
+
+        //'d. MAC地址名IP地址值属性: 当属性值是 IP 地址时使用此方式描述, 属性值为 IP 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ mac address ]: [ ip address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'e. MAC地址名MAC地址值属性: 当属性值是 MAC 地址时使用此方式描述, 属性值为 MAC 地址'
+        //'格式如下:'
+        "<attribute name introduce>": "<attribute value introduce>",         // [ mac address ]: [ mac address ], <attribute value的附加介绍, 如默认值等>
+                                                                       // <attribute name的附加介绍>
+
+        //'f. MAC地址名JSON值属性: 当属性值是 JSON 时使用此方式描述, 属性值为 JSON, 支持嵌套, 内层可继续包含各种类型的属性'
+        //'格式如下:'
+        "<attribute name introduce>": {},                              // [ mac address ]: [ json ], <这个 JSON 的概要性介绍>
+                                                                       // <attribute name的附加介绍>
+
+}
+```
+
+#### Configuration Example
+
+//'**本节提供通过命令行（HE / Shell）查询本组件配置的示例**（具体语法以项目为准）. **要求**: (1) 采用项目中**常用**的查询方式; (2) 示例输出中**每个属性及其取值**均须可理解——与 **Configuration attributes** 已有条目一致, 或于行尾 **#** 后注明**该属性取该值的含义**（组件定稿语言见 §7）; (3) **尽量覆盖更多属性**, 以反映本组件配置全貌, 避免仅列少数条目; 单条命令展示不全时, 可再换一种查询方式补全. 定稿英文标题: **Configuration Example**'
+
+```shell
+# Query configuration (HE / Shell; project-specific syntax)
+<组件名称>
+{
+    "<attribute>":"<value>",                    # <what this attribute means at this value>
+    "<attribute2>":"<value2>",                    # <...>
+    # <one line per attribute you show; include as many as practical>
+}
+
+```
+
+#### Configuration write example (mandatory)
+
+//'**本节提供通过命令行（HE / Shell）修改本组件配置的示例**（具体语法以项目为准）. **必须**至少**两种**常用形式: 下列「单属性赋值」与「多属性一次写入」各示一组; 另有惯用形式可继续追加. 各组示例**紧接的说明文字**须交代变更意图及与 **Configuration attributes** 中**哪些属性**对应（组件定稿语言见 §7）'
+
+```shell
+# Change one configuration attribute (HE / Shell; project-specific syntax)
+<组件名称>:<attribute>=<attribute value>
+```
+
+```shell
+# Change several configuration attributes at once (HE / Shell; project-specific syntax)
+<组件名称>|{"<attribute>":"<attribute value>","<attribute2>":"<attribute2 value>","<attribute3>":"<attribute3 value>"}
+```
+
+
+
+---
+
+
+
+### API Reference
+
+//'**JSON 对象返回值与 Configuration attributes 同构**: 仅当成功分支为 **JSON 对象** 时适用; 须在 `succeed return json { ... }` 内逐字段按 **Configuration attributes** 规则书写 (字段级 typing + 注释、对使用者的语义). **标量 / 字符串 API** 的成功返回值**不是** JSON 对象, **禁止**用空 JSON 块或伪字段表描述, 成功分支用**一行**写清 **[ string ]** 或 **[ number ]** 等形态即可 (见下模板)**
+
+//'通过返回值对 API 分为**四类**, 以下分别说明描述格式'
+//'**boole_t API**: 通常返回 **ttrue** / **tfalse**, 或 **terror**'
+//'**talk_t JSON API**: 成功时返回 **JSON 对象** (或平台约定的 JSON talk); 失败 **NULL**; 可 **terror**; 成功对象须按上文「同构」规则展开'
+//'**标量 / 字符串 API**: 成功时返回**单一标量 talk**（**不是** JSON 对象）, 文档中用 **[ string ]** 或 **[ number ]**（等与实现对齐的**一种**形态）描述即可; 失败 **NULL**; 可 **terror**. 例如仅返回一段文本 token、或仅返回一个整数计数等查询（后者文档标 **[ number ]**）'
+//'**复合类 API**: 依具体接口在 **ttrue** / **tfalse** / **NULL** / **JSON** / **terror** 等分支中择一, 互斥分支勿写成同一次调用并存'
+
+//'Management、Query、Control 各子节中「单条 API」采用相同描述体例; 完整模板仅在 **Management APIs** 给出一次, Query 与 Control 仅界定收录范围, 不重复展开模板'
+//'上文的 boole_t、talk_t JSON、标量/字符串、复合类 指返回值形态, 与三个子节名称 (Management / Query / Control) 正交: 任一子节下的接口均可能是其中任一类, 书写时以 **Management APIs** 节中的模板为准'
+
+//'**Management APIs**: 侧重组件生命周期与系统调度; 收录管理用或系统调用的 API, 例如 setup, shut, service, online, offline'
+//'**Query APIs** / **Control APIs**: 面向业务数据与运行参数 — 只读查询归入 Query, 会改变运行状态或持久化配置的归入 Control; 生命周期与系统调度类接口不归入上述两节, 应归入 **Management APIs**'
+//'请勿将同一业务接口同时列入 Management 与 Query/Control (生命周期/系统调度与查询、控制职责相分离)'
+//'若实现为同一符号 (同一函数或命令), 仅因参数组合不同而分别表现为查询或控制 (例如某参数缺省为查询、指定后为控制), 须在 Query 与 Control 各列一条: 各条仅描述该语义下的参数与行为, 通过参数约定体现差异; 两节出现相同 API 名称属正常体例, 不构成不当重复'
+#### Management APIs
+
+//'以下为单条 API 通用模板 (适用于 Management、Query、Control; 按实际返回值选用 boole_t / talk_t JSON / 标量/字符串 / 复合类 之一)'
+//'参数行中的 [ <string> ] 仅为示例, 实际参数类型可为 number、JSON 字符串等, 与实现一致即可'
+
+//'boole_t API 的描述格式'
+##### `<API name[ argument, argument2, argument3, ... ]>` - <API介绍>
+    - <argument> ---------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument2> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument3> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <...>
+    - failed return <tfalse>
+    - succeed return <ttrue>
+    - error return <terror> //'若适用则列出, 否则省略
+
+
+//'talk_t JSON API 的描述格式 (成功体为 JSON 对象)'
+##### `<API name[ argument, argument2, argument3, ... ]>` - <API介绍>
+    - <argument> ---------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument2> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument3> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - failed return NULL
+    - error return <terror> //'若适用则列出, 否则省略
+    - succeed return json
     {
-        //'可选值的属性介绍, 当些属性只有几个可选值是使用此方式描述'
-        "<attribute>": "<attribute introduce>",                   // [ "<选项>", "<选项2>", "<选项3>", ... ]
-                                                                    // "<选项>": <关于当attribute的值为选项时作用及介绍>
-                                                                    // "<选项2>": <关于当attribute的值为选项时作用及介绍>
-                                                                    // "<选项>3": <关于当attribute的值为选项时作用及介绍
-                                                                    // <介绍默认值>
-        //'类型值的属性介绍, 当些属性是string, number, ip address, mac address, port, 等通用属性时可以使用此值'
-        "<attribute>": "<attribute introduce>",                   // [ string ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ number ], <介绍取值范围>, <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ ip address ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ mac address ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ tcp port ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ udp port ], <介绍默认值>
-        "<attribute>": "<attribute introduce>",                   // [ tcp/udp port ], <介绍默认值>
-        //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'  
+        //'**强制**: 描述方式与 **Configuration attributes** 完全相同 (字段级 typing + 注释行); 见 **API Reference** 节首「JSON 对象返回值与 Configuration attributes 同构」; 本节占位不得理解为可省略子字段'
     }
 
-    //'JSON对象类属性介绍, 子属性名也像值一样可变化'
-    "<attribute>":
+
+//'标量 / 字符串 API 的描述格式 (成功时为**单个**非 JSON 值, 如一段文本或一个计数; 与 talk_t JSON 区分)'
+##### `<API name[ argument, argument2, argument3, ... ]>` - <API介绍>
+    - <argument> ---------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument2> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument3> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - failed return NULL
+    - error return <terror> //'若适用则列出, 否则省略
+    - succeed return [ string ] 或 [ number ]（与实现一致，择一）, <单一返回值对使用者的语义、取值范围或编码说明> //'勿使用 `succeed return json { }` 描述此类接口'
+
+
+//'复合类 API 的描述格式'
+//'下列返回情形按具体 API 只取其一, 勿将互斥分支写成同一调用会同时发生'
+##### `<API name[ argument, argument2, argument3, ... ]>` - <API介绍>
+    - <argument> ---------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument2> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - <argument3> --------- [ <string> ], <参数介绍, 是否必需项> //'若适用则列出, 否则省略
+    - failed return <tfalse>
+    - succeed return <ttrue>
+    - failed return NULL
+    - error return <terror> //'若适用则列出, 否则省略
+    - succeed return json
     {
-        //'item name可自定义的可选值的属性'
-        "<item name>":"item value introduce", // [ string ] : [ "<选项>", "<选项2>", "<选项3>", ... ]
+        //'**强制**: 描述方式与 **Configuration attributes** 完全相同 (字段级 typing + 注释行); 见 **API Reference** 节首「JSON 对象返回值与 Configuration attributes 同构」; 本节占位不得理解为可省略子字段'
     }
 
-
-
-
-
-
-    //'attribute introduce: 必须使用多个英文单词, 英文单词间有空格, 这样可以与attribute区分'
-
-
-
-    "concom": "Multiple link connection management components",    // [ string ], You can customize the data scheduling component to implement more personalized requirements
-
-    "1": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ] 
-    "2": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "3": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "4": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "5": "ifname object of extern",          // [ "ifname@wan", "ifname@wan2", "ifname@lte", "ifname@lte2", "ifname@wisp", "ifname@wisp2", ... ]
-    "6": "ifname object of extern",          // [ "ifname@wan", ... ]
-    "7": "ifname object of extern",          // optional; same conventions as "1".."6" (system supports up to slot "10")
-    "8": "ifname object of extern",
-    "9": "ifname object of extern",
-    "10": "ifname object of extern",
-
-    // Configure parameters of the delay switchover function, only use in dbdc mode(reserved), the function can control the data via low delay connection
-    "delay_count": "Statistical delay times of last",   // [ number ]
-    "delay_divide": "delay divide line",                // [ number ], the unit is ms
-    "delay_diff": "Delay differential",                 // [ number ], the unit is ms
-
-    // DNS custom when Multiple DNS
-    "custom_dns": "Custom DNS",                       // [ "disable", "enable", "ifname@lte", "ifname@lte2", ... ]
-    "dns": "Custom DNS1",                             // [ ip address ], This is valid when "custom_dns" is "enable"
-    "dns2": "Custom DNS2"                             // [ ip address ], This is valid when "custom_dns" is "enable"
-}
-```
-
-Example, show all the configure
-```shell
-network@frame
-{
-    "type":"hot",                              # multi-link scheduling mode: hot backup
-    "1":"ifname@wan",                          # priority slot 1: WAN (Ethernet)
-    "2":"ifname@lte",                          # priority slot 2: LTE modem
-    "3":"ifname@lte2",                         # priority slot 3: second LTE modem
-    "4":"ifname@wisp",                         # priority slot 4: WISP (wireless relay)
-    "custom_dns":"disable"                     # use DNS from the active uplink (not custom)
-}
-```
-
-### Connection Types
-
-| Type | Description | Priority slots considered by the scheduler |
-|------|-------------|-----------------------------------------------|
-| `cold` | Cold backup — only one uplink active at a time; others are brought down | `"1"` .. `"10"` |
-| `hot` | Hot backup — several uplinks may stay up; default route prefers the smallest-numbered online slot | `"1"` .. `"10"` |
-| `hot2` | Hot backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
-| `hot3` | Hot backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
-| `hot4` | Hot backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
-| `hot5` | Hot backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
-| `lazy` | Lazy hot backup — after a switch to a backup, it does not move back to a higher-priority link until that backup fails | `"1"` .. `"10"` |
-| `lazy2` | Lazy backup; scheduler only evaluates `"1"` .. `"2"` | 2 |
-| `lazy3` | Lazy backup; scheduler only evaluates `"1"` .. `"3"` | 3 |
-| `lazy4` | Lazy backup; scheduler only evaluates `"1"` .. `"4"` | 4 |
-| `lazy5` | Lazy backup; scheduler only evaluates `"1"` .. `"5"` | 5 |
-
-### Configuration Example
-
-```json
-{
-    "type": "hot4",                  // multi-link scheduling on 4 extern connections
-    "1": "ifname@lte",
-    "2": "ifname@lte2",
-    "3": "ifname@wan",
-    "4": "ifname@wisp",
-    "delay_count": "10",             // Collect statistics on the latest 10 delays and schedule traffic based on the delay
-    "delay_divide": "150", 
-    "delay_diff": "100"
-}
-```
-
----
-
-## API Reference
-
-### Management APIs
-
-#### `setup[]` - Setup network infrastructure
-- Prepares the network framework (routing policy, firewall hooks, registration of local and external logical interfaces).
-- When multi-link settings exist for the current device mode, starts the **multi-link scheduler service** in the background.
-
-#### `shut[]` - Shutdown network infrastructure
-- Stops the multi-link scheduler (if running), tears down registrations, and clears framework-managed firewall state as appropriate.
-
-#### `service[]` - Start multi-link scheduler
-- Used internally to launch the scheduler executable that performs uplink selection; ordinary administration goes through `network@frame` and configuration.
-
-### Query APIs
-
-#### `status[]` - Show external connections status
-
-Returns the status of external connections when multiple external connections coexist.
-
-**Returns:**
-- `NULL` - Failed
-- `terror` - Error (e.g., wrong mode of operation, only works in multi-connection mode)
-- JSON object describing network information
-
-```json
-// Attributes introduction of talk by the method return
-{
-    "ifname object": {           // [ "ifname@wan", "ifname@wan2", "ifname@wan3", "ifname@wan4", "ifname@lte", "ifname@lte2", "ifname@lte3", "ifname@lte4", "ifname@wisp", "ifname@wisp2" ]
-        "status": "Whether online",    // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "down" ], "up" for online
-        "inuse": "Whether used"        // [ "disable", "enable" ], enable for in used, disable for not used
+    Example, <调用目的说明>
+    ```shell
+    <调用 API 的命令>
+    {
+        //'**强制**: 返回值字段级描述与 **Configuration attributes** 及 talk_t JSON 成功分支相同; 不得仅复述「返回 JSON」'
     }
-}
-```
+    ```
 
-**Status Values:**
-- `nodevice` - Corresponding module could not be found
-- `reset` - Reset the device
-- `setup` - Setup the connection
-- `register` - Register to peer
-- `uping` - Connecting
-- `scanning` - Scanning the peer
-- `block` - Wait keeplive succeed
-- `up` - Ready to connect to internet (signal/network/simcard all ok)
-- `failed` - Keeplive failed
-- `down` - The ifname is down
 
-**Example:**
-```shell
-network@frame.status
-{
-    "ifname@lte": {
-        "status": "up",
-        "inuse": "enable"
-    },
-    "ifname@lte2": {
-        "status": "down",
-        "inuse": "disable"
-    }
-}
-```
+//'Query APIs 中列出用于查询组件信息或状态的 API, 如 status, info, list 等, 具体以对应实现为准'
+//'与 Control 共用同一符号时: 本节条目仅描述查询语义下的参数形态与含义; 控制语义在 **Control APIs** 中另列一条, 通过两节中的参数约定区分 (无需合并为单条)'
+#### Query APIs
 
-#### `list[]` - List all connections
+//'本节不重复模板: 每条 API 的书写格式与 **Management APIs** 节中 boole_t、talk_t JSON、标量/字符串、复合类 四类模板相同, 按该 API 实际返回值选用对应模板即可'
 
-Returns a list of all registered connections.
+//'Control APIs 中列出用于控制组件行为、配置或运行状态的 API, 如 modify, change, reset, stop 等, 具体以对应实现为准'
+//'与 Query 共用同一符号时: 本节条目仅描述控制语义下的参数形态与含义; 查询语义在 **Query APIs** 中另列一条, 通过两节中的参数约定区分 (无需合并为单条)'
+#### Control APIs
 
-```json
-// Attributes introduction of talk by the method return
-{
-    "ifname object": "The corresponding ifdev object"    // [ "ifname@wan", ... ]: [ string ]
-}
-```
+//'本节不重复模板: 每条 API 的书写格式与 **Management APIs** 节中 boole_t、talk_t JSON、标量/字符串、复合类 四类模板相同, 按该 API 实际返回值选用对应模板即可'
 
-**Example:**
-```shell
-network@frame.list
-{
-    "ifname@lan": "bridge@lan",
-    "ifname@lte": "modem@lte",
-    "ifname@lte2": "modem@lte2"
-}
-```
 
-#### `local[]` - List all local connections and information
 
-Returns detailed information about local (LAN) connections.
+### Joint Events Hook
 
-```json
-// Attributes introduction of talk by the method return
-{
-    "ifname object": {
-        "status": "Current state",        // [ "uping", "down", "up" ]
-        "mode": "IPV4 address mode",      // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
-        "netdev": "netdev name",          // [ string ]
-        "ifdev": "ifdev name",            // [ string ], Optional
-        "gw": "gateway ip address",       // [ ip address ], Optional
-        "dns": "dns ip address",          // [ ip address ], Optional
-        "dns2": "dns2 ip address",        // [ ip address ], Optional
-        "ip": "ip address",               // [ ip address ]
-        "mask": "network mask",           // [ ip address ]
-        "ontime": "online uptime",        // [ string ], Optional, online system uptime
-        "livetime": "online time",        // [ string ], format is hour:minute:second:day
-        "rx_bytes": "received bytes",     // [ number ]
-        "rx_packets": "received packets", // [ number ]
-        "tx_bytes": "transmitted bytes",  // [ number ]
-        "tx_packets": "transmitted packets",// [ number ]
-        "mac": "MAC address",             // [ mac address ]
-        "method": "IPv6 address mode",    // [ "manual", "automatic", "slaac" ], Optional
-        "addr": "IPv6 address",           // [ ipv6 address ], Optional
-        "addr2": "IPv6 address2",         // [ ipv6 address ], Optional
-        "addr3": "IPv6 address3"          // [ ipv6 address ], Optional
-    }
-}
-```
-
-#### `extern[]` - List all extern connections and information
-
-Returns detailed information about external (WAN) connections.
-
-```json
-// Attributes introduction of talk by the method return
-{
-    "ifname object": {
-        "status": "Current state",
-        "mode": "IPV4 address mode",      // [ "dhcpc", "static", "pppoe" ]
-        "netdev": "netdev name",
-        "ifdev": "ifdev name",
-        "gw": "gateway ip address",
-        "dns": "dns ip address",
-        "dns2": "dns2 ip address",
-        "ip": "ip address",
-        "mask": "network mask",
-        "delay": "delay time",            // [ "failed", "block", number ]
-        "ontime": "online uptime",
-        "livetime": "online time",
-        "rx_bytes": "received bytes",
-        "rx_packets": "received packets",
-        "tx_bytes": "transmitted bytes",
-        "tx_packets": "transmitted packets",
-        "mac": "MAC address",
-        "method": "IPv6 address mode",
-        "addr": "IPv6 address",
-        
-        // LTE specific attributes (for ifname@lte, ifname@lte2, etc.)
-        "imei": "IMEI number",
-        "imsi": "IMSI number",
-        "iccid": "ICCID number",          // [ number, "nosim", "pin", "puk" ]
-        "plmn": "MCC and MNC",            // [ number, "noreg", "dereg" ]
-        "name": "modem name",
-        "operator": "operator name",
-        "nettype": "network type",
-        "signal": "signal level",         // [ "0", "1", "2", "3", "4" ]
-        "rssi": "signal intensity",
-        "csq": "CSQ number",
-        "rsrp": "RSRP value",
-        "rsrq": "RSRQ value",
-        "sinr": "sinr value",
-        "band": "current band",
-        "ci": "cell identity",
-        "lac": "location area code",
-        "channel": "channel",
-        
-        // WISP specific attributes (for ifname@wisp, ifname@wisp2)
-        "peer": "Peer SSID",
-        "peermac": "Peer BSSID",
-        "rate": "connect rate",
-        "rssp": "Peer signal percentage"
-    }
-}
-```
-
-#### `vpn[]` - List all VPN connections and information
-
-Returns information about VPN connections.
-
-```json
-{
-    "ifname object": {
-        "mode": "current mode",
-        "status": "current state",
-        "ifdev": "corresponding ifdev object",
-        "netdev": "netdev name of linux",
-        "ip": "IP address",
-        "rx_bytes": "received bytes",
-        "rx_packets": "received packets",
-        "tx_bytes": "transmitted bytes",
-        "tx_packets": "transmitted packets",
-        "mac": "MAC address"
-    }
-}
-```
-
-#### `outer[]` - List all extern and VPN connections
-
-Combines extern and VPN connection information.
-
-#### `default[]` - Get current default connection
-
-Returns the current default gateway connection information.
-
-- Call without arguments: return JSON with connection info
-- Call with one argument (ifname): return `ttrue` when matched, otherwise `tfalse`
-
-#### `gateway[]` - Get current gateway connection
-
-Returns the current gateway connection information (similar to `default[]`).
-
-### Interface Management APIs
-
-#### `register[ifname,concom,ifdev,type]` - Register an interface
-
-Registers a network interface with the frame.
-
-**Parameters:**
-- `ifname` - Interface name (e.g., "ifname@lte")
-- `concom` - Connection component name
-- `ifdev` - Interface device name
-- `type` - Interface type ("local", "extern", "vpn")
-
-#### `unregister[ifname,type]` - Unregister an interface
-
-Unregisters a network interface from the frame.
-
-#### `add[ifdev,netdev]` - Add a device
-
-Adds a network device to the frame (VLAN or Bridge).
-
-#### `delete[ifdev]` - Delete a device
-
-Removes a network device from the frame.
-
-### Online/Offline APIs
-
-#### `online[info]` - IPv4 online notification
-
-Called when an interface comes online (IPv4).
-
-**Info JSON structure:**
-```json
-{
-    "ifname": "interface name",
-    "ifdev": "device name",
-    "netdev": "network device",
-    "ip": "IP address",
-    "mask": "network mask",
-    "gw": "gateway",
-    "dns": "DNS server",
-    "dns2": "backup DNS"
-}
-```
-
-#### `offline[ifname]` - IPv4 offline notification
-
-Called when an interface goes offline (IPv4).
-
-#### `upline[info]` - IPv6 online notification
-
-Called when an interface comes online (IPv6).
-
-#### `downline[ifname]` - IPv6 offline notification
-
-Called when an interface goes offline (IPv6).
-
----
-
-## Connect Service
-
-The connect service is a separate process that manages multi-link connections. It is started by the frame component when multi-link mode is configured.
-
-### Features
-
-1. **Cold backup**
-   - Only one uplink is active at a time; lower-priority links are taken down when a higher-priority one is used.
-   - When the default route changes, existing connection tracking may be cleared so sessions are not stuck on the old path.
-
-2. **Hot backup**
-   - Multiple uplinks may remain up; the **default route** tracks the best available slot (smallest index that is online).
-   - If the preferred uplink fails, traffic moves to the next eligible slot automatically.
-
-3. **Lazy backup**
-   - Like hot backup, but after failing over it **does not move back** to a higher-priority uplink when that uplink recovers, until the current uplink fails again — reducing flip-flop between links.
-
-For `hot2`…`hot5` and `lazy2`…`lazy5`, only the first *N* numbered slots participate in **scheduler decisions**; additional slots may still appear in configuration but are outside that policy’s scan (see the table above).
-
-### Signals
-
-The connect service responds to the following signals:
-
-- `SIGHUP` - Refresh connections
-- `SIGTERM` / `SIGINT` - Graceful shutdown
-- `SIGPIPE` - Ignored (prevents crash on broken pipe)
-
-### Control Interface
-
-On systems that ship the maintenance CLI, you can signal the scheduler with:
-
-```shell
-# Exit the connect service
-connect exit
-
-# Refresh connections
-connect flush
-```
-
-### Status Query
-
-```shell
-# Query connect service status
-network@frame.status
-```
-
----
-
-## Deployment notes
-
-### Paths and storage
-
-Install layout (where libraries, the scheduler binary, runtime sockets, and registration files live) is decided by the **firmware image** and project packaging. Operators should use **`he`**, the Web UI, or product-specific tools — not hard-coded paths.
-
-### Firewall and policy routing
-
-The framework creates the **iptables/nftables structures** needed for outbound NAT, policy routing marks, and shunting. Exact chain names visible on the device may vary by product line.
-
-### Routing Tables
-
-- Default table preference: 100
-- Default table name: "default"
-
----
-
-#### Joint Events
-The following joint events are published (JSON on the joint bus) when network interface state changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
+//'表格列扩展与定稿英文要求见本指导文首第 9 条'
 
 | Event | Description |
 |-------|-------------|
-| `network/on` | Sent when a local interface (LAN) comes up with IPv4 connectivity. Triggered after the interface obtains an IP address and is ready for local network communication. |
-| `network/off` | Sent when a local interface (LAN) goes down or loses IPv4 connectivity. Triggered when the interface is disabled or the connection is lost. |
-| `network/up` | Sent when a local interface (LAN) comes up with IPv6 connectivity. Triggered after the interface obtains an IPv6 address. |
-| `network/down` | Sent when a local interface (LAN) goes down or loses IPv6 connectivity. |
-| `network/onextern` | Sent when an external interface (WAN/LTE/WiFi ISP) comes up with IPv4 connectivity. Triggered after successful connection establishment to the internet service provider. This event precedes `network/online` for external connections. |
-| `network/offextern` | Sent when an external interface (WAN/LTE/WiFi ISP) goes down or loses IPv4 connectivity. Triggered when the ISP connection is lost. |
-| `network/upextern` | Sent when an external interface (WAN/LTE/WiFi ISP) comes up with IPv6 connectivity. |
-| `network/downextern` | Sent when an external interface (WAN/LTE/WiFi ISP) goes down or loses IPv6 connectivity. |
-| `network/onvpn` | Sent when a VPN interface comes up with IPv4 connectivity. Triggered after the VPN tunnel is successfully established. |
-| `network/offvpn` | Sent when a VPN interface goes down or loses IPv4 connectivity. Triggered when the VPN tunnel is closed or interrupted. |
-| `network/upvpn` | Sent when a VPN interface comes up with IPv6 connectivity. |
-| `network/downvpn` | Sent when a VPN interface goes down or loses IPv6 connectivity. |
-| `network/online` | Sent when the system establishes a default route to the internet (IPv4). Triggered after an external interface comes up and the routing table is updated. This indicates the device has full internet access. |
-| `network/offline` | Sent when the system loses its default route to the internet (IPv4). Triggered when all external interfaces are down or when the primary connection fails. |
-| `network/upline` | Sent when the system establishes IPv6 internet connectivity via an external interface or VPN. |
-| `network/downline` | Sent when the system loses IPv6 internet connectivity. |
+| `<Joint 事件名称>` | <触发组件作出什么操作> |
+| `<逐行列出本组件注册或订阅的 Joint 事件>` | <同上：说明订阅后组件作出的操作或用途> |
 
----
-
-## Examples
-
-### Basic Multi-WAN Setup
-
-```shell
-# Configure 4 external connections in hot backup mode
-config network@frame hot4
-set type=hot4
-set 1=ifname@wan
-set 2=ifname@lte
-set 3=ifname@wisp
-set 4=ifname@lte2
-commit
-```
-
-### Custom DNS Configuration
-
-```shell
-# Configure custom DNS for multi-WAN
-config network@frame hot4
-set type=hot4
-set custom_dns=enable
-set dns=8.8.8.8
-set dns2=8.8.4.4
-commit
-```
-
-### Query Connection Status
-
-```shell
-# Get all extern connection status
-network@frame.extern
-
-# Get current default gateway
-network@frame.default
-
-# Check if specific interface is default
-network@frame.default[ifname@lte]
-```
-
-### Manual Connection Control
-
-```shell
-# Refresh connections (trigger re-evaluation)
-connect flush
-
-# Stop connect service
-connect exit
-```
-
----
-
-## Notes
-
-1. The **multi-link scheduler** starts only when the **merged network profile** for the current device **network mode** includes a **`connect`** section describing multi-uplink behavior (for example `type` and numbered slots). If that section is absent, only per-interface bring-up runs and no scheduler is needed.
-2. Up to **10** priority slots exist; configuration keys **`"1"` … `"10"`** refer to them in order (smaller index = higher priority).
-3. Which logical interfaces appear as **local**, **external**, or **VPN** is driven by the **network profile** for the mode, plus any dynamic registration used for disabled-link handling in multi-WAN products.
-4. DNS follows the **default uplink** when it changes, **unless** `custom_dns` is `enable` or a per-interface DNS override applies.
-5. In **cold** backup, clearing IPv4 connection tracking on default-route changes avoids stale sessions tied to the old uplink.
-
----
-
-### Lifecycle API
-+ `setup[]` / `shut[]` — bring up or tear down the frame service and multi-link **`connect`** integration. **`network@hosts.setup`** is scheduled under **`init` → `land`**; **`network@frame`** itself is usually started from the **`connect`** executable / platform sequence when a profile contains a **`connect`** section.
 
 
 ### Published Joint Events
-**IPv4 / IPv6 uplink and scheduling notifications** emitted as JSON on the joint bus, including (non-exhaustive):
 
-| Event (examples) | When |
-|------------------|------|
-| `network/on`, `network/off` | Logical extern link up/down |
-| `network/onextern`, `network/offextern` | External ifname scope |
-| `network/onvpn`, `network/offvpn` | VPN scope |
-| `network/online`, `network/offline` | Post-connect / DHCP-style online |
-| `network/upline`, `network/downline`, `network/upextern`, … | IPv6 / dual-stack analogues |
+//'表格列扩展与定稿英文要求见本指导文首第 9 条'
 
-Payload structure follows the `talk_t` JSON built in **`_online` / `_offline` / `_upline` / `_downline`** (typically includes **`ifname`** and status fields).
+| Event | When | Argument | Argument2 | Argument3 |
+|-------|------|----------|-----------|-----------|
+| `<Joint 事件名称>` | <说明触发该事件的原因或目的> | <第一个事件参数的含义, 无则留空> | <第二个事件参数的含义, 无则留空> | <第三个事件参数的含义, 无则留空> |
+| `<逐行列出本组件对外发布的 Joint 事件>` | | | | |
 
-### C Code Example
-```c
-#include "skin/skin.h"
 
-static void example_frame_list(void)
-{
-    talk_t ret = scall("network@frame", "list", NULL);
-    if (ret > tpanic)
-        talk_free(ret);
-}
-```
+### Other
 
+<不便归入上述章节但对使用者仍属必要的信息>
