@@ -156,15 +156,7 @@
               <button class="btn btn-mini btn-main" id="cmodel_modify" data-i18n="Modify"></button>
           </div>
       </div>
-      <!-- 功能代码 -->
-      <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Features"></label>
-          <div class="col-sm-9">
-              <input type="text" id="features_string" class="col-xs-10 col-sm-5" maxlength="128" />
-              &nbsp;&nbsp;&nbsp;
-              <button class="btn btn-mini btn-main" id="features_modify" data-i18n="Modify"></button>
-          </div>
-      </div>
+     
       <!-- 语言 -->
       <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Language Settings"></label>
@@ -420,7 +412,6 @@
             $('#cfgversion').text(ms.cfgversion||$.i18n('Default'));
 
             $('#cmodel_string').val( ms.cmodel );
-            $('#features_string').val( ms.features );
             $("#language").val( m.language );
             $('#mac').val( m.mac );
             $('#sn_string').val( m.sn );
@@ -437,7 +428,9 @@
         // 本地升级
         $('#upgrade').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
         $('#upgrade').fileupload({
-          url:'/cgi/upgrade', paramName:'filename', dataType:'text',
+          url:'/upload?username='+window.username+'&key='+window.talkkey+'&object=arch@firmware&api=zz&p=[]',
+          paramName:'filename',
+          dataType:'text',
           add: function( e, data )
           {
               // 提示正在升级, 选择文件之后, 执行升级之前
@@ -529,7 +522,7 @@
         // 导入默认配置
         $('#restore_default').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
         $('#restore_default').fileupload({
-            url: '/cgi/restore_default',
+            url:'/upload?username='+window.username+'&key='+window.talkkey+'&object=arch@data&api=restore',
             paramName: 'filename',
             dataType: 'text',
             add: function (e, data)
@@ -591,20 +584,7 @@
                 return;
             }
         });
-        $('#features_modify').click(function () {
-            var nfeatures = $("#features_string").val();
-            if ( nfeatures != ms.features )
-            {
-                he.exec( [ "arch@data:features="+nfeatures ] ).then( function(){
-                    location.reload(true);
-                });
-            }
-            else
-            {
-                page.alert( { message: $.i18n('Settings unchanged') } );
-                return;
-            }
-        });
+     
         $("#language").change(function(){
           var nlang = $("#language").val();
           if ( nlang != m.language )
