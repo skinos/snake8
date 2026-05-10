@@ -9,7 +9,7 @@ PKG_VERSION:=$(shell prj-read version)
 INTRO_STR:=$(shell prj-read intro)
 DESC_STR:=$(shell prj-read desc)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
-PKG_BUILD_DEPENDS:=+PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +PACKAGE_skinos_arch
+PKG_BUILD_DEPENDS:=land network arch
 
 # 包含Openwrt的一些有关包处理的函数
 include $(INCLUDE_DIR)/package.mk
