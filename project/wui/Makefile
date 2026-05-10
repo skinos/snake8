@@ -20,7 +20,7 @@ $(eval $(call Package/Define))
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_webs:skinos_webs
+  DEPENDS:=+skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_webs:skinos_webs
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
