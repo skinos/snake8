@@ -128,5 +128,14 @@
     "wan2": "WAN2",
     "wan3": "WAN3",
     "wan4": "WAN4",
-    "Ethernet Status":"Ethernet Status"
+    "Ethernet Status":"Ethernet Status",
+    "Upgrade": "Upgrade",
+    "System Reboot":"System Reboot",
+    "Default Configure":"Default Configure",
+    "Restore Default Configure": "Restore Default Configure",
+    "Save Default Configure": "Save Default Configure",
+    "Factory Configure":"Factory Configure",
+    "Custom Model":"Custom Model",
+    "Language Settings":"Language Settings",
+    "Backup Configure":"Backup Configure"
 }

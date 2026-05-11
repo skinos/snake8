@@ -131,5 +131,14 @@
     "wan2": "WAN2",
     "wan3": "WAN3",
     "wan4": "WAN4",
-    "Ethernet Status":"网口状态"
+    "Ethernet Status":"网口状态",
+    "Upgrade": "软件更新",
+    "System Reboot":"系统重启",
+    "Default Configure":"默认配置",
+    "Restore Default Configure": "恢复默认配置",
+    "Save Default Configure": "保存默认配置",
+    "Factory Configure":"出厂配置",
+    "Custom Model":"定制版本",
+    "Language Settings":"语言设置",
+    "Backup Configure":"备份配置"
 }
