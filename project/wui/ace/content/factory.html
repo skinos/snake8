@@ -553,7 +553,6 @@
         $('#save_default').click(function () {
             he.exec( [ "arch@data.current_default" ] ).then( function(v){
                 var ret = v[0];
-                console.log('arch@data.current_default:',v);
                 if ( ret == true )
                 {
                     page.alert( { message: $.i18n('Save configure to default succeed'), callback: function( result ){location.reload();} } );

@@ -2,7 +2,7 @@
 window.object = "wui@admin";
 window.hepath = "/he";
 window.talkkey = sessionStorage.getItem( "talkkey" );
-console.log( "GET:"+window.talkkey );
+// console.log( "GET:"+window.talkkey );
 window.username = sessionStorage.getItem( "username" );
 
 // disable load the subpage, loading when after i18n loaded

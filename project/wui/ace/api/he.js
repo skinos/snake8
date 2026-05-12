@@ -85,6 +85,10 @@ var he =
 		//console.log( "POST:"+window.talkkey );
         paramter["key"] = window.talkkey;
 		paramter["username"] = window.username;
+
+        // 打印交互数据
+        console.log( "Request:", paramter );
+
         /* get the uri */
         uri = window.hepath+"?rand=" + Math.random();
         /* show the loading */
@@ -99,6 +103,7 @@ var he =
                 'url':uri, 'type':'POST', 'timeout':timeout, 'async':true, dataType: "json", 'contentType':'application/json', 'data':JSON.stringify(paramter),
                 'complete': function ( x, s )
                 {
+
                     // return while in rebooting
                     if ( window.rebooting )
                     {
@@ -129,6 +134,9 @@ var he =
                     else
                     {
                         callbak = eval( "(" + x.responseText + ")" );
+                        // 打印交互数据
+                        console.log( "Return:", callbak );
+
                         if ( callbak == null )
                         {
                             console.log( "Server Response Not JSON: "+x.responseText );
@@ -139,7 +147,6 @@ var he =
 						{
 							window.talkkey = callbak["key"];
 							sessionStorage.setItem( "talkkey", window.talkkey );
-							console.log( "UPDATE:"+window.talkkey );
 						}
                         for ( i in heindex )
                         {
@@ -182,6 +189,7 @@ var he =
         else
         {
             htmlobj = $.ajax( { 'url':uri, 'type':'POST', 'timeout':timeout, 'async':false, dataType: "json", 'contentType':'application/json', 'data':JSON.stringify(paramter) } );
+
             // return while in rebooting
             if ( window.rebooting )
             {
@@ -212,6 +220,8 @@ var he =
             else
             {
                 callbak = eval( "(" + htmlobj.responseText + ")" );
+                // 打印交互数据
+                console.log( "Return:", callbak );
                 if ( callbak == null )
                 {
                     console.log( "Server Sync Response Not JSON: "+htmlobj.responseText );
@@ -224,7 +234,6 @@ var he =
 					{
 						window.talkkey = callbak["key"];
 						sessionStorage.setItem( "talkkey", window.talkkey );
-						console.log( "UPDATE:"+window.talkkey );
 					}
                     for ( i in heindex )
                     {
