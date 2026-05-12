@@ -182,5 +182,6 @@
     "Enable": "Enable",
     "Disable": "Disable",
     "Auto Test": "Auto Test",
-    "Status View": "Status View"
+    "Status View": "Status View",
+    "Operation":"Operation"
 }
