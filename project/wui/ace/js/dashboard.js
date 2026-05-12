@@ -1148,11 +1148,11 @@ function toggleLteInterface(type) {
     
     if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect") && status !== $.i18n("block")) {
         he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     } else {
         he.exec(['ifname@' + type + '.shut']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     }
 }
@@ -1163,11 +1163,11 @@ function toggleWanInterface(type) {
     
     if (status === $.i18n("down")) {
         he.exec(['ifname@' + type + '.setup']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     } else {
         he.exec(['ifname@' + type + '.shut']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     }
 }
@@ -1178,11 +1178,11 @@ function toggleWispInterface(type) {
     
     if (status === $.i18n("down")) {
         he.exec(['ifname@' + type + '.setup']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     } else {
         he.exec(['ifname@' + type + '.shut']).then(function(result) {
-            location.reload();
+            interface_load();
         });
     }
 }
