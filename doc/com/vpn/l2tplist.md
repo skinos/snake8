@@ -21,7 +21,7 @@ Management of L2TP client Instance
     ```
     ```shell
     # examples, list all l2tp client
-    vpn@l2tpclient.list
+    vpn@l2tplist.list
     {
     }
     ```
@@ -37,8 +37,8 @@ Management of L2TP client Instance
     }
     ```
     ```shell
-    # examples, list all l2tp client
-    vpn@l2tpclient.list
+    # examples, list all l2tp client status
+    vpn@l2tplist.status
     {
     }
     ```
@@ -46,14 +46,14 @@ Management of L2TP client Instance
 + `add[ [server], [port] ]` **add a l2tp client**, *succeed return the l2tp object name, failed return NULL*
     ```shell
     # examples
-    vpn@l2tpclient.add[ www.l2tptest.com, 1701 ]
+    vpn@l2tplist.add[ www.l2tptest.com, 1701 ]
     vpn@l2tp4
     ```
 
 + `delte[ l2tp object ]` **delete a l2tp client**, *succeed return ttrue, failed return tfalse*
     ```shell
     # examples
-    vpn@l2tpclient.delete[ vpn@l2tp4 ]
+    vpn@l2tplist.delete[ vpn@l2tp4 ]
     ttrue
     ```
 

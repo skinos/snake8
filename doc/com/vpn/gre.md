@@ -22,6 +22,9 @@ Management of GRE tunnel
     "remoteip":"gre tunnel remote address",      // [ ip address ]
     "ttl":"gre tunnel ttl",                      // [ number ]
     "mtu":"gre tunnel MTU",                      // [ number ]
+    "custom_dns":"custom the dns server",        // [ disable, enable ]
+    "dns":"dns address",                         // [ ip address ], vaild when "custom_dns" be "enable"
+    "dns2":"backup dns address",                 // [ ip address ], vaild when "custom_dns" be "enable"
 
     // route attributes
     "masq":"share interface address to access",    // [ disable, enable ]
@@ -34,10 +37,7 @@ Management of GRE tunnel
             "mask":"destination network mask"      // [ string ]
         }
         // ...more route rule
-    },
-    "custom_dns":"custom the dns server",        // [ disable, enable ]
-    "dns":"dns address",                         // [ ip address ], vaild when "custom_dns" be "enable"
-    "dns2":"backup dns address"                  // [ ip address ], vaild when "custom_dns" be "enable"
+    }
 }
 
 ```
@@ -92,5 +92,5 @@ Management of GRE tunnel
     ```shell
     # examples, get the first gre tunnel netdev
     vpn@gre.netdev
-    gre0
+    gre
     ```
