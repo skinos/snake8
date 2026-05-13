@@ -1,5 +1,13 @@
 {
     "Status": "状态",
+    "disable": "禁用",
+    "down": "未连接",
+    "scanning": "正在扫描",
+    "uping": "正在连接",
+    "connect": "正在连接",
+    "connecting": "正在连接",
+    "connected": "正在连接",
+    "up": "连接成功",
     "Address": "地址",
     "Delay": "延迟",
     "Peer SSID": "对端SSID",
@@ -34,7 +42,6 @@
     "Enter SSID3": "输入SSID3",
     "[placeholder]Enter BSSID3": "输入BSSID3",
     "Enter BSSID3": "输入BSSID3",
-    "disable": "禁用",
     "owe": "OWE",
     "wpapsk": "WPA-PSK(个人)",
     "wpa2psk": "WPA2-PSK(个人)",
@@ -105,6 +112,5 @@
     "SSID": "SSID",
     "Signal": "信号",
     "MAC": "MAC",
-    "down": "未连接",
     "Scanning": "扫描中"
 }
