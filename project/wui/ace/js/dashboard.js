@@ -1006,97 +1006,90 @@ function switch_show(ethInfo, wifi24Info, wifi58Info, phyInfo) {
     }  
 }
 
-function interface_load() {  
-    he.bkload(['network@frame.extern']).then(function(externData) {  
-        if (!externData) return;  
-          
-        var data = externData[0];  
-        if (!data) return;  
-          
-        if (data['ifname@lte']) {  
-            lte_show(data['ifname@lte'], "#lte");  
-        }  
-          
-        if (data['ifname@lte2']) {  
-            lte_show(data['ifname@lte2'], "#lte2");  
-        }  
-          
-        if (data['ifname@lte3']) {  
-            lte_show(data['ifname@lte3'], "#lte3");  
-        }  
-          
-        if (data['ifname@lte4']) {  
-            lte_show(data['ifname@lte4'], "#lte4");  
-        }  
-          
-        if (window.ifdev && window.ifdev["wifi@n"] === true && data['ifname@wisp']) {  
-            wisp_show(data['ifname@wisp'], "#wisp");  
-        }  
-          
-        if (window.ifdev && window.ifdev["wifi@a"] === true && data['ifname@wisp2']) {  
-            wisp_show(data['ifname@wisp2'], "#wisp2");  
-        }  
-  
-        if (data['ifname@wan']) {  
-            wan_show(data['ifname@wan'], "#wan");  
-        }  
-          
-        if (data['ifname@wan2']) {  
-            wan_show(data['ifname@wan2'], "#wan2");  
-        }  
-          
-        if (data['ifname@wan3']) {  
-            wan_show(data['ifname@wan3'], "#wan3");  
-        }  
-          
-        if (data['ifname@wan4']) {  
-            wan_show(data['ifname@wan4'], "#wan4");  
-        }  
-          
-        adjustBoxLayout();  
-    });  
-      
-    he.bkload(['network@frame.local']).then(function(localData) {  
-        if (!localData) return;  
-          
-        var data = localData[0];  
-        if (!data) return;  
-          
-        if (data['ifname@lan']) {  
-            lan_show(data['ifname@lan'], "#lan");  
-        }  
-          
-        if (data['ifname@lan2']) {  
-            lan_show(data['ifname@lan2'], "#lan2");  
-        }  
-          
-        if (data['ifname@lan3']) {  
-            lan_show(data['ifname@lan3'], "#lan3");  
-        }  
-          
-        if (data['ifname@lan4']) {  
-            lan_show(data['ifname@lan4'], "#lan4");  
-        }  
-        adjustBoxLayout();  
-    });  
-      
-    he.bkload(['arch@ethernet.status', 'arch@ethernet']).then(function(ethData) {  
-        if (!ethData) return;  
-          
-        var statusData = ethData[0];
-        var configData = ethData[1];
-        
-        var phyInfo = (configData && configData.phy) ? configData.phy : null;
-  
-        he.bkload(['wifi@nssid.status', 'wifi@assid.status']).then(function(wifiData) {  
-            var wifi24Data = wifiData[0] || null;  
-            var wifi58Data = wifiData[1] || null;  
-              
-            switch_show(statusData, wifi24Data, wifi58Data, phyInfo);  
-  
-            adjustBoxLayout();  
-        });  
-    });  
+function interface_load() {
+    he.bkload([
+        'network@frame.extern',
+        'network@frame.local',
+        'arch@ethernet.status',
+        'arch@ethernet',
+        'wifi@nssid.status',
+        'wifi@assid.status'
+    ]).then(function(v) {
+        if (!v) return;
+
+        var externData = v[0] || {};
+        var localData = v[1] || {};
+        var ethStatusData = v[2] || {};
+        var ethConfigData = v[3] || {};
+        var wifi24Data = v[4] || null;
+        var wifi58Data = v[5] || null;
+
+        var phyInfo = ethConfigData && ethConfigData.phy ? ethConfigData.phy : null;
+
+        // extern
+        if (externData['ifname@lte']) {
+            lte_show(externData['ifname@lte'], "#lte");
+        }
+
+        if (externData['ifname@lte2']) {
+            lte_show(externData['ifname@lte2'], "#lte2");
+        }
+
+        if (externData['ifname@lte3']) {
+            lte_show(externData['ifname@lte3'], "#lte3");
+        }
+
+        if (externData['ifname@lte4']) {
+            lte_show(externData['ifname@lte4'], "#lte4");
+        }
+
+        if (window.ifdev && window.ifdev["wifi@n"] === true && externData['ifname@wisp']) {
+            wisp_show(externData['ifname@wisp'], "#wisp");
+        }
+
+        if (window.ifdev && window.ifdev["wifi@a"] === true && externData['ifname@wisp2']) {
+            wisp_show(externData['ifname@wisp2'], "#wisp2");
+        }
+
+        if (externData['ifname@wan']) {
+            wan_show(externData['ifname@wan'], "#wan");
+        }
+
+        if (externData['ifname@wan2']) {
+            wan_show(externData['ifname@wan2'], "#wan2");
+        }
+
+        if (externData['ifname@wan3']) {
+            wan_show(externData['ifname@wan3'], "#wan3");
+        }
+
+        if (externData['ifname@wan4']) {
+            wan_show(externData['ifname@wan4'], "#wan4");
+        }
+
+        // local
+        if (localData['ifname@lan']) {
+            lan_show(localData['ifname@lan'], "#lan");
+        }
+
+        if (localData['ifname@lan2']) {
+            lan_show(localData['ifname@lan2'], "#lan2");
+        }
+
+        if (localData['ifname@lan3']) {
+            lan_show(localData['ifname@lan3'], "#lan3");
+        }
+
+        if (localData['ifname@lan4']) {
+            lan_show(localData['ifname@lan4'], "#lan4");
+        }
+
+        // switch / wifi
+        switch_show(ethStatusData, wifi24Data, wifi58Data, phyInfo);
+
+        // 最后统一调整一次布局
+        adjustBoxLayout();
+    });
 }
 
 // 按钮事件绑定函数

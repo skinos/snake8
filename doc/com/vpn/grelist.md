@@ -43,7 +43,7 @@ Management of GRE tunnel Instance
     }
     ```
 
-+ `add[ [server] ]` **add a gre tunnel**, *succeed return the gre object name, failed return NULL*
++ `add[ [peer] ]` **add a gre tunnel**, *succeed return the gre object name, failed return NULL*
     ```shell
     # examples
     vpn@grelist.add[ www.gretest.com ]
