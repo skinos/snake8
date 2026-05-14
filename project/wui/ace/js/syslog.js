@@ -183,6 +183,9 @@ function syslog_down( rowId )
 $.i18n().load( page.lang('syslog') ).then( function () {
   /* init the language */
   $.i18n().locale = lang; $('body').i18n();
+
+  $('#syslog_html').show();
+
   /* init the clients table */
   jqtable.create(  syslogs_table, syslogs_pager,
     {

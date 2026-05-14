@@ -19,6 +19,9 @@ function status_load()
       state = v[0];
       var info = state;
       var id = "#wisp";
+      $(id+"_btn").show();
+      $(id+"_rssiimg").show();
+      
       /* status end btn */
       if ( info.status )
       {

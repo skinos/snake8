@@ -4,6 +4,7 @@
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
+    <div id="admin_html" style="display: none;">
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Web Server"></label>
@@ -83,7 +84,9 @@
           <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
         </div>
       </div>
-      
+
+    </div>
+
     </div>
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
@@ -269,6 +272,8 @@
     $.i18n().load( page.lang(langjson) ).then( function () {
       /* init the language */
       $.i18n().locale = lang; $('body').i18n();
+
+      $('#admin_html').show();
 
       /* load the configure */
       load_config();
