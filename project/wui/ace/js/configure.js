@@ -3,6 +3,8 @@ $.i18n().load( page.lang('configure') ).then( function () {
     /* init the language */
     $.i18n().locale = lang; $('body').i18n();
 
+    $('#configure_html').show();
+    
     /* load the info */
     $('#cfgversion').text( window.machine.cfgversion||$.i18n('default') );
 

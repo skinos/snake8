@@ -74,12 +74,15 @@ function status_load()
   he.bkload( [ object+".status" ] ).then( function(v){
     state = v[0]
     var info = state;
+    var id = "#lte";
 
-      if(!info){
-        info = {};
-      }
-
-      var id = "#lte";
+    if(!info){
+      info = {};
+    }
+    
+    $(id+"_btn").show();
+    $(id+"_rssiimg").show();
+    
       /* status end btn */
       if ( info.status )
       {

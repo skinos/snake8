@@ -9,10 +9,15 @@ function hosts_load()
 {
     he.load( [ obj ] ).then( function(v){
         hosts = v[0];
+
         if ( !hosts )
         {
             return;
         }
+
+        $("#tip").show();
+        $("#button_hosts").show();
+        
         hostscopy = JSON.parse(JSON.stringify(hosts));
         var rows = [];
         for ( var hostname in hosts )

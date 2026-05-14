@@ -755,7 +755,7 @@ var jqtable =
     */
     create: function( grid_selector, pager_selector, custom )
     {
-        var defaults = 
+        var defaults =
         {
             datatype: 'local', editurl: 'clientArray', viewrecords : true, height: 'auto',
             rowNum:10000, rowList:[],

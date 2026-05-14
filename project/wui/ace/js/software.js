@@ -70,6 +70,8 @@ $.i18n().load( page.lang('software') ).then( function () {
   /* init the language */
   $.i18n().locale = lang; $('body').i18n();
 
+  $('#software_html').show();
+
   /* load the firmware info */
   if ( window.wui.bigversion && window.wui.bigversion == "enable" )
   {
