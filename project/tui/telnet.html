@@ -4,6 +4,7 @@
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
+    <div id="telnet_html" style="display: none;">
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Telnet Server"></label>
@@ -51,6 +52,8 @@
         </div>
       </div>
       
+    </div>
+
     </div>
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
@@ -158,6 +161,8 @@
     $.i18n().load( page.lang(langjson) ).then( function () {
       /* init the langauage */
       $.i18n().locale = lang; $('body').i18n();
+
+      $('#telnet_html').show();
 
       /* load the configure */
       load_config();

@@ -209,6 +209,8 @@ $.i18n().load( page.lang('device') ).then( function () {
   /* init the language */
   $.i18n().locale = lang; $('body').i18n();
 
+  $('#device_html').show();
+
   // load hostname
   $('#name_string').text(window.machine.name);
   if ( window.machines.cmodel )

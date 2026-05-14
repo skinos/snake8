@@ -9,8 +9,7 @@
   <div class="col-xs-12">
     <!-- PAGE CONTENT BEGINS -->
 
-
-
+  <div id="sdk_html" style="display: none;">
     <h4 data-i18n="a. How to download the SDK and compile an upgrade package"></h4>
     <p data-i18n="1. It is recommended to download this SDK after setting up the build environment in Ubuntu."></p>
     <p data-i18n="2. Run the following command in an Ubuntu terminal to download the SDK:" ></p>
@@ -34,7 +33,7 @@
     <p data-i18n="3. These documents are updated from time to time. Run make update in the SDK directory to refresh them."></p>
     <p data-i18n="4. Visit www.ashyelf.com for more development help (under construction)."></p>
 
-
+  </div>
 
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
@@ -46,6 +45,8 @@
     $.i18n().load( page.lang('sdk') ).then( function () {
       /* init the language */
       $.i18n().locale = lang; $('body').i18n();
+
+      $('#sdk_html').show();
 
       he.load( [ 'land@machine.status' ] ).then( function(v){
           var gBOARDID = '';

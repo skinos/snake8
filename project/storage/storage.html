@@ -3,6 +3,7 @@
   <div class="col-xs-12 form-btn-wrapper">
     <!-- PAGE CONTENT BEGINS -->
 
+  <div id="storage_html" style="display: none;">
     <div class="form-horizontal" id="ftp"  style="display: none;" >
       <h4 data-i18n="FTP Server"></h4>
       <!-- 状态 -->
@@ -119,6 +120,7 @@
       </div>
     </div>
 
+  </div>
 
 
     <!-- PAGE CONTENT ENDS -->
@@ -395,6 +397,9 @@
     $.i18n().load( page.lang(langjson) ).then( function () {
       /* init the langauage */
       $.i18n().locale = window.lang; $('body').i18n();
+
+      $('#storage_html').show();
+
       /* load the configure */
       storage_load();
 

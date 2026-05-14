@@ -4,7 +4,7 @@
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
-    
+    <div id="restart_html" style="display: none;">
       <!-- 重启模式 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Reboot Mode"></label>
@@ -107,6 +107,7 @@
        </div>
      </div>
 
+    </div>
 
     </div>
     <!-- PAGE CONTENT ENDS -->
@@ -214,6 +215,9 @@
     $.i18n().load( page.lang(langjson) ).then( function () {
         /* init the langauage */
         $.i18n().locale = lang; $('body').i18n();
+
+        $('#restart_html').show();
+
         /* init the select */
         var str = '';
         for (var i = 0; i < 24; i ++) {
