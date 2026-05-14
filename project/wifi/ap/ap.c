@@ -66,14 +66,12 @@ talk_t _netdev( obj_t this, param_t param )
 }
 boole_t _up( obj_t this, param_t param )
 {
-	int fd;
 	talk_t ret;
 	talk_t cfg;
+	char *netdev;
 	const char *ptr;
 	const char *radio;
 	const char *object;
-	const char *netdev;
-    char path[PATH_MAX];
 
 	/* get the configure */
 	object = obj_name( this );
@@ -82,10 +80,14 @@ boole_t _up( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	netdev = reg_string( this, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
+	netdev = register_pointer( this, "netdev" );
+	if ( netdev == NULL )
 	{
-		return tfalse;
+		return terror;
+	}
+	if ( *netdev == '\0' )
+	{
+		return terror;
 	}
 	cfg = config_get( this, NULL );
 	if ( cfg == NULL )
@@ -93,49 +95,40 @@ boole_t _up( obj_t this, param_t param )
 		return tfalse;
 	}
 
-    /* ignore it if up already */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	fd = lock_open( path, O_RDWR|O_CREAT|O_EXCL, 0666, -1 );
-    if ( fd < 0 )
-    {
-		wifi_warn( "%s(%s) already up", object, netdev );
+	if ( register_lockw( this, netdev ) != true )
+	{
+		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
 		talk_free( cfg );
-		return ttrue;
-    }
+		return tfalse;
+	}
+
 	wifi_info( "%s(%s) up", object, netdev );
 
 	ret = tfalse;
-    /* status */
-    ptr = json_string( cfg, "status" );
-    if (  ptr == NULL || 0 != strcmp( ptr, "enable" ) )
-    {
-        if ( netdev_flags( netdev, IFF_UP ) > 0 )
-        {
-            ifconfig( "%s down", netdev );
-        }
+	/* status */
+	ptr = json_string( cfg, "status" );
+	if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
+	{
+		if ( netdev_flags( netdev, IFF_UP ) > 0 )
+		{
+			ifconfig( "%s down", netdev );
+		}
 		ret = ttrue;
-		lock_close( fd );
-		unlink( path );
-    }
+	}
 	else
 	{
-        if ( netdev_flags( netdev, IFF_UP ) <= 0 )
-        {
-            ifconfig( "%s up", netdev );
-        }
-		/* mark the up state */
-		ptr = uptime_desc( NULL, 0 );
-		if ( ptr != NULL )
+		if ( netdev_flags( netdev, IFF_UP ) <= 0 )
 		{
-			write( fd, ptr,	strlen(ptr) );
+			ifconfig( "%s up", netdev );
 		}
-		lock_close( fd );
 	}
 	/* start the hostapd */
 	sreset( radio, "hostapd", NULL, "%s-hostapd", radio );
 
+	register_unlock( this, netdev );
+
 	talk_free( cfg );
-    return ret;
+	return ret;
 }
 boole_t _connect( obj_t this, param_t param )
 {
@@ -165,21 +158,26 @@ boole_t _connected( obj_t this, param_t param )
 boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
-	const char *netdev;
-	char path[PATH_MAX];
+	char *netdev;
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
+	netdev = register_pointer( this, "netdev" );
+	if ( netdev == NULL )
 	{
+		return terror;
+	}
+	if ( *netdev == '\0' )
+	{
+		return terror;
+	}
+
+	if ( register_lockw( this, netdev ) != true )
+	{
+		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
 		return tfalse;
 	}
 
-	/* delete the mark file */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	unlink( path );
-
-    /* down the device */
+	/* down the device */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) > 0 )
 	{
 		wifi_debug( "%s(%s) down", object, netdev );
@@ -188,6 +186,8 @@ boole_t _down( obj_t this, param_t param )
 			ifconfig( "%s down", netdev );
 		}
 	}
+
+	register_unlock( this, netdev );
 
 	return ttrue;
 }
@@ -257,13 +257,6 @@ talk_t _status( obj_t this, param_t param )
 	if ( netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) ) == 0 )
 	{
 		json_set_string( ret, "mac", mac );
-	}
-	/* get uptime and livetime_string */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	if ( file2string( path, buffer, sizeof(buffer) ) > 0 )
-	{
-		json_set_string( ret, "ontime", buffer );
-		json_set_string( ret, "livetime", livetime_desc( atoi(buffer), path, sizeof(path) ) );
 	}
 
 	{

@@ -1659,7 +1659,7 @@ boole_t _online( obj_t this, param_t param )
 		string3file( path, "nameserver %s\n", dns );
 		if ( gateway == NULL || 0 != strcmp( gateway, dns ) )
 		{
-			routes_switch( DNS_TABLE_NAME, dns, NULL, NULL, v, true );
+			routes_switch( DNS_TABLE_ID, dns, NULL, NULL, v, true );
 		}
 	}
 	reg_set_string( this, "dns", dns );
@@ -1668,7 +1668,7 @@ boole_t _online( obj_t this, param_t param )
 		string3file( path, "nameserver %s\n", dns2 );
 		if ( gateway == NULL || 0 != strcmp( gateway, dns2 ) )
 		{
-			routes_switch( DNS_TABLE_NAME, dns2, NULL, NULL, v, true );
+			routes_switch( DNS_TABLE_ID, dns2, NULL, NULL, v, true );
 		}
 	}
 	reg_set_string( this, "dns2", dns2 );

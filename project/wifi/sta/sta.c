@@ -284,7 +284,6 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 }
 static int station_dev_connected( obj_t this, const char *netdev )
 {
-	int i;
 	int ret;
 	FILE *fp;
 	char *ptr;
@@ -293,63 +292,34 @@ static int station_dev_connected( obj_t this, const char *netdev )
     char readbuf[256];
 
 	ret = 1;
-	/* use the wpa_cli */	
-    snprintf( path, sizeof(path), "/tmp/.wpa_cli_%s_status", netdev );
-    i = shell( "wpa_cli -i %s status > %s 2>/dev/null", netdev, path );
-	if ( i == 0 )
-    {
-		/* parse the wpa_cli */
-		fp = fopen( path, "r");
-		if( fp == NULL )
-		{
-			return 1;
-		}
-		readbuf[0] = '\0';
-		while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
-		{
-			if ( strncmp( readbuf, "wpa_state=", 10 ) == 0 )
-			{
-				ptr = readbuf+10;
-				if ( strncmp( ptr, "COMPLETED", 9 ) == 0 )
-				{
-					ret = 0;
-					break;
-				}
-			}
-		}
-		fclose( fp );
-    }
-	else
+	/* use iw sta link */	
+	snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
+	shell( "iw dev %s link > %s", netdev, path );
+	/* parse the iw sta link */
+	fp = fopen( path, "r");
+	if( fp == NULL )
 	{
-		/* use iw sta link */	
-		snprintf( path, sizeof(path), "/tmp/.iw_%s_link", netdev );
-		shell( "iw dev %s link > %s", netdev, path );
-		/* parse the iw sta link */
-		fp = fopen( path, "r");
-		if( fp == NULL )
+		return 1;
+	}
+	readbuf[0] = '\0';
+	while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
+	{
+		if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
 		{
-			return 1;
-		}
-		readbuf[0] = '\0';
-		while( fgets( readbuf, sizeof(readbuf)-1, fp ) != NULL )
-		{
-			if ( NULL != ( ptr = strstr( readbuf, "Connected to" ) ) )
+			ptr += 13;
+			end = strchr( ptr, ' ' );
+			if ( end != NULL )
 			{
-				ptr += 13;
-				end = strchr( ptr, ' ' );
-				if ( end != NULL )
-				{
-					*end = '\0';
-				}
-				if ( strlen( ptr ) == 17 )
-				{
-					ret = 0;
-					break;
-				}
+				*end = '\0';
+			}
+			if ( strlen( ptr ) == 17 )
+			{
+				ret = 0;
+				break;
 			}
 		}
-		fclose( fp );
 	}
+	fclose( fp );
 	return ret;
 }
 
@@ -415,14 +385,12 @@ talk_t _netdev( obj_t this, param_t param )
 boole_t _up( obj_t this, param_t param )
 {
 	int i;
-	int fd;
 	talk_t v;
 	talk_t cfg;
 	talk_t opt;
-	const char *ptr;
+	char *netdev;
 	const char *radio;
 	const char *object;
-	const char *netdev;
 	const char *ifname;
 	const char *status;
 	const char *peer;
@@ -434,7 +402,6 @@ boole_t _up( obj_t this, param_t param )
 	char kwkey[48];
 	char kwenc[48];
 	char kpmode[48];
-	char path[PATH_MAX];
 
 	/* get the configure */
 	object = obj_name( this );
@@ -443,8 +410,12 @@ boole_t _up( obj_t this, param_t param )
 	{
 		return terror;
 	}
-	netdev = reg_string( this, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
+	netdev = register_pointer( this, "netdev" );
+	if ( netdev == NULL )
+	{
+		return terror;
+	}
+	if ( *netdev == '\0' )
 	{
 		return terror;
 	}
@@ -453,16 +424,13 @@ boole_t _up( obj_t this, param_t param )
 	{
 		return terror;
 	}
-
-    /* ignore it if up already */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	fd = lock_open( path, O_RDWR|O_CREAT|O_EXCL, 0666, -1 );
-    if ( fd < 0 )
-    {
-		wifi_warn( "%s(%s) already up", object, netdev );
+	/* wait if another process is in up/down; then run this up */
+	if ( register_lockw( this, netdev ) != true )
+	{
+		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
 		talk_free( cfg );
-		return ttrue;
-    }
+		return tfalse;
+	}
 	/* keeplive stop */
 	sstop( "%s-keeplive", netdev );
 	/* relayd stop */
@@ -515,8 +483,7 @@ boole_t _up( obj_t this, param_t param )
 		if ( status != NULL && 0 == strcmp( status, "disable" ) )
 		{
 			talk_free( cfg );
-			lock_close( fd );
-			unlink( path );
+			register_unlock( this, netdev );
 			return terror;
 		}
 		for ( i=0; i<STA_PEER_MAX; i++ )
@@ -548,9 +515,9 @@ boole_t _up( obj_t this, param_t param )
 		}
 		if ( i >= STA_PEER_MAX )
 		{
+			wifi_warn( "%s(%s) no peer settings", object, netdev );
 			talk_free( cfg );
-			lock_close( fd );
-			unlink( path );
+			register_unlock( this, netdev );
 			return terror;
 		}
 	}
@@ -593,13 +560,7 @@ boole_t _up( obj_t this, param_t param )
 	sleep( 1 );
 	cstart( this, "keeplive", NULL, "%s-keeplive", netdev );
 
-	/* mark the up state */
-	ptr = uptime_desc( NULL, 0 );
-	if ( ptr != NULL )
-	{
-		write( fd, ptr, strlen(ptr) );
-	}
-	lock_close( fd );
+	register_unlock( this, netdev );
 
 	talk_free( cfg );
 	return ttrue;
@@ -632,14 +593,24 @@ boole_t _connected( obj_t this, param_t param )
 boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
-	const char *netdev;
-	char path[PATH_MAX];
+	char *netdev;
 
 	object = obj_name( this );
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
+	netdev = register_pointer( this, "netdev" );
+	if ( netdev == NULL )
 	{
+		return terror;
+	}
+	if ( *netdev == '\0' )
+	{
+		return terror;
+	}
+
+	/* wait if another process is in up/down; then run this down */
+	if ( register_lockw( this, netdev ) != true )
+	{
+		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
 		return tfalse;
 	}
 
@@ -656,9 +627,7 @@ boole_t _down( obj_t this, param_t param )
 		ifconfig( "%s down", netdev );
 	}
 
-	/* delete the mark file */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	unlink( path );
+	register_unlock( this, netdev );
 
 	return ttrue;
 }
@@ -669,16 +638,27 @@ boole_t _reset( obj_t this, param_t param )
 {
 	int reset_times;
 	const char *object;
-	const char *netdev;
-    char path[PATH_MAX];
+	char *netdev;
 
 	object = obj_name( this );
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
-	if ( netdev == NULL || *netdev == '\0' )
+	netdev = register_pointer( this, "netdev" );
+	if ( netdev == NULL )
 	{
+		return terror;
+	}
+	if ( *netdev == '\0' )
+	{
+		return terror;
+	}
+
+	/* wait if another process is in up/down; then run this down */
+	if ( register_lockw( this, netdev ) != true )
+	{
+		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
 		return tfalse;
 	}
+
 	/* record the count */
 	reset_times = reg_int( this, "reset_times" );
 	wifi_fault( "%s reset %d times", object, reset_times+1 );
@@ -690,10 +670,9 @@ boole_t _reset( obj_t this, param_t param )
 	sdelete( "%s-relayd", netdev );
 	/* delete wpa_supplicant */
 	sdelete( "%s-wpa", netdev );
-	/* delete the mark file */
-	var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-	unlink( path );
-	
+
+	register_unlock( this, netdev );
+
 	return ttrue;
 }
 
@@ -1291,7 +1270,6 @@ boole_t _keeplive( obj_t this, param_t param )
 	const char *beacon;
 	const char *channel;
 	const char *bandwidth;
-	char path[PATH_MAX];
 
 	object = obj_name( this );
 	radio = reg_string( this, "radio" );
@@ -1412,9 +1390,6 @@ reset:
 	/* reset the wisp ifname when wisp */
 	if ( ifname != NULL && strstr( ifname, WISP_COM ) != NULL )
 	{
-		/* delete the mark file */
-		var2path( path, sizeof(path), "%s-%s.up", COM_ID, netdev );
-		unlink( path );
 		sreset( NULL, NULL, NULL, ifname );
 		return ttrue;
 	}

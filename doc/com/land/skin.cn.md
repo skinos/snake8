@@ -1534,11 +1534,11 @@ void register_ssync(const char *object);
 
 #### register_lock / register_lockw / register_unlock
 ```c
-boole register_lock(obj_t this, void *point, const char *name, int flag);
-boole register_lockw(obj_t this, void *point, const char *name, int flag);
-boole register_unlock(obj_t this, void *point, const char *name);
+boole register_lock(obj_t this, const void *point);
+boole register_lockw(obj_t this, const void *point);
+boole register_unlock(obj_t this, const void *point);
 ```
-**描述：** 对寄存器变量值范围的建议/记录锁。`flag` 是 `F_WRLCK` 或 `F_RDLCK`。**`register_lock`** 使用 `fcntl(F_SETLK)`（不等待*范围*锁）；**`register_lockw`** 使用 `fcntl(F_SETLKW)`（等待）。两者都可能首先**阻塞在寄存器文件的 `flock(LOCK_SH)` 上** — 见 `register.h` 注释。成功时，`point`（如果非 NULL）可以接收指向变量的 mmap 存储的指针。
+**描述：** 在 `point` 处对**一个字节**做建议性 `fcntl` 记录锁；**`point` 必须落在 `this->wreg` 或 `this->rreg` 的 mmap 区间内**（例如 `register_pointer` 或 `register_value`）。锁类型由实现按映射选择：**落在 `wreg` 用 `F_WRLCK`**，**落在 `rreg` 用 `F_RDLCK`**。**`register_lock`** 使用 `fcntl(F_SETLK)`；**`register_lockw`** 使用 `fcntl(F_SETLKW)`（阻塞等待）。**不使用 `flock`**，**不调用 `register_open`**；不能替代 `register_set` / `register_value_set` 内的整文件锁。
 
 ### 8.3 整数操作
 
@@ -1645,7 +1645,7 @@ register_ssync("land@machine");
 
 ### 8.7 示例程序（每个 `register.h` API）
 
-触及 `register.h` 中的**每个函数和类型化宏**。**`register_open` / mmap 路径**需要工作的寄存器后端；**`register_lock*`** 使用 **`fcntl`** 记录锁（来自 `<fcntl.h>` 的 `F_RDLCK` / `F_WRLCK`）。
+触及 `register.h` 中的**每个函数和类型化宏**。**`register_open` / mmap 路径**需要工作的寄存器后端；**`register_lock*`** 使用 **`fcntl`** 记录锁（`F_WRLCK` / `F_RDLCK` 由实现根据 `point` 落在 wreg 还是 rreg 自动选择）。
 
 ```c
 #ifndef PROJECT_ID
@@ -1684,9 +1684,12 @@ static void demo_register_all(void)
     register_sync(o);
     register_ssync("land@machine");
 
-    (void)register_lock(o, NULL, "rw_i", F_RDLCK);
-    (void)register_lockw(o, NULL, "rw_i", F_RDLCK);
-    (void)register_unlock(o, NULL, "rw_i");
+    void *p = register_pointer(o, "rw_i");
+    if (p != NULL) {
+    (void)register_lock(o, p);
+    (void)register_lockw(o, p);
+    (void)register_unlock(o, p);
+    }
 
     tl = reg_list(o);
     if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);

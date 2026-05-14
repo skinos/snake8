@@ -75,7 +75,7 @@ typedef register_var_struct* register_var_t;
  * @note Must call register_close() to release the handler when done
  * @see register_close
  */
-register_file_t register_open( const char *object, int flags, int mode, int value_number, int total_size );
+register_file_t register_open( const char *object, int flags, int mode, int value_number, int total_value_size );
 /**
  * @brief search for a register variable by name or by mapped value address
  * @param[in] h register file handler returned by register_open()
@@ -240,44 +240,38 @@ void            register_sync(      obj_t this );
 void            register_ssync( const char *object );
 
 /**
- * @brief try to acquire a lock on a register variable (fcntl record lock is non-blocking)
+ * @brief acquire advisory fcntl record lock on one byte at address point (non-blocking)
  * @param[in] this object pointer (must not be NULL)
- * @param[in] point optional address for register_search(): if non-NULL, select the variable by value mapping; if NULL, use name
- * @param[in] name register variable name when point is NULL (then must be non-NULL); ignored when point is non-NULL. At least one of point or name must be non-NULL
- * @param[in] flag lock type: F_WRLCK for exclusive/write lock, F_RDLCK for shared/read lock
- * @return lock result
- * 		@retval true for lock acquired
- *  	@retval false for lock failed (e.g. contested record lock), errno will be set
- * @note flock(LOCK_SH) may block; fcntl(F_SETLK) does not wait on the variable range lock
- * @see register_lockw for record lock that waits (F_SETLKW)
- * @see register_unlock to release the lock
- */
-boole           register_lock( obj_t this, void *point, const char *name, int flag );
-/**
- * @brief acquire a lock on a register variable (record lock waits: F_SETLKW)
- * @param[in] this object pointer (must not be NULL)
- * @param[in] point optional address for register_search(): if non-NULL, select by value mapping; if NULL, use name
- * @param[in] name register variable name when point is NULL (then must be non-NULL); ignored when point is non-NULL. At least one of point or name must be non-NULL
- * @param[in] flag lock type: F_WRLCK for exclusive/write lock, F_RDLCK for shared/read lock
- * @return lock result
- * 		@retval true for lock acquired
- *  	@retval false for lock failed, errno will be set
- * @note flock(LOCK_SH) may block; fcntl(F_SETLKW) waits until the variable range lock is granted (contrast register_lock using F_SETLK)
- * @see register_lock for try-style record lock (F_SETLK, non-waiting on range)
- * @see register_unlock to release the lock
- */
-boole           register_lockw( obj_t this, void *point, const char *name, int flag );
-/**
- * @brief release a previously acquired lock on a register variable
- * @param[in] this object pointer (must not be NULL)
- * @param[in] point optional address passed to register_search() to locate the variable (can be NULL if name is used)
- * @param[in] name register variable name when point is NULL (then must be non-NULL); ignored when point is non-NULL. At least one of point or name must be non-NULL
- * @return unlock result
+ * @param[in] point address inside this->wreg or this->rreg mmap (e.g. from register_pointer() or register_value()); must not be NULL
+ * @return operation result
  * 		@retval true for succeed
  *  	@retval false for failed, errno will be set
- * @see register_lock, register_lockw
+ * @note Uses fcntl(F_SETLK). If point lies in wreg the lock type is F_WRLCK; if in rreg, F_RDLCK. Does not call register_open().
+ * @see register_lockw register_unlock
  */
-boole			register_unlock( obj_t this, void *point, const char *name );
+boole           register_lock( obj_t this, const void *point );
+/**
+ * @brief acquire advisory fcntl record lock on one byte at address point (blocking)
+ * @param[in] this object pointer (must not be NULL)
+ * @param[in] point address inside this->wreg or this->rreg mmap (e.g. from register_pointer() or register_value()); must not be NULL
+ * @return operation result
+ * 		@retval true for succeed
+ *  	@retval false for failed, errno will be set
+ * @note Uses fcntl(F_SETLKW). If point lies in wreg the lock type is F_WRLCK; if in rreg, F_RDLCK. Does not call register_open().
+ * @see register_lock register_unlock
+ */
+boole           register_lockw( obj_t this, const void *point );
+/**
+ * @brief release advisory fcntl record lock on one byte at address point
+ * @param[in] this object pointer (must not be NULL)
+ * @param[in] point same address passed to register_lock() or register_lockw(); must not be NULL
+ * @return operation result
+ * 		@retval true for succeed
+ *  	@retval false for failed, errno will be set
+ * @note Uses fcntl(F_SETLK) with F_UNLCK. wreg vs rreg resolution must match the lock call.
+ * @see register_lock register_lockw
+ */
+boole			register_unlock( obj_t this, const void *point );
 
 
 
