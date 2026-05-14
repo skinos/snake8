@@ -523,12 +523,12 @@ boole lsmod( const char *module );
 #define MAIN_TABLE_NAME       "main"
 #define MAIN_TABLE_ID         254
 #define MAIN_TABLE_PREF       32766
+// ifname mark rule
+#define IFNAME_TABLE_PREF     35000
 // dns table
 #define DNS_TABLE_ID          252
 #define DNS_TABLE_NAME        "252"
-#define DNS_TABLE_PREF        33000
-// ifname mark rule
-#define IFNAME_TABLE_PREF     35000
+#define DNS_TABLE_PREF        36000
 // default table
 #define DEFAULT_TABLE_NAME    "default"
 #define DEFAULT_TABLE_ID      253
@@ -631,7 +631,7 @@ int          route_info( const char *destname, const char *mask, const char *met
  *		@retval 0 for not exist
  *		@retval <0 for error, the errno code will be sets
  */
-int          routes_info( const char *tid, const char *destname, const char *mask, const char *metric, char *gateway, char *netdev );
+int          routes_info( int tid, const char *destname, const char *mask, const char *metric, char *gateway, char *netdev );
 /**
  * @brief get the default route information
  * @param[out] gateway buffer to store default gateway IP address
@@ -675,7 +675,7 @@ boole        route_switch( const char *dest, const char *mask, const char *metri
  *		@retval true for succeed
  *		@retval false for failed
  */
-boole        routes_switch( const char *tid, const char *dest, const char *mask, const char *metric, talk_t v, boole clear );
+boole        routes_switch( int tid, const char *dest, const char *mask, const char *metric, talk_t v, boole clear );
 /**
  * @brief switch the extern route rule with dual-path (two routes for load balancing/failover)
  * @param[in] tid routing table ID string
@@ -689,7 +689,7 @@ boole        routes_switch( const char *tid, const char *dest, const char *mask,
  *		@retval true for succeed
  *		@retval false for failed
  */
-boole        routes_switch2( const char *tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, boole clear );
+boole        routes_switch2( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, boole clear );
 /**
  * @brief switch the extern route rule with triple-path (three routes for load balancing/failover)
  * @param[in] tid routing table ID string
@@ -704,7 +704,7 @@ boole        routes_switch2( const char *tid, const char *dest, const char *mask
  *		@retval true for succeed
  *		@retval false for failed
  */
-boole        routes_switch3( const char *tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, boole clear );
+boole        routes_switch3( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, boole clear );
 /**
  * @brief switch the extern route rule with quad-path (four routes for load balancing/failover)
  * @param[in] tid routing table ID string
@@ -720,7 +720,7 @@ boole        routes_switch3( const char *tid, const char *dest, const char *mask
  *		@retval true for succeed
  *		@retval false for failed
  */
-boole        routes_switch4( const char *tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, boole clear );
+boole        routes_switch4( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, boole clear );
 /**
  * @brief create the extern route table for ifname
  * @param[in] tid route id

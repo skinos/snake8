@@ -1553,11 +1553,11 @@ void register_ssync(const char *object);
 
 #### register_lock / register_lockw / register_unlock
 ```c
-boole register_lock(obj_t this, void *point, const char *name, int flag);
-boole register_lockw(obj_t this, void *point, const char *name, int flag);
-boole register_unlock(obj_t this, void *point, const char *name);
+boole register_lock(obj_t this, const void *point);
+boole register_lockw(obj_t this, const void *point);
+boole register_unlock(obj_t this, const void *point);
 ```
-**Description:** Advisory / record locks on a register variable’s value range. `flag` is `F_WRLCK` or `F_RDLCK`. **`register_lock`** uses `fcntl(F_SETLK)` (does not wait for the *range* lock); **`register_lockw`** uses `fcntl(F_SETLKW)` (waits). Both may **block on `flock(LOCK_SH)`** on the register file first — see `register.h` comments. On success, `point` (if non-NULL) can receive a pointer to the variable’s mmap’d storage.
+**Description:** Advisory `fcntl` record lock on **one byte** at `point`. `point` must lie inside **`this->wreg` or `this->rreg` mmap** (e.g. `register_pointer` or `register_value`). The lock type is chosen automatically: **`F_WRLCK`** when `point` is in **`wreg`**, **`F_RDLCK`** when in **`rreg`**. **`register_lock`** uses `fcntl(F_SETLK)`; **`register_lockw`** uses `fcntl(F_SETLKW)` (waits). Does not use `flock` or `register_open`; does not replace whole-file locking inside `register_set` / `register_value_set`.
 
 ### 8.3 Integer Operations
 
@@ -1664,7 +1664,7 @@ register_ssync("land@machine");
 
 ### 8.7 Sample program (every `register.h` API)
 
-Touches **every function and typed macro** in `register.h`. **`register_open` / mmap paths** need a working register backend; **`register_lock*`** uses **`fcntl`** record locks (`F_RDLCK` / `F_WRLCK` from `<fcntl.h>`).
+Touches **every function and typed macro** in `register.h`. **`register_open` / mmap paths** need a working register backend; **`register_lock*`** uses **`fcntl`** record locks (type `F_WRLCK` vs `F_RDLCK` is chosen from wreg vs rreg inside the implementation).
 
 ```c
 #ifndef PROJECT_ID
@@ -1703,9 +1703,12 @@ static void demo_register_all(void)
     register_sync(o);
     register_ssync("land@machine");
 
-    (void)register_lock(o, NULL, "rw_i", F_RDLCK);
-    (void)register_lockw(o, NULL, "rw_i", F_RDLCK);
-    (void)register_unlock(o, NULL, "rw_i");
+    void *p = register_pointer(o, "rw_i");
+    if (p != NULL) {
+    (void)register_lock(o, p);
+    (void)register_lockw(o, p);
+    (void)register_unlock(o, p);
+    }
 
     tl = reg_list(o);
     if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);

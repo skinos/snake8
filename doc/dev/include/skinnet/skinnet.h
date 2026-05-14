@@ -338,8 +338,6 @@ boole pmtu_clear_ifname( const char *object, const char *netdev, int mtu );
  * @{
  */
 
-/** @brief Connection process PID file path */
-#define CONNECT_PID_FILE  PROJECT_VAR_DIR"/.connect.pid"
 /** @brief Connection process Unix domain socket path */
 #define CONNECT_UNIX_FILE PROJECT_VAR_DIR"/.connect.unix"
 
