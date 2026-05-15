@@ -1,134 +1,147 @@
-## UART infrastructure
+## uart@frame — UART Infrastructure
 
-`uart@frame` is the **infrastructure** component for this package.
-It registers UART logical objects (`uart@tty`, `uart@tty2`, …) with the Skin runtime, resolves `ttydev` / `devcom` / `drvcom`, and starts the selected driver executable(`uartdrv@dtu`, `uartdrv@tui`, …) for each enabled port.
+### Overview
 
-It does **not** hold a large JSON configuration blob of its own, port settings live on each **`uart@tty*`** object.
-Use the **Component API** below for registration helpers and DNS utilities.
+The UART infrastructure component manages serial port instances and their driver bindings. It implements a device-driver separation architecture where the framework creates and manages port instances (`uart@tty`, `uart@tty2`, …), and each instance is bound to a driver (`uartdrv@dtu`, `uartdrv@tui`, …) that implements the actual business logic.
+- register and unregister UART port instances at runtime
+- list all registered UART ports with their device and driver bindings
+- start and stop individual ports by device component name
+- resolve domain names to IP addresses for DTU client connections
 
 
-### Component API
 
-All calls below are issued on **`uart@frame`**
+### Concepts
 
-+ `register[ uart_object, [ttydev], [devcom], [drvcom] ]` **register a UART object and optional bindings**
-    - uart_object ------------ [ string ], e.g. `uart@tty3`
-    - ttydev ----------------- [ string ], optional, e.g. `/dev/ttyUSB8`
-    - devcom ----------------- [ string ], optional UART device component, e.g. `usb@tty-2-32`
-    - drvcom ----------------- [ string ], optional driver key, e.g. `uartdrv@dtu`
-    - failed return **tfalse** (`errno` set, often `EINVAL`)
-    - succeed return **ttrue**
-    - Also calls `com_register( object, "uart@frame", 0 )`.
+**Device-driver separation**
 
-    Examples:
+The UART subsystem separates the physical port (device) from the business logic (driver):
+
+* **Device layer** (`uart@tty`, `uart@tty2`, …) — each instance holds the serial port configuration (speed, parity, databit, stopbit, flow) and the DTU forwarding rules (client/server/MQTT). Instances are registered by `uart@frame` at boot and stored as configuration objects.
+
+* **Driver layer** (`uartdrv@dtu`, `uartdrv@tui`, …) — executable programs that implement the actual serial-to-network bridging or terminal access. The driver is bound to an instance via the `drvcom` configuration field. When the instance starts, the framework launches the driver executable and passes the instance name and TTY device path.
+
+* **Binding chain** — at boot, `uart@frame.setup` iterates all configured instances. For each instance it resolves `ttydev` (the Linux serial device path, either directly or via `devcom`), reads `drvcom` (the driver object name), and starts the driver as a service: `sstarts(object, drvcom, "service", object, ttydev)`.
+
+**Instance naming** — instances are named `uart@tty`, `uart@tty2`, `uart@tty3`, … up to `uart@tty8`. The suffix number corresponds to the hardware UART port. Additional instances can be registered dynamically via `uart@frame.register` for USB-to-serial adapters or other external ports.
+
+**Driver objects** — drivers are registered in `prj.json` under `obj` as `uartdrv@dtu`, `uartdrv@tui`, etc. The `drvcom` field in the instance configuration references these object names. Each driver exposes a `service` entry point that the framework calls to start the driver process.
+
+
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **initialize the UART infrastructure**
+    - failed return tfalse
+    - succeed return ttrue
+    - When called on `uart@frame`: iterates all configured UART instances, registers each with `com_register`, and calls `setup` on each
+    - When called on `uart@tty*` (instance): reads configuration, resolves `ttydev` and `drvcom`, starts the driver service
+
++ `shut[]` **shut down the UART infrastructure**
+    - failed return tfalse
+    - succeed return ttrue
+    - When called on `uart@frame`: calls `shut` on every registered instance, then unregisters each
+    - When called on `uart@tty*` (instance): stops the driver service
+
+#### Control APIs
+
++ `register[ object, ttydev, devcom, drvcom ]` **register a UART instance with optional bindings**
+    - object ----------- [ string ], the instance name (e.g. uart@tty3)
+    - ttydev ----------- [ string ], optional, the Linux serial device path (e.g. /dev/ttyUSB8)
+    - devcom ----------- [ string ], optional, the device component that provides ttydev (e.g. usb@tty-2-32)
+    - drvcom ----------- [ string ], optional, the driver object name (e.g. uartdrv@dtu)
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, register uart@tty3 with a USB serial device
     ```shell
     uart@frame.register[ uart@tty3, /dev/ttyUSB8 ]
     ttrue
     ```
+
+    Example, register with all bindings specified
     ```shell
     uart@frame.register[ uart@tty-2-32, /dev/ttyUSB8, usb@tty-2-32, uartdrv@dtu ]
     ttrue
     ```
 
-+ `unregister[ uart_object ]` **unregister a UART object**
-    - uart_object ------------ [ string ]
-    - failed return **tfalse**
-    - succeed return **ttrue**
++ `unregister[ object ]` **unregister a UART instance**
+    - object ----------- [ string ], the instance name to unregister
+    - failed return tfalse
+    - succeed return ttrue
 
-    Example:
+    Example, unregister uart@tty3
     ```shell
     uart@frame.unregister[ uart@tty3 ]
     ttrue
     ```
 
-+ `list[]` **list registered UART objects**
-    - failed return **NULL**
-    - succeed return **JSON**: per object, `ttydev`, `devcom`, `drvcom` (strings; may be inexistence in JSON)
++ `add[ devcom ]` **start the UART port whose device component matches**
+    - devcom ----------- [ string ], the device component name to match against each instance's `devcom` register
+    - failed return tfalse, no matching instance or setup failed
+    - succeed return ttrue
 
-    Example (shape):
+    Example, start the port bound to usb@tty-2-3
+    ```shell
+    uart@frame.add[ usb@tty-2-3 ]
+    ttrue
+    ```
+
++ `delete[ devcom ]` **stop the UART port whose device component matches**
+    - devcom ----------- [ string ], the device component name to match
+    - failed return tfalse, no matching instance or shut failed
+    - succeed return ttrue
+
+    Example, stop the port bound to usb@tty-2-3
+    ```shell
+    uart@frame.delete[ usb@tty-2-3 ]
+    ttrue
+    ```
+
+#### Query APIs
+
++ `list[]` **list all registered UART instances with their bindings**
+    - failed return NULL
+    - succeed return [ json ], a map of instance name to binding information
     ```json
     {
-        "uart@tty": 
-        { 
+        "instance name":                       // [ string ]: { json }, UART instance name (e.g. uart@tty, uart@tty2)
+        {                                          // instance binding information
+            "ttydev": "serial device path",    // [ string ], the Linux serial device path
+            "devcom": "device component",      // [ string ], the device component that provides ttydev
+            "drvcom": "driver component"       // [ string ], the driver object name bound to this instance
+        }
+        // "...":{...}  How many instances show how many properties
+    }
+    ```
+
+    Example, list all UART instances
+    ```shell
+    uart@frame.list
+    {
+        "uart@tty":
+        {
             "ttydev":"/dev/ttyS0",
             "drvcom":"uartdrv@dtu"
         },
-        "uart@2-3": 
-        { 
-            "ttydev":"/dev/ttyUSB8", 
+        "uart@tty2":
+        {
+            "ttydev":"/dev/ttyUSB8",
             "devcom":"usb@tty-2-3",
             "drvcom":"uartdrv@dtu"
         }
     }
     ```
 
-+ `add[ devcom ]` **start the UART port** whose saved `devcom` matches
-    - devcom ----------------- [ string ], must match that port’s `devcom` register
-    - finds the object and calls its **`setup`**
-    - failed return **tfalse** if no match or setup fails
-    - succeed return **ttrue**
++ `domain2ip[ domain, timeout ]` **resolve a domain name to IPv4 address**
+    - domain ----------- [ string ], the domain name to resolve
+    - timeout ---------- [ string ], optional, timeout in seconds, default be 10
+    - failed return terror, resolution failed
+    - succeed return ttrue, result stored in register: `reg_set_string(this, domain, ip)`
 
-+ `delete[ devcom ]` **stop the UART port** whose `devcom` matches
-    - devcom ----------------- [ string ]
-    - calls that object’s **`shut`**
-    - failed return **tfalse** if no match or shut fails
-    - succeed return **ttrue**
-
-+ `domain2ip[ domain, [timeout_seconds] ]` **resolve a hostname to IPv4**
-    - domain ----------------- [ string ]
-    - timeout ---------------- [ string or number ], optional; default **10** seconds if omitted
-    - succeed return **ttrue** and store result in register: `reg_set_string(this, domain, ip)`
-    - failed return **terror** and `reg_set_string(this, domain, NULL)`
-
-    Example:
+    Example, resolve a domain name with 20 second timeout
     ```shell
     uart@frame.domain2ip[ www.example.com, 20 ]
     ttrue
     ```
-
-### Lifecycle API
-
-+ `setup[]`
-    - **`uart@frame`**: walks all UART objects in this project’s config, `com_register`s each,
-      calls each **`uart@tty*.setup`**. Intended for **`prj.json` `init`** (e.g. `uart@frame.setup`).
-    - **`uart@tty*`** (per port): reads config; if `status` is `disable`, returns **tfalse**;
-      resolves `ttydev` (direct or via `devcom`); resolves `drvcom`; calls into the driver
-      **`service`** entry with the port name and config. GPIO `convert` may be applied.
-
-+ `shut[]`
-    - **`uart@frame`**: calls **`shut`** on every registered UART object, then `com_unregister`.
-    - **`uart@tty*`**: tears down that port (`sdelete`).
-
-### C code example
-
-```c
-#include "skin/skin.h"
-
-static void print_frame_call_error(const char *api, talk_t ret)
-{
-	if (ret == tfalse || ret == terror || ret == tpanic)
-	{
-		printf("%s failed, errno=%d\n", api, errno);
-	}
-}
-```
-
-##### `register[ uart_object, ttydev, devcom, drvcom ]`
-
-```c
-talk_t ret = scalls("uart@frame", "register", "uart@tty3,/dev/ttyUSB8,usb@tty-2-3,uartdrv@dtu");
-	if (ret != ttrue) print_frame_call_error("register", ret);
-```
-
-##### `list[]`
-
-```c
-talk_t ret = scall("uart@frame", "list", NULL);
-if (ret > tpanic)
-{
-	/* inspect JSON */
-	talk_free(ret);
-}
-else
-	print_frame_call_error("list", ret);
-```

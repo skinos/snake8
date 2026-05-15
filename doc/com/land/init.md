@@ -1,103 +1,113 @@
 ## land@init — Boot Startup Tasks
-Administration of equipment initialize task
-Each FPK can register startup tasks through its shipped manifest; the system runs them at the configured **init** level 
 
-There are multiple boot levels at system startup:
-    - `arch`       skinos arch setup
-    - `land`       skinos land setup
-    - `bus`        skinos bus setup
-    - `device`     skinos device setup
-    - `network`    skinos network setup
-    - `manage`     skinos manage frame setup
-    - `local`      local interface setup
-    - `extern`     internet connect setup
-    - `app`        app setup
-    - `app2`       app2 setup
-    - `general`    general app setup 
-    - `delay`      app delay 1 second setup
-    - `delay2`     app delay 2 second setup
-    - `delay3`     app delay 3 second setup
-    - `delay4`     app delay 4 second setup
-    - `delay5`     app delay 5 second setup
+### Overview
 
-*It is not recommended for common application developers to register extern and earlier boot levels*
+Manage boot startup tasks. Each FPK can register startup tasks through its configuration; the system runs them at the configured boot level during startup.
+- register and unregister startup tasks at runtime (lost on reboot)
+- add and delete persisted startup tasks in configuration
+- list registered startup tasks by level
+- execute all tasks at a specified boot level
+
+There are multiple boot levels at system startup, executed in order:
+- `arch` — platform layer setup
+- `land` — core infrastructure setup
+- `bus` — bus subsystem setup
+- `device` — device setup
+- `network` — network subsystem setup
+- `manage` — management framework setup
+- `local` — local interface setup
+- `extern` — internet connection setup
+- `app` — application setup
+- `app2` — secondary application setup
+- `general` — general application setup
+- `delay` through `delay5` — delayed setup (1 to 5 seconds)
 
 
-### Configuration ( `land@init` )
 
-The **saved configuration object** for `land@init` (boot task **list** and optional **remote** notify target). `register` / `unregister` / `list` also use a per-object **cache file**; see the note below.
+### Configuration reference ( land@init )
 
 ```json
 // Attributes introduction 
 {
-    "list":
+    "list":                                // [ json ], persisted startup task list
     {
-        "task name":                             // [ string ], you can custom the name
-        {
-            "level":"boot levels",                          // [ string ], boot levels 
-                                                                    // "arch"
-                                                                    // "land"
-                                                                    // "bus"
-                                                                    // "device"
-                                                                    // "network"
-                                                                    // "manage"
-                                                                    // "local"
-                                                                    // "extern"
-                                                                    // "app"
-                                                                    // "app2"
-                                                                    // "general"
-                                                                    // "delay"
-                                                                    // "delay2"
-                                                                    // "delay3"
-                                                                    // "delay4"
-                                                                    // "delay5"
-            "call":"component API or program"               // [ string ]
+        "task name":                       // [ string ]: { json }, custom task name
+        {                                      // task definition
+            "level": "boot level",             // [ string ], the boot level to run this task at
+                                                   // "arch", "land", "bus", "device", "network",
+                                                   // "manage", "local", "extern", "app", "app2",
+                                                   // "general", "delay", "delay2", "delay3",
+                                                   // "delay4", "delay5"
+            "call": "component API or program" // [ string ], the component method or program to call
         }
-        // "...":{ ... }     How many startup task show how many properties
+        // "...":{...}  How many tasks show how many properties
     },
-    "remote":                                          // optional; read at setup for UDP notify target used by call
+    "remote":                              // [ json ], optional UDP notification target
     {
-        "ip":"remote ip address",                      // [ string ], empty clears remote
-        "port": "udp port"                             // [ number ], default 515 if missing or not positive
+        "ip": "remote IP address",         // [ string ], remote IP for UDP notification, empty means disabled
+        "port": "UDP port"                 // [ number ], UDP port number, default be 515
     }
 }
-// Examples
+```
+
+#### Configuration example
+
+Example, show all the init configure
+```shell
+land@init
 {
     "list":
     {
-        "tuisetup":                               // call tui@telnet.setup at the app boot levels
+        "tuisetup":
         {
-            "level":"app",
-            "call":"tui@telnet.setup"
+            "level":"app",                     # boot at app level
+            "call":"tui@telnet.setup"          # call tui@telnet.setup
         },
-        "webreset":                               // call wui@admin.reset at the general boot levels
+        "webreset":
         {
-            "level":"general",
-            "call":"wui@admin.reset"
+            "level":"general",                 # boot at general level
+            "call":"wui@admin.reset"           # call wui@admin.reset
         }
     },
     "remote":
     {
-        "ip":"192.168.1.100",
-        "port": "515"
+        "ip":"192.168.1.100",                  # remote notification IP
+        "port":515                             # remote notification port
     }
 }
-```  
+```
 
-Examples, merge **remote** and one **list** entry (only listed keys change)
+#### Configuration settings example
+
+Example, set the remote notification IP
+```shell
+land@init:remote/ip=192.168.1.50
+ttrue
+```
+
+Example, merge set the remote notification configure( include "ip" "port" )
 ```shell
 land@init|{"remote":{"ip":"192.168.1.50","port":"515"}}
 ttrue
 ```
 
-`register` / `unregister` / `list` use the per-object **cache file** (same layout as the level map above). `add` / `delete` change the persisted **`list`** in configuration; those entries are applied into the cache when **setup** runs (normally at boot). Until then, `list` still reflects only what is already in the cache.
 
 
-### Component API
+### API Reference
 
-+ `register[ [boot level], call ]` **register a startup task, lost when reboot**  
-    - boot level ----------- [ string ], default be "general" 
-    - call ----------------- [ string ], component API or program 
+#### Management APIs
+
++ `setup[]` **initialize the init component**
+    - failed return tfalse
+    - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Registers all tasks from configuration list into the runtime cache
+
+#### Control APIs
+
++ `register[ level, call ]` **register a startup task at runtime, lost on reboot**
+    - level ----------- [ string ], the boot level, default be "general"
+    - call ------------ [ string ], the component API or program to call
     - failed return tfalse
     - succeed return ttrue
 
@@ -106,96 +116,46 @@ ttrue
     land@init.register[ app, wui@admin.reset ]
     ttrue
     ```
-    Example, register calling tui@ssh.setup at the default(general) boot level
+
+    Example, register calling tui@ssh.setup at the default general level
     ```shell
     land@init.register[ ,tui@ssh.setup ]
-    ttrue    
-    ```   
+    ttrue
+    ```
 
-+ `unregister[ [boot level], call ]` **delete a startup task**  
-    - boot level ----------- [ string ], default be "general"
-    - call ----------------- [ string ], component API or program
++ `unregister[ level, call ]` **unregister a startup task from runtime**
+    - level ----------- [ string ], the boot level, default be "general"
+    - call ------------ [ string ], the component API or program to remove
     - failed return tfalse
     - succeed return ttrue
 
-    Example, delete calling tui@ssh.setup at the app boot level
+    Example, unregister tui@ssh.setup at the app boot level
     ```shell
     land@init.unregister[ app, tui@ssh.setup ]
     ttrue
     ```
 
-+ `list[ [boot level] ]` **list startup task**  
-    - boot level ----------- [ string ], omit or empty to list all levels; otherwise return only that level
-    - returns json describing the boot task(s)
-    ```json
-    // Attributes introduction of json by the method return
-    {
-        "boot level":                  // [ string ]:{},  boot levels 
-        {
-            "component API or program":"",
-            "component API or program":""
-            // "...":"..."     How many calling at that level show how many properties
-        }
-        // "...":{ ... }     How many boot levels show how many properties
-    }    
-    ```  
-
-    Example, show all the boot task
-    ```shell
-    land@init.list
-    {
-        "app2":                         // call agent@local.setup at boot level app2
-        {
-            "agent@local.setup":""
-        },
-        "app":                          // call client@station.setup/clock@restart.setup/forward@alg.setup at boot level app
-        {
-            "client@station.setup":"",  
-            "clock@restart.setup":"",   
-            "forward@alg.setup":""      
-        },
-        "manage":                       // call tui@telnet.setup and tui@ssh.setup at boot level manage
-        {
-            "tui@telnet.setup":"",      
-            "tui@ssh.setup":""          
-        }
-        // ... more boot levels
-    }
-    ```
-
-    Example, show the land boot level task
-    ```shell
-    land@init.list[ land ]
-    {
-        "land@auth.setup":"",
-        "land@joint.setup":"",
-        "land@init.setup":"",
-        "land@uninit.setup":"",
-        "network@hosts.setup":""
-    }   
-    ```
-
-+ `add[ task name, call, [boot level] ]` **add a boot startup task**
-    - task name ------------ [ string ], task name, you can custom the name
-    - call ----------------- [ string ], component API or program
-    - boot level ----------- [ string ], default be "general"
++ `add[ name, call, [level] ]` **add a persisted startup task to configuration**
+    - name ------------ [ string ], custom task name
+    - call ------------ [ string ], the component API or program to call
+    - level ----------- [ string ], the boot level, default be "general"
     - failed return tfalse
     - succeed return ttrue
 
-    Example, add a task named websetup, that calling wui@admin.setup at the app boot level
+    Example, add a task named websetup at the app level
     ```shell
     land@init.add[ websetup, wui@admin.setup, app ]
     ttrue
     ```
 
-    Example, add a task named sshsetup, that calling tui@ssh.setup at the general boot level
+    Example, add a task named sshsetup at the general level
     ```shell
     land@init.add[ sshsetup, tui@ssh.setup ]
-    ttrue    
+    ttrue
     ```
 
-+ `delete[ task name ]` **delete a startup task**
-    - task name ---- [ string ], task name
++ `delete[ name ]` **delete a persisted startup task from configuration**
+    - name ------------ [ string ], the task name to delete
     - failed return tfalse
     - succeed return ttrue
 
@@ -205,33 +165,53 @@ ttrue
     ttrue
     ```
 
-+ `call[ level, [parameter] ]` **execute all startup tasks at the specified boot level**, *succeed return ttrue, failed return tfalse, error return terror*
-    - level ----------- [ string ], boot level to execute (e.g., "app", "general", "network")
-    - parameter ------- [ talk_t ], optional parameter to pass to the tasks
-    - This method is called by the system during boot process
-    - It executes all registered tasks for the specified level and sends UDP notification if remote logging is configured
-    - Not intended for manual invocation
+#### Query APIs
 
++ `list[ [level] ]` **list registered startup tasks**
+    - level ----------- [ string ], optional, the boot level to filter by; omit or empty to list all levels
+    - failed return NULL
+    - succeed return [ json ], a map of boot level to task list
+    ```json
+    {
+        "boot level":                          // [ string ]: { json }, boot level name
+        {                                          // tasks registered at this level
+            "component API or program": "",    // [ string ]: [ string ], the call string, value is empty
+            // "...":"..."  How many tasks at this level show how many properties
+        }
+        // "...":{...}  How many levels show how many properties
+    }
+    ```
 
-### Lifecycle API
+    Example, list all startup tasks
+    ```shell
+    land@init.list
+    {
+        "app2":
+        {
+            "agent@local.setup":""
+        },
+        "app":
+        {
+            "client@station.setup":"",
+            "clock@restart.setup":"",
+            "forward@alg.setup":""
+        },
+        "manage":
+        {
+            "tui@telnet.setup":"",
+            "tui@ssh.setup":""
+        }
+    }
+    ```
 
-
-+ `setup[]` **initialize the init component**, *succeed return ttrue, failed return tfalse, error return terror*
-    - This is a lifecycle method called automatically by the system during startup
-    - It registers all startup tasks from configuration and sets up remote logging if configured
-    - Not intended for manual invocation
-
-**Note:** The land **`init`** component shares the same **`land@init`** implementation as **`joint`** / **`uninit`** and does not export **`shut[]`**; only **`land@syslog`** provides **`_shut`** in this tree.
-
-### C Code Example
-
-```c
-#include "skin/skin.h"
-
-static void example_land_init(void)
-{
-    talk_t ret = scall("land@init", "setup", NULL);
-    (void)ret;
-}
-```
-
+    Example, list tasks at the land level
+    ```shell
+    land@init.list[ land ]
+    {
+        "land@auth.setup":"",
+        "land@joint.setup":"",
+        "land@init.setup":"",
+        "land@uninit.setup":"",
+        "network@hosts.setup":""
+    }
+    ```
