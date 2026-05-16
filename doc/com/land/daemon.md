@@ -1,40 +1,35 @@
 ## land@daemon — Daemon & Watchdog
 
-### Overview
+The **daemon** executable is the main supervisor process of the gateway.
+It feeds the hardware watchdog, monitors memory usage, checks the local
+network interface, and periodically scans registered services — restarting
+any that have exited unexpectedly.  All behaviour is controlled through the
+`land@daemon` configuration object described below.
 
-The daemon executable is the main supervisor process of the system. It feeds the hardware watchdog, monitors memory usage, checks the local network interface, and periodically scans registered services, restarting any that have exited unexpectedly.
-- feed the hardware watchdog at configurable intervals
-- monitor free memory and reboot when memory is critically low
-- check local network interface presence and reboot on prolonged absence
-- scan and manage registered services, restart exited services automatically
-- accept control commands via command-line arguments
+### Configuration ( `land@daemon` )
 
-
-
-### Configuration reference ( land@daemon )
+The **saved configuration object** for `land@daemon` (watchdog, memory, local link checks, service scan interval). Consumed by the **`daemon`** executable at runtime.
 
 ```json
-// Attributes introduction 
+// Attributes introduction
 {
-    "service_check":"service scan interval",                       // [ number ], interval in seconds to scan registered services, default be 3
+    "service_check":"service scan interval",                           // [ number ], second
 
-    "watchdog_file":"watchdog device file path",                   // [ string ], path to the hardware watchdog device (e.g. /dev/watchdog), empty means disabled
-    "watchdog_interval":"watchdog feed interval",                  // [ number ], feed interval in microseconds, default be 1000000 (1 second)
+    "watchdog_file":"watchdog device file path",                       // [ string ], file path (for example /dev/watchdog)
+    "watchdog_interval":"watchdog feed interval",                      // [ number ], microsecond
 
-    "memory_check":"memory check interval",                        // [ number ], interval in seconds to check free memory, 0 means disabled, default be 10
-    "memory_warn":"warn threshold of free memory",                 // [ number ], warn when free memory falls below this value in kB, 0 means disabled
-    "memory_reboot":"reboot threshold of free memory",             // [ number ], reboot when free memory falls below this value in kB, 0 means disabled
+    "memory_check":"memory check interval",                            // [ number ], second
+    "memory_warn":"warn threshold of free memory",                     // [ number ], kB
+    "memory_reboot":"reboot threshold of free memory",                 // [ number ], kB
 
-    "local_check":"network local check interval",                  // [ number ], interval in seconds to check local network interface, 0 means disabled, default be 30
-    "local_disbuild":"reboot threshold when local missing at setup",  // [ number ], number of consecutive checks before reboot when local interface never appears, default be 20
-    "local_disappear":"reboot threshold when local disappears",    // [ number ], number of consecutive checks before reboot when local interface disappears, default be 10
-    "local_ifname":"local interface object name"                   // [ string ], object name that provides netdev API for local interface check (e.g. ifname@local)
+    "local_check":"network local check interval",                      // [ number ], second
+    "local_disbuild":"reboot threshold when local is missing at setup",// [ number ], count
+    "local_disappear":"reboot threshold when local disappears",        // [ number ], count
+    "local_ifname":"object name that provides netdev API"              // [ string ], for example "ifname@local"
 }
 ```
 
-#### Configuration example
-
-Example, show all the daemon configure
+Example, show all the configure
 ```shell
 land@daemon
 {
@@ -45,70 +40,103 @@ land@daemon
     "memory_warn":"3000",                      # warn when free memory below 3000 kB
     "memory_reboot":"800",                     # reboot when free memory below 800 kB
     "local_check":"30",                        # check local network interface every 30 seconds
-    "local_disbuild":"20",                     # reboot after 20 consecutive local-missing checks
+    "local_disbuild":"20",                     # reboot after 20 consecutive local-missing at setup
     "local_disappear":"10",                    # reboot after 10 consecutive local-disappear checks
     "local_ifname":"ifname@local"              # local network interface object name
 }
 ```
 
-#### Configuration settings example
-
-Example, set the service scan interval to 5 seconds
+Examples, merge several tuning fields at once
 ```shell
-land@daemon:service_check=5
+land@daemon|{"service_check":"5","watchdog_interval":"1000000"}
 ttrue
 ```
 
-Example, set the watchdog feed interval to 2 seconds
-```shell
-land@daemon:watchdog_interval=2000000
-ttrue
+#### Notes
+- `watchdog_interval` is parsed as microseconds, then converted into `tv_sec/tv_usec`.
+- `memory_warn` and `memory_reboot` are compared with free memory in kB.
+- `local_disbuild` and `local_disappear` are retry counts, not time duration.
+- If `watchdog_file` is not set in config, daemon tries register variable `watchdog_file`.
+
+#### Configuration Examples
+Minimal service check only:
+```json
+{
+    "service_check":"5"
+}
 ```
 
-Example, merge set the daemon configure( include "service_check" "watchdog_interval" "memory_check" )
-```shell
-land@daemon|{"service_check":"5","watchdog_interval":"2000000","memory_check":"10"}
-ttrue
+Enable watchdog feed every 1 second:
+```json
+{
+    "watchdog_file":"/dev/watchdog",
+    "watchdog_interval":"1000000"
+}
 ```
 
+Enable memory and local watchdog policies:
+```json
+{
+    "memory_check":"10",
+    "memory_warn":"3000",
+    "memory_reboot":"800",
+    "local_check":"30",
+    "local_disbuild":"20",
+    "local_disappear":"10",
+    "local_ifname":"ifname@local"
+}
+```
 
+### Executable Commands
 
-### Other
+The **`daemon`** program (not HE methods on a long-running session) accepts these control lines:
 
-The daemon executable accepts the following command-line control commands.
+Stop daemon immediately:
+```shell
+daemon exit
+```
 
-+ `daemon exit` **stop the daemon immediately**
-    - sends SIGINT to the running daemon process
-    - the daemon will stop all services and exit
+Stop daemon after 15 seconds:
+```shell
+daemon stop15exit
+```
 
-    Example, stop the daemon immediately
-    ```shell
-    daemon exit
-    ```
+Stop daemon after 600 seconds:
+```shell
+daemon delay600exit
+```
 
-+ `daemon stop15exit` **stop the daemon after 15 seconds**
-    - sends SIGXFSZ to the running daemon process
-    - the daemon will suspend service startup and exit after 15 seconds
+Show flash id:
+```shell
+daemon flashid
+```
 
-    Example, stop the daemon after 15 seconds
-    ```shell
-    daemon stop15exit
-    ```
+### C Code Example
 
-+ `daemon delay600exit` **stop the daemon after 600 seconds**
-    - sends SIGWINCH to the running daemon process
-    - the daemon will exit after 600 seconds (10 minutes)
+**Read and update configuration**
 
-    Example, stop the daemon after 600 seconds
-    ```shell
-    daemon delay600exit
-    ```
+```c
+#include "skin/skin.h"
 
-+ `daemon flashid` **show the flash ID of the device**
-    - reads and prints the flash identification string
+static int example_config_land_daemon(void)
+{
+    char buf[128];
+    if (sgets_string(buf, sizeof(buf), "land@daemon", "status") == NULL)
+        return -1;
+    return ssets_string("land@daemon", "enable", "status") ? 0 : -1;
+}
+```
 
-    Example, show the flash ID
-    ```shell
-    daemon flashid
-    0123456789ABCDEF
-    ```
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+        printf("%s failed, errno=%d\n", api, errno);
+}
+
+/* e.g. scall("land@daemon", "list", NULL); talk_free if JSON */
+```
