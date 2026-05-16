@@ -1,473 +1,434 @@
-## uart@tty — UART Port Object
+## uart@tty — UART Port Instance
 
-Each serial port is a **saved configuration object** named **`uart@tty`**, **`uart@tty2`**, …
-(see `prj.json` **`wui`**). The object stores line settings, an optional **`dtu`** subtree
-(TCP/UDP/MQTT when **`drvcom`** is **`uartdrv@dtu`**), and binds to a driver via **`drvcom`**
-(**`uartdrv@dtu`**, **`uartdrv@tui`**, …).
+### Overview
 
-Startup is normally driven by **`uart@frame.setup`**, which calls **`uart@tty.setup`** for each
-enabled port; that launches the driver **`service`** with this object’s JSON.
+Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@tty3`, … up to `uart@tty8`. Each instance stores the serial port line settings and binds to a driver via the `drvcom` field. Different drivers use different sub-keys for their own configuration.
+- configure serial port parameters (speed, parity, databit, stopbit, flow)
+- bind to a driver via `drvcom` (see below for available drivers)
+- driver-specific configuration lives under a sub-key named after the driver (e.g. `dtu`, `sixents`)
+- manage TLS certificates for secure connections
+- query driver status and trigger event-driven resets
 
----
+**Available drivers**:
 
-### Configuration ( `uart@tty` )
+| drvcom value | Driver | Sub-key | Description |
+|---|---|---|---|
+| `uartdrv@dtu` | **[dtu.md](dtu.md)** | `dtu` | Serial-to-network bridge (TCP/UDP/MQTT) |
+| `uartdrv@sixents` | **[sixents.md](sixents.md)** | `sixents` | GNSS differential correction (RTK) |
+| `uartdrv@tui` | **[tui.md](tui.md)** | *(none)* | Eline serial terminal |
 
-The **saved configuration object** for `uart@tty` (query/set via `uart@tty`, `uart@tty:path`, merge `|{json}`, etc.).
 
 
-Reading or replacing the whole object uses normal Skin **`config_get` / `config_set`**. A successful **`set`**
-on the port triggers **`shut`** then **`setup`** for that object (`uart_dev.c` **`_set`**), reloading the driver.
-
-When **`drvcom`** is **`uartdrv@dtu`**, up to **nine** of each kind are loaded under **`dtu`**:
-**`client`** / **`client2`…`client9`**, **`server`** / **`server2`…`server9`**, **`mqtt`** / **`mqtt2`…`mqtt9`**.
+### Configuration reference ( uart@tty )
 
 ```json
-// Attributes introduction of json by the component configure
+// Attributes introduction 
 {
-    "status":"tty function enable or disable",                      // [ "enable", "disable" ]
-    "convert":"hardeware function custom",                          // [ "disable", "enable" ]
-    "devcom":"uart device component",                               // [ string ], only use for other project provide the ttydev
-    "ttydev":"uart tty device",                                     // [ string ], Linux serial device path when not using devcom
-    "drvcom":"use the component for function",                      // [ string ], e.g. uartdrv@dtu, uartdrv@tui (see prj.json obj)
-    "extern":"reset when the extern online",                        // [ "disable", "default", "ifname@wan", ... ]
-                                                                        // "disable" for no reset when ifname online
-                                                                        // "default" for reset when the gateway online 
-                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+    "status": "instance enable or disable",              // [ "disable", "enable" ], default be "enable"
+    "convert": "hardware flow control custom",           // [ "disable", "enable" ], default be "disable"
+    "devcom": "device component name",                   // [ string ], the component that provides the ttydev path (e.g. usb@tty-2-3)
+    "ttydev": "serial device path",                      // [ string ], Linux serial device path (e.g. /dev/ttyS1), used when devcom is not set
+    "drvcom": "driver component name",                   // [ string ], the driver object to bind (e.g. uartdrv@dtu, uartdrv@tui)
+    "extern": "reset trigger on network event",          // [ "disable", "default", "<ifname>" ], default be "disable"
+                                                              // "disable": no reset on network event
+                                                              // "default": reset when gateway comes online
+                                                              // "ifname@wan", "ifname@lte", etc.: reset when that interface comes online
 
-    "speed":"tty device speed",                                       // [ "9600", "19200", ... ]
-    "flow":"tty device flow type",                                    // [ "disable", "hard", "soft" ]
-    "parity":"tty device parity",                                     // [ "disable", "even", "odd" ]
-    "databit":"tty device data bit",                                  // [ "5", "6", "7", "8" ]
-    "stopbit":"tty device stop bit",                                  // [ "1", "2" ]
+    "speed": "serial baud rate",                         // [ "9600", "19200", "38400", "57600", "115200", ... ], default be "9600"
+    "flow": "flow control type",                         // [ "disable", "hard", "soft" ], default be "disable"
+    "parity": "parity mode",                             // [ "disable", "even", "odd" ], default be "disable"
+    "databit": "data bits",                              // [ "5", "6", "7", "8" ], default be "8"
+    "stopbit": "stop bits",                              // [ "1", "2" ], default be "1"
 
-    "active":"enable or disable send some data to tty device for active the tty",   // [ "disable", "enable", "idle", "timing" ]
-                                                                                        // "disable" for no active data
-                                                                                        // "enable" for send active data once
-                                                                                        // "idle" for send active data when idle interval
-                                                                                        // "timing" for send active data timer
-    "active_interval":"active data send interval",                                  // [ number ], seconds, with enable idle timing
-    "active_string":"active data be send",                                          // [ hex string ], payload bytes as hex
+    "active": "serial active data mode",                 // [ "disable", "enable", "idle", "timing" ], default be "disable"
+                                                              // "disable": no active data sent
+                                                              // "enable": send active data once at startup
+                                                              // "idle": send active data when serial is idle
+                                                              // "timing": send active data at fixed interval
+    "active_interval": "active data interval",           // [ number ], interval in seconds, used with enable/idle/timing modes
+    "active_string": "active data payload",              // [ hex string ], the hex-encoded bytes to send
 
-    "frame_maxsize":"read a frame the max size data from uart",                     // [ number ], max frame bytes toward network (DTU)
-    "frame_interval":"interval bewteen frame from uart",                            // [ number ], inter-byte timeout in ms (DTU)
+    "frame_maxsize": "max frame size",                   // [ number ], maximum bytes per frame toward network, used by DTU driver
+    "frame_interval": "inter-frame interval",            // [ number ], inter-byte timeout in milliseconds, used by DTU driver
 
-    "dtu":                                                  // present when drvcom is uartdrv@dtu
+    "sixents":                                             // [ json ], Sixents GNSS differential correction configuration, present when drvcom is uartdrv@sixents
     {
-        "client":                                           // TCP or UDP client slot 1
+        "ak": "Sixents Access Key",                        // [ string ], the AK credential from Sixents subscription, required
+        "as": "Sixents Access Secret",                     // [ string ], the AS credential paired with AK, required
+        "devid": "device identifier",                      // [ string ], unique device ID registered with Sixents, required
+        "devtype": "device type",                          // [ string ], device model or type label, required
+        "auth_port": "HTTPS auth server port",             // [ number ], default be 443
+        "rtcm_port": "RTCM data server port",              // [ number ], default be 4402, selectable from 4401-4405
+        "tty_cmd": "custom GNSS init command",             // [ string ], optional, if empty sends Unicore N4/UM982 default commands
+        "gga_timeout": "GGA watchdog timeout"              // [ number ], seconds without GGA before uart power reset, default be 30, minimum 10
+    },
+
+    "dtu":                                               // [ json ], DTU forwarding configuration, present when drvcom is uartdrv@dtu
+    {
+        "client":                                        // [ json ], TCP/UDP client slot 1
         {
-            "status":"enable or disable this client",         // [ "disable", "enable" ]
-            "extern":"reset when the extern online",          // [ "disable", "default", "ifname@wan", ... ]
-                                                                        // "disable" for no reset when ifname online
-                                                                        // "default" for reset when the gateway online 
-                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
-            "proto":"tcp or udp protocol",                         // [ "tcp", "udp" ]
-            "server":"server address",                             // [ string ], domain or IPv4 literal
-            "port":"server port",                                  // [ number ]
+            "status": "client enable or disable",        // [ "disable", "enable" ]
+            "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+            "proto": "protocol",                         // [ "tcp", "udp" ]
+            "server": "server address",                  // [ string ], domain name or IPv4 address
+            "port": "server port",                       // [ number ]
 
-            "login":"login packet type",                           // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for no login packet
-                                                                        // "hex" login_string well be hex string
-                                                                        // "ascii" login_string well be ascii string
-                                                                        // "mac" use the device macid for login packet
-            "login_string":"login packet content",                 // [ string ]
+            "login": "login packet type",                // [ "disable", "hex", "ascii", "mac" ]
+                                                              // "disable": no login packet
+                                                              // "hex": login_string is hex-encoded
+                                                              // "ascii": login_string is ASCII text
+                                                              // "mac": use device MAC address as login packet
+            "login_string": "login packet content",      // [ string ]
 
-            "keeplive":"keeplive type",                            // [ "disable", "idle", "enable", "timing" ]
-                                                                        // "disable" for no keeplive packet
-                                                                        // "idle" idle to keeplive
-                                                                        // "timing" timing send keeplive    
-                                                                        // "enable" same "timing"
-            "keeplive_interval":"keeplive interval",               // [ number ], seconds
-            "keeplive_string":"keeplive packet content",           // [ hex string ]
+            "keeplive": "keepalive type",                // [ "disable", "idle", "enable", "timing" ]
+                                                              // "disable": no keepalive
+                                                              // "idle": send keepalive when idle
+                                                              // "timing": send keepalive at fixed interval
+                                                              // "enable": same as timing
+            "keeplive_interval": "keepalive interval",   // [ number ], seconds
+            "keeplive_string": "keepalive payload",      // [ hex string ]
 
-            "frame_start":"frame prefix type",                     // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for frame prefix
-                                                                        // "hex" frame_start_string well be hex string
-                                                                        // "ascii" frame_start_string well be ascii string
-                                                                        // "mac" use the device macid for frame prefix      
-            "frame_start_string":"frame prefix content",           // [ string ]
-
-            "frame_end":"frame postfix type",                      // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for frame prefix
-                                                                        // "hex" frame_end_string well be hex string
-                                                                        // "ascii" frame_end_string well be ascii string
-                                                                        // "mac" use the device macid for frame prefix      
-            "frame_end_string":"frame postfix content"             // [ string ]
-        
-        },
-        // more the TCP or UDP client named clientX, X be number 1-9
-    
-        "mqtt":                                             // MQTT client slot 1
-        {
-            "status":"enable or disable this client",         // [ "disable", "enable" ]
-            "extern":"reset when the extern online",          // [ "disable", "default", "ifname@wan", ... ]
-                                                                        // "disable" for no reset when ifname online
-                                                                        // "default" for reset when the gateway online 
-                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
-            "server":"server address",                             // [ string ], domain or IPv4 literal
-            "port":"server port",                                  // [ number ]
-            "mqtt_id":"device identify",                      // [ string ]
-            "mqtt_username":"mqtt username",                  // [ string ]
-            "mqtt_password":"mqtt password",                  // [ string ]
-            "mqtt_interval":"mqtt interval",                  // [ nubmer ]
-            "mqtt_keepalive":"mqtt keepalive",                // [ number ]
-            "mqtt_publish":"mqtt publish topic",              // [ string ]
-            "mqtt_publish_qos":"mqtt publish qos",            // [ number ]
-            "mqtt_subscribe":
-            {
-                "subscribe topic":"topic qos",      // [ string ]:[ number ]
-                // "subscribe topic":"topic qos"     How many subscribe topic need setting save how many properties
-            }
-        },
-        // more the mqtt client named clientX, X be number 1-9
-
-        "server":                                           // TCP or UDP listen slot 1
-        {
-            "status":"enable or disable this server",         // [ "disable", "enable" ]
-            "proto":"tcp or udp protocol",                         // [ "tcp", "udp" ]
-            "port":"server port",                                  // [ number ]
-            "limit":"concurrence client",                     // [ number ]
-
-            "login":"login packet type",                           // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for no login packet
-                                                                        // "hex" login_string well be hex string
-                                                                        // "ascii" login_string well be ascii string
-                                                                        // "mac" use the device macid for login packet
-            "login_string":"login packet content",                 // [ string ]
-
-            "keeplive":"keeplive type",                            // [ "disable", "idle", "enable", "timing" ]
-                                                                        // "disable" for no keeplive packet
-                                                                        // "idle" idle to keeplive
-                                                                        // "timing" timing send keeplive    
-                                                                        // "enable" same "timing"
-            "keeplive_interval":"keeplive interval",               // [ number ], seconds
-            "keeplive_string":"keeplive packet content",           // [ hex string ]
-
-            "frame_start":"frame prefix type",                     // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for frame prefix
-                                                                        // "hex" frame_start_string well be hex string
-                                                                        // "ascii" frame_start_string well be ascii string
-                                                                        // "mac" use the device macid for frame prefix      
-            "frame_start_string":"frame prefix content",           // [ string ]
-
-            "frame_end":"frame postfix type",                      // [ "disable", "hex", "ascii", "mac" ]
-                                                                        // "disable" for frame prefix
-                                                                        // "hex" frame_end_string well be hex string
-                                                                        // "ascii" frame_end_string well be ascii string
-                                                                        // "mac" use the device macid for frame prefix      
-            "frame_end_string":"frame postfix content"             // [ string ]
-
+            "frame_start": "frame prefix type",          // [ "disable", "hex", "ascii", "mac" ]
+            "frame_start_string": "frame prefix content", // [ string ]
+            "frame_end": "frame postfix type",           // [ "disable", "hex", "ascii", "mac" ]
+            "frame_end_string": "frame postfix content"  // [ string ]
         }
-        // more the server named serverX, X be number 1-9
+        // "...":{...}  How many client slots (client, client2, ..., client9) show how many properties
+
+        "mqtt":                                          // [ json ], MQTT client slot 1
+        {
+            "status": "MQTT enable or disable",          // [ "disable", "enable" ]
+            "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+            "server": "MQTT broker address",             // [ string ], domain name or IPv4 address
+            "port": "MQTT broker port",                  // [ number ]
+            "mqtt_id": "MQTT client ID",                 // [ string ]
+            "mqtt_username": "MQTT username",            // [ string ]
+            "mqtt_password": "MQTT password",            // [ string ]
+            "mqtt_interval": "publish interval",         // [ number ], seconds
+            "mqtt_keepalive": "MQTT keepalive",          // [ number ], seconds
+            "mqtt_publish": "publish topic",             // [ string ]
+            "mqtt_publish_qos": "publish QoS",           // [ number ], 0, 1, or 2
+            "mqtt_subscribe":                            // [ json ], subscription topics
+            {
+                "topic name": "QoS level"                // [ string ]: [ number ], topic and its QoS
+                // "...":"..."  How many topics show how many properties
+            }
+        }
+        // "...":{...}  How many MQTT slots (mqtt, mqtt2, ..., mqtt9) show how many properties
+
+        "server":                                        // [ json ], TCP/UDP server slot 1
+        {
+            "status": "server enable or disable",        // [ "disable", "enable" ]
+            "proto": "protocol",                         // [ "tcp", "udp" ]
+            "port": "listen port",                       // [ number ]
+            "limit": "max concurrent clients",           // [ number ]
+
+            "login": "login packet type",                // [ "disable", "hex", "ascii", "mac" ]
+            "login_string": "login packet content",      // [ string ]
+            "keeplive": "keepalive type",                // [ "disable", "idle", "enable", "timing" ]
+            "keeplive_interval": "keepalive interval",   // [ number ], seconds
+            "keeplive_string": "keepalive payload",      // [ hex string ]
+            "frame_start": "frame prefix type",          // [ "disable", "hex", "ascii", "mac" ]
+            "frame_start_string": "frame prefix content", // [ string ]
+            "frame_end": "frame postfix type",           // [ "disable", "hex", "ascii", "mac" ]
+            "frame_end_string": "frame postfix content"  // [ string ]
+        }
+        // "...":{...}  How many server slots (server, server2, ..., server9) show how many properties
     }
 }
 ```
 
-Examples, query all configuration of the first UART
+#### Configuration example
 
+**uart@tty with DTU driver** — serial-to-network bridge with TCP client and server
 ```shell
-~ # he 'uart@tty'                    # Query configurations of uart@tty (first UART port)
-{                                 # Return a complete JSON object
-    "status":"enable",                              # enable the first UART
-    "convert":"disable",
-    "devcom":"",
-    "ttydev":"/dev/ttyS1",
-    "drvcom":"uartdrv@dtu",
-    "extern":"disable",
-    "speed":"57600",
-    "flow":"disable",
-    "parity":"disable",
-    "databit":"8",
-    "stopbit":"1",
-    "active":"disable",
-    "active_interval":"60",
-    "active_string":"",
-    "frame_maxsize":"",
-    "frame_interval":"",
+land@uart@tty
+{
+    "status":"enable",                         # port is enabled
+    "convert":"disable",                       # hardware flow control disabled
+    "ttydev":"/dev/ttyS1",                     # serial device path
+    "drvcom":"uartdrv@dtu",                    # bound to DTU driver
+    "extern":"disable",                        # no reset on network event
+    "speed":"57600",                           # baud rate 57600
+    "flow":"disable",                          # no flow control
+    "parity":"disable",                        # no parity
+    "databit":"8",                             # 8 data bits
+    "stopbit":"1",                             # 1 stop bit
+    "active":"disable",                        # no active data
     "dtu":
     {
         "client":
         {
-            "status":"enable",
-            "extern":"disable",
-            "proto":"tcp",
-            "server":"192.168.8.250",
-            "port":"800",
-            "login":"disable",
-            "login_string":"",
-            "keeplive":"disable",
-            "keeplive_interval":"30",
-            "keeplive_string":"",
-            "frame_start":"disable",
-            "frame_start_string":"",
-            "frame_end":"disable",
-            "frame_end_string":""
-        },
-        "client2":
-        {
-            "status":"disable",
-            "extern":"disable",
-            "proto":"udp",
-            "server":"",
-            "port":"",
-            "login":"disable",
-            "login_string":"",
-            "keeplive":"disable",
-            "keeplive_interval":"30",
-            "keeplive_string":"",
-            "frame_start":"disable",
-            "frame_start_string":"",
-            "frame_end":"disable",
-            "frame_end_string":""
+            "status":"enable",                 # TCP client enabled
+            "proto":"tcp",                     # TCP protocol
+            "server":"192.168.8.250",          # server address
+            "port":"800",                      # server port
+            "login":"disable",                 # no login packet
+            "keeplive":"disable"               # no keepalive
         },
         "server":
         {
-            "status":"enable",
-            "extern":"disable",
-            "proto":"tcp",
-            "port":"7000",
-            "limit":"5",
-            "login":"disable",
-            "login_string":"",
-            "keeplive":"disable",
-            "keeplive_interval":"30",
-            "keeplive_string":"",
-            "frame_start":"disable",
-            "frame_start_string":"",
-            "frame_end":"disable",
-            "frame_end_string":""
-        },
-        "mqtt":
-        {
-            "status":"disable",
-            "extern":"disable",
-            "server":"",
-            "port":"1883",
-            "mqtt_id":"",
-            "mqtt_username":"",
-            "mqtt_password":"",
-            "mqtt_interval":"10",
-            "mqtt_keepalive":"60",
-            "mqtt_publish":"",
-            "mqtt_publish_qos":"0",
-            "mqtt_subscribe":{}
+            "status":"enable",                 # TCP server enabled
+            "proto":"tcp",                     # TCP protocol
+            "port":"7000",                     # listen port
+            "limit":"5"                        # max 5 clients
         }
     }
 }
-~ #
 ```
 
-Examples, disable the first DTU TCP client
-
+**uart@tty2 with Sixents driver** — GNSS RTK differential correction
 ```shell
-~ # he 'uart@tty:dtu/client/status=disable'                    # Set dtu client status to disable
-ttrue                                                          # ttrue is returned, the change is successful
-~ #
+land@uart@tty2
+{
+    "status":"enable",                         # port is enabled
+    "ttydev":"/dev/ttyS2",                     # serial device path
+    "drvcom":"uartdrv@sixents",                # bound to Sixents driver
+    "speed":"115200",                          # baud rate 115200
+    "flow":"disable",                          # no flow control
+    "parity":"disable",                        # no parity
+    "databit":"8",                             # 8 data bits
+    "stopbit":"1",                             # 1 stop bit
+    "sixents":
+    {
+        "ak":"your-ak-string",                 # Sixents Access Key
+        "as":"your-as-string",                 # Sixents Access Secret
+        "devid":"SN20260001",                  # device serial number
+        "devtype":"GNSS-RTK-01",               # device type
+        "auth_port":"443",                     # HTTPS auth port
+        "rtcm_port":"4402",                    # RTCM data port
+        "gga_timeout":"30"                     # GGA watchdog timeout
+    }
+}
 ```
 
-Examples, set the first DTU server listen port to 8000
-
+**uart@tty3 with TUI driver** — eline serial terminal (simplest, no driver sub-key)
 ```shell
-~ # he 'uart@tty:dtu/server/port=8000'                    # Set dtu server port
-ttrue                                                     # ttrue is returned, the change is successful
-~ #
+land@uart@tty3
+{
+    "status":"enable",                         # port is enabled
+    "ttydev":"/dev/ttyS3",                     # serial device path
+    "drvcom":"uartdrv@tui",                    # bound to TUI driver
+    "speed":"57600",                           # baud rate 57600
+    "flow":"disable",                          # no flow control
+    "parity":"disable",                        # no parity
+    "databit":"8",                             # 8 data bits
+    "stopbit":"1"                              # 1 stop bit
+}
 ```
 
----
+#### Configuration settings example
 
-### Component API ( `uart@tty` )
+Example, set the serial baud rate to 115200
+```shell
+land@uart@tty:speed=115200
+ttrue
+```
 
-These methods are invoked on the **port object** (e.g. **`uart@tty`**), not on **`uart@frame`**.
+Example, set the DTU client server address and port
+```shell
+land@uart@tty:dtu/client/server=192.168.8.100
+ttrue
+```
 
-+ `ttydev[]` **resolved TTY path**
-    - none or failed return NULL
-    - return string talk for resolved ttydev (or via devcom)
+Example, merge set the DTU client configure( include "status" "proto" "server" "port" )
+```shell
+land@uart@tty|{"dtu":{"client":{"status":"enable","proto":"tcp","server":"192.168.8.100","port":"8000"}}}
+ttrue
+```
 
-    Example, query tty device path
+Example, set the Sixents Access Key on uart@tty2
+```shell
+land@uart@tty2:sixents/ak=new-ak-value
+ttrue
+```
+
+Example, bind uart@tty3 to the TUI driver
+```shell
+land@uart@tty3:drvcom=uartdrv@tui
+ttrue
+```
+
+
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **initialize the UART port instance**
+    - failed return tfalse
+    - succeed return ttrue
+    - Reads configuration, resolves ttydev and drvcom, starts the driver service
+    - Called by `uart@frame.setup` at boot or when configuration changes
+
++ `shut[]` **shut down the UART port instance**
+    - failed return tfalse
+    - succeed return ttrue
+    - Stops the driver service and unregisters the port
+
+#### Query APIs
+
++ `ttydev[]` **get the resolved serial device path**
+    - failed return NULL
+    - succeed return [ string ], the Linux serial device path (e.g. /dev/ttyS1)
+
+    Example, get the tty device path
     ```shell
     uart@tty.ttydev
     /dev/ttyS1
     ```
 
-+ `devcom[]` **device component name**
-    - none or failed return NULL
-    - return string talk
++ `devcom[]` **get the device component name**
+    - failed return NULL
+    - succeed return [ string ], the device component name (e.g. usb@tty-2-3)
 
-+ `drvcom[]` **driver component name**
-    - none or failed return NULL
-    - return string talk
+    Example, get the device component
+    ```shell
+    uart@tty.devcom
+    usb@tty-2-3
+    ```
 
-+ `status[]` **driver status**
-    - If drvcom is uartdrv@dtu, this object returns NULL — use **`uartdrv@dtu.status[ uart_object ]`** instead.
-    - Otherwise return JSON from **`scall(drvcom, "status", uart_object)`**
++ `drvcom[]` **get the driver component name**
+    - failed return NULL
+    - succeed return [ string ], the driver object name (e.g. uartdrv@dtu)
 
-+ `reset[ event_name, { "ifname": "…" } ]` **event-driven reset**
-    - event_name ----------- [ string ], e.g. network/online
-    - second parameter ----- JSON object with ifname (required where compared)
-    - When drvcom is not uartdrv@dtu: forward **`scallst(drvcom, "reset", uart_object, v)`**
-    - When drvcom is uartdrv@dtu: use top-level extern; if extern is default and event_name is network/online, sreset; else if extern equals ifname, sreset
-    - For DTU link reconnect by dtu.*.extern, use **`uartdrv@dtu.reset`** below
+    Example, get the driver component
+    ```shell
+    uart@tty.drvcom
+    uartdrv@dtu
+    ```
 
-+ `clear_ca[ slot ]` **remove TLS CA file for a DTU slot**
-    - slot ----------------- [ string ], e.g. client, server, client2
++ `status[]` **get the driver status**
+    - failed return NULL, driver not running or driver does not support status
+    - succeed return [ json ], driver status information (delegates to the driver's status API)
+
+    Example, get DTU driver status
+    ```shell
+    uart@tty.status
+    {
+        "tty":
+        {
+            "rx":1024,
+            "tx":2048,
+            "connect":"ok"
+        },
+        "client":
+        {
+            "rx":512,
+            "tx":256,
+            "connect":"ok",
+            "ip":"192.168.8.250"
+        }
+    }
+    ```
+
++ `key[]` **list TLS certificate paths for driver client/server slots**
+    - failed return NULL
+    - succeed return [ json ], a map of slot name to TLS file paths (ca, crt, key) where files exist
+
+    Example, list TLS certificates
+    ```shell
+    uart@tty.key
+    {
+        "client":
+        {
+            "ca":"/skinos/cfg/uart-tty-client.ca",
+            "crt":"/skinos/cfg/uart-tty-client.crt",
+            "key":"/skinos/cfg/uart-tty-client.key"
+        }
+    }
+    ```
+
+#### Control APIs
+
++ `reset[ event, ifname ]` **trigger an event-driven reset on the driver**
+    - event ------------ [ string ], the event name (e.g. network/online, network/onextern)
+    - ifname ----------- [ string ], JSON object with "ifname" field specifying the interface name
     - failed return tfalse
     - succeed return ttrue
 
-    Example, clear client CA
+    Example, reset DTU clients when WAN comes online
+    ```shell
+    uart@tty.reset[ network/online, {"ifname":"ifname@wan"} ]
+    ttrue
+    ```
+
++ `import_ca[ slot, file ]` **import a TLS CA certificate for a driver slot**
+    - slot ------------- [ string ], the slot name (e.g. client, server, mqtt)
+    - file ------------- [ string ], the source file path to copy
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, import CA certificate for client slot
+    ```shell
+    uart@tty.import_ca[ client, /tmp/ca.pem ]
+    ttrue
+    ```
+
++ `import_cert[ slot, file ]` **import a TLS client certificate for a driver slot**
+    - slot ------------- [ string ], the slot name
+    - file ------------- [ string ], the source file path to copy
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, import client certificate
+    ```shell
+    uart@tty.import_cert[ client, /tmp/client.crt ]
+    ttrue
+    ```
+
++ `import_key[ slot, file ]` **import a TLS private key for a driver slot**
+    - slot ------------- [ string ], the slot name
+    - file ------------- [ string ], the source file path to copy
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, import client private key
+    ```shell
+    uart@tty.import_key[ client, /tmp/client.key ]
+    ttrue
+    ```
+
++ `clear_ca[ slot ]` **remove the TLS CA certificate for a driver slot**
+    - slot ------------- [ string ], the slot name
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, remove client CA certificate
     ```shell
     uart@tty.clear_ca[ client ]
     ttrue
     ```
 
-+ `clear_cert[ slot ]` **remove TLS client cert file for a DTU slot**
-    - slot ----------------- [ string ]
++ `clear_cert[ slot ]` **remove the TLS client certificate for a driver slot**
+    - slot ------------- [ string ], the slot name
     - failed return tfalse
     - succeed return ttrue
 
-+ `clear_key[ slot ]` **remove TLS private key file for a DTU slot**
-    - slot ----------------- [ string ]
-    - failed return tfalse
-    - succeed return ttrue
-
-+ `key[]` **list TLS material paths per client/server slot**
-    - return JSON with nested ca/crt/key paths where files exist
-
----
-
-## uartdrv@dtu — DTU / MQTT / TCP / UDP Driver
-
-`uartdrv@dtu` is the **executable** mapped from **`uartdrv@dtu`** in **`prj.json`** **`obj`**. It bridges one UART to multiple TCP/UDP clients and servers and MQTT clients using **libevent** and **libmosquitto**. The **`dtu`** subtree in **`uart@tty*`** configuration is consumed when this driver runs.
-
----
-
-### Component API ( `uartdrv@dtu` )
-
-+ `service[ uart_object ]` **run the DTU event loop**
-    - uart_object ---------- [ string ], e.g. uart@tty, must match the saved configuration object name
-    - opens serial, creates peers, listens on Unix datagram **`$(project_var)/$(project)/$(uart_object).unix`**
-    - does not return while event_base_dispatch runs
-
-    Example, start is normally done by uart@tty setup (illustrative)
+    Example, remove client certificate
     ```shell
-    uartdrv@dtu.service[ uart@tty ]
-    ```
-
-+ `status[ uart_object ]` **query link statistics**
-    - uart_object ---------- [ string ]
-    - failed return NULL (process not running)
-    - return JSON per peer rx, tx, connect, optional ip
-
-    Example, query DTU status when process is running
-    ```shell
-    uartdrv@dtu.status[ uart@tty ]
-    {
-        "tty":{ "rx":"100", "tx":"200", "connect":"ok" },
-        "client":{ "rx":"50", "tx":"50", "connect":"ok", "ip":"192.168.8.250" }
-    }
-    ```
-
-+ `reset[ uart_object, { "ifname": "…" } ]` **reconnect selected TCP/UDP/MQTT clients**
-    - uart_object ---------- [ string ]
-    - JSON ----------------- must contain ifname string; compared to each dtu.*.extern
-    - for each subsection with non-empty extern, if extern is default or equals ifname, and key is client or mqtt (not server*), close and reopen that client
-    - failed return tfalse when process down, no matches, or IPC error; otherwise dtu_call result
-
-    Example, reset DTU clients tied to default or matching extern after WAN up
-    ```shell
-    uartdrv@dtu.reset[ uart@tty, { "ifname":"ifname@wan" } ]
+    uart@tty.clear_cert[ client ]
     ttrue
     ```
 
-**Internal control socket** (datagram JSON to the same **`*.unix`** path as service):
++ `clear_key[ slot ]` **remove the TLS private key for a driver slot**
+    - slot ------------- [ string ], the slot name
+    - failed return tfalse
+    - succeed return ttrue
 
-```json
-{ "cmd": "status" }
-```
+    Example, remove client private key
+    ```shell
+    uart@tty.clear_key[ client ]
+    ttrue
+    ```
 
-```json
-{ "cmd": "reset", "v": { "client": "reset", "mqtt2": "reset" } }
-```
++ `power[]` **power cycle the UART port hardware**
+    - failed return tfalse
+    - succeed return ttrue
+    - Toggles the GPIO power pin off for 1 second then back on
 
-Keys in **v** are **dtu** subsection names; values are ignored but keys must exist. Only TCP client, UDP client, and MQTT client peers are restarted.
-
-**Build option:** define **`DTU_DNS_EVDNS=1`** and link **libevent_extra** for **evdns** hostname resolution on DTU clients and MQTT; default **0** uses **domain2ip** / register (**`dtu.h`**).
-
-### Lifecycle ( `uartdrv@dtu` )
-
-`uartdrv@dtu` has **no** separate **`setup`** / **`shut`** exports on the executable table: the process lifetime is the **`service`** call. Stopping the service is done by the platform (**signal**, **`land@service`**, etc.). **`uart@tty.shut`** tears down the port from the **`uart@frame`** side.
-
----
-
-## uartdrv@tui — Eline Serial Driver
-
-+ `service[ uart_object ]` **attach serial to eline**
-    - uart_object ---------- [ string ]
-    - opens ttydev with termios, dup2 to stdin/stdout, execlp("eline", …)
-    - on success does not return
-
----
-
-### Lifecycle API ( `uart@tty` )
-
-+ `setup[]` / `shut[]` — invoked from **`uart@frame`** or manually; see **`frame.md`** and **`uart_dev`** **`_set`**.
-
----
-
-### C Code Example
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_uart_call_error(const char *api, talk_t ret)
-{
-	if (ret == tfalse || ret == terror || ret == tpanic)
-	{
-		printf("%s failed, errno=%d\n", api, errno);
-	}
-}
-```
-
-##### `ttydev[]`
-
-```c
-talk_t ret = scall("uart@tty", "ttydev", NULL);
-if (ret > tpanic)
-{
-	printf("%s\n", x2string(ret));
-	talk_free(ret);
-}
-else
-	print_uart_call_error("ttydev", ret);
-```
-
-##### `clear_ca[ slot ]`
-
-```c
-talk_t ret = scalls("uart@tty", "clear_ca", "client");
-if (ret != ttrue)
-	print_uart_call_error("clear_ca", ret);
-```
-
-##### `uartdrv@dtu.status[ uart_object ]`
-
-```c
-talk_t ret = scalls("uartdrv@dtu", "status", "uart@tty");
-if (ret > tpanic)
-{
-	/* inspect JSON */
-	talk_free(ret);
-}
-else
-	print_uart_call_error("status", ret);
-```
-
-##### `uartdrv@dtu.reset[ uart_object, json ]`
-
-```c
-talk_t ret = scalls("uartdrv@dtu", "reset", "uart@tty,{\"ifname\":\"ifname@wan\"}");
-if (ret > tpanic)
-	talk_free(ret);
-else if (ret != ttrue)
-	print_uart_call_error("reset", ret);
-```
+    Example, power cycle the UART port
+    ```shell
+    uart@tty.power
+    ttrue
+    ```
