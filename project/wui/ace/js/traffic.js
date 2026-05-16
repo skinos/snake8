@@ -466,8 +466,6 @@ var clients_pager = '#clients-grid-pager';
             {
                 astalist = {};
             }
-            $('#traffic_html').show();
-            
             // 保存所有的客户端行
             var count = 0;
             var rows = [];
