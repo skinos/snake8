@@ -12,7 +12,7 @@ function preloadCompactPortIcons() {
 
 function fetchNetworkFrame() {
     // 负责加载数据并存入全局变量 加载完后触发一次 adjustBoxLayout
-    return he.load([ "network@frame"]).then(function(v) {
+    return he.bkload([ "network@frame"]).then(function(v) {
         if (v[0]) {
             currentFrameData = v[0];
             adjustBoxLayout(); // 数据拿到后，重新刷一遍布局
