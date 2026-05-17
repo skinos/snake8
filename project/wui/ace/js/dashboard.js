@@ -1244,10 +1244,10 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     }
 
     // 没有缓存，第一次进入dashboard等数据加载
-    return Promise.all([
+    $.when(
         interface_load(),
         fetchNetworkFrame()
-    ]).then(function() {
+    ).done(function() {
         adjustBoxLayout();
 
         page.timing({
@@ -1256,5 +1256,6 @@ $.i18n().load(page.lang('dashboard')).then(function() {
             },
             interval: flush_interval * 1000
         });
-    });
+
+    })
 });
