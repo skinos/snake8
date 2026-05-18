@@ -1,0 +1,188 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "mt7628an.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	compatible = "ashyelf,d218", "mediatek,mt7628an-soc";
+
+	aliases {
+		watchdog0 = &watchdog;
+		watchdog9 = &watchdog_706;
+	};
+
+	chosen {
+		/* No console= on ttyS0: keep UART for application (see uart/tty.cfg) */
+		bootargs = "rootfstype=squashfs,jffs2";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		bd_led1: led-1 {
+			label = "led2";
+			gpios = <&gpio 2 GPIO_ACTIVE_HIGH>;
+		};
+		bd_led2: led-2 {
+			label = "led11";
+			gpios = <&gpio 11 GPIO_ACTIVE_HIGH>;
+		};
+		bd_led3: led-3 {
+			label = "led0";
+			gpios = <&gpio 0 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 38 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+	};
+
+	watchdog_706: watchdog-706 {
+		compatible = "linux,wdt-sp706";
+		always-enabled;
+		gpios = <&gpio 37 GPIO_ACTIVE_HIGH>;
+		hw_algo = "toggle";
+		hw_margin_ms = <500>;
+		hw_timer_times = <10>;
+		status = "okay";
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+    flash0: flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		/* W25Q128JV: fR up to 133 MHz; 50 MHz safe first step vs 40 MHz */
+		spi-max-frequency = <50000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x30000>;
+			};
+
+			partition@30000 {
+				label = "u-boot-env";
+				reg = <0x30000 0x10000>;
+				read-only;
+			};
+
+			factory: partition@40000 {
+				label = "factory";
+				reg = <0x40000 0x10000>;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					eeprom_factory_0: eeprom@0 {
+						reg = <0x0 0x400>;
+					};
+
+					eeprom_factory_8000: eeprom@8000 {
+						reg = <0x8000 0x200>;
+					};
+
+					macaddr_factory_e000: macaddr@e000 {
+						compatible = "mac-base";
+						reg = <0xe000 0x6>;
+					};
+				};
+			};
+
+            firmware: partition@50000 {
+				compatible = "denx,uimage";
+				label = "firmware";
+				reg = <0x50000 0xe30000>;
+			};
+
+            Fconfig: partition@e80000 {
+				label = "Fconfig";
+				reg = <0xe80000 0x100000>;
+			};
+            OEM: partition@f80000 {
+				label = "OEM";
+				reg = <0xf80000 0x80000>;
+			};
+		};
+	};
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&ehci {
+	status = "okay";
+};
+
+&ohci {
+	status = "okay";
+};
+
+/* 2.4 GHz only (SoC &wmac); no PCIe WiFi on this board */
+&pcie {
+	status = "disabled";
+};
+
+&wmac {
+	status = "okay";
+	nvmem-cells = <&eeprom_factory_0>;
+	nvmem-cell-names = "eeprom";
+};
+
+&ethernet {
+	nvmem-cells = <&macaddr_factory_e000>;
+	nvmem-cell-names = "mac-address";
+};
+
+&state_default {
+	gpio {
+		groups = "i2c", "refclk", "wdt";
+		function = "gpio";
+	};
+
+	p0led_an {
+		groups = "p0led_an";
+		function = "p0led_an";
+	};
+
+	p1led_an {
+		groups = "p1led_an";
+		function = "p1led_an";
+	};
+
+	p2led_an {
+		groups = "p2led_an";
+		function = "p2led_an";
+	};
+
+	p3led_an {
+		groups = "p3led_an";
+		function = "p3led_an";
+	};
+
+	p4led_an {
+		groups = "p4led_an";
+		function = "p4led_an";
+	};
+};
+
+&watchdog {
+	status = "okay";
+};

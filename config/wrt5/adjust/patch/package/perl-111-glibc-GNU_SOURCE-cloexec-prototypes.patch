@@ -1,0 +1,16 @@
+--- a/perl.h
++++ b/perl.h
+@@ -43,6 +43,13 @@
+  */
+ /* #define PERL_RC_STACK */
+ 
++/* glibc: dup3/pipe2/accept4/mkostemp prototypes need _GNU_SOURCE before
++ * libc headers; cross config may omit HAS_GNULIBC while keeping HAS_DUP3.
++ * Do not test __GLIBC__ here: it is only defined after glibc <features.h>. */
++#if defined(__linux__) && !defined(__ANDROID__) && !defined(_GNU_SOURCE)
++#  define _GNU_SOURCE
++#endif
++
+ #include "config.h"
+ 
+ /* This fakes up using Mingw for locale handling. In order to not define WIN32

@@ -1,0 +1,103 @@
+{
+    "name":"uart",
+    "intro":"uart forwarding project",
+    "desc":"uart management and custom",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "lib":
+    {
+        "skinuart":"uart library"
+    },
+
+    "com":
+    {
+        "frame":"uart frame"
+    },
+    "exe":
+    {
+        "dtu":"UART application components for DTU",
+        "tui":"UART application components for eline"
+    },
+    "obj":
+    {
+        "uartdrv@dtu":"dtu",
+        "uartdrv@tui":"tui"
+    },
+    
+    "init":
+    {
+        "general":
+        {
+            "uart@frame.setup":""
+        }
+    },
+    "uninit":
+    {
+        "general":
+        {
+            "uart@frame.shut":""
+        }
+    },
+
+    "wui":
+    {
+        "uart":
+        {
+            "en":"UART#1",
+            "cn":"串口#1",
+            "page":"uart.html",
+            "object":"uart@tty"
+        },
+        "uart2":
+        {
+            "en":"UART#RTK",
+            "cn":"串口#RTK",
+            "page":"uart.html",
+            "object":"uart@tty2"
+        },
+        "uart3":
+        {
+            "en":"UART#3",
+            "cn":"串口#3",
+            "page":"uart.html",
+            "object":"uart@tty3"
+        },
+        "uart4":
+        {
+            "en":"UART#4",
+            "cn":"串口#4",
+            "page":"uart.html",
+            "object":"uart@tty4"
+        },
+        "uart5":
+        {
+            "en":"UART#5",
+            "cn":"串口#5",
+            "page":"uart.html",
+            "object":"uart@tty5"
+        },
+        "uart6":
+        {
+            "en":"UART#6",
+            "cn":"串口#6",
+            "page":"uart.html",
+            "object":"uart@tty6"
+        },
+        "uart7":
+        {
+            "en":"UART#7",
+            "cn":"串口#7",
+            "page":"uart.html",
+            "object":"uart@tty7"
+        },
+        "uart8":
+        {
+            "en":"UART#8",
+            "cn":"串口#8",
+            "page":"uart.html",
+            "object":"uart@tty8"
+        }
+    }
+}

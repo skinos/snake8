@@ -1,0 +1,19 @@
+--- a/mt7615/init.c	2026-04-19 00:12:33.762312991 +0800
++++ b/mt7615/init.c	2026-04-19 00:12:33.782313781 +0800
+@@ -443,6 +443,16 @@
+ 	dev->mphy.hw->wiphy->available_antennas_rx = dev->chainmask;
+ 	dev->mphy.hw->wiphy->available_antennas_tx = dev->chainmask;
+ 	mt76_set_stream_caps(&dev->mphy, true);
++
++	/* MT7663 (MT7613): STA mode often fails auth/assoc against VHT160 APs
++	 * when these capability bits are set; link is stable at 80 MHz.
++	 * Negotiate as 80 MHz VHT client instead. See openwrt/mt76#945.
++	 */
++	if (is_mt7663(&dev->mt76)) {
++		dev->mphy.sband_5g.sband.vht_cap.cap &=
++			~(IEEE80211_VHT_CAP_SHORT_GI_160 |
++			  IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ);
++	}
+ }
+ 
+ u32 mt7615_reg_map(struct mt7615_dev *dev, u32 addr)
