@@ -23,16 +23,16 @@ You can reach the gateway over:
 - **RS232 UART** (same typical serial parameters)   
 - **RS485 UART** (same typical serial parameters)   
 
-### Telnet client
-1. Open **Telnet Server** under **&lt;System&gt;** on the web UI.
+##### Telnet client   
+1. Open **Telnet Server** under **&lt;System&gt;** on the web UI.   
 2. Log in with your user and password. If you land in **eline** (`$ `), use it as above; use **`ashy`** when you need **`he`** in shell.
 
-### SSH client
-1. Open **SSH Server** under **&lt;System&gt;**.
+##### SSH client   
+1. Open **SSH Server** under **&lt;System&gt;**.   
 2. Log in; then follow the **eline / `ashy` / `he`** flow above.
 
-### TTL / RS232 / RS485
-1. Under **&lt;Application&gt;**, set **Serial#TTL** / **Serial#RS232** / **Serial#485** or **UART** / **UART2** / **UART3** to **Command Line**.
+##### TTL / RS232 / RS485   
+1. Under **&lt;Application&gt;**, set **Serial#TTL** / **Serial#RS232** / **Serial#485** or **UART** / **UART2** / **UART3** to **Command Line**.   
 2. Connect with a serial terminal and log in; same **eline / `ashy` / `he`** rules apply.
 
 After login, a short ASCII banner may appear, for example:   
@@ -61,7 +61,7 @@ The active prompt is **`$ `** (eline), **`# `** (classic HE loop), or **`~ #`** 
 
 ## HE Command Format
 
-### Quick start (30 seconds)
+#### Quick start (30 seconds)
 
 The lines below are what you type in **Linux shell** (`~ #` after **`ashy`**). In **eline** (`$ `), type the same **payload** only—omit **`he`** and the surrounding quotes—see **[eline.md](eline.md)**.
 
@@ -73,7 +73,7 @@ The lines below are what you type in **Linux shell** (`~ #` after **`ashy`**). I
 ~ # he 'land@machine.status:version'          # 5) one field from method JSON
 ```
 
-### How the `he` program joins arguments
+#### How the `he` program joins arguments
 
 The implementation builds one string by **concatenating every argument after `he` with no space inserted**. Examples:
 
@@ -97,7 +97,7 @@ If the **first character** of that combined string is **`+`**, **`=`**, or **`-`
 | Call method with parameters | `component.method[param1,param2,...]` | Calls a component API method with one or more parameters. | `he 'clock@date.ntpsync[ntp1.aliyun.com]'` |
 | Return one field from method JSON | `component.method:attr/path` | Calls method and returns only one field from the JSON result. | `he 'ifname@lte.status:ip'` |
 
-### How to choose a format quickly
+#### How to choose a format quickly
 
 | Goal | Recommended format |
 |---|---|
@@ -110,33 +110,22 @@ If the **first character** of that combined string is **`+`**, **`=`**, or **`-`
 | Call an API | `component.method[...]` |
 | Call API and return only one field | `component.method:attr/path` |
 
-### HE command types and return values
+#### **HE Command Introduction**
 
-Each HE command takes one line and ends with Enter. Commands fall into three types:
++ Each command takes a line and ends with a CR. HE commands can be divided into three types:   
+	+ **Query configuration**              Used to query the current configuration of some function components of the gateway
+	+ **Modify configuration**             Used to modify the configuration of certain gateway components
+	+ **Calling component method**         Used to perform some functions of the gateway component operations, such as querying status, starting, and disabling
++ The return type of the command   
+	+ **Character string**         Used to represent a single piece of information. (The called method returns a string of type `talk_t`.) *After the output you get the next prompt: **`~ #`** in Linux shell, **`$ `** in eline, or **`# `** in the classic HE loop.*
+	+ **ttrue** or **tfalse**      `ttrue` indicates success, `tfalse` indicates failure. *Same next-prompt rule as above.*
+	+ **{JSON}**                   A JSON object that starts with `{` and ends with `}` (the called method returns a JSON structure of type `talk_t`) is used to represent some complex information. *Same next-prompt rule as above.*
+	+ **Empty**                       Used to indicate that no available information is available (`NULL` if the called method returns `null`). *Same next-prompt rule as above.*
 
-| Type | Purpose |
-|------|---------|
-| **Query configuration** | Read the current configuration of a component |
-| **Modify configuration** | Change the configuration of a component |
-| **Call component method** | Invoke a component API (query status, start, stop, etc.) |
+#### **Query configuration**
 
-Return values:
-
-| Return | Meaning |
-|--------|---------|
-| **String** | A single text value returned by the method |
-| **`ttrue`** | Operation succeeded |
-| **`tfalse`** | Operation failed |
-| **`{JSON}`** | A JSON object with complex information |
-| **Empty** | No data available (method returned NULL) |
-
-After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** in eline, or **`# `** in the classic HE loop.
-
-### Query configuration
-
-+ When querying all configurations of the components of the gateway, enter **component name** and press Enter. Usually the return value will be a JSON.
-
-    **Example: query full component configuration**
++ When querying all configurations of the components of the gateway, enter **component name** Press enter
+Usually the return value will be a JSON
     ```shell
     ~ # he 'land@machine'                    # Query configurations of land@machine (Basic Information of Gateway)
     {                                 # Return a complete JSON object
@@ -150,17 +139,14 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
     ~ #
     ```   
 
-+ When querying the attributes specified by the component, give the **component name:attribute path** and press Enter. The return value can be a string or a JSON, depending on the value of the corresponding attribute.
-
-    **Example: query one attribute**
++ When querying the attributes specified by the component, give the **component name:attribute path** Enter
+The return value can be a string or a JSON, depending on the value of the corresponding attribute
     ```shell
     ~ # he 'land@machine:name'                    # Query the value of the name attribute under the land@machine component configuration
     A218-120108                      # Return a string
     ~ #
     ```   
-+ When a component has many levels of attributes, **attribute path** separates the multiple layers of **attribute names** with a **/**. The attribute path is used to locate the attributes.
-
-    **Example: query nested attributes with path**
++ When a component has many levels of attributes, **attribute path** will separate the multiple layers of **attribute names** with a **/**. The attribute path is used to locate the attributes, as follows
     ```shell
     ~ # he 'ifname@lan:static'                    # Query the value of the static attribute under the ifname@lan(LAN Network Management) component configuration
     {
@@ -172,20 +158,17 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
     ~ #
     ```   
 
-    The path format is **attribute/sub-attribute/sub-sub-attribute/...** to locate deeply nested attributes.
+    The above are passed by **attribute/subordinate attribute/subordinate attribute/...** This path-like way to locate multiple layer attributes
 
-### Modify configuration
+#### **Modify configuration**
 
-+ Modifying the component configuration is similar to querying the component configuration, first giving the **component name**, then giving the **attribute path** to modify the attribute, and finally giving the **value**.
-
++ Modifying the component configuration is similar to querying the component configuration, first giving the **component name**, then giving the **attribute path** to modify the attribute, and finally giving the **value**
     When modifying the value of the entire component:
     ```shell
     component name=value
-    ```
+    ```   
     When modifying the value of an entire component, usually the value must be a JSON (starts with `{` and ends with `}`).
-    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails.
-
-    **Example: replace full component configuration**
+    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails. See the following example
     ```shell
     ~ # he 'forward@alg'                    # Query the ALG configuration
     {
@@ -224,11 +207,9 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
 + When modifying a component specified attribute:
     ```shell
     component name:attribute path=value
-    ```
-    The value can be a JSON (starting with `{` and ending with `}`) or a string.
-    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails.
-
-    **Example: modify an attribute with JSON value**
+    ```   
+    The value can be a JSON (starting with `{` and ending with `}`) or a string
+    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails. See the following example
     ```shell
     ~ # he 'gnss@nmea'                    # Query the GNSS configuration
     {
@@ -292,7 +273,7 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
     }
 	~ # he 'gnss@nmea:client={"status":"enable","server":"192.168.8.250","port":"8000","interval":"30","id":"2232"}'                    # Modify the client attribute in gnss@nmea(GNSS configuration)
 	ttrue
-	~ # he 'gnss@nmea:client'                    # Query the result of modifying the client attributes in gnss@nmea(GNSS configuration)
+	~ # he 'gnss@nmea:client'                    # Query the result of modifying the client attributes in ugnss@nmea(GNSS configuration)
     {
         "status":"enable",
         "server":"192.168.8.250",
@@ -300,11 +281,6 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
         "interval":"30",
         "id":"2232"
     }
-	~ #
-    ```
-
-    **Example: modify a nested attribute with string value**
-    ```shell
 	~ # he 'gnss@nmea:client/server=192.168.8.251'                    # Change the value of the server attribute under the gnss@nmea(GPS management)client attribute
 	ttrue
 	~ # he 'gnss@nmea:client'                    # After the configuration is modified, check the configuration again
@@ -315,11 +291,6 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
 	    "interval":"30",
 	    "id":"2232"
 	}
-	~ #
-    ```
-
-    **Example: verify the change in full configuration**
-    ```shell
 	~ # he 'gnss@nmea'                    # Query the all of GNSS configuration
     {
         "status":"enable",
@@ -362,11 +333,9 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
 + When modifying several specified attributes without affecting others:
     ```shell
     component name|{"attribute1":"value1", "attribute2":"value2" , "attribute3":"value3"}
-    ```
-    value1, value2, value3 is usually a string.
-    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails.
-
-    **Example: merge several attributes**
+    ```   
+    value1, value2, value3 is usually a string
+    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails. See the following example
     ```shell
 	~ # he 'gnss@nmea:client'                    # Query the client attribute in GNSS configuration
 	{
@@ -391,13 +360,11 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
     ```   
 
 
-+ To clear an attribute of a component configuration, press Enter after the `=`:
++ To clear a attribute of a component configuration, press Enter after the =:
     ```shell
     component name:attribute path=
-    ```
-    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails.
-
-    **Example: clear an attribute**
+    ```   
+    **ttrue** is returned if the modification succeeds, **tfalse** is returned if the modification fails. See the following example
     ```shell
     ~ # he 'gnss@nmea'                    # Query the all of GNSS configuration
     {
@@ -470,15 +437,13 @@ After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** i
     ```   
 
 
-### Calling component method
+#### **Calling component method**
 
 To call a component method, you need to give the component name and method name, parameters can also be given if any
-+ When a component method is called without arguments:
++ When a component method is called without arguments    
     ```shell
     component name.component method
-    ```
-
-    **Example: list clients**
+    ```   
     ```shell
     ~ # he 'client@station.list'                    # Call the list method of client@station(Client Access) to get the current list of clients
     {
@@ -492,24 +457,20 @@ To call a component method, you need to give the component name and method name,
     ```   
 
 
-+ When calling a component method with parameters:
++ When calling a component method with parameters
     ```shell
     component name.component method[ parameter ]
-    ```
-
-    **Example: sync time via NTP**
+    ```   
     ```shell
     ~ # he 'clock@date.ntpsync[ntp1.aliyun.com]'                    # Call the ntpsync method of clock@date(System Date) to synchronize time by NTP with ntp1.aliyun.com
     ttrue
     ~ #
     ```   
 
-+ When calling a component method with multiple parameters:
++ When calling a component method with multiple parameters
     ```shell
     component name.component method[ parameter1, parameter2, parameter3, ... ]
-    ```
-
-    **Example: add an account with multiple parameters**
+    ```   
     ```shell
     ~ # he 'land@auth.add[,xiaomi,4431232]'                    # Call the add of land@auth to add an account with the first parameter empty (none), the second parameter xiaomi, and the third 4431232
     ttrue
@@ -528,12 +489,10 @@ To call a component method, you need to give the component name and method name,
     ```   
 
 
-+ When a component method returns JSON, you can ask that only the attribute values specified in the JSON be returned:
++ When a component method is called to return JSON, you can ask that only the attribute values specified in the JSON be returned
     ```shell
     component name.component method:attribute path
-    ```
-
-    **Example: query one field from method JSON**
+    ```   
     ```shell
     ~ # he 'ifname@lte.status'                    # Call the status method of ifname@lte to query the status of the first LTE connection
     {
@@ -599,13 +558,13 @@ To call a component method, you need to give the component name and method name,
 
 
 ---
-## Reference the component documentation to manage the gateway using the HE command
+##  Reference the component documentation to manage the gateway using the HE command
 
 There are two ways to access component documentation. Each component can be managed through its documentation.
 - Access [Online component documentation](../com/) View component documentation. This online file is added/updated as new features are developed.
 - Contact technical support
 
-### Component documentation points
+#### Component documentation points   
 - In [Online component documentation](../com/) projects in the system are listed in the form of a directory, and each project contains component documents
 - Clicking on a project to enter the project will list all the component documents under this project
 - Click on the component to open the component document, which begins with a function description
@@ -613,12 +572,10 @@ There are two ways to access component documentation. Each component can be mana
 - This is usually followed by an introduction to the **Methods** of this component. Examples of calls are also provided and can be executed in the HE command.
 - **Worked examples below** use **`~ # he '…'`** (Linux shell after **`ashy`**) so they can be copied verbatim. In **eline** (`$ `), type only the string inside the quotes—no **`he`** wrapper.
 
-### Reference document query component configuration
-The component name is given in the **Configuration**, for example **Syslog** — **[syslog.md](syslog.md)** — component name **land@syslog**
+#### Reference document query component configuration   
+The component name is given in the **Configuration**, for example **Syslog** — [online path](../com/land/syslog.md) or, in this repo, **[syslog.md](syslog.md)** — component name **land@syslog**
 
 - Enter **component name** to return all configurations for this component. The attributes and examples for each configuration are described in **Configuration** in the component documentation.
-
-    **Example: query all syslog configuration**
     ```shell
     ~ # he 'land@syslog'                    # Enter component name
     {                               # Return a JSON of all the component configuration
@@ -634,19 +591,15 @@ The component name is given in the **Configuration**, for example **Syslog** —
     ```
 
 - Query a specific attribute by providing the attribute with the **attribute path** after the **component name**.
-
-    **Example: query one syslog attribute**
     ```shell
     ~ # he 'land@syslog:level'                    # Query the value of the level attribute
     info                                    # value of level is info
     ~ #
     ```
 
-### Refer to the component documentation to modify the component configuration   
-Refer to **Syslog** docs (**[syslog.md](syslog.md)**). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
-- Modify the remote attribute of the land@syslog remote log server on the terminal.
-
-    **Example: set one syslog attribute**
+#### Refer to the component documentation to modify the component configuration   
+Refer to **Syslog** docs ([../com/land/syslog.md](../com/land/syslog.md) or [syslog.md](syslog.md)). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
+- Modify the remote attribute of the land@syslog remote log server on the terminal
     ```shell
     ~ # he 'land@syslog:remote=192.168.8.250'                    # Change the value of remote to 192.168.8.250
     ttrue                                    # Return ttrue successfully
@@ -654,8 +607,6 @@ Refer to **Syslog** docs (**[syslog.md](syslog.md)**). The attributes described 
     ```
 
 - Modify multiple attributes at the same time by encapsulating only the target fields in a JSON object (the rest remains unchanged).
-
-    **Example: merge several syslog attributes**
     ```shell
     ~ # he 'land@syslog|{"remote":"192.168.8.251","port":"500"}'                    # Change the value of remote to 192.168.8.251 and value of port to 500
     ttrue                                                    # Return ttrue successfully
@@ -663,19 +614,15 @@ Refer to **Syslog** docs (**[syslog.md](syslog.md)**). The attributes described 
     ```
 
 - Set the full syslog configuration on the terminal. To modify all configurations, provide the same JSON object.
-
-    **Example: replace full syslog configuration**
     ```shell
     ~ # he 'land@syslog={"status":"enable","location":"","debug":"arch@usb","level":"info","trace":"disable","size":"100"}'
     ttrue                                    # Return ttrue successfully
     ~ #
     ```
 
-### Call a component method by referring to the component documentation   
+#### call a component method by referring to the component documentation   
 Refer to the same **Syslog** documentation. Methods described there can be called on the terminal as `component name.component method`.
-- Call the component land@syslog's show method to display the current log.
-
-    **Example: show syslog output**
+- call the component land@syslog's show method to display the current log
     ```shell
     ~ # he 'land@syslog.show'
     Dec 15 15:47:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 102 times
@@ -696,9 +643,7 @@ Refer to the same **Syslog** documentation. Methods described there can be calle
     Dec 15 15:48:35 V520-12CC70 user.warn syslog: modem@lte check simcard failed 117 times
     ~ #
     ```
-- Call the clear method of component land@syslog to clear all current logs.
-
-    **Example: clear syslog**
+- Call the clear method of component land@syslog to clear all current logs
     ```shell
     ~ # he 'land@syslog.clear'
     ttrue
@@ -806,4 +751,6 @@ Enter 'help' for a list of built-in commands.
 
 ## See also
 
-- **[eline.md](eline.md)** — `$ ` prompt, `set`, `ashy`, passthrough list, and Ctrl+D behavior.
+- **[eline.md](eline.md)** — `$ ` prompt, `set`, `ashy`, passthrough list, and Ctrl+D behavior.  
+- **[TERMINOLOGY.md](TERMINOLOGY.md)** — shared terms.  
+- **[he.cn.md](he.cn.md)** — Chinese version of this document.

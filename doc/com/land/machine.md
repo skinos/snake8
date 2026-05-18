@@ -1,485 +1,336 @@
-## land@machine — Machine Information Management
+## land@machine — Gateway identity, runtime snapshot, and host control
 
 ### Overview
 
-Manage machine hardware information, system configuration, and power operations.
-- query machine status including platform, hardware, version, uptime, and memory
-- manage machine configuration such as name, mode, and network ports
-- restart, reboot, and restore factory defaults
-- block and unblock restart and default restore operations
-- query CPU, memory, process, and filesystem information
+The **machine** component (`land@machine`, `MACHINE_COM`) holds persisted gateway identity and operating-mode fields, exposes a consolidated runtime and product snapshot, provides Linux-oriented host resource queries where the platform supports them, and implements guarded reboot and factory-related operations. It is registered in the **land** project (`prj.json`: system basic information management).
 
+### Architecture
 
+- **Startup (`setup`)**: Scans the system project list, registers the **land** project with **fpk**, registers other projects unless **`custom@project`** marks a project as `disable`, applies **`name`** as the host name (length limited by `HOST_NAME_MAX` when non-empty), copies **Web UI**, **telnet**, **SSH**, and **LAN static IP** values from peer components into the global **register** store, and logs completion.
+- **Configuration view**: Persisted **`land@machine`** keys are merged with **`arch@data`** (`DATA_COM`) fields for serial identity and language or version metadata when the configuration is read. If **`mode`** is missing or empty in storage, the effective value for display is **`default`**. Writes cannot change **`sn`**, **`mac`**, or **`macid`** through this component; **`language`**, **`gpversion`**, and **`cfgversion`** are applied to **`arch@data`**; changing **`mode`** toggles **LAN** **`dhcps/status`** (`disable` when **`mode`** is **`mbridge`** or **`default`**, otherwise **`enable`**). Other writable keys persist under the normal **`land@machine`** path.
+- **Status (`status`)**: Starts from the persisted **`land@machine`** object, then overwrites or adds register-backed and **`arch@data`** fields: platform identifiers, optional health or random numeric fields, uptime and clock strings, product metadata, and service endpoint strings published at **setup**.
+- **Restart path**: Honors **`lock`** and **`block_restart`**; sets register **`machine_state`** to **`restarting`**, publishes **`machine/status`**, then schedules or performs reboot (**`daemon stop15exit`**, **`reboot`**, or **`reboot(RB_AUTOBOOT)`** with fallbacks).
+- **Resource helpers (`machine_misc.c`)**: Parse **`/proc/stat`**, **`/proc/meminfo`**, **`/proc/*/status`**, and **`df`** output (Linux-oriented); **`sginfo`** and **`esinfo`** reshape **`fsinfo`**-like data using **`PROJECT_CFG_DIR`**, **`PROJECT_MNT_DIR`**, and **`PROJECT_INT_DIR`**.
 
-### Configuration reference ( land@machine )
+### Dependencies
+
+- **Skin runtime** (`skin/skin.h`): configuration, register, scall helpers, joint calls, shell helpers.
+- **`arch@data` (`DATA_COM`)**: Identity and product fields merged into the configuration view and into **`status`**; writable for **`language`**, **`gpversion`**, **`cfgversion`** through the configuration write path described under **Configuration Reference**.
+- **`fpk` / project scan**: Project registration at boot; **`custom@project`** may disable individual projects.
+- **Peer configuration sources**: **`wui`**, **`telnetd`**, **`sshd`**, **`lan`** (read during **setup** for register publishing and **`mode`**-related LAN DHCP policy).
+- **`lock` (`LOCK_COM`)**: Gates **restart** and **default** versus **release** / **factory** per policy flags.
+- **OS**: `sethostname`, `reboot`, `fork` / `sleep`, **`/proc`**, **`df`** (resource helpers).
+
+---
+
+### Configuration Reference ( land@machine )
+
+#### Configuration attributes
 
 ```json
-// Attributes introduction 
 {
-    "name":"machine hostname",                     // [ string ], the system hostname
-    "mode":"machine working mode",                 // [ "ap", "wisp", "nwisp", "gateway", "dgateway", "tgateway", "qgateway", "misp", "nmisp", "dmisp", "mwm", "mix" ], default be "default"
-                                                       // "ap": access point
-                                                       // "wisp": 2.4G Wireless Internet Service Provider connection
-                                                       // "nwisp": 5.8G Wireless Internet Service Provider connection( need the board support 5.8G wireless base
-                                                       // "gateway": wire WAN gateway
-                                                       // "dgateway": Dual wire WAN gateway
-                                                       // "tgateway": Three wire WAN gateway
-                                                       // "qgateway": Quartered wire WAN gateway
-                                                       // "misp": LTE Mobile Internet Service Provider connection( need the board support LTE baseband)
-                                                       // "nmisp": Next Mobile(NR/LTE) Internet Service Provider connection( need the board support NR/LTE baseb
-                                                       // "dmisp": Dual Mobile(LTE/NR) Internet Service Provider connection( need the board support two LTE/NR b
-                                                       // "mwm": multiple LTE and Wireless gateway
-                                                       // "mix": custom mix connection from multiple internet connection
-                                                       // "mbridge" or "default": LAN dhcps status set disable
+    "mode": "deployment or operator mode",                         // [ "ap", "wisp", "nwisp", "gateway", "dgateway", "misp", "nmisp", "dmisp", "mix", "mwm", "mbridge", "default", ... ], <product-specific semantics for each literal>
+                                                                      // "mbridge": LAN DHCP server (**`lan`** **`dhcps/status`**) is set to **disable** on write when this value is applied
+                                                                      // "default": same LAN DHCP side effect as **mbridge** on write
+                                                                      // <other values>: LAN **`dhcps/status`** set to **enable** on write when **mode** changes
+                                                                      // Default when absent or empty on read: effective display value **default**
 
-    "sn":"serial number",                          // [ string ], read-only, from EEPROM, cannot be changed
-    "mac":"MAC address",                           // [ string ], read-only, from EEPROM, cannot be changed
-    "macid":"MAC ID",                              // [ string ], read-only, from EEPROM, cannot be changed
-    "model":"product model",                       // [ string ], read-only, from EEPROM
-    "features":"product features",                 // [ string ], read-only, from EEPROM
-    "cmodel":"custom model",                       // [ string ], read-only, from EEPROM
-    "oem":"OEM information",                       // [ string ], read-only, from EEPROM
-    "magic":"magic number",                        // [ string ], read-only, from EEPROM
-    "datecode":"manufacture date code",            // [ string ], read-only, from EEPROM
-    "language":"system language",                  // [ string ], stored in EEPROM, writable
-    "gpversion":"general purpose version",         // [ string ], stored in EEPROM, writable
-    "cfgversion":"configuration version"           // [ string ], stored in EEPROM, writable
+    "name": "host name for the device",                             // [ string ], applied at **setup** via `sethostname` when non-empty; length clamped to **HOST_NAME_MAX**
+
+    "mac": "MAC address (identity)",                                // [ mac address ], merged from **`arch@data`** for display; not writable through this component
+
+    "macid": "MAC-derived or serial-related identifier",            // [ string ], merged from **`arch@data`**; not writable through this component
+
+    "sn": "serial number",                                          // [ string ], merged from **`arch@data`**; not writable through this component
+
+    "language": "UI or configuration language tag",                 // [ "cn", "en", "jp", ... ], stored in **`arch@data`** when written
+
+    "cfgversion": "configuration version string",                   // [ string ], stored in **`arch@data`** when written
+
+    "gpversion": "group configuration version string",              // [ string ], stored in **`arch@data`** when written
+
+    "broken": "optional health or quality flag for other subsystems" // [ string ], <producer-defined literals such as **ill** or **disable** if used>; not assigned in **machine.c**
 }
 ```
 
-#### Configuration example
+#### Configuration Example
 
-Example, show all the machine configure
 ```shell
 land@machine
 {
-    "name":"SkinOS",                             # machine hostname
-    "mode":"default",                            # working mode
-    "sn":"20240001",                             # serial number
-    "mac":"AA:BB:CC:DD:EE:FF",                   # MAC address
-    "model":"R2000",                             # product model
-    "language":"cn",                             # system language
-    "gpversion":"1.0.0",                         # general purpose version
-    "cfgversion":"1.0.0"                         # configuration version
+    "mode":"nmisp",                    # example deployment mode
+    "name":"ASHYELF-12AAD0",
+    "mac":"00:03:7F:12:AA:D0",
+    "macid":"00037F12AAD0",
+    "language":"cn",
+    "cfgversion":"1"
 }
 ```
 
-#### Configuration settings example
+#### Configuration write example (mandatory)
 
-Example, set the machine hostname
+Writing **`land@machine`** updates persisted configuration under the framework’s storage rules. **`name`** takes effect on the next **setup** (or reboot path that runs **setup**). **`mode`** immediately adjusts **LAN** **`dhcps/status`** as described for **`mbridge`** / **`default`** versus other values. **`language`**, **`cfgversion`**, and **`gpversion`** are written to **`arch@data`**, not only to **`land@machine`**. Attempts to change **`sn`**, **`mac`**, or **`macid`** through this component are rejected (the write fails for those paths). Use the host environment’s usual attribute or merge syntax for **`land@machine`**.
+
 ```shell
-land@machine:name=MyRouter
-ttrue
+land@machine|{"name":"DemoGW","language":"en","mode":"gateway"}
 ```
 
-Example, set the machine working mode to LTE Mobile Router
-```shell
-land@machine:mode=misp
-ttrue
-```
-
-Example, merge set the machine configure( include "name" "mode" "language" )
-```shell
-land@machine|{"name":"MyRouter","mode":"router","language":"en"}
-ttrue
-```
-
-
+---
 
 ### API Reference
 
 #### Management APIs
 
-+ `setup[]` **initialize the machine component**
-    - failed return tfalse
-    - succeed return ttrue
-    - This is a lifecycle method called automatically by the system during startup
-    - Scans and registers projects, sets hostname, stores port and IP info in register
+##### `setup[]` — Project registration, hostname, and register publish
+
+- Called by the platform during initialization (not a routine operator API).
+- failed return `tfalse`
+- succeed return `ttrue`
+- error return `terror` (if raised by the platform)
 
 #### Query APIs
 
-+ `status[]` **get the full machine status**
-    - failed return NULL
-    - succeed return [ json ], machine status including platform, hardware, version, uptime, EEPROM data and ports
-    ```json
-    {
-        "name": "machine hostname",              // [ string ], from persisted land@machine config
-        "mode": "working mode",                  // [ string ], from persisted land@machine config
-        "platform": "platform identifier",       // [ string ], from register platform
-        "hardware": "hardware identifier",        // [ string ], from register hardware
-        "custom": "custom profile name",         // [ string ], from register custom
-        "scope": "system scope",                 // [ string ], from register scope
-        "version": "firmware version",           // [ string ], register machine_state when non-empty, otherwise register version
-        "ill": "health indicator",               // [ number ], present only when register ill is non-zero
-        "rand": "random number",                 // [ number ], from register rand
-        "livetime": "system uptime",             // [ string ], uptime description
-        "current": "current time",               // [ string ], current date and time description
-        "mac": "MAC address",                    // [ string ], from arch@data EEPROM
-        "macid": "MAC ID",                       // [ string ], from arch@data EEPROM
-        "model": "product model",                // [ string ], from arch@data EEPROM
-        "features": "product features",          // [ string ], from arch@data EEPROM
-        "cmodel": "custom model",                // [ string ], from arch@data EEPROM
-        "oem": "OEM information",                // [ string ], from arch@data EEPROM
-        "magic": "magic number",                 // [ string ], from arch@data EEPROM
-        "datecode": "manufacture date code",     // [ string ], from arch@data EEPROM
-        "gpversion": "general purpose version",  // [ string ], from arch@data EEPROM
-        "cfgversion": "configuration version",   // [ string ], from arch@data EEPROM
-        "wui_port": "web UI port",               // [ string ], from register wui_port
-        "telnet_port": "telnet port",            // [ string ], from register telnet_port
-        "ssh_port": "SSH port",                  // [ string ], from register ssh_port
-        "local_ip": "LAN IP address"             // [ string ], from register local_ip
-    }
-    ```
+##### `status[]` — Runtime gateway, product, and service snapshot
 
-    Example, get machine status
-    ```shell
-    land@machine.status
+- failed return `NULL`
+- error return `terror`
+- succeed return json
     {
-        "name":"SkinOS",                         # machine hostname
-        "mode":"default",                        # working mode
-        "platform":"rk3568",                     # platform identifier
-        "hardware":"R2000",                      # hardware identifier
-        "custom":"default",                      # custom profile name
-        "scope":"product",                       # system scope
-        "version":"8.0.0",                       # firmware version
-        "livetime":"3d 2h 15m",                  # system uptime
-        "current":"2025-01-15 10:30:00",         # current date and time
-        "rand":12345,                            # random number
-        "mac":"AA:BB:CC:DD:EE:FF",               # MAC address
-        "model":"R2000",                         # product model
-        "features":"lte,wifi",                   # product features
-        "wui_port":"80",                         # web UI port
-        "telnet_port":"23",                      # telnet port
-        "ssh_port":"22",                         # SSH port
-        "local_ip":"192.168.1.1"                 # LAN IP address
-    }
-    ```
+        "mode": "effective deployment mode string",                 // [ string ], from persisted **`land@machine`**; if missing in storage, readers of configuration see **default**; this snapshot includes the stored object first
 
-+ `cpuinfo[]` **get CPU usage information from /proc/stat**
-    - failed return NULL
-    - succeed return [ json ], CPU usage statistics per core
-    ```json
-    {
-        "cpu name":                              // [ string ]: { json }, CPU identifier (cpu, cpu0, cpu1, ...)
-        {                                             // CPU usage counters
-            "user": "user time",                 // [ number ], user mode time in jiffies
-            "nice": "nice time",                 // [ number ], nice user mode time in jiffies
-            "system": "system time",             // [ number ], kernel mode time in jiffies
-            "idle": "idle time",                 // [ number ], idle time in jiffies
-            "iowait": "io wait time",            // [ number ], I/O wait time in jiffies
-            "irq": "irq time",                   // [ number ], interrupt request time in jiffies
-            "softirq": "softirq time"            // [ number ], soft interrupt time in jiffies
-        }
-        // "...":{...}  How many CPUs show how many properties
-    }
-    ```
+        "name": "configured host name",                             // [ string ], from persisted **`land@machine`** when present
 
-    Example, get CPU information
-    ```shell
-    land@machine.cpuinfo
+        "broken": "optional health flag",                           // [ string ], present only if stored under **`land@machine`**; not produced by **machine.c** itself
+
+        "platform": "platform label",                               // [ string ], from register **platform**; **error** if unset
+
+        "hardware": "hardware label",                               // [ string ], from register **hardware**; **error** if unset
+
+        "custom": "custom product label",                           // [ string ], from register **custom**; **error** if unset
+
+        "scope": "scope or region label",                           // [ string ], from register **scope**; **error** if unset
+
+        "version": "firmware or transient state string",            // [ string ], register **machine_state** when non-empty, otherwise register **version**; **error** if neither available
+
+        "ill": "non-zero health indicator",                         // [ number ], present only when register **ill** is non-zero
+
+        "rand": "optional numeric token from register",             // [ number ], present only when register **rand** is defined
+
+        "livetime": "uptime description",                           // [ string ], from **`uptime_desc`**
+
+        "current": "current time description",                        // [ string ], from **`date_desc`**
+
+        "mac": "MAC address",                                         // [ mac address ], from **`arch@data`**
+
+        "macid": "MAC-derived or related id",                       // [ string ], from **`arch@data`**
+
+        "model": "product model",                                     // [ string ], from **`arch@data`**
+
+        "features": "feature string",                               // [ string ], from **`arch@data`**
+
+        "cmodel": "customer model string",                           // [ string ], from **`arch@data`**
+
+        "oem": "OEM identifier",                                      // [ string ], from **`arch@data`**
+
+        "magic": "magic or product key string",                     // [ string ], from **`arch@data`**
+
+        "datecode": "manufacturing or date code",                   // [ string ], from **`arch@data`**
+
+        "gpversion": "group version",                               // [ string ], from **`arch@data`**
+
+        "cfgversion": "configuration version",                      // [ string ], from **`arch@data`**
+
+        "wui_port": "Web UI listen port",                           // [ string ], from register when **setup** stored it
+
+        "telnet_port": "telnet listen port",                        // [ string ], from register when present
+
+        "ssh_port": "SSH listen port",                              // [ string ], from register when present
+
+        "local_ip": "LAN static IP published at setup",             // [ string ], from register when **lan** **static/ip** was set at **setup**
+    }
+
+##### `cpuinfo[]` — CPU time counters from `/proc/stat` (Linux)
+
+- failed return `NULL` (for example cannot open **`/proc/stat`**)
+- error return `terror`
+- succeed return json
     {
-        "cpu":
-        {
-            "user":"12345",                      # user mode time
-            "nice":"0",                          # nice user mode time
-            "system":"6789",                     # kernel mode time
-            "idle":"987654",                     # idle time
-            "iowait":"123",                      # I/O wait time
-            "irq":"45",                          # interrupt time
-            "softirq":"67"                       # soft interrupt time
+        "<cpuid>": {                                                // [ "cpu", "cpu0", "cpu1", ... ]: [ json ], one nested object per **`/proc/stat`** line whose first token starts with **cpu**, until the first line that does not
+                                                                       // "cpu": aggregate line when present
+                                                                       // "cpuN": per-CPU line when present
+            "user": "user jiffies string",                          // [ string ], **`/proc/stat`** column
+            "nice": "nice jiffies string",                          // [ string ]
+            "system": "system jiffies string",                      // [ string ]
+            "idle": "idle jiffies string",                          // [ string ]
+            "iowait": "iowait jiffies string",                      // [ string ]
+            "irq": "irq jiffies string",                            // [ string ]
+            "softirq": "softirq jiffies string"                     // [ string ]
         }
     }
-    ```
 
-+ `meminfo[]` **get memory usage information from /proc/meminfo**
-    - failed return NULL
-    - succeed return [ json ], memory usage information
-    ```json
+##### `meminfo[]` — Selected fields from `/proc/meminfo` (Linux)
+
+- failed return `NULL`
+- succeed return json
     {
-        "total": "total memory",                 // [ number ], total memory in kB
-        "free": "free memory",                   // [ number ], free memory in kB
-        "buffers": "buffer memory",              // [ number ], buffer memory in kB
-        "cached": "cached memory"                // [ number ], cached memory in kB
+        "total": "MemTotal token (kB)",                             // [ string ], first field after label from **`MemTotal:`**
+        "free": "MemFree token (kB)",                               // [ string ], from **`MemFree:`**
+        "buffers": "Buffers token (kB)",                            // [ string ], from **`Buffers:`**
+        "cached": "Cached token (kB)"                               // [ string ], from **`Cached:`**; parsing stops after this line is handled
     }
-    ```
 
-    Example, get memory information
-    ```shell
-    land@machine.meminfo
-    {
-        "total":"524288",                        # total memory 512MB
-        "free":"262144",                         # free memory 256MB
-        "buffers":"16384",                       # buffer memory 16MB
-        "cached":"131072"                        # cached memory 128MB
-    }
-    ```
+##### `psinfo[]` — Process table summary from `/proc/*/status` (Linux)
 
-+ `psinfo[]` **get process information from /proc**
-    - failed return NULL
-    - succeed return [ json ], a map of PID to process status
-    ```json
+- failed return `NULL`
+- succeed return json
     {
-        "pid":                                   // [ string ]: { json }, process ID
-        {                                             // process status information
-            "name": "process name",              // [ string ], process name
-            "state": "process state",            // [ string ], process state (R, S, D, Z, T, etc.)
-            "vmsize": "virtual memory size",     // [ number ], virtual memory size in kB
-            "fdsize": "file descriptor size",    // [ number ], number of allocated file descriptors
-            "ppid": "parent process ID"          // [ number ], parent process ID
-        }
-        // "...":{...}  How many processes show how many properties
-    }
-    ```
-
-    Example, get process information
-    ```shell
-    land@machine.psinfo
-    {
-        "1":
-        {
-            "name":"init",                       # process name
-            "state":"S",                         # sleeping state
-            "vmsize":"1234",                     # virtual memory size
-            "fdsize":"32",                       # file descriptors
-            "ppid":"0"                           # parent PID
+        "<pid>": {                                                  // [ string ]: [ json ], **pid** is a decimal directory name under **`/proc`**
+            "name": "process name token",                           // [ string ], from **Name:**
+            "state": "process state token",                         // [ string ], from **State:**
+            "vmsize": "VmSize token",                               // [ string ], from **VmSize:** when present
+            "fdsize": "FDSize token",                               // [ string ], from **FDSize:** when present
+            "ppid": "parent PID token"                              // [ string ], from **PPid:** when present
         }
     }
-    ```
 
-+ `psnumber[]` **get the total number of running processes**
-    - failed return NULL
-    - succeed return [ number ], the count of running processes
+##### `psnumber[]` — Count of processes with readable `/proc/<pid>/status` (Linux)
 
-    Example, count running processes
-    ```shell
-    land@machine.psnumber
-    45
-    ```
-
-+ `fsinfo[]` **get filesystem usage information from df**
-    - failed return NULL
-    - succeed return [ json ], a map of mount point to filesystem information
-    ```json
+- failed return `NULL`
+- succeed return json
     {
-        "mount point":                           // [ string ]: { json }, filesystem mount point
-        {                                             // filesystem usage information
-            "filesystem": "device path",         // [ string ], the device or filesystem path
-            "size": "total size",                // [ string ], total size
-            "used": "used size",                 // [ string ], used size
-            "available": "available size",       // [ string ], available size
-            "use": "usage percentage"            // [ string ], usage percentage
-        }
-        // "...":{...}  How many filesystems show how many properties
+        // [ number ], non-negative integer count; one increment per **`/proc/<pid>`** directory for which **`/proc/<pid>/status`** opens successfully
     }
-    ```
 
-    Example, get filesystem information
-    ```shell
-    land@machine.fsinfo
+##### `fsinfo[]` — Mounted filesystem usage from `df` (Linux)
+
+- failed return `NULL`
+- succeed return json
     {
-        "/":
-        {
-            "filesystem":"/dev/root",            # device path
-            "size":"256M",                       # total size
-            "used":"128M",                       # used size
-            "available":"128M",                  # available size
-            "use":"50%"                          # usage percentage
+        "<mountpoint>": {                                            // [ string ]: [ json ], mount path as key; only **`df`** rows whose line starts with **`/`** or **`ubi`** are included
+            "filesystem": "source device or pseudo-fs",            // [ string ], first column from **`df`**
+            "size": "total size token",                              // [ string ]
+            "used": "used token",                                    // [ string ]
+            "available": "available token",                          // [ string ]
+            "use": "percentage or use token"                         // [ string ], fifth column from parsed **`df`** line
         }
     }
-    ```
 
-+ `sginfo[]` **get storage device information**
-    - failed return NULL
-    - succeed return [ json ], a map of storage device name to path and usage
-    ```json
-    {
-        "device name":                           // [ string ]: { json }, storage device name (config, sd0, etc.)
-        {                                             // storage device information
-            "path": "mount path",                // [ string ], mount path of the storage device
-            "size": "total size",                // [ string ], total size
-            "used": "used size",                 // [ string ], used size
-            "available": "available size",       // [ string ], available size
-            "use": "usage percentage"            // [ string ], usage percentage
-        }
-        // "...":{...}  How many storage devices show how many properties
-    }
-    ```
+##### `sginfo[]` — Config partition plus extension mounts
 
-    Example, get storage device information
-    ```shell
-    land@machine.sginfo
+- failed return `NULL`
+- succeed return json
     {
-        "config":
-        {
-            "path":"/skinos/cfg",                # config partition mount path
-            "size":"16M",                        # total size
-            "used":"4M",                         # used size
-            "available":"12M",                   # available size
-            "use":"25%"                          # usage percentage
+        "config": {                                                  // [ json ], same inner keys as one **`fsinfo`** value for **`PROJECT_CFG_DIR`**
+            "filesystem": "source device or pseudo-fs",            // [ string ]
+            "size": "total size token",                              // [ string ]
+            "used": "used token",                                    // [ string ]
+            "available": "available token",                          // [ string ]
+            "use": "percentage or use token"                         // [ string ]
+        },
+
+        "<mntname>": {                                               // [ string ]: [ json ], **mntname** is a subdirectory of **`PROJECT_MNT_DIR`** (excluding empty and **.**) with a matching **`df`** mount path substring
+            "path": "PROJECT_MNT_DIR/<mntname>",                    // [ string ]
+            "size": "total size token",                              // [ string ], from matching **`fsinfo`** row
+            "used": "used token",                                    // [ string ]
+            "available": "available token",                          // [ string ]
+            "use": "percentage or use token"                         // [ string ]
         }
     }
-    ```
 
-+ `esinfo[]` **get external storage device information excluding config and internal**
-    - failed return NULL
-    - succeed return [ json ], a map of external storage device name to path and usage, same structure as sginfo but excluding config and internal partitions
-    ```json
-    {
-        "device name":                           // [ string ]: { json }, external storage device name (sd0, sd1, etc.)
-        {                                             // storage device information
-            "path": "mount path",                // [ string ], mount path of the storage device
-            "size": "total size",                // [ string ], total size with unit
-            "used": "used size",                 // [ string ], used size with unit
-            "available": "available size",       // [ string ], available size with unit
-            "use": "usage percentage"            // [ string ], usage percentage
-        }
-        // "...":{...}  How many external storage devices show how many properties
-    }
-    ```
+##### `esinfo[]` — Extension storage only (excludes built-in config and internal volume names)
 
-    Example, get external storage information
-    ```shell
-    land@machine.esinfo
+- failed return `NULL`
+- succeed return json
     {
-        "sd0":
-        {
-            "path":"/mnt/sd0",                   # SD card mount path
-            "size":"7G",                         # total size
-            "used":"2G",                         # used size
-            "available":"5G",                    # available size
-            "use":"28%"                          # usage percentage
+        "<mntname>": {                                               // [ string ]: [ json ], same inner keys as **`sginfo`** extension entries; basenames of **`PROJECT_CFG_DIR`** and **`PROJECT_INT_DIR`** are omitted as keys
+            "path": "PROJECT_MNT_DIR/<mntname>",                    // [ string ]
+            "size": "total size token",                              // [ string ]
+            "used": "used token",                                    // [ string ]
+            "available": "available token",                          // [ string ]
+            "use": "percentage or use token"                         // [ string ]
         }
     }
-    ```
 
 #### Control APIs
 
-+ `restart[ delay, key ]` **restart the machine**
-    - delay ----------- [ string ], optional, delay in seconds before restart
-    - key ------------- [ string ], optional, a reason or identifier for the restart
-    - failed return tfalse, restart is locked or blocked
-    - succeed return ttrue
+##### `restart[ delay, key ]` — Reboot or schedule reboot
 
-    Example, restart the machine immediately
-    ```shell
-    land@machine.restart
-    ttrue
-    ```
+- `delay` --------- [ string ], optional decimal seconds; when strictly positive, forks a child that sleeps then invokes the same operation with no delay
+- `key` ----------- [ string ], optional label included in warning logs
+- failed return `tfalse` (**`lock.default=enable`**, **`block_restart`**, or **`fork`** failure)
+- succeed return `ttrue`
+- error return `terror` (for example **`EPERM`** when locked)
 
-    Example, restart the machine after 10 seconds
-    ```shell
-    land@machine.restart[ 10, firmware upgrade ]
-    ttrue
-    ```
+##### `reboot[ delay, key ]` — Same behavior as **`restart`**
 
-+ `reboot[ delay, key ]` **reboot the machine, same as restart**
-    - delay ----------- [ string ], optional, delay in seconds before reboot
-    - key ------------- [ string ], optional, a reason or identifier for the reboot
-    - failed return tfalse
-    - succeed return ttrue
+- `delay` --------- [ string ], optional, same as **`restart`**
+- `key` ----------- [ string ], optional, same as **`restart`**
+- failed return `tfalse`
+- succeed return `ttrue`
+- error return `terror`
 
-    Example, reboot the machine
-    ```shell
-    land@machine.reboot
-    ttrue
-    ```
+##### `restart_block[]` / `reboot_block[]` — Set register flag to block restart
 
-+ `restart_block[]` **block machine restart operations**
-    - failed return tfalse
-    - succeed return ttrue
+- succeed return `ttrue`
+- Sets register **`block_restart`** to true.
 
-    Example, block restart
-    ```shell
-    land@machine.restart_block
-    ttrue
-    ```
+##### `restart_unblock[]` / `reboot_unblock[]` — Clear restart block
 
-+ `reboot_block[]` **block machine reboot operations, same as restart_block**
-    - failed return tfalse
-    - succeed return ttrue
+- succeed return `ttrue`
+- Sets register **`block_restart`** to false.
 
-    Example, block reboot
-    ```shell
-    land@machine.reboot_block
-    ttrue
-    ```
+##### `default[ delay, key ]` — Restore **`arch@data`** defaults then restart
 
-+ `restart_unblock[]` **unblock machine restart operations**
-    - failed return tfalse
-    - succeed return ttrue
+- Honors **`lock.default`** and register **`block_default`**.
+- `delay` --------- [ string ], passed through to **restart** after **`arch@data` `default`** succeeds
+- `key` ----------- [ string ], passed through to **restart**
+- failed return `tfalse`
+- succeed return `ttrue`
+- error return `terror` when locked or blocked
 
-    Example, unblock restart
-    ```shell
-    land@machine.restart_unblock
-    ttrue
-    ```
+##### `default_block[]` — Block **default**, **release**, and **factory** paths that consult **`block_default`**
 
-+ `reboot_unblock[]` **unblock machine reboot operations, same as restart_unblock**
-    - failed return tfalse
-    - succeed return ttrue
+- succeed return `ttrue`
 
-    Example, unblock reboot
-    ```shell
-    land@machine.reboot_unblock
-    ttrue
-    ```
+##### `default_unblock[]` — Clear **`block_default`**
 
-+ `default[]` **restore default configuration and restart**
-    - failed return tfalse, operation is locked or blocked
-    - succeed return ttrue
+- succeed return `ttrue`
 
-    Example, restore default configuration
-    ```shell
-    land@machine.default
-    ttrue
-    ```
+##### `release[ delay, key ]` — Product **release** on **`arch@data`** then restart
 
-+ `default_block[]` **block default restore operations**
-    - failed return tfalse
-    - succeed return ttrue
+- Honors **`lock.factory`** and **`block_default`**.
+- `delay` --------- [ string ], forwarded to **restart** on success
+- `key` ----------- [ string ], forwarded to **restart**
+- failed return `tfalse`
+- succeed return `ttrue`
+- error return `terror`
 
-    Example, block default restore
-    ```shell
-    land@machine.default_block
-    ttrue
-    ```
+##### `factory[ delay, key ]` — Factory reset on **`arch@data`** then restart
 
-+ `default_unblock[]` **unblock default restore operations**
-    - failed return tfalse
-    - succeed return ttrue
+- Same locking and **`block_default`** behavior as **`release`**.
+- `delay` --------- [ string ], forwarded to **restart** on success
+- `key` ----------- [ string ], forwarded to **restart**
+- failed return `tfalse`
+- succeed return `ttrue`
+- error return `terror`
 
-    Example, unblock default restore
-    ```shell
-    land@machine.default_unblock
-    ttrue
-    ```
+**Policy summary**
 
-+ `release[]` **run release operation and restart**
-    - failed return tfalse, operation is locked or blocked
-    - succeed return ttrue
+- **`lock.default=enable`**: blocks **`restart`** / **`reboot`** and **`default`**.
+- **`lock.factory=enable`**: blocks **`release`** and **`factory`**.
+- Register **`block_restart`** / **`block_default`**: used with the block and unblock APIs above.
 
-    Example, run release operation
-    ```shell
-    land@machine.release
-    ttrue
-    ```
-
-+ `factory[]` **run factory reset and restart**
-    - failed return tfalse, operation is locked or blocked
-    - succeed return ttrue
-
-    Example, run factory reset
-    ```shell
-    land@machine.factory
-    ttrue
-    ```
-
-
+---
 
 ### Published Joint Events
 
-The following joint events are published when machine state changes. Other components can subscribe at runtime (joint registration / **land@joint**).
+| Event | When | Argument | Argument2 | Argument3 |
+|-------|------|----------|-----------|-----------|
+| `machine/status` | After **`machine_state`** is set to **`restarting`** during the restart sequence | | | |
 
-| Event | Description |
-|-------|-------------|
-| `machine/status` | Sent when the machine state changes. Triggered by `restart` when the machine_state register is set to "restarting". The event parameter is NULL. |
+---
+
+### Other
+
+- **`cpuinfo`**, **`meminfo`**, **`psinfo`**, **`psnumber`**, **`fsinfo`**, **`sginfo`**, and **`esinfo`** expect Linux-style **`/proc`** and **`df`**; on other targets they may return **`NULL`**.
+- C usage patterns follow **`skin/skin.h`** (`sgets`, `scall`, `talk_free`, etc.); see **land** tree samples for embedding.

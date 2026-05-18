@@ -1,6 +1,10 @@
 var flush_interval = 2;
 var currentFrameData = null;
 
+// 缓存frame数据
+var dashboardCache = window.dashboardCache || null;
+var dashboardFrameCache = window.dashboardFrameCache || null;
+
 /** Preload compact switch port icons so first paint matches online/offline (avoid lazy/delay on hidden imgs). */
 function preloadCompactPortIcons() {
     var bases = ['/assets/css/images/net_disable.jpg', '/assets/css/images/net_offline.jpg', '/assets/css/images/net_online.jpg'];
@@ -11,11 +15,15 @@ function preloadCompactPortIcons() {
 }
 
 function fetchNetworkFrame() {
-    // 负责加载数据并存入全局变量 加载完后触发一次 adjustBoxLayout
-    return he.load([ "network@frame"]).then(function(v) {
-        if (v[0]) {
+    return he.bkload(["network@frame"]).then(function(v) {
+        if (v && v[0]) {
             currentFrameData = v[0];
-            adjustBoxLayout(); // 数据拿到后，重新刷一遍布局
+
+            // 缓存frame数据
+            dashboardFrameCache = v[0];
+            window.dashboardFrameCache = v[0];
+
+            adjustBoxLayout();
         }
     });
 }
@@ -1006,89 +1014,104 @@ function switch_show(ethInfo, wifi24Info, wifi58Info, phyInfo) {
     }  
 }
 
-function interface_load() {
-    he.bkload([
+function renderInterfaceData(v) {
+    if (!v) return;
+
+    var externData = v[0] || {};
+    var localData = v[1] || {};
+    var ethStatusData = v[2] || {};
+    var ethConfigData = v[3] || {};
+    var wifi24Data = v[4] || null;
+    var wifi58Data = v[5] || null;
+
+    var phyInfo = ethConfigData && ethConfigData.phy ? ethConfigData.phy : null;
+
+    // extern
+    if (externData['ifname@lte']) {
+        lte_show(externData['ifname@lte'], "#lte");
+    }
+
+    if (externData['ifname@lte2']) {
+        lte_show(externData['ifname@lte2'], "#lte2");
+    }
+
+    if (externData['ifname@lte3']) {
+        lte_show(externData['ifname@lte3'], "#lte3");
+    }
+
+    if (externData['ifname@lte4']) {
+        lte_show(externData['ifname@lte4'], "#lte4");
+    }
+
+    if (window.ifdev && window.ifdev["wifi@n"] === true && externData['ifname@wisp']) {
+        wisp_show(externData['ifname@wisp'], "#wisp");
+    }
+
+    if (window.ifdev && window.ifdev["wifi@a"] === true && externData['ifname@wisp2']) {
+        wisp_show(externData['ifname@wisp2'], "#wisp2");
+    }
+
+    if (externData['ifname@wan']) {
+        wan_show(externData['ifname@wan'], "#wan");
+    }
+
+    if (externData['ifname@wan2']) {
+        wan_show(externData['ifname@wan2'], "#wan2");
+    }
+
+    if (externData['ifname@wan3']) {
+        wan_show(externData['ifname@wan3'], "#wan3");
+    }
+
+    if (externData['ifname@wan4']) {
+        wan_show(externData['ifname@wan4'], "#wan4");
+    }
+
+    // local
+    if (localData['ifname@lan']) {
+        lan_show(localData['ifname@lan'], "#lan");
+    }
+
+    if (localData['ifname@lan2']) {
+        lan_show(localData['ifname@lan2'], "#lan2");
+    }
+
+    if (localData['ifname@lan3']) {
+        lan_show(localData['ifname@lan3'], "#lan3");
+    }
+
+    if (localData['ifname@lan4']) {
+        lan_show(localData['ifname@lan4'], "#lan4");
+    }
+
+    // switch / wifi
+    switch_show(ethStatusData, wifi24Data, wifi58Data, phyInfo);
+
+    // adjust frame layout
+    adjustBoxLayout();
+}
+
+function loadInterfaceData() {
+    return he.bkload([
         'network@frame.extern',
         'network@frame.local',
         'arch@ethernet.status',
         'arch@ethernet',
         'wifi@nssid.status',
         'wifi@assid.status'
-    ]).then(function(v) {
+    ]);
+}
+
+
+function interface_load() {
+    return loadInterfaceData().then(function(v) {
         if (!v) return;
+        // 缓存frame数据
+        dashboardCache = v;
+        window.dashboardCache = v;
 
-        var externData = v[0] || {};
-        var localData = v[1] || {};
-        var ethStatusData = v[2] || {};
-        var ethConfigData = v[3] || {};
-        var wifi24Data = v[4] || null;
-        var wifi58Data = v[5] || null;
-
-        var phyInfo = ethConfigData && ethConfigData.phy ? ethConfigData.phy : null;
-
-        // extern
-        if (externData['ifname@lte']) {
-            lte_show(externData['ifname@lte'], "#lte");
-        }
-
-        if (externData['ifname@lte2']) {
-            lte_show(externData['ifname@lte2'], "#lte2");
-        }
-
-        if (externData['ifname@lte3']) {
-            lte_show(externData['ifname@lte3'], "#lte3");
-        }
-
-        if (externData['ifname@lte4']) {
-            lte_show(externData['ifname@lte4'], "#lte4");
-        }
-
-        if (window.ifdev && window.ifdev["wifi@n"] === true && externData['ifname@wisp']) {
-            wisp_show(externData['ifname@wisp'], "#wisp");
-        }
-
-        if (window.ifdev && window.ifdev["wifi@a"] === true && externData['ifname@wisp2']) {
-            wisp_show(externData['ifname@wisp2'], "#wisp2");
-        }
-
-        if (externData['ifname@wan']) {
-            wan_show(externData['ifname@wan'], "#wan");
-        }
-
-        if (externData['ifname@wan2']) {
-            wan_show(externData['ifname@wan2'], "#wan2");
-        }
-
-        if (externData['ifname@wan3']) {
-            wan_show(externData['ifname@wan3'], "#wan3");
-        }
-
-        if (externData['ifname@wan4']) {
-            wan_show(externData['ifname@wan4'], "#wan4");
-        }
-
-        // local
-        if (localData['ifname@lan']) {
-            lan_show(localData['ifname@lan'], "#lan");
-        }
-
-        if (localData['ifname@lan2']) {
-            lan_show(localData['ifname@lan2'], "#lan2");
-        }
-
-        if (localData['ifname@lan3']) {
-            lan_show(localData['ifname@lan3'], "#lan3");
-        }
-
-        if (localData['ifname@lan4']) {
-            lan_show(localData['ifname@lan4'], "#lan4");
-        }
-
-        // switch / wifi
-        switch_show(ethStatusData, wifi24Data, wifi58Data, phyInfo);
-
-        // 最后统一调整一次布局
-        adjustBoxLayout();
+        // 渲染界面
+        renderInterfaceData(v);
     });
 }
 
@@ -1194,18 +1217,45 @@ $.i18n().load(page.lang('dashboard')).then(function() {
 
     preloadCompactPortIcons();
 
-    /* load the configure */
-    interface_load();
+    
+    // 如果有上一次 dashboard 正确数据
+    // 立即渲染，不显示错误框架，不白屏
+    if (dashboardFrameCache) {
+        currentFrameData = dashboardFrameCache;
+    }
 
-    fetchNetworkFrame();
-    adjustBoxLayout();
-    
-    /* set the timer flush */
-    page.timing({
-        refresh: function() {
-            interface_load();
-        },
-        interval: flush_interval * 1000
-    });
-    
+    if (dashboardCache) {
+        renderInterfaceData(dashboardCache);
+        adjustBoxLayout();
+
+        
+        // 后台刷新最新数据
+        interface_load();
+        fetchNetworkFrame();
+
+        page.timing({
+            refresh: function() {
+                interface_load();
+            },
+            interval: flush_interval * 1000
+        });
+
+        return;
+    }
+
+    // 没有缓存，第一次进入dashboard等数据加载
+    $.when(
+        interface_load(),
+        fetchNetworkFrame()
+    ).done(function() {
+        adjustBoxLayout();
+
+        page.timing({
+            refresh: function() {
+                interface_load();
+            },
+            interval: flush_interval * 1000
+        });
+
+    })
 });

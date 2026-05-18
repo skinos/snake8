@@ -230,189 +230,64 @@ These paths are usually **consumed at install time** and **not** left as a runti
 
 ---
 
-## 14. `prj.json` format reference
+## 14. Example — `land` project (this repository)
 
-The following JSON shows the complete `prj.json` structure with type annotations. All fields are described by their type and purpose.
-
-```json
-// Attributes introduction 
-{
-    "name": "project name",                                  // [ string ], project name, also used as directory name and FPK identifier
-    "intro": "short description",                            // [ string ], one-line summary of the project
-    "desc": "detailed description",                          // [ string ], longer description of the project purpose
-    "type": "permission tier",                               // [ "root", "admin", "user", "app" ], intended permission tier for installers and UI
-    "version": "version string",                             // [ string ], semantic version (e.g. "8.0.0")
-    "author": "author or maintainer",                        // [ string ], author name or email address
-
-    "lib":                                                   // [ json ], shared libraries built from subdirectories
-    {
-        "library directory": "description"                   // [ string ]: [ string ], library source directory name and its description
-        // "...":"..."  How many libraries show how many properties
-    },
-    "exe":                                                   // [ json ], project-local executables
-    {
-        "executable directory": "description"                // [ string ]: [ string ], executable source directory name and its description
-        // "...":"..."  How many executables show how many properties
-    },
-    "cmd":                                                   // [ json ], shell commands installed to global bin path
-    {
-        "command directory": "description"                   // [ string ]: [ string ], command source directory name and its description
-        // "...":"..."  How many commands show how many properties
-    },
-    "com":                                                   // [ json ], components (.com files)
-    {
-        "component directory": "description"                 // [ string ]: [ string ], component source directory name and its description
-        // "...":"..."  How many components show how many properties
-    },
-    "osc":                                                   // [ json ], bundled third-party / open-source programs
-    {
-        "program directory": "description"                   // [ string ]: [ string ], open-source program directory name and its description
-        // "...":"..."  How many programs show how many properties
-    },
-    "ko":                                                    // [ json ], kernel modules (.ko)
-    {
-        "module directory": "description"                    // [ string ]: [ string ], kernel module source directory name and its description
-        // "...":"..."  How many modules show how many properties
-    },
-    "res":                                                   // [ json ], resource files or trees
-    {
-        "resource path": "description"                       // [ string ]: [ string ], resource file or directory name and its description
-        // "...":"..."  How many resources show how many properties
-    },
-
-    "obj":                                                   // [ json ], public object name to component mappings
-    {
-        "public object name": "backing component"            // [ string ]: [ string ], object name registered in the system and its backing component
-                                                               // if value contains "@", used as-is for com_register
-                                                               // if value has no "@", expanded to "project@value"
-        // "...":"..."  How many objects show how many properties
-    },
-    "init":                                                  // [ json ], boot startup tasks
-    {
-        "boot level":                                        // [ string ]: { json }, boot level name (arch, land, bus, device, network, manage, local, extern, app, app2, general, delay, delay2, delay3, delay4, delay5)
-        {
-            "component.method": "description"                // [ string ]: [ string ], HE-style component method call and its description
-            // "...":"..."  How many tasks at this level show how many properties
-        }
-        // "...":{...}  How many boot levels show how many properties
-    },
-    "uninit":                                                // [ json ], shutdown tasks (same structure as init)
-    {
-        "shutdown level":                                    // [ string ]: { json }, shutdown level name (reverse order of init levels)
-        {
-            "component.method": "description"                // [ string ]: [ string ], HE-style component method call and its description
-            // "...":"..."  How many tasks at this level show how many properties
-        }
-        // "...":{...}  How many shutdown levels show how many properties
-    },
-    "joint":                                                 // [ json ], joint event subscriptions
-    {
-        "joint event name":                                  // [ string ]: { json }, joint event name (e.g. network/online, storage/insert)
-        {
-            "component.method": "description"                // [ string ]: [ string ], HE-style component method call and its description
-            // "...":"..."  How many handlers at this event show how many properties
-        }
-        // "...":{...}  How many events show how many properties
-    },
-    "wui":                                                   // [ json ], web UI page registrations (optional)
-    {
-        "page identifier":                                   // [ string ]: { json }, page identifier, used as key under wui
-        {
-            "menu": "menu group",                            // [ string ], top-level menu group in the web UI (e.g. "System", "Network")
-            "en": "English menu label",                      // [ string ], English display name for the menu entry
-            "cn": "Chinese menu label",                      // [ string ], Chinese display name for the menu entry
-            "page": "html filename",                         // [ string ], HTML page filename under the project directory
-            "config": "component config object",             // [ string ], optional, show entry only when this component config exists
-            "object": "component object name",               // [ string ], optional, show entry only when this object exists (com_have check)
-            "api": "method name",                            // [ string ], optional, paired with object for com_have(object, api) check
-            "attr": "attribute path",                        // [ string ], optional, when config is set, additional attribute path for visibility
-            "mode":                                          // [ json ], optional, work-mode visibility filter
-            {
-                "mode name": "enable or disable"             // [ string ]: [ "enable", "disable" ], when "disable", hide entry for this mode
-                // "...":"..."  How many modes show how many properties
-            },
-            "lang":                                          // [ json ], language file paths
-            {
-                "locale": "language json file path"          // [ string ]: [ string ], locale key (cn, en, etc.) and its language file path
-                // "...":"..."  How many locales show how many properties
-            }
-        }
-        // "...":{...}  How many pages show how many properties
-    }
-}
-```
-
----
-
-## 15. Example — `land` project (this repository)
-
-The `land` project provides core infrastructure: authentication, component management, init/uninit/joint scheduling, register variables, syslog, service supervision, machine info, and FPK packaging.
+Current `land/prj.json` (verbatim; formatting normalized):
 
 ```json
 {
-    "name": "land",                                      # the land project, core infrastructure
-    "intro": "component infrastructure",                 # short description
+    "name": "land",
+    "intro": "component infrastructure",
     "desc": "core for skin system, provides the basic components&library of the entire system",
-    "type": "root",                                      # requires root permission
-    "version": "8.0.0",                                  # current version
-    "author": "dimmalex@gmail.com",                      # author
-
-    "lib":                                               # has 1 library
-    {
-        "skin": "skinos core library"                    # the skinos core library
+    "type": "root",
+    "version": "8.0.0",
+    "author": "dimmalex@gmail.com",
+    "lib": {
+        "skin": "skinos core library"
     },
-    "cmd":                                               # has 3 commands
-    {
-        "he": "tools for call all component",            # he command tool
-        "daemon": "service daemon management",           # daemon executable
+    "cmd": {
+        "he": "tools for call all component",
+        "daemon": "service daemon management",
         "eline": "tools for terminal line to execute the he command"
     },
-    "com":                                               # has 8 components
-    {
-        "fpk": "fpk management",                         # fpk package management
-        "init": "init/uninit/joint management",          # init/uninit/joint shared implementation
-        "component": "component management",             # component registration
-        "register": "register variables",                # register variable management
-        "syslog": "system log management",               # syslog service
-        "service": "service management",                 # daemon service management
-        "machine": "system basic information management", # machine info and control
-        "auth": "authentication management"              # user authentication
+    "com": {
+        "fpk": "fpk management",
+        "init": "init/uninit/joint management",
+        "component": "component management",
+        "register": "register variables",
+        "syslog": "system log management",
+        "service": "service management",
+        "machine": "system basic information management",
+        "auth": "authentication management"
     },
-    "obj":                                               # has 9 object mappings
-    {
-        "land@uninit": "init",                           # land@uninit uses the init component
-        "land@joint": "init",                            # land@joint uses the init component
-        "com": "component",                              # com alias for component
-        "reg": "register",                               # reg alias for register
-        "log": "syslog",                                 # log alias for syslog
-        "serv": "service",                               # serv alias for service
-        "fpk": "fpk",                                    # fpk alias for fpk
-        "machine": "machine",                            # machine alias for machine
-        "auth": "auth"                                   # auth alias for auth
+    "obj": {
+        "land@uninit": "init",
+        "land@joint": "init",
+        "com": "component",
+        "reg": "register",
+        "log": "syslog",
+        "serv": "service",
+        "fpk": "fpk",
+        "machine": "machine",
+        "auth": "auth"
     },
-    "init":                                              # has 2 boot levels
-    {
-        "arch":                                          # arch level: platform layer setup
-        {
-            "land@syslog.setup": ""                      # start syslog at arch level
+    "init": {
+        "arch": {
+            "land@syslog.setup": ""
         },
-        "land":                                          # land level: core infrastructure setup
-        {
-            "land@auth.setup": "",                       # setup authentication
-            "land@joint.setup": "",                      # setup joint event system
-            "land@init.setup": "",                       # setup init system
-            "land@uninit.setup": ""                      # setup uninit system
+        "land": {
+            "land@auth.setup": "",
+            "land@joint.setup": "",
+            "land@init.setup": "",
+            "land@uninit.setup": ""
         }
     },
-    "joint":                                             # has 2 joint event subscriptions
-    {
-        "storage/insert":                                # when external storage is inserted
-        {
-            "land@syslog.setup": ""                      # re-setup syslog to use new storage
+    "joint": {
+        "storage/insert": {
+            "land@syslog.setup": ""
         },
-        "storage/remove":                                # when external storage is removed
-        {
-            "land@syslog.setup": ""                      # re-setup syslog after storage removal
+        "storage/remove": {
+            "land@syslog.setup": ""
         }
     }
 }
@@ -420,53 +295,44 @@ The `land` project provides core infrastructure: authentication, component manag
 
 ---
 
-## 16. Example — `tui`-style manifest
+## 15. Example excerpt — `tui`-style manifest
 
-The `tui` project provides terminal user interface services: telnet and SSH servers, with a web UI page for telnet configuration.
+Illustrates **`com` + `cmd` + short `obj` aliases + `init` + `wui`** (trimmed to one `wui` page for size):
 
 ```json
 {
-    "name": "tui",                                       # the tui project, terminal user interface
-    "intro": "Terminal user interface service",          # short description
-    "type": "root",                                      # requires root permission
-    "version": "7.0.0",                                  # current version
-    "author": "dimmalex@gmail.com",                      # author
-
-    "com":                                               # has 2 components
-    {
-        "telnet": "telnet server management",            # telnet server component
-        "ssh": "ssl shell server management"             # SSH server component
+    "name": "tui",
+    "intro": "Terminal user interface service",
+    "type": "root",
+    "version": "7.0.0",
+    "author": "dimmalex@gmail.com",
+    "com": {
+        "telnet": "telnet server management",
+        "ssh": "ssl shell server management"
     },
-    "cmd":                                               # has 1 command
-    {
-        "eline": "tools for terminal command line"       # terminal line tool
+    "cmd": {
+        "eline": "tools for terminal command line"
     },
-    "obj":                                               # has 2 object mappings
-    {
-        "telnetd": "telnet",                             # telnetd object uses telnet component
-        "sshd": "ssh"                                    # sshd object uses ssh component
+    "obj": {
+        "telnetd": "telnet",
+        "sshd": "ssh"
     },
-    "init":                                              # has 1 boot level
-    {
-        "app":                                           # app level: application setup
-        {
-            "tui@telnet.setup": "",                      # setup telnet server
-            "tui@ssh.setup": ""                          # setup SSH server
+    "init": {
+        "app": {
+            "tui@telnet.setup": "",
+            "tui@ssh.setup": ""
         }
     },
-    "wui":                                               # has 1 web UI page
-    {
-        "telnet":                                        # telnet configuration page
-        {
-            "menu": "System",                            # under System menu group
-            "en": "Telnet Server",                       # English menu label
-            "cn": "Telnet服务器",                          # Chinese menu label
-            "page": "telnet.html",                       # HTML page file
-            "config": "tui@telnet",                      # show when tui@telnet config exists
-            "lang":                                      # language files
-            {
-                "cn": "cn.json",                         # Chinese language file
-                "en": "en.json"                          # English language file
+    "wui": {
+        "telnet": {
+            "menu": "System",
+            "en": "Telnet Server",
+            "cn": "Telnet服务器",
+            "page": "telnet.html",
+            "config": "tui@telnet",
+            "lang": {
+                "cn": "cn.json",
+                "en": "en.json"
             }
         }
     }
@@ -475,7 +341,7 @@ The `tui` project provides terminal user interface services: telnet and SSH serv
 
 ---
 
-## 17. Related documents
+## 16. Related documents
 
 | Document | Content |
 |----------|---------|

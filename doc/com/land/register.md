@@ -1,166 +1,237 @@
-## land@register — Register Variable Management
+## land@register — Register Variables
 
-### Overview
+Register variables are lightweight, **volatile** key-value slots attached to
+any object.  They are commonly used to hold runtime state (interface device
+names, connection flags, metric counters, etc.) that other components can
+read or write without persisting to flash.  Values are lost on reboot unless
+your product explicitly saves them elsewhere.
 
-Manage system register variables. Register variables are a system-wide key-value store shared across all components, used for runtime state, configuration snapshots, and inter-component data exchange.
-- list all register variables for a component or globally
-- read register values as integer, boolean, or string
-- write register values as integer, boolean, or string
-- dump binary register data in hexadecimal format
+### Configuration ( `land@register` )
+
+The **saved configuration object** for `land@register` (query/set via `land@register`, `land@register:path`, merge `|{json}`, etc.).
 
 
+`land@register` has **no** persisted JSON configuration; use the **Component API** to read and write register slots per object.
 
-### API Reference
+### Component API
 
-#### Query APIs
++ `list[ [object] ]` **list all register**, show specified object register list
+    - object ----------- [ string ], when omitted, list registers for the default object
+    - none or failed return NULL 
+    - return json to describes the list  
 
-+ `list[ id ]` **list all register variables**
-    - id -------------- [ string ], optional, the component object name; omit to list global register variables
-    - failed return NULL
-    - succeed return [ json ], a map of register variable name to value
     ```json
+    // Attributes introduction of json by the method return
     {
-        "variable name": "variable value",  // [ string ]: [ string ], register variable name and its value
-        // "...":"..."  How many variables show how many properties
+        "register name":"register value size in byte"
+        // ... more register list
+    }    
+    ```
+    Example, get object ifname@wan register list
+    ```shell
+    land@register.list[ifname@wan]
+    {
+        "ifdev":"20",                    // named ifdev register size is 20 byte
+        "tid":"4",                       // named tid register size is 4 byte
+        "mode":"20",                     // named mode register size is 20 byte
+        "method":"20",
+        "connect_failed":"4",
+        "netdev":"20",
+        "keeplive":"20",
+        "metric":"20",
+        "custom_dns":"20",
+        "dns":"20",
+        "dns2":"20",
+        "delay_buf":"240",
+        "delay_pos":"4",
+        "delay":"4"
     }
     ```
 
-    Example, list all global register variables
++ `int[ [object], register name ]` **show register value in integer**  
+    - object ----------- [ string ], omit to use default object (same as one-argument form)
+    - register name ----------- [ string ]
+    - none or failed return NULL     
+    - return talk value produced by **`number2x`** (integer channel; shell traces usually show a decimal number)
+
+    Example, show the tid of ifname@wan object
     ```shell
-    land@register.list
+    land@register.int[ifname@wan, tid]
+    5
+    ```
+
++ `boole[ [object], register name ]` **show register value in boole**
+    - object ----------- [ string ], omit to use default object
+    - register name ----------- [ string ]
+    - none or failed return NULL     
+    - return **`true`** / **`false`** talk strings via **`string2x`**
+
+    Example, show the keeplive of ifname@wan object
+    ```shell
+    land@register.boole[ifname@wan, keeplive]
+    true
+    ```
+
++ `string[ [object], register name ]` **show register value in string**
+    - object ----------- [ string ], omit to use default object
+    - register name ----------- [ string ]
+    - none or failed return NULL     
+    - return talk string via **`string2x`**, or **NULL** when the slot is unset / error
+
+    Example, show the mode register of ifname@wan object 
+    ```shell
+    land@register.string[ifname@wan, mode]
+    dhcpc
+    ```
+
++ `dump10[ [object], register name ]` **dump register bytes as hex, newline every 10 bytes**
+    - object --------------- [ string ], omit to use default object
+    - register name -------- [ string ]
+    - failed return tfalse; on success prints to stdout and returns NULL
+
++ `dump100[ [object], register name ]` **dump register bytes as hex, newline every 100 bytes**
+    - object --------------- [ string ], omit to use default object
+    - register name -------- [ string ]
+    - failed return tfalse; on success prints to stdout and returns NULL
+
++ `set_int[ [object], register name, value ]` **set a integer value to register**
+    - object --------------- [ string ], omit to set the global register namespace
+    - register name -------- [ string ]
+    - value ---------------- [ number ]
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, set 5 to tid of ifname@wan object
+    ```shell
+    land@register.set_int[ifname@wan, tid, 5]
+    ttrue
+    ```
+
++ `set_boole[ [object], register name, value ]` **set a boolean value to register**
+    - object --------------- [ string ], omit for global register
+    - register name -------- [ string ]
+    - value ---------------- [ "true", "false" ]
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, set true to keeplive of ifname@wan object
+    ```shell
+    land@register.set_boole[ifname@wan, keeplive, true]
+    ttrue
+    ```
+
++ `set_string[ [object], register name, [value] ]` **set string value to register**
+    - object --------------- [ string ], omit for global register
+    - register name -------- [ string ]
+    - value ---------------- [ string ], omit or empty string clears to empty
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, set myreg3 of ifname@wan object value
+    ```shell
+    land@register.set_string[ifname@wan, myreg3, myreg3valueisnull ]
+    ttrue
+    ```
+
+### Lifecycle API
+
++ `setup[]` / `shut[]` — **when implemented** for **`land@register`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
+### C Code Example
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_register_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
     {
-        "platform":"rk3568",
-        "hardware":"R2000",
-        "version":"8.0.0"
+        printf("%s failed, errno=%d\n", api, errno);
     }
-    ```
+}
+```
 
-    Example, list register variables for land@machine
-    ```shell
-    land@register.list[ land@machine ]
-    {
-        "wui_port":"80",
-        "telnet_port":"23",
-        "ssh_port":"22"
-    }
-    ```
+##### `list[ [object] ]`
 
-+ `int[ id, name ]` **get an integer register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - failed return NULL
-    - succeed return [ number ], the integer value
+```c
+talk_t ret = scalls("land@register", "list", "ifname@wan");
+if (ret > tpanic)
+{
+    printf("register list json ready\n");
+    talk_free(ret);
+}
+else print_register_call_error("list", ret);
+```
 
-    Example, get the global rand value
-    ```shell
-    land@register.int[ rand ]
-    12345
-    ```
+##### `int[ [object], register name ]`
 
-    Example, get the ill value from global register
-    ```shell
-    land@register.int[ ill ]
-    0
-    ```
+```c
+talk_t ret = scalls("land@register", "int", "ifname@wan,tid");
+if (ret > tpanic)
+{
+    printf("tid=%s\n", x2string(ret));
+    talk_free(ret);
+}
+else print_register_call_error("int", ret);
+```
 
-+ `boole[ id, name ]` **get a boolean register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - failed return NULL
-    - succeed return [ string ], "true" or "false"
+##### `boole[ [object], register name ]`
 
-    Example, get the block_restart value
-    ```shell
-    land@register.boole[ block_restart ]
-    false
-    ```
+```c
+talk_t ret = scalls("land@register", "boole", "ifname@wan,keeplive");
+if (ret > tpanic)
+{
+    printf("keeplive=%s\n", x2string(ret));
+    talk_free(ret);
+}
+else print_register_call_error("boole", ret);
+```
 
-+ `string[ id, name ]` **get a string register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - failed return NULL
-    - succeed return [ string ], the string value
+##### `string[ [object], register name ]`
 
-    Example, get the platform value
-    ```shell
-    land@register.string[ platform ]
-    rk3568
-    ```
+```c
+talk_t ret = scalls("land@register", "string", "ifname@wan,mode");
+if (ret > tpanic)
+{
+    printf("mode=%s\n", x2string(ret));
+    talk_free(ret);
+}
+else print_register_call_error("string", ret);
+```
 
-    Example, get the log_file value from global register
-    ```shell
-    land@register.string[ log_file ]
-    /var/log/12345-syslog.log
-    ```
+##### `dump10[ [object], register name ]`
 
-+ `dump10[ id, name ]` **dump binary register data in hex, 10 bytes per line**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - failed return tfalse, variable not found
-    - succeed return NULL, data printed to stdout
+```c
+talk_t ret = scalls("land@register", "dump10", "ifname@wan,mac");
+if (ret == tfalse || ret == terror || ret == tpanic) print_register_call_error("dump10", ret);
+```
 
-    Example, dump the log_mask register
-    ```shell
-    land@register.dump10[ log_mask ]
-    ff ff ff ff ff ff ff ff ff ff
-    ff ff ff ff ff ff ff ff ff ff
-    ```
+##### `dump100[ [object], register name ]`
 
-+ `dump100[ id, name ]` **dump binary register data in hex, 100 bytes per line**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - failed return tfalse, variable not found
-    - succeed return NULL, data printed to stdout
+```c
+talk_t ret = scalls("land@register", "dump100", "ifname@wan,mac");
+if (ret == tfalse || ret == terror || ret == tpanic) print_register_call_error("dump100", ret);
+```
 
-    Example, dump the log_mask register with 100 bytes per line
-    ```shell
-    land@register.dump100[ log_mask ]
-    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ...
-    ```
+##### `set_int[ [object], register name, value ]`
 
-#### Control APIs
+```c
+talk_t ret = scalls("land@register", "set_int", "ifname@wan,tid,7");
+if (ret != ttrue) print_register_call_error("set_int", ret);
+```
 
-+ `set_int[ id, name, value ]` **set an integer register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - value ----------- [ string ], the integer value to set
-    - failed return tfalse
-    - succeed return ttrue
+##### `set_boole[ [object], register name, value ]`
 
-    Example, set the global rand value
-    ```shell
-    land@register.set_int[ rand, 99999 ]
-    ttrue
-    ```
+```c
+talk_t ret = scalls("land@register", "set_boole", "ifname@wan,keeplive,true");
+if (ret != ttrue) print_register_call_error("set_boole", ret);
+```
 
-+ `set_boole[ id, name, value ]` **set a boolean register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - value ----------- [ string ], "true" or "false"
-    - failed return tfalse
-    - succeed return ttrue
+##### `set_string[ [object], register name, [value] ]`
 
-    Example, set block_restart to true
-    ```shell
-    land@register.set_boole[ block_restart, true ]
-    ttrue
-    ```
+```c
+talk_t ret = scalls("land@register", "set_string", "ifname@wan,myreg3,myvalue");
+if (ret != ttrue) print_register_call_error("set_string", ret);
+```
 
-+ `set_string[ id, name, value ]` **set a string register value**
-    - id -------------- [ string ], optional, the component object name; omit for global register
-    - name ------------ [ string ], the register variable name
-    - value ----------- [ string ], optional, the string value to set; omit or empty to clear
-    - failed return tfalse
-    - succeed return ttrue
-
-    Example, set a string value
-    ```shell
-    land@register.set_string[ machine_state, restarting ]
-    ttrue
-    ```
-
-    Example, clear a string value
-    ```shell
-    land@register.set_string[ machine_state ]
-    ttrue
-    ```

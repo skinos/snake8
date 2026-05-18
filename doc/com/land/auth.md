@@ -1,7 +1,5 @@
 ## land@auth — User & Permission Management
 
-### Overview
-
 Manage usernames and permissions. Prefer the **Component API** below instead of editing raw configuration when possible.
 The configuration structure is divided into three layers
 - username can belong to multiple groups
@@ -12,64 +10,62 @@ The configuration structure is divided into three layers
     > Examples storage functions are added, "nas" group are built in the storage. you can add or delete username belonging to "nas" group
 
 
+### Configuration ( `land@auth` )
 
-### Configuration reference ( land@auth )
+The **saved configuration object** for `land@auth` (query/set via `land@auth`, paths under `user/` and `group/`, merge `|{json}`, etc.). Direct edits are easy to get wrong; use APIs for routine account work.
 
 ```json
 // Attributes introduction 
 {
-    "user":          // [ json ], username list, all accounts in the system are under this json
+    "user":        //  username list, all accounts in the system are under this node
     {
-        "user name":       // [ string ]: { json }, username in system
-        {                      // username configure in this json
-            "id":"username identify number",                        // [ number ], linux system user id number
-            "key":"username password",                              // [ string ], encrypt password, cannot be space
-            "key_check":"key need strength",                        // [ "disable", "enable" ], default be "disable"
-            "key_failed_time":"Number of consecutive failures",     // [ number ], default be 0
-            "key_failed_wait":"failures to block",                  // [ number ], default be 5, the unit is second
+        "user name":                  // [ string ], you can custom the username
+        {
+            "id":"username identify number",                        // [ number ]
+            "key":"username password",                              // [ string ]
+            "key_check":"key need strength",                        // [ "disable", "enable" ]
+            "key_failed_time":"Number of consecutive failures",     // [ number ]
+            "key_failed_wait":"failures to block",                  // [ number ], the unit is second
 
-            "group":                     // [ json ], List of groups to which the username belongs
+            "group":                     // List of groups to which the username belongs
             {
-                "group name":"belongs state"  // [ string ]: [ "disable","enable" ], group name the the username belongs
-                                                    // "enable" for belongs, "disable" for not
-                // "...":"..."  How many groups belongs show how many properties
+                "group name":"belongs state"  // [ string ]: [ "disable","enable" ], "enable" for belongs, "disable" for not
+                // "...":"..."                // How many groups belongs show how many properties
             },
-            "domain":                    // [ json ], List of all domains configure for this username
+            "domain":                    // List of all domains configure for this username
             {
-                "domain name":                // [ string ]: { json }, domain name the the username belongs
-                {                                   // Domain-specific properties
+                "domain name":
+                {
                     "key":"In this domain specialized password"        // [ string ], an empty one represents the use of the default password
                 }
-                // "...":{ ... }  How many domain show how many properties
+                // "...":{ ... }                                  // How many domain show how many properties
             }
         }
-        // "...":{...}  How many username show how many properties
+        // "...":{...}                  // How many username show how many properties
     },
-    "group":     // [ json ], Group list, all groups in the system are under this node
+    "group":     // Group list, all groups in the system are under this node
     {
-        "group name":      // [ string ]: { json }, group in system
-        {                      // group configure in this json
-            "id":"group identify",     // [ number ], linux system group id number
-            "domain":                    // [ json ], List of all domains configure for this group
+        "group name":
+        {
+            "id":"group identify",     // [ number ]
+            "domain":                  // List of all domain permissions under the group
             {
-                "group name":"belongs state"  // [ string ]: [ "disable","enable" ], group name the the group belongs
-                // "...":"..."  How many domain show how many properties
+                "domain name":"enable state"  // [ string ]: [ "disable","enable" ]
+                // "...":"..."             // How many domain show how many properties
             }
         }
-        // "...":{...}  How many group show how many properties
+        // "...":{...}                  // How many group show how many properties
     }
 }
 ```
 
-#### Configuration example
-
-Example, show all the accounts configure
+Examples, show all the accounts configure
 ```shell
-land@auth                                # enter this
-{                                        # return this
+land@auth
+{
     "user":
     {
-        "admin":                         # username: admin
+        "admin":                       # username: admin
         {
             "id":"0",                         # admin username id is 0
             "key":"eYgJU9Koun1yPYJ78JeH2Q==", # admin default domain encode password
@@ -129,70 +125,31 @@ land@auth                                # enter this
         }
     }
 }
-```
+```  
 
-#### Configuration settings example
-
-Example, enable the password check for admin
+Examples, merge a small subset of fields (illustrative; prefer APIs for real account work)
 ```shell
-land@auth:user/admin/key_check=enable
+land@auth|{"user":{"admin":{"key_check":"enable"}}}
 ttrue
 ```
 
-Example, set admin's number of consecutive failures be 3
-```shell
-land@auth:user/admin/key_failed_time=3
-ttrue
-```
+### Component API
 
-Example, merge set the password check for admin( include "key_check" "key_failed_time" "key_failed_wait" )
-```shell
-land@auth|{"user":{"admin":{"key_check":"enable","key_failed_time":"4","key_failed_wait":"10"}}}
-ttrue
-```
-
-
-
-### API Reference
-
-#### Management APIs
-
-+ `setup[]` **initialize the auth component**, *succeed return ttrue, failed return tfalse, error return terror*
-    - failed return tfalse
-    - succeed return ttrue
-    - This is a lifecycle method called automatically by the system during startup
-    - Not intended for manual invocation
-
-
-#### Query APIs
-
-+ `domain[ username ]` **list all domain for the user's enabled groups**   
++ `domain[ username ]` **merge domain JSON from the user’s enabled groups**   
     - username ----------- [ string ]
-    - failed return NULL
-    - succeed return [ json ], all domain "username" belong in the json
-    ```json
-    {
-        "domain name": "enable or disable"  // [ string ]: [ "enable", "disable" ], domain name in system
-                                                    // "enable": have this permissions
-                                                    // "disable": no this permissions
-        // "...":"..."  How many domain belongs show how many properties
-    }
-    ```
+    - failed return NULL (e.g. missing username)
+    - returns a JSON object (possibly empty `{}`). Implementation walks **`user/<username>/group`**: for each group whose value is **`enable`**, it loads **`group/<group>/domain`** from the saved config and **`json_patch`**es those objects together. The result is **not** a flat map of `"domain":"enable"` strings; its shape matches whatever you store under each group’s **`domain`** object.
 
-    Example, list all admin's domain
+    Example (shape depends on your `group/*/domain` configuration)
     ```shell
     land@auth.domain[ admin ]
-    {
-        "admin":"enable",    # admin have the admin domain permissions
-        "nas":"enable",      # admin have the nas domain permissions
-        "vpn":"enable"       # admin have the vpn domain permissions
-    }
+    { }
     ```
 
-+ `check[ domain, username, password ]` **check the username and password correct**   
-    - domain ------------- [ string ], optional, specify a specific domain, default is common
++ `check[ [domain], username, password ]` **check the username and password correct**   
+    - domain ----------- [ string ],  specify a specific domain, default is common
     - username ----------- [ string ] 
-    - password ----------- [ string ], text password
+    - password ----------- [ string ] 
     - failed return tfalse
     - succeed return ttrue
 
@@ -203,15 +160,15 @@ ttrue
     ```
 
     Example, check the username admin correct with wrong password
-    ```shell
+    ```
     land@auth.check[ ,admin, passwrong ]
     tfalse
     ```
 
-+ `match[ domain, username, ciphertext ]` **check the username and cryptographic password correct**   
-    - domain ----------------- [ string ], optional, specify a specific domain, default is common
-    - username --------------- [ string ] 
-    - ciphertext ------------- [ string ], cryptographic password
++ `match[ [domain], username, ciphertext ]` **check the username and cryptographic password correct**   
+    - domain ----------- [ string ],  specify a specific domain, default is common
+    - username ----------- [ string ] 
+    - ciphertext ----------- [ string ], cryptographic password
     - failed return tfalse
     - succeed return ttrue
 
@@ -222,59 +179,18 @@ ttrue
     ```
 
     Example, check the username admin correct with wrong password
-    ```shell
+    ```
     land@auth.match[ ,admin, admin ]
     tfalse
     ```
 
-+ `list[ group ]` **list users**   
-    - group ----------- [ string ], optional, when set, only user in this group
-    - failed return NULL
-    - succeed return [ json ], all user with its key in the json
-    ```json
-    {
-        "user name":     // [ string ]: { json }, system username
-        {                     // username's key in this json
-            "key":"password string",    // [ string ]
-        }
-        // "...":{}  How many user show how many properties        
-    }
-    ```
 
-    Example, list all username
-    ```shell
-    land@auth.list
-    {
-        "admin":
-        {
-            "key":"eYgJU9Koun1yPYJ78JeH2Q=="   # admin's key
-        },
-        "eason":
-        {
-            "key":"CL088bD9dcJUgNzhCKBnfg=="   # eason's key
-        }    
-    }
-    ```
-
-    Example, list all admin group username
-    ```shell
-    land@auth.list[ admin ]
-    {
-        "admin":
-        {
-            "key":"eYgJU9Koun1yPYJ78JeH2Q=="   # admin's key
-        }
-    }
-    ```
-
-#### Control APIs
-
-+ `modify[ domain, username, password, [new password], [new username] ]` **modify the username or password with original password**   
-    - domain ----------------- [ string ], optional, specify a specific domain, default is common
-    - username --------------- [ string ] 
-    - password --------------- [ string ], text password
-    - new password ----------- [ string ], optional, but "new password" and "new username" must have one of them
-    - new username ----------- [ string ], optional, but "new password" and "new username" must have one of them
++ `modify[ [domain], username, password, [new password], [new username] ]` **modify the username or password with original password**   
+    - domain ----------- [ string ],  specify a specific domain, default is common
+    - username ----------- [ string ] 
+    - password ----------- [ string ] 
+    - new password ----------- [ string ] 
+    - new username ----------- [ string ]
     - failed return tfalse
     - succeed return ttrue
 
@@ -283,19 +199,18 @@ ttrue
     land@auth.modify[ ,admin, admin, 12345 ]
     ttrue
     ```
-
     Example, modify the username of admin to Bob
-    ```shell
+    ```
     land@auth.modify[ ,admin, 12345, , Bob ]
     ttrue
     ```
 
-+ `change[ domain, username, ciphertext, [new password], [new username] ]` **modify the username or password with original cryptographic password**   
-    - domain ----------------- [ string ], optional, specify a specific domain, default is common
-    - username --------------- [ string ] 
-    - ciphertext ------------- [ string ], cryptographic password 
-    - new password ----------- [ string ], optional, but "new password" and "new username" must have one of them
-    - new username ----------- [ string ], optional, but "new password" and "new username" must have one of them
++ `change[ [domain], username, ciphertext, [new password], [new username] ]` **modify the username or password with original cryptographic password**   
+    - domain ----------- [ string ],  specify a specific domain, default is common
+    - username ----------- [ string ] 
+    - ciphertext ----------- [ string ], cryptographic password 
+    - new password ----------- [ string ] 
+    - new username ----------- [ string ]
     - failed return tfalse
     - succeed return ttrue
 
@@ -304,18 +219,18 @@ ttrue
     land@auth.change[ ,admin, MjEyMzJmMjk3YTU3YTVhNzQzODk0YTBlNGE4MDFmYzM=, 12345 ]
     ttrue
     ```
-
     Example, change the username of admin to Bob
-    ```shell
+    ```
     land@auth.change[ ,admin, ODI3Y2NiMGVlYThhNzA2YzRjMzRhMTY4OTFmODRlN2I=, , Bob ]
     ttrue
     ```
 
-+ `add[ domain, username, password, group, ... ]` **add a new username**   
-    - domain -------------- [ string ], optional slot used when storing a domain-specific key (`user/<name>/domain/<domain>/key`)
-    - username ------------ [ string ]
-    - password ------------ [ string ]
-    - group, ... ---------- [ string, ... ], optional 4th, 5th, … parameters: each non-NULL name gets **`"enable"`** in the new user's **`group`** map
+
++ `add[ [domain], username, password [, group, ... ] ]` **add a new username**   
+    - domain ----------- [ string ], optional slot used when storing a domain-specific key (`user/<name>/domain/<domain>/key`)
+    - username ----------- [ string ] (required)
+    - password ----------- [ string ] (optional in the parser; if present it is stored via **`simple_encode`**)
+    - group ... -------- optional 4th, 5th, … parameters: each non-NULL name gets **`"enable"`** in the new user’s **`group`** map
     - failed return tfalse
     - succeed return ttrue
 
@@ -325,8 +240,9 @@ ttrue
     ttrue
     ```
 
-+ `delete[ username, ... ]` **delete username**   
-    - username, ... ----------- [ string ], you can delete a many username
++ `delete[ username[, ...] ]` **delete username**   
+    - username ----------- [ string ] 
+    - ... ----------- [ string ], you can delete a many username
     - failed return tfalse
     - succeed return ttrue
 
@@ -337,31 +253,79 @@ ttrue
     ```
     
     Example, delete the username Alice and Bob 
-    ```shell
+    ```
     land@auth.delete[ Alice, Bob ]
     ttrue
     ```
 
++ `list[ [group] ]` **list users (optionally filter by group membership)**   
+    - group ----------- [ string ], optional; when set, only users with **`group/<group> == "enable"`** are included
+    - failed return NULL
+    - returns JSON: per user, **`key`** (default password field) and a **`domain`** subtree (from **`json_cut_value`** on that user’s **`domain`** node), same style as stored in config (often **`simple_encode`**d strings).   
+    ```json
+    // Shape returned by implementation (illustrative)
+    {
+        "user name":
+        {
+            "key":"encoded-or-plain password string",
+            "domain": { "...": { "key":"..." } }
+        }
+    }
+    ```
 
+    Example, list all admin group username
+    ```shell
+    land@auth.list[ admin ]
+    {
+        "admin":
+        {
+            "key":"eYgJU9Koun1yPYJ78JeH2Q==",
+            "domain":
+            {
+                "nas":
+                {
+                    "key":"CL088bD9dcJUgNzhCKBnfg=="
+                },
+                "wui":
+                {
+                    "key":"pTxxKkPm+ezb9w/wowVxSg=="
+                }
+            }
+        }
+    }
+    ```
 
-### Published Joint Events
+    Example, list all username
+    ```
+    land@auth.list
+    {
+        "admin":
+        {
+            "key":"eYgJU9Koun1yPYJ78JeH2Q==",
+            "domain":
+            {
+                "nas":
+                {
+                    "key":"CL088bD9dcJUgNzhCKBnfg=="
+                },
+                "wui":
+                {
+                    "key":"pTxxKkPm+ezb9w/wowVxSg=="
+                }
+            }
+        }
+        "eason":
+        {
+            "key":"CL088bD9dcJUgNzhCKBnfg=="
+        }
+    }
+    ```
 
-The following joint events are published when authentication data changes. Other components can subscribe at runtime (joint registration / **land@joint**).
-
-| Event | Description |
-|-------|-------------|
-| `auth/modify` | Sent when authentication configuration or user accounts are modified. Triggered after `set` (config change), `add` (new account), `delete` (account removal), `modify` (password/username change), or `change` (password change via ciphertext). The event parameter is the affected account name, or `NULL` when the entire config was changed. |
-
-
-
-### Other
-
-Some helpful APIs
 
 + `md5[ string ]` **calculate MD5 hash of string**
     - string ----------- [ string ], the string to hash
     - failed return NULL
-    - succeed return [ string ], the MD5 hash string (32 characters hex)
+    - return the MD5 hash string (32 characters hex)
 
     Example, calculate MD5 of "admin"
     ```shell
@@ -372,7 +336,7 @@ Some helpful APIs
 + `b64_encode[ string ]` **Base64 encode a string**
     - string ----------- [ string ], the string to encode
     - failed return NULL
-    - succeed return [ string ], the Base64 encoded string
+    - return the Base64 encoded string
 
     Example, Base64 encode "admin"
     ```shell
@@ -383,7 +347,7 @@ Some helpful APIs
 + `b64_decode[ string ]` **Base64 decode a string**
     - string ----------- [ string ], the Base64 string to decode
     - failed return NULL
-    - succeed return [ string ], the decoded string
+    - return the decoded string
 
     Example, Base64 decode "YWRtaW4="
     ```shell
@@ -393,9 +357,9 @@ Some helpful APIs
 
 + `encode[ string, [key] ]` **simple encode a string**
     - string ----------- [ string ], the string to encode
-    - key -------------- [ string ], optional token passed; omitted / NULL uses the implementation default
+    - key -------------- [ string ], optional token passed; omitted / NULL uses the implementation default)
     - failed return NULL
-    - succeed return [ string ], the encoded string
+    - return the encoded string
 
     Example, encode "admin"
     ```shell
@@ -407,10 +371,172 @@ Some helpful APIs
     - string ----------- [ string ], the encoded string to decode
     - key -------------- [ string ], optional token (must match **`encode`**)
     - failed return NULL
-    - succeed return [ string ], the decoded string
+    - return the decoded string
 
     Example, decode "eYgJU9Koun1yPYJ78JeH2Q=="
     ```shell
     land@auth.decode[ eYgJU9Koun1yPYJ78JeH2Q== ]
     admin
     ```
+
+### Lifecycle API
+
+
++ `setup[]` **initialize the auth component**, *succeed return ttrue, failed return tfalse, error return terror*
+    - This is a lifecycle method called automatically by the system during startup
+    - When register **`scope`** is **`wrt`** or **`platform`** is **`slave`**, **`setup`** returns **`ttrue`** without merging passwd/shadow (same guard applies to **`set`**: writes return **false** and do not run **`_refresh`**).
+    - Otherwise it runs **`_refresh`** to merge configured users/groups into system account files (e.g. **`/var/passwd`** and related files; exact set depends on the image).
+    - Not intended for manual invocation
+
+
+### Published Joint Events
+
+The following joint events are published when authentication data changes. Other components can subscribe at runtime (joint registration / **`land@joint`**).
+
+| Event | Description |
+|-------|-------------|
+| `auth/modify` | Sent when authentication configuration or user accounts are modified. Triggered after `set` (config change), `add` (new account), `delete` (account removal), `modify` (password/username change), or `change` (password change via ciphertext). The event parameter is the affected account name, or `NULL` when the entire config was changed. |
+
+
+### C Code Example
+
+**Read and update configuration**
+
+```c
+#include "skin/skin.h"
+
+static int auth_config_get_and_set(void)
+{
+    char key_check[32];
+    talk_t user_node;
+    talk_t domain_key;
+    boole ok;
+
+    /* 1) Read one string config value */
+    if (sgets_string(key_check, sizeof(key_check), "land@auth", "user/admin/key_check") == NULL)
+    {
+        return -1;
+    }
+    printf("admin key_check=%s\n", key_check);
+
+    /* 2) Read one object node */
+    user_node = sgets("land@auth", "user/admin");
+    if (user_node == NULL || user_node <= tpanic)
+    {
+        return -1;
+    }
+    printf("admin default key=%s\n", json_string(user_node, "key"));
+    talk_free(user_node);
+
+    /* 3) Update string config values */
+    ok = ssets_string("land@auth", "enable", "user/admin/key_check");
+    if (ok == false)
+    {
+        return -1;
+    }
+    ok = ssets_string("land@auth", "disable", "user/admin/group/vpn");
+    if (ok == false)
+    {
+        return -1;
+    }
+
+    /* 4) Update one domain password value with talk/json interface */
+    domain_key = string2x("new_encoded_key_here");
+    ok = ssets("land@auth", domain_key, "user/admin/domain/wui/key");
+    talk_free(domain_key);
+    if (ok == false)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+```
+
+Notes:
+- Use `sgets_string()` / `sgets()` to read auth configuration paths.
+- Use `ssets_string()` / `ssets()` to update auth configuration paths.
+- Any returned `talk_t` that holds JSON (or other heap-owned graph nodes) must be released with `talk_free()` when you are done; `he`-only operators normally do not call these C APIs directly.
+
+**Call component methods**
+
+```c
+#include "skin/skin.h"
+
+static void print_auth_call_error(const char *api, talk_t ret)
+{
+    if (ret == tfalse || ret == terror || ret == tpanic)
+    {
+        printf("%s failed, errno=%d\n", api, errno);
+    }
+}
+```
+
+##### `domain[ username ]`
+
+```c
+talk_t ret = scalls("land@auth", "domain", "admin");
+if (ret > tpanic)
+{
+    printf("admin domain list ready\n");
+    talk_free(ret);
+}
+else print_auth_call_error("domain", ret);
+```
+
+##### `check[ [domain], username, password ]`
+
+```c
+talk_t ret = scalls("land@auth", "check", "wui,admin,admin_password");
+if (ret != ttrue) print_auth_call_error("check", ret);
+```
+
+##### `match[ [domain], username, ciphertext ]`
+
+```c
+const char *ciphertext = "CIPHER_KEY_TEXT";
+talk_t ret = scalls("land@auth", "match", "wui,admin,%s", ciphertext);
+if (ret != ttrue) print_auth_call_error("match", ret);
+```
+
+##### `modify[ [domain], username, password, [new password], [new username] ]`
+
+```c
+talk_t ret = scalls("land@auth", "modify", "wui,admin,oldpass,newpass,admin2");
+if (ret != ttrue) print_auth_call_error("modify", ret);
+```
+
+##### `change[ [domain], username, ciphertext, [new password], [new username] ]`
+
+```c
+const char *ciphertext = "CIPHER_KEY_TEXT";
+talk_t ret = scalls("land@auth", "change", "wui,admin,%s,newpass,admin2", ciphertext);
+if (ret != ttrue) print_auth_call_error("change", ret);
+```
+
+##### `add[ [domain], username, password [, group, ... ] ]`
+
+```c
+talk_t ret = scalls("land@auth", "add", "wui,alice,alice_password");
+if (ret != ttrue) print_auth_call_error("add", ret);
+```
+
+##### `delete[ username[, ...] ]`
+
+```c
+talk_t ret = scalls("land@auth", "delete", "alice,bob");
+if (ret != ttrue) print_auth_call_error("delete", ret);
+```
+
+##### `list[ [group] ]`
+
+```c
+talk_t ret = scalls("land@auth", "list", "admin");
+if (ret > tpanic)
+{
+    printf("admin users json ready\n");
+    talk_free(ret);
+}
+else print_auth_call_error("list", ret);
+```
+
