@@ -34,20 +34,16 @@ clangd:
 
 # SDK Download
 update:
-	# Update the sdk
-	git pull
-	# Update the Platform-specific configure repositories
+	@set -e; \
+	git pull; \
 	if [ -d ${gPLATFORM_DIR} ]; then \
 		echo "cd ${gPLATFORM_DIR}; git pull"; \
 	else \
 		echo "cd ${gTOP_DIR}/config; git clone git@gitee.com:snake8/${gPLATFORM}"; \
-	fi
-	# Forward to Platform-specific SDK Makefile update
-	make -f target.makefile sdk_update
-	# Adjust the Platform-specific SDK
-	make -f target.makefile sdk_adjust
-	# Refresh the menu
-	make -f target.makefile sdk_menu
+	fi; \
+	$(MAKE) -f target.makefile sdk_update; \
+	$(MAKE) -f target.makefile sdk_adjust; \
+	$(MAKE) -f target.makefile sdk_menu
 
 # SDK rebuild for HOST
 rebuild:
