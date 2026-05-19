@@ -25,7 +25,6 @@ Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@
 // Attributes introduction 
 {
     "status": "instance enable or disable",              // [ "disable", "enable" ], default be "enable"
-    "convert": "hardware flow control custom",           // [ "disable", "enable" ], default be "disable"
     "devcom": "device component name",                   // [ string ], the component that provides the ttydev path (e.g. usb@tty-2-3)
     "ttydev": "serial device path",                      // [ string ], Linux serial device path (e.g. /dev/ttyS1), used when devcom is not set
     "drvcom": "driver component name",                   // [ string ], the driver object to bind (e.g. uartdrv@dtu, uartdrv@tui)

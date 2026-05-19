@@ -35,14 +35,12 @@ The UART subsystem separates the physical port (device) from the business logic 
 + `setup[]` **initialize the UART infrastructure**
     - failed return tfalse
     - succeed return ttrue
-    - When called on `uart@frame`: iterates all configured UART instances, registers each with `com_register`, and calls `setup` on each
-    - When called on `uart@tty*` (instance): reads configuration, resolves `ttydev` and `drvcom`, starts the driver service
+    - iterates all configured UART instances, registers each with `com_register`, and calls `setup` on each
 
 + `shut[]` **shut down the UART infrastructure**
     - failed return tfalse
     - succeed return ttrue
-    - When called on `uart@frame`: calls `shut` on every registered instance, then unregisters each
-    - When called on `uart@tty*` (instance): stops the driver service
+    - calls `shut` on every registered instance, then unregisters each
 
 #### Control APIs
 
