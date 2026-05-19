@@ -1,48 +1,103 @@
 ## wifi@n — 2.4G Radio Management
-Manage 2.4G Radio. Which driver and host stack apply is **product-specific**; the **`arch`** area supplies board integration, while configuration flows through the same **`land`** / `he` model as other components.
 
-### Configuration ( `wifi@n` )
+### Overview
+
+Manage 2.4G radio baseband for wireless access point functionality. Each platform registers a **`wifi@n`** component for its 2.4G WiFi baseband chip, providing a unified interface regardless of the underlying hardware.
+
+- manages 2.4G radio lifecycle: setup, shutdown, hostapd configuration
+- supports 802.11b/g/n/ax wireless modes
+- provides channel list, mode list, security list, and station list queries
+- supports LDPC, STBC, and Short GI radio features
+
+
+
+### Configuration reference ( wifi@n )
+
 ```json
-// Attribute introduction
+// Attributes introduction 
 {
-    "mode":"radio mode",                 // [ "n", "b", "bg", "x" ]
-                                                // "n" for 11N
-                                                // "b" for 11B
-                                                // "bg" for 11BG
-                                                // "x" for 11AX
-    
-    "bandwidth":"radio bandwidth",       // [ "20", "2040", "40" ]
-                                                // "20" for 20M
-                                                // "2040" for 20M and 40M
-                                                // "40" for 40M
+    "status":"start at system startup",                        // [ "enable", "disable" ]
+    "mode":"radio mode",                                       // [ "bg", "n", "2g" ]
+                                                                    // "bg" for 11BG
+                                                                    // "n" for 11N, bandwidths: 20, 40
+                                                                    // "2g" for 11AX, bandwidths: 20, 40
+    "bandwidth":"radio bandwidth",                             // [ "20", "40" ]
+    "channel":"radio channel",                                 // [ 0-14 ], 0 for auto select the channel
+    "beacon":"beacon interval",                                // [ number ]
+    "country":"country code",                                  // [ string ], e.g. "cn", "us", "jp"
+    "dtim":"radio dtim",                                       // [ number ]
+    "txpower":"transmit power",                                // [ number ], optional
+    "ldpc":"use LDPC or not",                                  // [ "disable", "enable" ]
+    "shortgi":"short GI",                                      // [ "disable", "enable" ]
+    "stbc":"radio STBC",                                       // [ "disable", "enable" ]
+    "extcha":"extension channel",                              // [ "below", "above" ], optional, for 40M bandwidth
+    "rts_threshold":"RTS threshold",                           // [ number ], optional
+    "frag_threshold":"fragmentation threshold",                // [ number ], optional
 
-    "channel":"radio channel",           // [ 0-14 ], "0" for auto select the channel
-    "beacon":"beacon interval",          // [ number ]
-    "country":"country code",            // [ "cn", "en", "jp", ... ]
-
-    "dtim":"radio dtim",                 // [ number ]
-    "ldpc":"use LDPC or not",            // [ "disable", "enable" ]
-    "shortgi":"short GI",                // [ "disable", "enable" ]
-    "stbc":"radio STBC"                  // [ "disable", "enable" ]
+    // Advanced hostapd options (driver-specific)
+    "option":                             // advanced hostapd configuration options
+    {
+        "g":                             // 802.11g specific options
+        {
+            "spectrum_mgmt_required":"spectrum management",    // [ string ]
+            "rssi_reject_assoc_rssi":"RSSI reject threshold",  // [ string ]
+            "rssi_reject_assoc_timeout":"reject timeout",      // [ string ]
+            "rssi_ignore_probe_request":"ignore probe",        // [ string ]
+            "acs_exclude_dfs":"exclude DFS channels",          // [ string ]
+            "min_tx_power":"minimum TX power",                 // [ string ]
+            "stationary_ap":"stationary AP mode",              // [ string ]
+            "ht_coex":"HT coexistence"                         // [ string ]
+        },
+        "n":                             // 802.11n specific options
+        {
+            "spectrum_mgmt_required":"spectrum management",    // [ string ]
+            "rssi_reject_assoc_rssi":"RSSI reject threshold",  // [ string ]
+            "rssi_reject_assoc_timeout":"reject timeout",      // [ string ]
+            "rssi_ignore_probe_request":"ignore probe",        // [ string ]
+            "acs_exclude_dfs":"exclude DFS channels",          // [ string ]
+            "min_tx_power":"minimum TX power",                 // [ string ]
+            "stationary_ap":"stationary AP mode",              // [ string ]
+            "ht_coex":"HT coexistence"                         // [ string ]
+        },
+        "2g":                            // 2.4G specific options (for AX mode)
+        {
+            "spectrum_mgmt_required":"spectrum management",    // [ string ]
+            "rssi_reject_assoc_rssi":"RSSI reject threshold",  // [ string ]
+            "rssi_reject_assoc_timeout":"reject timeout",      // [ string ]
+            "rssi_ignore_probe_request":"ignore probe",        // [ string ]
+            "acs_exclude_dfs":"exclude DFS channels",          // [ string ]
+            "min_tx_power":"minimum TX power",                 // [ string ]
+            "stationary_ap":"stationary AP mode",              // [ string ]
+            "ht_coex":"HT coexistence",                        // [ string ]
+            "he_bss_color":"HE BSS color",                     // [ string ]
+            "he_su_beamformer":"HE SU beamformer",             // [ string ]
+            "he_su_beamformee":"HE SU beamformee",             // [ string ]
+            "he_mu_beamformer":"HE MU beamformer"              // [ string ]
+        },
+        "ht_capab":"HT capabilities",                          // [ string ]
+        "vht_capab":"VHT capabilities"                         // [ string ]
+    }
 }
 ```
 
-Example, show 2.4G SSID all configure
+#### Configuration example
+
+Example, show 2.4G Radio all configure
 ```shell
 wifi@n
 {
     "mode":"n",                # 2.4G Radio is 11N
     "bandwidth":"40",          # 2.4G bandwidth 40M
     "channel":"11",            # 2.4G channel is 11
-
     "beacon":"100",            # 2.4G beacon interval is 100ms
-    "dtim":"1", 
-    
+    "dtim":"1",
     "ldpc":"enable",           # enable the LDPC
     "shortgi":"enable",        # enable the short GI
     "stbc":"enable"            # enable the STBC
 }
-```  
+```
+
+#### Configuration settings example
 
 Example, modify the 2.4G radio channel to auto
 ```shell
@@ -56,24 +111,56 @@ wifi@n:channel=11
 ttrue
 ```
 
-Examples, change several attributes at once (**merge**)
+Example, merge set the 2.4G Radio configure( include "mode" "bandwidth" "channel" )
 ```shell
-wifi@n|{"mode":"an","bandwidth":"40","channel":"0"}
+wifi@n|{"mode":"n","bandwidth":"40","channel":"0"}
 ttrue
 ```
 
-### Component API
-**Directly callable** APIs: `wifi@n.method`, `wifi@n2.method`, … (HE / eline / HTTP `/he`).
 
-+ `chlist[]` **get the 2.4G radio channel list**   
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **setup the 2.4G radio**
+    - failed return tfalse
+    - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Not intended for manual invocation
+
++ `shut[]` **shutdown the 2.4G radio**
+    - failed return tfalse
+    - succeed return ttrue
+
++ `hostapd[]` **configure and generate hostapd configuration**
+    - failed return tfalse
+    - succeed return ttrue
+    - Generates hostapd configuration file based on current radio settings
+    - Called internally by setup[]
+
++ `start_hostapd[]` **start hostapd service**
+    - failed return tfalse
+    - succeed return ttrue
+    - Starts the hostapd daemon for wireless AP functionality
+
++ `stop_hostapd[]` **stop hostapd service**
+    - failed return tfalse
+    - succeed return ttrue
+    - Stops the hostapd daemon
+
+
+#### Query APIs
+
++ `chlist[ mode, country ]` **get the 2.4G radio channel list**
+    - mode ------------- [ string ], optional, radio mode (e.g. "n", "2g"), defaults to configured mode
+    - country ---------- [ string ], optional, country code, defaults to configured country
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this list   
+    - succeed return [ json ], available channels
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "channel number":{}                // [ number ]:{}
-        // more channel number
+        "channel number":{}       // [ number ]:{}
+        // "...":{}  How many channels show how many properties
     }
     ```
 
@@ -97,19 +184,91 @@ ttrue
     }
     ```
 
-+ `stalist[]` **get list of clients on 2.4G radio**   
++ `modelist[]` **get supported wireless modes and bandwidths**
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this list   
+    - succeed return [ json ], supported modes with bandwidth options
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "client MAC address":              // [ MAC address ]:{}
+        "mode name":              // [ string ]
         {
-            "livetime":"online time",               // [ hour:minute:second:day ]
-            "rssi":"signal strength",               // [ number ], the unit maybe dBm or %
+            "bandwidth":""        // [ string ]: [ string ]
+            // "...":"..."  How many bandwidths show how many properties
         }
-        // ... more client
+        // "...":{}  How many modes show how many properties
+    }
+    ```
+
+    Example, get the 2.4G radio mode list
+    ```shell
+    wifi@n.modelist
+    {
+        "bg":"",
+        "n":
+        {
+            "20":"",
+            "40":""
+        },
+        "2g":
+        {
+            "20":"",
+            "40":""
+        }
+    }
+    ```
+
++ `securelist[]` **get supported security modes**
+    - failed return NULL
+    - succeed return [ json ], supported security modes with encryption options for the radio
+    ```json
+    {
+        "secure mode":            // [ string ]
+        {
+            "encrypt":""          // [ string ]: [ string ]
+            // "...":"..."  How many encryptions show how many properties
+        }
+        // "...":{}  How many modes show how many properties
+    }
+    ```
+
+    Example, get the 2.4G radio security list
+    ```shell
+    wifi@n.securelist
+    {
+        "disable":"",
+        "wpapsk":
+        {
+            "aes":"",
+            "tkip":"",
+            "tkipaes":""
+        },
+        "wpa2psk":
+        {
+            "aes":"",
+            "tkip":"",
+            "tkipaes":""
+        },
+        "wpapskwpa2psk":
+        {
+            "aes":"",
+            "tkip":"",
+            "tkipaes":""
+        }
+    }
+    ```
+
++ `stalist[]` **get list of clients on 2.4G radio**
+    - failed return NULL
+    - succeed return [ json ], connected client list
+    ```json
+    {
+        "client MAC address":     // [ mac address ]
+        {
+            "apidx":"AP index",          // [ string ]
+            "livetime":"online time",    // [ string ], format is hour:minute:second:day
+            "rssi":"signal strength",    // [ number ], the unit is dBm
+            "ifdev":"SSID component"     // [ string ]
+        }
+        // "...":{}  How many clients show how many properties
     }
     ```
 
@@ -117,21 +276,21 @@ ttrue
     ```shell
     wifi@n.stalist
     {
-        "78:11:DC:92:D3:9E":                  // client 1
+        "78:11:DC:92:D3:9E":                  # client 1
         {
             "apidx":"0",
             "livetime":"14:53:17:2",
             "rssi":"-52",
             "ifdev":"wifi@nssid"
         },
-        "88:C3:97:75:1B:C0":                 // client 2
+        "88:C3:97:75:1B:C0":                 # client 2
         {
             "apidx":"0",
             "livetime":"14:53:14:2",
             "rssi":"-52",
             "ifdev":"wifi@nssid"
         },
-        "40:31:3C:4D:78:35":                 // client 3
+        "40:31:3C:4D:78:35":                 # client 3
         {
             "apidx":"0",
             "livetime":"14:52:22:2",
@@ -141,52 +300,4 @@ ttrue
     }
     ```
 
-+ `stabeat[ MAC address ]` **disconnect the client**  
-    - failed return tfalse
-    - error return terror    
-    - succeed return ttrue
 
-    Example, disconnect the client 00:03:7F:13:BD:30 from 2.4G Radio
-    ```shell
-    wifi@n.stabeat[ 00:03:7F:13:BD:30 ]
-    ttrue
-    ```
-
-### Lifecycle API
-+ `setup[]` **start component services**, *succeed return ttrue, failed return tfalse*
-    - Called from the platform **`init`** schedule when **`setup[]`** is wired for this component.
-
-+ `shut[]` **stop component services**, *succeed return ttrue, failed return tfalse*
-    - Called from the platform **`uninit`** schedule when **`shut[]`** is wired.
-
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_wifi_n(void)
-{
-    char buf[128];
-    boole ok;
-    if (sgets_string(buf, sizeof(buf), "wifi@n", "status") == NULL)
-        return -1;
-    ok = ssets_string("wifi@n", "value", "status");
-    return ok ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* Example: scall("wifi@n", "status", NULL); then talk_free if JSON */
-```

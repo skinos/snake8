@@ -149,6 +149,8 @@ ttrue
         "rsrq":"RSRQ value",             // Optional, The format varies depending on the module
         "sinr":"sinr value",             // Optional, The format varies depending on the module 
         "band":"current band",           // Optional, The format varies depending on the module
+        "ci":"cell identity",            // Optional, [ string ]
+        "lac":"location area code",      // Optional, [ string ]
         "operator":"operator name",      // [ string ]
         "na":"5G network access status"  // Optional, [ "enable" ], present when modem has NA/NSA(5G) network access flag set
     }
@@ -357,7 +359,7 @@ ttrue
     ```
 
 + `reset[]` **reset the modem**
-    - failed: return NULL
+    - failed: return tfalse
     - error: return terror
     - success: return ttrue
     - this triggers modem reset workflow and service restart sequence
@@ -493,6 +495,68 @@ ttrue
     - success: return ttrue
     - the request is forwarded to the SMS service object
 
++ `fun[]` **check if modem is functional**
+    - success: return ttrue when modem is in functional state (ATD_WATCH or ATD_READY)
+    - failed: return tfalse when modem is in non-functional state (ATD_NONE, ATD_CFUN, ATD_SETUP)
+
+    Example, check if first LTE modem is functional
+    ```shell
+    modem@lte.fun
+    ttrue
+    ```
+
++ `bsim_back[]` **switch to backup SIM card**
+    - failed: return tfalse (when devbus is missing)
+    - success: return ttrue
+    - switches modem to backup SIM card and resets
+
+    Example, switch to backup SIM
+    ```shell
+    modem@lte.bsim_back
+    ttrue
+    ```
+
++ `bsim_main[]` **switch to main SIM card**
+    - failed: return tfalse (when devbus is missing)
+    - success: return ttrue
+    - switches modem to main SIM card and resets
+
+    Example, switch to main SIM
+    ```shell
+    modem@lte.bsim_main
+    ttrue
+    ```
+
++ `bsim_state[]` **get current SIM slot state**
+    - success: return [ string ], "main" or "back"
+
+    Example, get current SIM slot
+    ```shell
+    modem@lte.bsim_state
+    main
+    ```
+
++ `bsim_clear[]` **clear backup SIM counters**
+    - success: return ttrue
+    - resets bsim_times and switch_uptime counters to zero
+
+    Example, clear backup SIM counters
+    ```shell
+    modem@lte.bsim_clear
+    ttrue
+    ```
+
++ `bsim_over[ seconds ]` **timed failover to main SIM**
+    - seconds ---------- [ number ], seconds to sleep before switching
+    - success: return ttrue
+    - sleeps for specified seconds then switches to main SIM
+
+    Example, failover to main SIM after 300 seconds
+    ```shell
+    modem@lte.bsim_over[ 300 ]
+    ttrue
+    ```
+
 
 #### API availability by modem state
 Not all APIs are available in every modem state. The following table shows when each API returns an error/NULL due to state restrictions:
@@ -501,6 +565,7 @@ Not all APIs are available in every modem state. The following table shows when 
 |---|---|
 | `status` | always available (returns state-specific JSON for all states) |
 | `tty` | always available (reads from registry directly) |
+| `fun` | always available |
 | `imei`, `imsi`, `iccid`, `operator` | nodevice, down, reset |
 | `sim`, `pin` | nodevice, down, reset, idle, noimei, noimsi |
 | `plmn`, `signal` | nodevice, down, reset, idle, noimei, noimsi |
@@ -511,6 +576,9 @@ Not all APIs are available in every modem state. The following table shows when 
 | `lock_imei`, `lock_imsi` | always available |
 | `reset_clear` | always available |
 | `netdev` | always available (reads from registry directly) |
+| `bsim_back`, `bsim_main` | requires devbus to be present |
+| `bsim_state`, `bsim_clear` | always available |
+| `bsim_over` | always available |
 | `sms_send`, `sms_list`, `sms_delete` | requires `sms` to be "enable" and sms_object to be present |
 
 ### Lifecycle API

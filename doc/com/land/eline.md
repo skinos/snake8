@@ -57,7 +57,7 @@ $ land@machine.status:version
 | Call method with parameters | `component.method[param1,param2,...]` | Calls a method with parameters. | `clock@date.ntpsync[ntp1.aliyun.com]` |
 | One field from method JSON | `component.method:attr/path` | Calls method and returns one field. | `ifname@lte.status:ip` |
 
-#### How to choose a format quickly
+### How to choose a format quickly
 
 | Goal | Recommended format |
 |---|---|
@@ -70,7 +70,7 @@ $ land@machine.status:version
 | Call an API | `component.method[...]` |
 | Call API and return only one field | `component.method:attr/path` |
 
-#### HE command categories and return types
+### HE command categories and return types
 
 + Each HE line is one command, ended by Enter. Commands fall into: **query configuration**, **modify configuration**, and **call component method**.  
 + Typical returns: plain **string**, **`ttrue` / `tfalse`**, **JSON object** `{...}`, or empty when there is no data—same semantics as in **he.md**. After output, eline shows the next **`$ `** prompt.
@@ -83,7 +83,7 @@ For full grammar, nested examples, and troubleshooting, use **[he.md](he.md)**.
 
 The samples below use **`$ `** as the eline prompt. Lines you type have **`$ `** in front; other lines are printed output.
 
-#### List all components
+### List all components
 
 ```shell
 $ @
@@ -91,7 +91,7 @@ $ @
 $ 
 ```
 
-#### Query full configuration of one component
+### Query full configuration of one component
 
 ```shell
 $ land@machine
@@ -106,7 +106,7 @@ $ land@machine
 $ 
 ```
 
-#### Query one attribute and nested paths
+### Query one attribute and nested paths
 
 ```shell
 $ land@machine:name
@@ -122,7 +122,7 @@ $ ifname@lan:static/ip
 $ 
 ```
 
-#### Set one attribute (`ttrue` / `tfalse`)
+### Set one attribute (`ttrue` / `tfalse`)
 
 ```shell
 $ land@machine:name=DemoGateway
@@ -132,7 +132,7 @@ DemoGateway
 $ 
 ```
 
-#### Set a nested field
+### Set a nested field
 
 ```shell
 $ gnss@nmea:client/server=192.168.8.251
@@ -142,7 +142,7 @@ $ gnss@nmea:client/server
 $ 
 ```
 
-#### Replace a whole subtree with JSON
+### Replace a whole subtree with JSON
 
 ```shell
 $ gnss@nmea:client={"status":"enable","server":"192.168.8.250","port":"8000"}
@@ -157,7 +157,7 @@ $ gnss@nmea:client
 $ 
 ```
 
-#### Merge only some fields (keep the rest)
+### Merge only some fields (keep the rest)
 
 ```shell
 $ gnss@nmea:client|{"status":"disable","proto":"tcp"}
@@ -165,7 +165,7 @@ ttrue
 $ 
 ```
 
-#### Clear one attribute
+### Clear one attribute
 
 ```shell
 $ gnss@nmea:client/server=
@@ -173,7 +173,7 @@ ttrue
 $ 
 ```
 
-#### Call a method, then read one field from the result
+### Call a method, then read one field from the result
 
 ```shell
 $ land@machine.status
@@ -186,7 +186,7 @@ $ land@machine.status:version
 $ 
 ```
 
-#### Method with parameters
+### Method with parameters
 
 ```shell
 $ clock@date.ntpsync[ntp1.aliyun.com]
@@ -200,7 +200,7 @@ $
 
 Inside **`set`**, prompts look like **`land@machine:`**. Attribute names are **relative to that object** (same paths you would write after **`:`** in HE, e.g. **`name`**, **`static/ip`**).
 
-#### Edit and save
+### Edit and save
 
 ```shell
 $ set land@machine
@@ -225,7 +225,7 @@ DemoGateway
 $ 
 ```
 
-#### Query a nested field inside `set`
+### Query a nested field inside `set`
 
 ```shell
 $ set ifname@lan
@@ -236,7 +236,7 @@ ifname@lan: e
 $ 
 ```
 
-#### Abandon edits without saving
+### Abandon edits without saving
 
 ```shell
 $ set land@machine
@@ -248,7 +248,7 @@ ASHYELF-12AAD0
 $ 
 ```
 
-#### Leave `set` with Ctrl+D (same as `e` for dropping the session)
+### Leave `set` with Ctrl+D (same as `e` for dropping the session)
 
 Pressing **Ctrl+D** at the **`object:`** prompt releases the in-memory config and returns to **`$ `** without **`sset`**.
 
@@ -256,7 +256,7 @@ Pressing **Ctrl+D** at the **`object:`** prompt releases the in-memory config an
 
 ## Worked examples — built-ins, passthrough, and session control
 
-#### Exit eline
+### Exit eline
 
 ```shell
 $ exit
@@ -264,7 +264,7 @@ $ exit
 
 (End of session. **Ctrl+D** at **`$ `** also exits.)
 
-#### Full login shell (`ash`)
+### Full login shell (`ash`)
 
 ```shell
 $ ashy
@@ -272,7 +272,7 @@ $ ashy
 
 Eline is replaced by **`/bin/ash --login`**. When you leave that shell, the remote session often ends because the original eline process is gone—plan accordingly (e.g. open a second session for tests).
 
-#### Network / system commands (passthrough)
+### Network / system commands (passthrough)
 
 These run via the device shell, not HE:
 
@@ -289,7 +289,7 @@ $
 
 Use a **space** where the prefix requires it (e.g. **`ping `**, **`ip `**, **`ls `**). **`router`** is not treated as **`route`**.
 
-#### Readline history
+### Readline history
 
 ```shell
 $ land@machine:name
@@ -366,8 +366,7 @@ All **other** lines go to **`line_he_command`** (same entry point as **`he`** wi
 
 - Use **Up/Down** to recall previous lines (readline **history**).  
 - **Blank line** or a line whose first byte is not printable is skipped (no HE call, no passthrough); it does not go into history.  
-- Full HE grammar, **`he` argv joining**, return types, and **`+` / `=` / `-`** modes are in **[he.md](he.md)**.  
-- Shared terminology: **[TERMINOLOGY.md](TERMINOLOGY.md)** (if present in this tree).
+- Full HE grammar, **`he` argv joining**, return types, and **`+` / `=` / `-`** modes are in **[he.md](he.md)**.
 
 ---
 
@@ -375,13 +374,13 @@ All **other** lines go to **`line_he_command`** (same entry point as **`he`** wi
 
 You manage the gateway through **component names**, **configuration paths**, and **methods** exactly as described in each component’s markdown. Eline only changes the **prompt** (`$ `) and adds **`set`** / passthrough; the mapping from documentation to input lines is unchanged.
 
-#### Where to find component docs
+### Where to find component docs
 
-- Browse **[online component documentation](../com/)** when your product ships that tree (same layout as in **he.md**). It is updated as features grow.  
-- In this **land** repository, many topics are also available as local files—for example **[syslog.md](syslog.md)** for syslog.  
+- Browse **[online component documentation](../com/)** when your product ships that tree (same layout as in **he.md**). It is updated as features grow.
+- In this **land** repository, many topics are also available as local files—for example **[syslog.md](syslog.md)** for syslog.
 - Or contact technical support for the correct document bundle for your firmware.
 
-#### How to read a component document
+### How to read a component document
 
 - Open the project, then the component page. It usually starts with a **functional overview**.  
 - **Configuration** shows the JSON shape: field names, nesting, and meanings. Those names are the **`component:attr/path`** segments you type in HE (and the attribute names you use after **`set component`**).  
@@ -389,7 +388,7 @@ You manage the gateway through **component names**, **configuration paths**, and
 
 Once you know the **component name** (for example **`land@syslog`** from **Configuration**), you can query, change, and invoke methods from eline using the same rules as **[he.md](he.md)**.
 
-#### Query configuration from the doc
+### Query configuration from the doc
 
 - **Full object** — type the component name alone:
 
@@ -415,7 +414,7 @@ info
 $ 
 ```
 
-#### Change configuration from the doc
+### Change configuration from the doc
 
 - **Single attribute** — **`component:attr=value`**:
 
@@ -441,7 +440,7 @@ ttrue
 $ 
 ```
 
-#### Call methods from the doc
+### Call methods from the doc
 
 Method names in the document map to **`component.method`** (and parameters to **`[...]`** if documented).
 
@@ -455,7 +454,7 @@ ttrue
 $ 
 ```
 
-#### Same workflow with **`set land@syslog`**
+### Same workflow with **`set land@syslog`**
 
 After you read **Configuration**, you can edit that object interactively: attribute lines use **only the path part** (no repeated **`land@syslog:`** prefix on each key).
 
@@ -478,5 +477,4 @@ Apply the same pattern for **any** other component: open its doc → note **comp
 
 ## See also
 
-- **[he.md](he.md)** — complete HE command reference.  
-- **[eline.cn.md](eline.cn.md)** — this document in Chinese.
+- **[he.md](he.md)** — complete HE command reference.

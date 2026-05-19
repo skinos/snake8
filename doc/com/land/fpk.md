@@ -1,6 +1,14 @@
 ## land@fpk — FPK Package Management
 
-Manage system FPK projects.
+### Overview
+
+Manage SkinOS fpk projects. An fpk project is a collection of programs, components, libraries, web UI pages and resources packaged into an installation archive.
+- create and delete projects in the application directory
+- add components, web UI pages, objects, and lifecycle hooks to a project
+- register and unregister project components with the system
+- install and uninstall fpk packages from files or directories
+- pack a project directory into an fpk archive file
+- list installed projects and query project information
 
 ### Concepts
 
@@ -27,19 +35,19 @@ Manage system FPK projects.
 * The FPK filename ends with `.fpk`
 * The FPK can be installed through the web page or command line.
 * Every FPK must include:
-	- Project information file named **prj.json**
+    - Project information file named **prj.json**
 * Each FPK can contain:
-	- Libraries
-	- Executable files
-	- Driver files
-	- Component files ending with `.com` / `.ash`
-	- Configuration files ending with `.cfg`
-	- Web page files ending with `.html`
-	- Language files ending with `.json`
-	- Shell script files ending with `.sh`
-	- Other resource files
-	- Library header files for development under `install/include` (used in SDK compilation)
-	- Libraries for development under `install/lib` (used in SDK compilation)
+    - Libraries
+    - Executable files
+    - Driver files
+    - Component files ending with `.com` / `.ash`
+    - Configuration files ending with `.cfg`
+    - Web page files ending with `.html`
+    - Language files ending with `.json`
+    - Shell script files ending with `.sh`
+    - Other resource files
+    - Library header files for development under `install/include` (used in SDK compilation)
+    - Libraries for development under `install/lib` (used in SDK compilation)
 
 #### Runtime install paths (symbols)
 
@@ -48,168 +56,32 @@ Documentation uses **angle-bracket placeholders** instead of fixed paths. They c
 | Symbol | Typical meaning | C macro (reference) |
 |--------|-----------------|---------------------|
 | **`⟨PRJ_ROOT⟩`** | Root directory of **installed** projects (FPK payloads) | **`PROJECT_DIR`** |
-| **`⟨PRJ_NAME⟩`** | One project’s subdirectory (same as `prj.json` → `name`) | — |
-| **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** | That project’s install prefix on the device | — |
+| **`⟨PRJ_NAME⟩`** | One project's subdirectory (same as `prj.json` → `name`) | — |
+| **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** | That project's install prefix on the device | — |
 | **`⟨LIB_DIR⟩`** | Global shared-library directory used for symlinks | **`PROJECT_LIB_DIR`** |
 | **`⟨BIN_DIR⟩`** | Global command directory used for symlinks | **`PROJECT_BIN_DIR`** |
 | **`⟨SYS_ROOT⟩`** | Running system root (for merged `rootfs/` trees, `/etc`, …) | — |
 
 Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so they stay valid when **`PROJECT_DIR`** is changed at build time.
 
-#### prj.json: project information file
-This file is generated automatically when the project is created. Understanding its format helps validate project development output.
-```json
-// Attributes
-{
-    "name":"project (FPK) name",                   // [ string ]
-    "intro":"project (FPK) introduction",          // [ string ]
-    "desc":"detailed description of the project",  // [ string ]
-    "type":"project (FPK) type",                   // [ "root" ], "root" means root permission is required
-    "version":"project (FPK) version",             // [ string ]
-    "author":"project (FPK) author",               // [ string ]
 
-    "osc":                           // all open-source programs included in the project are shown in these attributes
-    {
-        "open-source program directory":"description"
-        // "...":"..." One property is shown for each open-source program
-    },
-    "lib":                           // all libraries included in the project are shown in these attributes
-    {
-        "library directory":"description"
-        // "...":"..." One property is shown for each library
-    },
-    "exe":                           // all executable programs included in the project are shown in these attributes
-    {
-        "executable program directory":"description"
-        // "...":"..." One property is shown for each executable program
-    },
-    "com":                           // all components included in the project are shown in these attributes
-    {
-        "component directory":"description"
-        // "...":"..." One property is shown for each component
-    },
-    "res":                           // all resource files or directories included in the project are shown in these attributes
-    {
-        "resource file or directory":"description"
-        // "...":"..." One property is shown for each resource file or directory
-    },
-    "obj":                           // all objects (dynamic components) included in the project are shown in these attributes
-    {
-        "object name":"actual components"
-        // "...":"..." One property is shown for each object (dynamic component)
-    },
-    "init":                          // all startup items included in the project are shown in these attributes
-    {
-        "initialize level":"components method"
-        // "...":"..." One property is shown for each startup item
-    },
-    "uninit":                        // all shutdown items included in the project are shown in these attributes
-    {
-        "shutdown level":"components method"
-        // "...":"..." One property is shown for each shutdown item
-    },
-    "joint":                         // all joint process items included in the project are shown in these attributes
-    {
-        "joint event":"components method"
-        // "...":"..." One property is shown for each joint process item
-    }
-}
-// Example
-{
-    "name":"arch",                              // arch project
-    "intro":"mtk platform layer for farm os",   // project introduction
-    "desc":"This project for MTK chips provides a unified management and usage interface for upper-layer projects",
-                                                // project description
-    "type":"root",                              // indicates root permission is required
-    "version":"6.0.0",                          // version is 6.0.0
-    "author":"dimmalex@gmail.com",              // author is dimmalex@gmail.com
-    "osc":                                      // has 1 open-source program
-    {
-        "ntpclient":"ntp client"                      // ntpclient
-    },
-    "lib":                                      // has 1 library
-    {
-        "land":"core library"                         // land library
-    },
-    "exe":                                      // has 2 executable programs
-    {
-        "daemon":"service daemon",                    // daemon, service implementation
-        "he":"tools for calling all components"       // he command tool for skinos
-    },
-    "com":                                      // has 7 components
-    {
-        "device":"device information",                // device, manages all devices
-        "data":"data management",                     // data, manages configuration and EEPROM
-        "firmware":"firmware management",             // firmware
-        "gpio":"register and gpio management",        // gpio
-        "test":"test device management",              // test, manages factory tests
-        "ethernet":"ethernet switch management",      // ethernet
-        "mt7628":"802.11n wireless management"        // mt7628
-    },
-    "res":                                      // has 1 resource file
-    {
-        "testpage.py":"test only"                    // test tools for factory
-    },
-    "obj":                                      // has 2 objects (dynamic components)
-    {
-        "wifi@nradio":"mt7628",                      // object is wifi@nradio, actual components is mt7628
-        "test":"test"                                // object is test, actual components is test
-    },
-    "init":                                      // has 3 startup items
-    {
-        "ethernet":"arch@ethernet.setup",            // called at initialize level ethernet
-        "nradio":"wifi@nradio.setup",                // called at initialize level nradio
-        "aradio":"wifi@aradio.setup"                 // called at initialize level aradio
-    },
-    "uninit":                                      // has 2 shutdown items
-    {
-        "nradio":"wifi@nradio.shut",                 // called at shutdown level nradio
-        "aradio":"wifi@aradio.shut"                  // called at shutdown level aradio
-    },
-    "joint":                                      // has 14 joint process items
-    {
-        "firmware/upgrading":"arch@gpio.event",  // called when firmware/upgrading happens
-        "firmware/upgraded":"arch@gpio.event",   // arch@gpio.event call when firmware/upgraded happens
-        "network/arise":"arch@gpio.event",       // arch@gpio.event call when network/arise happens
-        "network/ready":"arch@gpio.event",
-        "network/lining":"arch@gpio.event",
-        "network/online":"arch@gpio.event",
-        "network/offline":"arch@gpio.event",
-        "modem/poweron":"arch@gpio.event",
-        "modem/poweroff":"arch@gpio.event",
-        "modem/msim":"arch@gpio.event",
-        "modem/bsim":"arch@gpio.event",
-        "signal/flash":"arch@gpio.event",
-        "nssid/up":"arch@gpio.event",
-        "nssid/down":"arch@gpio.event"
-    }    
-}
-```
+### API Reference
 
-### Configuration ( `land@fpk` )
+#### Control APIs
 
-The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `land@fpk:path`, merge `|{json}`, etc.).
-
-
-`land@fpk` does **not** use a standalone JSON configuration document like feature components. Each installed project carries its own **`prj.json`** under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**. The methods below register, unregister, or inspect those projects at runtime.
-
-### Component API
-
-+ `register[ project directory [, ...] ]` **register project(s) to the system**. This API is called at startup to register all projects.
-    - project directory ----------- [ string ], project directory
-    - ... ------------------------- [ string ], register multiple project directories
++ `register[ path, ... ]` **register one or more project directories with the system**   
+    - path, ... ----------- [ string ], one or more project directory paths to register
     - failed return tfalse
     - succeed return ttrue
 
     Example, register one project
     ```shell
-    land@fpk.register[ ⟨PRJ_ROOT⟩/uart ]
+    land@fpk.register[ /skinos/uart ]
     ttrue
     ```
 
-+ `unregister[ project name [, ...] ]` **unregister project(s) from the system**
-    - project name ----------- [ string ], project name
-    - ... ------------------------- [ string ], unregister multiple project names
++ `unregister[ name, ... ]` **unregister one or more projects from the system**   
+    - name, ... ----------- [ string ], one or more project names to unregister
     - failed return tfalse
     - succeed return ttrue
 
@@ -219,261 +91,298 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
     ttrue
     ```
 
-+ `list[ [project] ]` **list project information**
-    - project ----------- [ string ], when provided, get details for the specified project
-    - returns JSON
++ `install[ path, ... ]` **install one or more fpk packages from files or directories**   
+    - path, ... ----------- [ string ], each argument may be an fpk archive file or a directory containing prj.json
+    - failed return tfalse
+    - succeed return ttrue
 
-    Example, show project information for `ifname`
+    Example, install an fpk package
     ```shell
-    land@fpk.list[ifname]
+    land@fpk.install[ wui-7.0.0-x86.fpk ]
+    ttrue
+    ```
+
++ `uninstall[ name, ... ]` **uninstall one or more projects by name**   
+    - name, ... ----------- [ string ], one or more project names to uninstall; firmware projects are skipped
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, uninstall the wui project
+    ```shell
+    land@fpk.uninstall[ wui ]
+    ttrue
+    ```
+
++ `project_add[ name, intro ]` **create a new empty project**   
+    - name ----------- [ string ], the project name, used as the directory name under the application directory
+    - intro ---------- [ string ], optional, a short description of the project
+    - failed return NULL
+    - succeed return [ json ], project information including name, version, author, intro and path
+
+    ```json
     {
-        "name":"ifname",
-        "intro":"skinos common network connection",
-        "desc":"skinos ip connect and wifi connect component",
-        "type":"root",
-        "version":"8.0.0",
-        "author":"dimmalex@gmail.com",
-        "com":
-        {
-            "ethcon":"ethernet connect component",
-            "ltecon":"lte modem connect component"
-        },
-        "path":"⟨PRJ_ROOT⟩/ifname/",
-        "size":"74923"
+        "name": "project name",                // [ string ], the project name
+        "version": "project version",          // [ string ], default version
+        "author": "project author",            // [ string ], set to land@fpk
+        "intro": "project introduction",       // [ string ], the introduction text
+        "path": "project directory path"       // [ string ], absolute path to the project directory
     }
     ```
-    Example, show all project information
+
+    Example, create a new project called myapp
+    ```shell
+    land@fpk.project_add[ myapp, my application ]
+    {
+        "name":"myapp",                        # the project name
+        "version":"1.0.0",                     # default version
+        "author":"land@fpk",                   # set to land@fpk
+        "intro":"my application",              # the introduction text
+        "path":"/skinos/app/myapp"             # absolute path to the project directory
+    }
     ```
+
++ `project_delete[ name ]` **delete a project and all its files**   
+    - name ----------- [ string ], the project name to delete
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, delete the project myapp
+    ```shell
+    land@fpk.project_delete[ myapp ]
+    ttrue
+    ```
+
++ `project_check[ name ]` **check whether a project exists and is valid**   
+    - name ----------- [ string ], the project name to check
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, check if myapp exists
+    ```shell
+    land@fpk.project_check[ myapp ]
+    ttrue
+    ```
+
++ `project_pack[ name ]` **pack a project directory into an fpk archive file**   
+    - name ----------- [ string ], the project name to pack, must be under the application directory
+    - failed return NULL
+    - succeed return [ string ], the full path of the generated fpk file
+
+    Example, pack the project myapp
+    ```shell
+    land@fpk.project_pack[ myapp ]
+    /tmp/myapp-1.0.0-rk3568.fpk
+    ```
+
++ `com_add[ project, name, intro ]` **add a new component to a project**   
+    - project -------- [ string ], the project name
+    - name ----------- [ string ], the component name
+    - intro ---------- [ string ], optional, a short description of the component
+    - failed return NULL
+    - succeed return [ string ], the project directory path
+
+    Example, add a component called sta to project myapp
+    ```shell
+    land@fpk.com_add[ myapp, sta, station component ]
+    /skinos/app/myapp
+    ```
+
++ `wui_add[ project, name, menu ]` **add a web UI page to a project**   
+    - project -------- [ string ], the project name
+    - name ----------- [ string ], the web UI page name
+    - menu ----------- [ string ], the menu label displayed in the web interface
+    - failed return NULL
+    - succeed return [ json ], web UI information including page path and language file paths
+
+    ```json
+    {
+        "en": "menu label",                    // [ string ], the English menu label
+        "page": "html file path",              // [ string ], absolute path to the HTML page
+        "lang":                                // [ json ], language file paths
+        {
+            "cn": "chinese language file path",   // [ string ], path to Chinese language JSON
+            "en": "english language file path"    // [ string ], path to English language JSON
+        }
+    }
+    ```
+
+    Example, add a web UI page called settings to project myapp
+    ```shell
+    land@fpk.wui_add[ myapp, settings, Settings ]
+    {
+        "en":"Settings",                           # the English menu label
+        "page":"/skinos/app/myapp/settings.html",  # absolute path to the HTML page
+        "lang":
+        {
+            "cn":"/skinos/app/myapp/settings-cn.json",  # path to Chinese language JSON
+            "en":"/skinos/app/myapp/settings-en.json"   # path to English language JSON
+        }
+    }
+    ```
+
++ `obj_add[ project, object, origin ]` **add an object mapping to a project**   
+    - project -------- [ string ], the project name
+    - object --------- [ string ], the object name to register in the system
+    - origin --------- [ string ], the source component name within the project
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, register object station pointing to component sta in myapp
+    ```shell
+    land@fpk.obj_add[ myapp, station, sta ]
+    ttrue
+    ```
+
++ `init_add[ project, level, call ]` **add an init hook to a project**   
+    - project -------- [ string ], the project name
+    - level ---------- [ string ], the init level or stage name
+    - call ----------- [ string ], the component method to call at init time
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, add an init hook to myapp
+    ```shell
+    land@fpk.init_add[ myapp, ethernet, myapp.sta.setup ]
+    ttrue
+    ```
+
++ `uninit_add[ project, level, call ]` **add an uninit hook to a project**   
+    - project -------- [ string ], the project name
+    - level ---------- [ string ], the uninit level or stage name
+    - call ----------- [ string ], the component method to call at uninit time
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, add an uninit hook to myapp
+    ```shell
+    land@fpk.uninit_add[ myapp, nradio, myapp.sta.shut ]
+    ttrue
+    ```
+
++ `joint_add[ project, level, call ]` **add a joint event hook to a project**   
+    - project -------- [ string ], the project name
+    - level ---------- [ string ], the joint event name to subscribe to
+    - call ----------- [ string ], the component method to call when the event fires
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, add a joint hook for network/online event to myapp
+    ```shell
+    land@fpk.joint_add[ myapp, network/online, myapp.sta.event ]
+    ttrue
+    ```
+
+#### Query APIs
+
++ `list[ project ]` **list all installed projects or get details of a specific project**   
+    - project ----------- [ string ], optional, when provided, return detailed info of that project only
+    - failed return NULL
+    - succeed return [ json ], when no argument: a map of project name to summary; when project given: the full project info
+
+    ```json
+    {
+        "project name":                          // [ string ]: { json }, project name in system
+        {                                             // project summary information
+            "path": "project directory path",     // [ string ], absolute path to the project directory
+            "size": "directory size in bytes",    // [ number ], total size of the project directory
+            "intro": "project introduction",      // [ string ], short description from prj.json
+            "version": "project version",         // [ string ], version string from prj.json
+            "author": "project author"            // [ string ], author from prj.json
+        }
+        // "...":{...}  How many projects show how many properties
+    }
+    ```
+
+    Example, list all installed projects
+    ```shell
     land@fpk.list
     {
         "agent":
         {
-            "path":"⟨PRJ_ROOT⟩/agent/",
-            "size":"155997",
-            "intro":"agent for remote or cloud control",
-            "version":"7.0.0",
-            "author":"dimmalex@gmail.com"
+            "path":"/skinos/agent/",                     # absolute path to the project directory
+            "size":155997,                               # total size of the project directory
+            "intro":"agent for remote or cloud control", # short description
+            "version":"7.0.0",                           # version string
+            "author":"dimmalex@gmail.com"                # author
         },
         "arch":
         {
-            "path":"⟨PRJ_ROOT⟩/arch/",
-            "size":"289294",
+            "path":"/skinos/arch/",
+            "size":289294,
             "intro":"mtk mt7981 platform layer for skinos",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "client":
-        {
-            "path":"⟨PRJ_ROOT⟩/client/",
-            "size":"66180",
-            "intro":"Client management",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "clock":
-        {
-            "path":"⟨PRJ_ROOT⟩/clock/",
-            "size":"59199",
-            "intro":"System clock management",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "forward":
-        {
-            "path":"⟨PRJ_ROOT⟩/forward/",
-            "size":"157035",
-            "intro":"Network forward function",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "ifname":
-        {
-            "path":"⟨PRJ_ROOT⟩/ifname/",
-            "size":"74923",
-            "intro":"skinos common network connection",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "land":
-        {
-            "path":"⟨PRJ_ROOT⟩/land/",
-            "size":"153711",
-            "intro":"component infrastructure",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "modem":
-        {
-            "path":"⟨PRJ_ROOT⟩/modem/",
-            "size":"185095",
-            "intro":"modem management",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "network":
-        {
-            "path":"⟨PRJ_ROOT⟩/network/",
-            "size":"479667",
-            "intro":"network infrastructure",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "pdriver":
-        {
-            "path":"⟨PRJ_ROOT⟩/pdriver/",
-            "size":"467419",
-            "intro":"Portable driver",
-            "version":"6.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "tui":
-        {
-            "path":"⟨PRJ_ROOT⟩/tui/",
-            "size":"37987",
-            "intro":"Terminal user interface service",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "webs":
-        {
-            "path":"⟨PRJ_ROOT⟩/webs/",
-            "size":"49283",
-            "intro":"web server",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "wifi":
-        {
-            "path":"⟨PRJ_ROOT⟩/wifi/",
-            "size":"108456",
-            "intro":"skinos wireless configure",
-            "version":"8.0.0",
-            "author":"dimmalex@gmail.com"
-        },
-        "wui":
-        {
-            "path":"⟨PRJ_ROOT⟩/wui/",
-            "size":"20066",
-            "intro":"web user interface page",
             "version":"8.0.0",
             "author":"dimmalex@gmail.com"
         }
     }
     ```
 
-
-+ `install[ path [,...] ]` **install FPK archive(s) or expanded project directory(ies)**
-    - path --------------- [ string ], each argument may be a **`.fpk` / tarball** (extracted under `/tmp` first) or a **directory** that already contains **`prj.json`**
-    - ... ---------------- [ string ], install multiple paths in one call
-    - failed return tfalse
-    - succeed return ttrue (behavior described above: directory or archive)
-
-    Example, install the `wui` project FPK to the system
+    Example, get details of a specific project
     ```shell
-    land@fpk.install[ wui-7.0.0-x86.fpk ]
-    ttrue
+    land@fpk.list[ ifname ]
+    {
+        "name":"ifname",                                 # the project name
+        "intro":"skinos common network connection",      # short description
+        "desc":"skinos ip connect and wifi connect component",  # detailed description
+        "type":"root",                                   # project type
+        "version":"8.0.0",                               # version string
+        "author":"dimmalex@gmail.com",                   # author
+        "com":
+        {
+            "ethcon":"ethernet connect component",       # component name and description
+            "ltecon":"lte modem connect component"       # component name and description
+        },
+        "path":"/skinos/ifname/",                        # absolute path to the project directory
+        "size":74923                                     # total size of the project directory
+    }
     ```
 
-+ `uninstall[ project name [,...] ]` **uninstall project(s) from the system**
-    - project name ----------- [ string ], project name
-    - ... ---------------- [ string ], uninstall multiple projects
-    - failed return tfalse
-    - succeed return ttrue
++ `number[]` **get the total number of installed projects**   
+    - failed return [ number ], returns 0 when no projects exist
+    - succeed return [ number ], the count of installed projects
 
-    Example, uninstall the `wui` project from the system
+    Example, count installed projects
     ```shell
-    land@fpk.uninstall[ wui ]
-    ttrue
-    ```
-
-+ `number` **get the number of installed projects**
-    - failed return tfalse
-    - return the number of installed projects
-
-    Example, get the number of installed projects
-    ```shell
-    land@fpk.number
+    land@fpk.number[]
     15
     ```
 
-+ `project_add[ name, [intro] ]` **create a minimal writable project** (under **`PROJECT_APP_DIR`**, same tree **`install`** uses)
-    - **name** ----------- [ string ], directory / `prj.json` → `name` (required)
-    - **intro** ---------- [ string ], optional; written into **`prj.json`**
-    - failed return **NULL** (**EINVAL** if name missing)
-    - succeed return JSON (includes **`path`** to the new project directory, default **`version`**, **`author`** set to **`land@fpk`**)
-
-+ `project_delete[ name ]` **delete a project directory**
-    - **name** ----------- [ string ], project name whose path is resolved by **`project_path`**
-    - failed return **tfalse**
-    - succeed return **ttrue** (runs **`rm -fr`** on that directory)
-
-+ `project_check[ name ]` **validate that a project exists and passes internal checks**
-    - **name** ----------- [ string ]
-    - failed return **tfalse**
-    - succeed return **ttrue** when the project passes **`project_check`**
-
-+ `project_pack[ name ]` **pack a writable project into a `.fpk` tarball**
-    - **name** ----------- [ string ], must resolve under **`PROJECT_APP_DIR`** (not under firmware **`PROJECT_DIR`** — otherwise **EPERM** / **NULL**)
-    - failed return **NULL**
-    - succeed return talk string path to **`⟨TMP⟩/name-⟨version⟩-⟨hardware⟩.fpk`** ( **`PROJECT_TMP_DIR`**, **`PROJECT_DEFAULT_VERSION`**, register **`hardware`**; archive is **`tar zcf`** of project contents)
-
-+ `com_add[ prj, name, [intro] ]` **add a shell-backed component stub to a project**
-    - **prj** ------------ [ string ], project name (path via **`project_path`**)
-    - **name** ----------- [ string ], component short name; runtime object is **`prj`⟨@⟩`name`** (see **`PROJECT_OBJECT_GAPC`**)
-    - **intro** ---------- [ string ], optional description stored under **`prj.json` → `com`**
-    - copies template **`comshell`** into the project, updates **`prj.json`**, then calls **`com_register( prj@name, path_to_comshell, 0 )`** — second-argument semantics match **`land@component.register`** / **`com_register(..., 0)`** (**`COM_COM`** map lookup for **`type` 0**)
-    - failed return **NULL**
-    - succeed return talk string: project directory path
-
-+ `wui_add[ prj, name, menu ]` **add a Web UI menu entry and scaffold files**
-    - **prj** ------------ [ string ], project name
-    - **name** ----------- [ string ], key under **`prj.json` → `wui`**
-    - **menu** ----------- [ string ], English menu label (stored in **`en`**)
-    - creates **`name.html`** from template, **`name-cn.json`** / **`name-en.json`**, updates **`prj.json`**
-    - failed return **NULL**
-    - succeed return JSON for the new **`wui`** entry (paths filled to absolute files)
-
-+ `obj_add[ prj, object, origin ]` **add a dynamic object mapping and register it**
-    - **prj** ------------ [ string ], project name
-    - **object** --------- [ string ], object name ( **`prj.json` → `obj`** key)
-    - **origin** --------- [ string ], backing component catalog name ( **`obj`** value), used to build **`land@component.register`** second argument as **`prj`⟨@⟩`origin`**
-    - updates **`prj.json`**, then **`land@component.register[ object, prj@origin ]`**
-    - failed return **tfalse**
-    - succeed return **ttrue**
-
-+ `init_add[ prj, level, call ]` **append an init slot and register it at runtime**
-    - **prj** / **level** / **call** --- [ string ]; **`level`** is the key under **`prj.json` → `init`**, **`call`** is the method string (e.g. **`arch@ethernet.setup`**)
-    - updates **`prj.json`**, then **`land@init.register[ level, call ]`**
-    - failed return **tfalse**, succeed **ttrue**
-
-+ `uninit_add[ prj, level, call ]` **append an uninit slot and register it**
-    - same shape as **`init_add`**, for **`prj.json` → `uninit`** and **`land@uninit.register`**
-
-+ `joint_add[ prj, level, call ]` **append a joint slot and register it**
-    - same shape as **`init_add`**, for **`prj.json` → `joint`** and **`land@joint.register`** ( **`level`** is the event key)
-
-+ `wui_menu[ [type] ]` **get the Web UI menu structure**
-    - **type** ----------- [ string ], optional; names the **`prj.json`** top-level object to scan (default **`wui`**). Use another key if your project stores pages there under a different section name.
-    - Skips projects whose name maps to **`disable`** in the **`project`** object under the platform **custom** component (object name varies by product; often **`arch@custom`**).
-    - For each menu item: may require existing config (**`config`** / **`attr`**) or a live **`object`**/**`api`** (**`com_have`**); entries that fail those checks are omitted.
++ `wui_menu[ type ]` **get the web UI menu structure for all enabled projects**   
+    - type ----------- [ string ], optional, the prj.json top-level key to scan, default is "wui"
     - failed return NULL
-    - return JSON describing the Web UI menu structure (**`page`** / **`lang`** paths rewritten to absolute paths)
+    - succeed return [ json ], a map of app name to web UI entry with page path, language files and display conditions
 
-    Example, get the Web UI menu
+    ```json
+    {
+        "app_menu name":                         // [ string ]: { json }, combined key of project and menu name
+        {                                             // web UI menu entry
+            "menu": "menu category",              // [ string ], the menu category label
+            "cn": "chinese label",                // [ string ], Chinese display name
+            "en": "english label",                // [ string ], English display name
+            "page": "html page path",             // [ string ], absolute path to the HTML page
+            "lang":                               // [ json ], language file paths
+            {
+                "cn": "chinese lang path",        // [ string ], path to Chinese language file
+                "en": "english lang path"         // [ string ], path to English language file
+            }
+        }
+        // "...":{...}  How many menu entries show how many properties
+    }
+    ```
+
+    Example, get the web UI menu
     ```shell
     land@fpk.wui_menu
     {
         "wifi_aclient":
         {
-            "menu":"Wireless",
-            "cn":"5.8G客户端",
-            "en":"5.8G Clients",
-            "page":"/skinos/wifi/client.html",
-            "object":"wifi@a",
+            "menu":"Wireless",                       # the menu category label
+            "cn":"5.8G客户端",                        # Chinese display name
+            "en":"5.8G Clients",                     # English display name
+            "page":"/skinos/wifi/client.html",       # absolute path to the HTML page
             "lang":
             {
-                "cn":"/skinos/wifi/cn",
-                "en":"/skinos/wifi/en"
+                "cn":"/skinos/wifi/cn",              # path to Chinese language file
+                "en":"/skinos/wifi/en"               # path to English language file
             }
         },
         "wui_webs":
@@ -482,7 +391,6 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
             "cn":"WEB服务器",
             "en":"Web Server",
             "page":"/skinos/wui/admin.html",
-            "config":"wui@admin",
             "lang":
             {
                 "cn":"/skinos/wui/cn",
@@ -491,22 +399,3 @@ The **saved configuration object** for `land@fpk` (query/set via `land@fpk`, `la
         }
     }
     ```
-
-### Lifecycle API
-
-+ **No** `setup[]` in the usual sense — **`land@fpk`** exposes **register/install** APIs used during boot.
-+ See **Component API** for **`register[]`**, **`install[]`**, etc.
-
-
-### C Code Example
-
-```c
-#include "skin/skin.h"
-
-static void example_land_fpk(void)
-{
-    talk_t ret = scall("land@fpk", "number", NULL);
-    (void)ret;
-}
-```
-

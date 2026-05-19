@@ -1,18 +1,28 @@
 ## ifname@lan — Local/LAN Network Management
-Manage local (LAN) networks. This component depends on a local network interface or switch (SoC), typically via **`arch`** (`ethernet`, bridge/VLAN wiring), and the **network** project (`network@frame` registration — see [`../network/frame.md`](../network/frame.md)).  
+
+### Overview
+
+Manage local (LAN) networks. This component depends on a local network interface or switch (SoC), typically via **`arch`** (`ethernet`, bridge/VLAN wiring), and the **network** project (`network@frame` registration — see [`../network/frame.md`](../network/frame.md)).
 Usually `ifname@lan` is the first local network. If there are multiple local networks, `ifname@lan2` is the second local network, and numbering increases sequentially.
 
-### Configuration ( `ifname@lan` )
-**ifname@lan** is first local network   
-**ifname@lan2** is second local network   
+- manages LAN interface lifecycle: setup, shutdown, status query
+- supports static IPv4 and DHCPv6/SLAAC IPv6 addressing
+- provides DHCP server for local clients
+- no NAT masquerade (it IS the LAN, not NATted)
+
+
+
+### Configuration reference ( ifname@lan )
 
 ```json
-// Attribute introduction
+// Attributes introduction 
 {
-    "status":"start at system startup",    // [ "enable", "disable" ], enable means auto-setup after boot
+    "status":"start at system startup",                          // [ "enable", "disable" ], enable means auto-setup after boot
 
     // IPv4
-    "mode":"IPV4 address mode",            // [ "dhcpc" ] DHCP client mode, [ "static" ] manual IPv4 setting
+    "mode":"IPV4 address mode",                                  // [ "dhcpc", "static" ]
+                                                                      // "dhcpc" for DHCP client mode
+                                                                      // "static" for manual IPv4 setting
     "static":                                 // detail configuration for "mode" is "static"
     {
         "ip":"IPv4 address",                        // < ipv4 address >
@@ -30,8 +40,8 @@ Usually `ifname@lan` is the first local network. If there are multiple local net
         "static":"Set an IP address before obtaining IP via DHCP", // [ "disable", "enable" ], temporary fallback address
         "routeopt":"dhcp option static route",                     // [ "disable", "enable" ], accept classless static routes
         "custom_dns":"Custom DNS",                                 // [ "disable", "enable" ]
-        "dns":"Custom DNS1",                                       // [ ip address ], This is valid when "custom_dns" is "enable"
-        "dns2":"Custom DNS2"                                       // [ ip address ], This is valid when "custom_dns" is "enable"
+        "dns":"Custom DNS1",                                       // [ ip address ], valid when "custom_dns" is "enable"
+        "dns2":"Custom DNS2"                                       // [ ip address ], valid when "custom_dns" is "enable"
     },
     "dhcps":                                               // detail configuration for DHCP server settings
     {
@@ -62,23 +72,24 @@ Usually `ifname@lan` is the first local network. If there are multiple local net
     "automatic":                             // detail configuration for "method" is "automatic"
     {
         "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
-        "resolve":"Custom DNS1",                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
-        "resolve2":"Custom DNS2"                         // [ ipv6 address ], This is valid when "custom_resolve" is "enable"
+        "resolve":"Custom DNS1",                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
+        "resolve2":"Custom DNS2"                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
     },
     "addrpool":
     {
         "status":"DHCPv6 service type",                                      // [ "disable", "enable" ]
         "startaddr":"The start address within the IPv6 allocation pool",     // [ ipv6 address ]
-        "endaddr":"IPv6 assigns the end address within the pool",            // [ ipv4 address ]
-        "prefix":"IPv6 assigns a subnet mask within a pool",                 // [ ipv4 netmask ]
+        "endaddr":"IPv6 assigns the end address within the pool",            // [ ipv6 address ]
+        "prefix":"IPv6 assigns a subnet mask within a pool",                 // [ ipv6 address ]
         "leasetime":"lease time for assigns",                                // [ number ], the unit is second
-        "hop":"Specifies the IPv4 gateway",                                  // [ ipv4 address ], default is local network IP address
-        "resolve":"Specifies the IPv4 DNS",                                  // [ ipv4 address ], default is local network IP address
-        "resolve2":"Specifies the IPv4 backup dns"                           // [ ipv4 address ]
+        "hop":"Specifies the IPv6 gateway",                                  // [ ipv6 address ], default is local network IP address
+        "resolve":"Specifies the IPv6 DNS",                                  // [ ipv6 address ], default is local network IP address
+        "resolve2":"Specifies the IPv6 backup dns"                           // [ ipv6 address ]
     }
-
 }
-```   
+```
+
+#### Configuration example
 
 Example, show all configuration of the first local network
 ```shell
@@ -91,7 +102,6 @@ ifname@lan
         "mask":"255.255.255.0"                       # IPv4 netmask is 255.255.255.0
     },
     "method":"automatic",                            # IPv6 address mode is automatic
-
     "dhcps":
     {
         "status":"enable",           # enable the DHCP server
@@ -101,54 +111,60 @@ ifname@lan
         "lease":"86400",             # lease is 86400
         "gw":"",                     # not configure the gateway, default assigns 192.168.1.1
         "dns":""                     # not configure the dns, default assigns 192.168.1.1
-    }    
+    }
 }
-```   
+```
 
-Example, modify the first local network IP address (takes effect after restart)
+#### Configuration settings example
+
+Example, modify the first local network IP address
 ```shell
 ifname@lan:static/ip=192.168.2.1
 ttrue
-```   
+```
 
-Example, disable DHCP server on the first local network (takes effect after restart)
+Example, disable DHCP server on the first local network
 ```shell
 ifname@lan:dhcps/status=disable
 ttrue
-```     
+```
 
-Example, modify DHCP pool of the first local network: start IP `192.168.2.100`, end IP `192.168.2.200`
+Example, merge set DHCP pool of the first local network( include "startip" "endip" )
 ```shell
 ifname@lan:dhcps|{"startip":"192.168.2.100","endip":"192.168.2.200"}
 ttrue
 ```
 
-Examples, change several attributes at once (**merge**)
-```shell
-ifname@lan|{"status":"enable","mode":"static"}
-ttrue
-```
 
-### Component API
-**Directly callable** APIs: `ifname@lan.method`, `ifname@lan2.method`, …
 
-**ifname@lan** is first local network  
-**ifname@lan2** is second local network
+### API Reference
 
-+ `status[]` **get local network information** 
-    - failed: return `NULL`
-    - error: return `terror`   
-    - success: return JSON status information  
+#### Management APIs
+
++ `setup[]` **setup the local network**
+    - failed return tfalse
+    - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Not intended for manual invocation
+
++ `shut[]` **shutdown the local network**
+    - failed return tfalse
+    - succeed return ttrue
+
+
+#### Query APIs
+
++ `status[]` **get local network information**
+    - failed return NULL
+    - succeed return [ json ], local network status information
     ```json
-    // Attributes introduction of talk by the method return
     {
         "status":"Current state",        // [ "nodevice", "uping", "down", "up" ]
                                              // "nodevice" means the underlying device is not present
                                              // "uping" means connecting
                                              // "down" means interface is down
                                              // "up" means connection is established
-
-        "mode":"IPV4 address mode",     // [ "dhcpc" ] for DHCP, [ "static" ] for manual setting
+        "mode":"IPV4 address mode",     // [ "dhcpc", "static" ]
         "netdev":"netdev name",         // [ string ]
         "ifdev":"ifdev name",           // [ string ], Optional
         "gw":"gateway ip address",      // [ ip address ], Optional
@@ -158,29 +174,26 @@ ttrue
         "mask":"network mask",          // [ ip address ]
         "ontime":"online uptime",       // [ string ], Optional, online system uptime
         "livetime":"online time",       // [ string ], format is hour:minute:second:day
-        "rx_bytes":"send bytes",        // [ number ]
-        "rx_packets":"send packets",    // [ number ]
-        "tx_bytes":"receive bytes",     // [ number ]
-        "tx_packets":"receive packets", // [ number ]
+        "rx_bytes":"received bytes",    // [ number ]
+        "rx_packets":"received packets",// [ number ]
+        "tx_bytes":"sent bytes",        // [ number ]
+        "tx_packets":"sent packets",    // [ number ]
         "mac":"MAC address",            // [ mac address ]
-
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], optional, present when IPv6 is enabled
+        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, present when IPv6 is enabled
                                             // "manual" for manual setting
                                             // "automatic" for DHCPv6
                                             // "slaac" for Stateless address autoconfiguration
         "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
         "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
         "addr3":"IPv6 address3"         // [ ipv6 address ], Optional, exist when IPV6 enable
-
     }
-    ```   
+    ```
 
     Example, get the first local network information
     ```shell
     ifname@lan.status
     {
         "status":"up",                     # connect is succeed
-
         "mode":"static",                   # IPv4 connect mode is static
         "netdev":"lan",                    # netdev is lan
         "ip":"192.168.1.1",                # ip address is 192.168.1.1
@@ -191,97 +204,27 @@ ttrue
         "tx_bytes":"1320",                 # send 1320 bytes
         "tx_packets":"4",                  # send 4 packets
         "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
-
         "method":"slaac",                  # IPv6 address mode is slaac
         "addr":"fe80::50:f4ff:fe00:0"      # local IPv6 address is fe80::50:f4ff:fe00:0
     }
-    ```   
+    ```
 
-+ `netdev[]` **get the netdev**   
-    - failed: return `NULL`
-    - error: return `terror`   
-    - success: return netdev string  
++ `netdev[]` **get the netdev**
+    - failed return NULL
+    - succeed return [ string ], the netdev name
 
     Example, get the first local network netdev
     ```shell
     ifname@lan.netdev
     lan
-    ```   
+    ```
 
-+ `ifdev[]` **get the ifdev**   
-    - failed: return `NULL`
-    - error: return `terror`   
-    - success: return ifdev component name  
++ `ifdev[]` **get the ifdev**
+    - failed return NULL
+    - succeed return [ string ], the ifdev component name
 
     Example, get the first local network ifdev
     ```shell
     ifname@lan.ifdev
     vlan@lan
-    ```   
-
-+ `shut[]` **shutdown the local network**  
-    - failed: return `tfalse`
-    - error: return `terror`   
-    - success: return `ttrue`
-
-    Example, shutdown the first local network
-    ```shell
-    ifname@lan.shut
-    ttrue
-    ```   
-    Example, shutdown the second local network
-    ```shell
-    ifname@lan2.shut
-    ttrue
-    ```   
-
-+ `setup[]` **setup the local network**   
-    - failed: return `tfalse`
-    - error: return `terror`   
-    - success: return `ttrue`
-
-    Example, setup the first local network
-    ```shell
-    ifname@lan.setup
-    ttrue
-    ```   
-    Example, setup the second local network
-    ```shell
-    ifname@lan2.setup
-    ttrue
     ```
-
-### Lifecycle API
-+ `setup[]` / `shut[]` — same entries as under **Component API**. The reference **ifname** package does not schedule **`init`/`uninit`** for **`ifname@lan`**; the **network** stack or product code calls **`setup[]` / `shut[]`**.
-
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_ifname_lan(void)
-{
-    char buf[128];
-    boole ok;
-    if (sgets_string(buf, sizeof(buf), "ifname@lan", "status") == NULL)
-        return -1;
-    ok = ssets_string("ifname@lan", "value", "status");
-    return ok ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* Example: scall("ifname@lan", "status", NULL); then talk_free if JSON */
-```

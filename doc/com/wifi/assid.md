@@ -1,49 +1,63 @@
 ## wifi@assid — 5.8G SSID Management
-Manage 5.8G SSID
-Usually wifi@assid is the first 5.8G SSID. If there are multiple 5.8G SSID in the system, wifi@assid2 will be the second 5.8G SSID, and increase by degress
 
-### Configuration ( `wifi@assid` )
-**wifi@assid** is first 5.8G SSID   
-**wifi@assid2** is second 5.8G SSID   
+### Overview
+
+Manage 5.8G wireless SSID (access point) interfaces. Each 5.8G radio can have multiple SSIDs, providing separate wireless networks on the same radio. Usually **`wifi@assid`** is the first 5.8G SSID. If there are multiple 5.8G SSIDs in the system, **`wifi@assid2`** is the second, and numbering increases sequentially.
+
+- manages SSID lifecycle: setup, shutdown, connection monitoring
+- supports WPA/WPA2/WPA3 security modes
+- provides access control (ACL) with white list and black list
+- supports client isolation and SSID broadcast control
+- provides client list and client disconnect functionality
+
+
+
+### Configuration reference ( wifi@assid )
 
 ```json
-// Attribute introduction
+// Attributes introduction 
 {
-    "status":"SSID status",                 // [ "enable", "disable" ]
-    "ssid":"SSID name",                     // [ string ]
-    "isolated":"isolated clients",          // [ "enable", "disable" ]
-    "broadcast":"broadcast SSID",           // [ "enable", "disable" ]
-    "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                // disable for disable the secure
-                                                // wpapsk for WPAPSK
-                                                // wpa2psk for WPA2PSK
-                                                // wpapskwpa2psk for WPA Auto
-    "wpa_encrypt":"wpa encrypt mode",       // [ "aes", "tkip", "tkipaes" ]
-                                                // aes for AES
-                                                // tkip for TKIP
-                                                // tkipaes for Auto
-    "wpa_key":"WPA password",               // [ string ], the length must be greater than 8
-    "wpa_rekey":"WPA key renegotiate time", // [ number ], the unit is second, space for no renegotiate
+    "status":"SSID status",                                    // [ "enable", "disable" ]
+    "ssid":"SSID name",                                        // [ string ]
+    "isolated":"isolated clients",                             // [ "enable", "disable" ]
+    "broadcast":"broadcast SSID",                              // [ "enable", "disable" ]
+    "secure":"secure mode",                                    // [ "disable", "owe", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+                                                                    // "disable" for no security
+                                                                    // "owe" for Opportunistic Wireless Encryption
+                                                                    // "wpapsk" for WPAPSK
+                                                                    // "wpa2psk" for WPA2PSK
+                                                                    // "wpa3psk" for WPA3PSK
+                                                                    // "wpapskwpa2psk" for WPA1/WPA2 PSK Auto
+                                                                    // "wpa2pskwpa3psk" for WPA2/WPA3 PSK Auto
+    "wpa_encrypt":"WPA encrypt mode",                          // [ "aes", "tkip", "tkipaes" ]
+                                                                    // "aes" for AES
+                                                                    // "tkip" for TKIP
+                                                                    // "tkipaes" for Auto
+    "wpa_key":"WPA password",                                  // [ string ], minimum 8 characters
+    "wpa_rekey":"WPA key renegotiate time",                    // [ number ], the unit is second, empty for no renegotiate
 
-    "acl":"access control function",        // [ "disable", "accept", "drop" ]
-                                                // disable 
-                                                // accept for white list
-                                                // drop for blacklist
-    "acl_table":                            // white list or black list, vaild when acl be "accept" or "drop"
+    "acl":"access control function",                           // [ "disable", "accept", "drop" ]
+                                                                    // "disable" for no ACL
+                                                                    // "accept" for white list
+                                                                    // "drop" for black list
+    "acl_table":                             // white list or black list, valid when acl is "accept" or "drop"
     {
-        "MAC Address":"",                   // [ MAC address ]:""
-        //... more mac address
+        "MAC Address":"",                   // [ mac address ]: [ string ]
+        // "...":"..."  How many MAC addresses show how many properties
     },
-    "maxsta":"maximum number of clients",   // [ nubmer ], space for no limit
+    "maxsta":"maximum number of clients",                      // [ number ], empty for no limit
+    "wds":"WDS station mode",                                  // [ "enable", "disable" ]
 
-    "wmm":"WMM state",                      // [ "enable", "disable" ]
-    "options":                              // custom attribute list for radio chip
+    "wmm":"WMM state",                                         // [ "enable", "disable" ]
+    "options":                             // custom attribute list for radio chip
     {
-        "custom attribute":"value of custom attribute",
-        //... more custom attribute
+        "custom attribute":"value",          // [ string ]: [ string ]
+        // "...":"..."  How many attributes show how many properties
     }
 }
 ```
+
+#### Configuration example
 
 Example, show first 5.8G SSID all configure
 ```shell
@@ -51,14 +65,14 @@ wifi@assid
 {
     "status":"enable",              # enable the SSID
     "ssid":"5228-test-5.8g",        # SSID name is 5228-test-5.8g
-    "isolated":"disable",           # clients are not quarantined, client can access echo other
+    "isolated":"disable",           # clients are not quarantined, client can access each other
     "broadcast":"enable",           # broadcast the SSID name
     "secure":"wpapskwpa2psk",       # secure mode is WPA Auto
-    "wpa_encrypt":"tkipaes",        # WAP encrypt is Auto
+    "wpa_encrypt":"tkipaes",        # WPA encrypt is Auto
     "wpa_key":"22222222",           # WPA encrypt key is 22222222
     "wpa_rekey":"",                 # WPA encrypt key no renegotiate
     "acl":"accept",                 # white list
-    "acl_table":                    # white list content, only the MAC address 00:22:33:11:33:22/00:22:33:11:33:23/00:22:33:11:33:24/00:22:33:11:33:EB can access
+    "acl_table":                    # white list content, only these MAC addresses can access
     {
         "00:22:33:11:33:22":"",
         "00:22:33:11:33:23":"",
@@ -68,9 +82,11 @@ wifi@assid
     "maxsta":"64",                  # supports simultaneous access by a maximum of 64 clients
     "wmm":"enable"                  # enable the WMM
 }
-```  
+```
 
-Example, modify the first 5.8G SSID name be myNewSSID
+#### Configuration settings example
+
+Example, modify the first 5.8G SSID name
 ```shell
 wifi@assid:ssid=myNewSSID
 ttrue
@@ -82,22 +98,9 @@ wifi@assid:status=disable
 ttrue
 ```
 
-Example, enable the first 5.8G SSID
+Example, merge set the first 5.8G SSID secure configure( include "secure" "wpa_encrypt" "wpa_key" )
 ```shell
-wifi@assid:status=enable
-ttrue
-```
-
-Example, modify the first 5.8G SSID secure mode to WPAPSK and change the wpa key to 88888888
-```shell
-wifi@assid:secure=wpapsk            # modify the secure mode to WPAPSK
-ttrue
-wifi@assid:wpa_encrypt=tkipaes      # modify the WAP encrypt to auto
-ttrue
-wifi@assid:wpa_key=88888888         # modify the WPA encrypt key is 88888888
-ttrue
-# You can also use one command to complete the operation of the above three command
-wifi@assid|{"secure":"wpapsk", "wpa_encrypt":"tkipaes", "wpa_key":"88888888"}
+wifi@assid|{"secure":"wpapsk","wpa_encrypt":"tkipaes","wpa_key":"88888888"}
 ttrue
 ```
 
@@ -107,39 +110,47 @@ wifi@assid2:status=disable
 ttrue
 ```
 
-### Component API
-**Directly callable** APIs: `wifi@assid.method`, `wifi@assid2.method`, … (HE / eline / HTTP `/he`).
 
-**wifi@assid** is first 5.8G SSID  
-**wifi@assid2** is second 5.8G SSID
 
-+ `status[]` **get the SSID infomation**   
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **setup the SSID**
+    - failed return tfalse
+    - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Not intended for manual invocation
+
++ `shut[]` **shutdown the SSID**
+    - failed return tfalse
+    - succeed return ttrue
+
+
+#### Query APIs
+
++ `status[]` **get the SSID information**
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this infomation   
+    - succeed return [ json ], SSID status information
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "status":"current status",              // [ "up", "down" ], "up" for enable, "down" for disable
-        "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                        // disable for disable the secure
-                                                        // wpapsk for WPAPSK
-                                                        // wpa2psk for WPA2PSK
-                                                        // wpapskwpa2psk for WPA Auto
-        "rx_bytes":"recvice bytes",             // [ nubmer ]
-        "rx_packets":"recvice packets",         // [ number ]
-        "rx_errs":"recvice errs packets",       // [ number ]
-        "rx_drops":"recvice drop packets",      // [ nubmer ]
-        "tx_bytes":"send bytes",                // [ nubmer ]
-        "tx_packets":"send packets",            // [ nubmer ]
-        "tx_errs":"send errors packets",        // [ nubmer ]
-        "tx_drops":"send drop packets",         // [ nubmer ]
-        "mac":"mac address",                    // [ MAC address ]
-        "livetime":"online time",               // [ hour:minute:second:day ]
+        "status":"current status",              // [ "nodevice", "up", "down" ]
+                                                    // "nodevice" means the network device does not exist
+                                                    // "up" for enable
+                                                    // "down" for disable
+        "secure":"secure mode",                 // [ "disable", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+        "rx_bytes":"received bytes",            // [ number ]
+        "rx_packets":"received packets",        // [ number ]
+        "rx_errs":"received error packets",     // [ number ]
+        "rx_drops":"received drop packets",     // [ number ]
+        "tx_bytes":"sent bytes",                // [ number ]
+        "tx_packets":"sent packets",            // [ number ]
+        "tx_errs":"sent error packets",         // [ number ]
+        "tx_drops":"sent drop packets",         // [ number ]
+        "mac":"MAC address",                    // [ mac address ]
         "ssid":"SSID name",                     // [ string ]
-        "bssid":"BSSID",                        // [ MAC address ]
-        "channel":"current channel",            // [ number ]
-        "rate":"current rate"                   // [ number ]
+        "bssid":"BSSID",                        // [ mac address ]
+        "channel":"current channel"             // [ number ]
     }
     ```
 
@@ -158,27 +169,23 @@ ttrue
         "tx_errs":"0",
         "tx_drops":"0",
         "mac":"00:03:7F:12:88:70",
-        "livetime":"14:45:36:2",
         "ssid":"dimmalex-home",
         "bssid":"00:03:7F:12:88:70",
-        "channel":"11",
-        "rate":"300"
+        "channel":"11"
     }
     ```
 
-+ `stalist[]` **get list of clients**   
++ `stalist[]` **get list of clients**
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this infomation   
+    - succeed return [ json ], connected client list
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "client MAC address":              // [ MAC address ]:{}
+        "client MAC address":     // [ mac address ]
         {
-            "livetime":"online time",               // [ hour:minute:second:day ]
-            "rssi":"signal strength",               // [ number ], the unit maybe dBm or %
-        },
-        // ... more client
+            "livetime":"online time",    // [ string ], format is hour:minute:second:day
+            "rssi":"signal strength"     // [ number ], the unit is dBm
+        }
+        // "...":{}  How many clients show how many properties
     }
     ```
 
@@ -186,33 +193,30 @@ ttrue
     ```shell
     wifi@assid.stalist
     {
-        "78:11:DC:92:D3:9E":                  // client 1
+        "78:11:DC:92:D3:9E":                  # client 1
         {
-            "apidx":"0",
             "livetime":"14:53:17:2",
-            "rssi":"-52",
-            "ifdev":"wifi@assid"
+            "rssi":"-52"
         },
-        "88:C3:97:75:1B:C0":                 // client 2
+        "88:C3:97:75:1B:C0":                 # client 2
         {
-            "apidx":"0",
             "livetime":"14:53:14:2",
-            "rssi":"-52",
-            "ifdev":"wifi@assid"
+            "rssi":"-52"
         },
-        "40:31:3C:4D:78:35":                 // client 3
+        "40:31:3C:4D:78:35":                 # client 3
         {
-            "apidx":"0",
             "livetime":"14:52:22:2",
-            "rssi":"-61",
-            "ifdev":"wifi@assid"
+            "rssi":"-61"
         }
     }
     ```
 
-+ `stabeat[ MAC address ]` **disconnect the client**   
+
+#### Control APIs
+
++ `stabeat[ mac ]` **disconnect a client**
+    - mac -------------- [ string ], client MAC address
     - failed return tfalse
-    - error return terror    
     - succeed return ttrue
 
     Example, disconnect the client 00:03:7F:13:BD:30 from first 5.8G SSID
@@ -220,38 +224,3 @@ ttrue
     wifi@assid.stabeat[ 00:03:7F:13:BD:30 ]
     ttrue
     ```
-
-### Lifecycle API
-+ `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
-
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_wifi_assid(void)
-{
-    char buf[128];
-    boole ok;
-    if (sgets_string(buf, sizeof(buf), "wifi@assid", "status") == NULL)
-        return -1;
-    ok = ssets_string("wifi@assid", "value", "status");
-    return ok ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* Example: scall("wifi@assid", "status", NULL); then talk_free if JSON */
-```

@@ -1,83 +1,91 @@
-## wifi@asta — 5.8G Station Management
-Manage 5.8G Station
+## wifi@asta — 5.8G Wireless Station Management
+
+### Overview
+
+Manage 5.8G wireless station (client) connections. This component provides wireless station functionality for connecting to remote APs, including AP scanning, channel listing, and security mode listing. It is used as a lower-level device (ifdev) by **`ifname@wisp`** for WISP network management.
+
+- manages wireless station lifecycle: setup, shutdown, connection monitoring
+- supports multiple peer configurations for failover
+- provides AP scanning, channel listing, and security mode listing
+- includes keeplive mechanism for connection monitoring
+- supports WPA/WPA2/WPA3 security modes
 
 
-### Configuration ( `wifi@asta` )
+
+### Configuration reference ( wifi@asta )
+
 ```json
-// Attribute introduction
+// Attributes introduction 
 {
-    "status":"enable or  disable the function",     // [ "enable", "disable" ]
-    "nossid":"disable the ssid",                    // [ "disable", "enable" ], disable the local ssid when connected
+    "status":"enable or disable the function",                   // [ "enable", "disable" ]
+    "nossid":"disable the ssid",                                 // [ "disable", "enable" ], disable the local ssid when connected
 
-    // wireless connect first peer
-    "peer":"SSID to connect",              // [ string ]
-    "peermac":"BSSID to connect",          // [ mac address ]
-    "peermode":"mode of connection",       // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
-    "secure":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                            // [ disable ] for no securiyt
-                                                            // [ wpapsk ]  for WPAPSK
-                                                            // [ wpa2psk ]  for WPA2PSK
-                                                            // [ wpapskwpa2psk ] for WPA Mix
-    "wpa_encrypt":"WAP encrypt",           // [ "aes", "tkip", "tkipaes" ]
-                                                            // [ aes ] for AES
-                                                            // [ tkip ] for TKIP
-                                                            // [ tkipaes ] for auto
-    "wpa_key":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+    // Wireless connect first peer
+    "peer":"SSID to connect",                                    // [ string ]
+    "peermac":"BSSID to connect",                                // [ mac address ]
+    "peermode":"mode of connection",                             // [ "hidden" ], peer AP does not broadcast SSID; channel must be set in hidden mode
+    "secure":"mode of security",                                 // [ "disable", "owe", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+                                                                      // "disable" for no security
+                                                                      // "owe" for Opportunistic Wireless Encryption
+                                                                      // "wpapsk" for WPAPSK
+                                                                      // "wpa2psk" for WPA2PSK
+                                                                      // "wpa3psk" for WPA3PSK
+                                                                      // "wpapskwpa2psk" for WPA1/WPA2 PSK Auto
+                                                                      // "wpa2pskwpa3psk" for WPA2/WPA3 PSK Auto
+    "wpa_encrypt":"WAP encrypt",                                 // [ "aes", "tkip", "tkipaes" ]
+                                                                      // "aes" for AES
+                                                                      // "tkip" for TKIP
+                                                                      // "tkipaes" for auto
+    "wpa_key":"WPA key",                                         // [ string ], minimum 8 characters, mandatory if secure is wpapsk/wpa2psk/wpa3psk/wpapskwpa2psk/wpa2pskwpa3psk
 
-    // wireless connect second peer
-    "peer2":"SSID2 to connect",            // [ string ]
-    "peermac2":"BSSID to connect",         // [ mac address ]
-    "peermode2":"mode of connection",      // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
-    "secure2":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                            // [ disable ] for no securiyt
-                                                            // [ wpapsk ]  for WPAPSK
-                                                            // [ wpa2psk ]  for WPA2PSK
-                                                            // [ wpapskwpa2psk ] for WPA Mix
-    "wpa_encrypt2":"WAP encrypt",           // [ "aes", "tkip", "tkipaes" ]
-                                                            // [ aes ] for AES
-                                                            // [ tkip ] for TKIP
-                                                            // [ tkipaes ] for auto
-    "wpa_key2":"WPA key",                   // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
+    // Wireless connect second peer (failover)
+    "peer2":"SSID2 to connect",                                  // [ string ]
+    "peermac2":"BSSID2 to connect",                              // [ mac address ]
+    "peermode2":"mode of connection",                            // [ "hidden" ]
+    "secure2":"mode of security",                                // [ "disable", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+    "wpa_encrypt2":"WAP encrypt",                                // [ "aes", "tkip", "tkipaes" ]
+    "wpa_key2":"WPA key",                                        // [ string ]
 
-    // wireless connect third peer
-    "peer3":"SSID3 to connect",            // [ string ]
-    "peermac3":"BSSID to connect",         // [ mac address ]
-    "peermode3":"mode of connection",      // [ "hidden" ] Indicates that the peer end does not broadcast SSID. In hidden mode, channel must not be empty  
-    "secure3":"mode of security",           // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                            // [ disable ] for no securiyt
-                                                            // [ wpapsk ]  for WPAPSK
-                                                            // [ wpa2psk ]  for WPA2PSK
-                                                            // [ wpapskwpa2psk ] for WPA Mix
-    "wpa_encrypt3":"WAP encrypt",           // [ "aes", "tkip", "tkipaes" ]
-                                                            // [ aes ] for AES
-                                                            // [ tkip ] for TKIP
-                                                            // [ tkipaes ] for auto
-    "wpa_key3":"WPA key"                    // [ string ], The value is a string of at least 8 characters. This parameter is mandatory if the "secure" be "wpapsk" or "wpa2psk" or "wpapskwpa2psk"
-
+    // Wireless connect third peer (failover)
+    "peer3":"SSID3 to connect",                                  // [ string ]
+    "peermac3":"BSSID3 to connect",                              // [ mac address ]
+    "peermode3":"mode of connection",                            // [ "hidden" ]
+    "secure3":"mode of security",                                // [ "disable", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+    "wpa_encrypt3":"WAP encrypt",                                // [ "aes", "tkip", "tkipaes" ]
+    "wpa_key3":"WPA key"                                         // [ string ]
 }
 ```
+
+#### Configuration example
 
 Example, show 5.8G Station all configure
 ```shell
+wifi@asta
 {
-    # WIFI peer
     "peer":"V520-D21D20-5G",    # connect V520-D21D20-5G
-    "secure":"wpapsk",       # security is WPAPSK
-    "wpa_encrypt":"aes",     # encrypt use AES
-    "wpa_key":"87654321",    # password 87654321
+    "secure":"wpapsk",          # security is WPAPSK
+    "wpa_encrypt":"aes",        # encrypt use AES
+    "wpa_key":"87654321"        # password 87654321
 }
 ```
+
+#### Configuration settings example
 
 Example, modify the SSID for 5.8G Station connect
 ```shell
 wifi@asta:peer=Myhotpot
 ttrue
+```
+
+Example, modify the security and password
+```shell
 wifi@asta:secure=wpapsk
 ttrue
-wifi@asta:wpa_key=88888888
-ttrue
-# You can also use one command to complete the operation of the above three command
-wifi@asta|{"peer":"Myhotpot", "secure":"wpapsk", "wpa_key":"88888888"}
+```
+
+Example, merge set the 5.8G Station configure( include "peer" "secure" "wpa_key" )
+```shell
+wifi@asta|{"peer":"Myhotpot","secure":"wpapsk","wpa_key":"88888888"}
 ttrue
 ```
 
@@ -87,90 +95,92 @@ wifi@asta:status=disable
 ttrue
 ```
 
-Example, enable the 5.8G Station connect
-```shell
-wifi@asta:status=enable
-ttrue
-```
 
 
-### Component API
-**Directly callable** APIs: `wifi@asta.method`, `wifi@asta2.method`, … (HE / eline / HTTP `/he`).
+### API Reference
 
-+ `status[]` **get the 5.8G Station infomation**   
+#### Management APIs
+
++ `setup[]` **setup the 5.8G Station**
+    - failed return tfalse
+    - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Not intended for manual invocation
+
++ `shut[]` **shutdown the 5.8G Station**
+    - failed return tfalse
+    - succeed return ttrue
+
+
+#### Query APIs
+
++ `status[]` **get the 5.8G Station information**
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this infomation   
+    - succeed return [ json ], station status information
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "status":"Current state",        // [ "uping", "down", "up" ]
+        "status":"Current status",        // [ "nodevice", "uping", "down", "up" ]
+                                             // "nodevice" means the network device does not exist
                                              // "uping" for connecting
                                              // "down" for the network is down
                                              // "up" for the network is connect succeed
-
         "peer":"Peer SSID",              // [ string ]
-        "peermac":"Peer BSSID",          // [ MAC address ]
-        "channel":"Peer channel",        // [ 0, 36-165 ]
+        "peermac":"Peer BSSID",          // [ mac address ]
+        "channel":"Peer channel",        // [ number ], 0-165
         "rate":"connect rate",           // [ number ], the unit is M
         "rssi":"Peer RSSI",              // [ number ], the unit is dBm
-        "signal":"signal level",         // [ 0, 1, 2, 3 4 ], 0 for no signal, 1 for weakest signal , 4 for strongest signal
+        "signal":"signal level",         // [ "0", "1", "2", "3", "4" ], 0 for no signal, 1 for weakest, 4 for strongest
+        "sinr":"signal to noise ratio",  // [ number ], Optional
+        "bandwidth":"channel bandwidth", // [ "20", "40", "80", "160" ], Optional
+        "beacon":"beacon interval"       // [ string ], Optional
     }
     ```
 
+    Example, get the 5.8G Station information
     ```shell
-    # examples, get the 5.8G Station infomation
     wifi@asta.status
     {
-
         "status":"up",                     # connect is succeed
-        "peer":"TP-link-2231-5G",            # peer is TP-link-2231-5G
+        "peer":"TP-link-2231-5G",         # peer is TP-link-2231-5G
         "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
-        "channel":"10",                   # channel is 10
+        "channel":"36",                   # channel is 36
         "rate":"270",                     # rate is 270M
         "rssi":"-41",                     # rssi is -41dBm
         "signal":"3"                      # signal level is 3
     }
     ```
 
-+ `netdev[]` **get the 5.8G Station netdev**   
++ `netdev[]` **get the 5.8G Station netdev**
     - failed return NULL
-    - error return terror    
-    - succeed return string to describes this infomation   
-    
+    - succeed return [ string ], the netdev name
+
     Example, get the 5.8G Station netdev
     ```shell
     wifi@asta.netdev
     ath11
     ```
 
-
-+ `aplist[]` **use the 5.8G Station scan the surrounding AP**   
++ `aplist[ peer, peermac, peer2, peer3 ]` **scan surrounding APs**
+    - peer ------------- [ string ], optional, filter by SSID
+    - peermac ---------- [ string ], optional, filter by BSSID
+    - peer2 ------------ [ string ], optional, filter by SSID2
+    - peer3 ------------ [ string ], optional, filter by SSID3
     - failed return NULL
-    - error return terror    
-    - succeed return json to describes this infomation   
+    - succeed return [ json ], scanned AP information
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "AP BSSID":                                   // [ mac address ]
+        "AP BSSID":                       // [ mac address ]
         {
-            "ssid":"SSID name",                           // [ string ]
-            "channel":"channel number",                   // [ number ], 0,36-165, 0 for auto
-            "secure":"mode of security",                  // [ "disable", "wpapsk", "wpa2psk", "wpapskwpa2psk" ]
-                                                                 // "disable" for no securiyt
-                                                                 // "wpapsk"  for WPAPSK
-                                                                 // "wpa2psk"  for WPA2PSK
-                                                                 // "wpapskwpa2psk" for WPA Mix
-            "wpa_encrypt":"WAP encrypt",                  // [ "aes", "tkip", "tkipaes" ]
-                                                                 // "aes" for AES
-                                                                 // "tkip" for TKIP
-                                                                 // "tkipaes" for auto
-            "sig":"signal level(%)",                      // [ number ]
-            "signal":"signal level[0-4]",                 // [ "0", "1", "2", "3", "4" ]
-            "chext":"extern channel",                     // [ "none", "below", "above" ]
-            "mode":"wireless system"                      // [ string ]
+            "ssid":"SSID name",               // [ string ]
+            "channel":"channel number",       // [ number ], 0-165, 0 for auto
+            "secure":"mode of security",      // [ "disable", "wpapsk", "wpa2psk", "wpa3psk", "wpapskwpa2psk", "wpa2pskwpa3psk" ]
+            "wpa_encrypt":"WAP encrypt",      // [ "aes", "tkip", "tkipaes" ]
+            "sig":"signal level(%)",          // [ number ]
+            "signal":"signal level[0-4]",     // [ "0", "1", "2", "3", "4" ]
+            "chext":"extern channel",         // [ "none", "below", "above" ]
+            "mode":"wireless system"          // [ string ]
         }
-        // ... more AP
+        // "...":{}  How many APs show how many properties
     }
     ```
 
@@ -180,7 +190,7 @@ ttrue
     {
         "80:EA:07:15:0E:E6":                    # first AP by scanning
         {
-            "ssid":"1411",                                 # frist AP SSID
+            "ssid":"1411",                                 # first AP SSID
             "channel":"36",                                # first AP channel
             "secure":"wpapskwpa2psk",                      # secure mode is WPA mix
             "wpa_encrypt":"aes",                           # encrypt type is AES
@@ -199,74 +209,44 @@ ttrue
             "signal":"3",
             "chext":"none",
             "mode":"11a/n/ac"
-        },
-        "8C:74:A0:D6:68:B0":                    # third AP by scanning
-        {
-            "ssid":"CMCC-ktfK",
-            "channel":"165",
-            "secure":"wpapskwpa2psk",
-            "wpa_encrypt":"aes",
-            "sig":"0",
-            "signal":"0",
-            "chext":"none",
-            "mode":"11a/n/ac"
         }
     }
     ```
 
-+ `shut[]` **shutdown the 5.8G Station**   
-    - failed return tfalse
-    - error return terror    
-    - succeed return ttrue
-
-    Example, shutdown the 5.8G Station
-    ```shell
-    wifi@asta.shut
-    ttrue
++ `chlist[]` **get available wireless channels**
+    - failed return NULL
+    - succeed return [ json ], available wireless channels
+    ```json
+    {
+        "channel number":{}       // [ number ]:{}
+        // "...":{}  How many channels show how many properties
+    }
     ```
 
-+ `setup[]` **setup the 5.8G Station**   
-    - failed return tfalse
-    - error return terror    
-    - succeed return ttrue
-
-    Example, setup the 5.8G Station
-    ```shell
-    wifi@asta.setup
-    ttrue
++ `securelist[]` **get supported security modes**
+    - failed return NULL
+    - succeed return [ json ], supported security modes
+    ```json
+    {
+        "secure mode":            // [ string ]
+        {
+            "encrypt":""          // [ string ]: [ string ]
+            // "...":"..."  How many encryptions show how many properties
+        }
+        // "...":{}  How many modes show how many properties
+    }
     ```
 
-### Lifecycle API
-+ `setup[]` / `shut[]` — when present for this object in `project/wifi`, they start/stop the underlying wireless service. The reference **wifi** FPK does not schedule **`init`/`uninit`** for these objects; bring-up is usually driven by the driver, **network** stack, or product integration.
 
+#### Other
 
-### C Code Example
-**Read and update configuration**
++ `reset[]` **reset the wireless station**
+    - failed return tfalse
+    - succeed return ttrue
+    - Stops keeplive, relayd, and wpa_supplicant
 
-```c
-#include "skin/skin.h"
-
-static int example_config_wifi_asta(void)
-{
-    char buf[128];
-    boole ok;
-    if (sgets_string(buf, sizeof(buf), "wifi@asta", "status") == NULL)
-        return -1;
-    ok = ssets_string("wifi@asta", "value", "status");
-    return ok ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* Example: scall("wifi@asta", "status", NULL); then talk_free if JSON */
-```
+    Example, reset the 5.8G Station
+    ```shell
+    wifi@asta.reset
+    ttrue
+    ```
