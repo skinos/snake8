@@ -89,54 +89,42 @@ OPENWRT_DL_NAME:=openwrt-25.12.2-dl.tar.xz
 OPENWRT_FEED_NAME:=openwrt-25.12.2-feeds.tar.xz
 OPENWRT_SDK_NAME:=openwrt-25.12.2.tar.xz
 sdk_update:
-	# 下载或更新底层SDK
+	@set -e; \
 	if [ ! -d ${gPLATFORM_DIR}/dl ]; then \
 		mkdir ${gPLATFORM_DIR}/dl; \
-	fi
+	fi; \
 	if [ ! -d ${gSDK_DIR} ]; then \
-		if [ ! -e ${gPLATFORM_DIR}/dl/${OPENWRT_SDK_NAME} ]; then \
-			cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_SDK_NAME}; \
-		fi; \
-		cd ${gTOP_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_SDK_NAME}; mv openwrt-25.12.2 ${gPLATFORM};\
-	fi
-	# 更新dl目录, 避免每次一个一个下载
+		cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_SDK_NAME} || exit 1; \
+		cd ${gTOP_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_SDK_NAME} || exit 1; \
+		mv openwrt-25.12.2 ${gPLATFORM} || exit 1; \
+	fi; \
 	if [ ! -d ${gSDK_DIR}/dl ]; then \
-		if [ ! -e ${gPLATFORM_DIR}/dl/${OPENWRT_DL_NAME} ]; then \
-			cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_DL_NAME}; \
-		fi; \
-		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_DL_NAME}; \
-	fi
-	# 更新并安装所有的菜单项
+		cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_DL_NAME} || exit 1; \
+		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_DL_NAME} || exit 1; \
+	fi; \
 	if [ ! -d ${gSDK_DIR}/feeds ]; then \
-		if [ ! -e ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME} ]; then \
-			cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_FEED_NAME}; \
-		fi; \
-		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME}; \
-	fi
-	# 更新fpk
-	cd ${gPLATFORM_DIR}/dl; rm -fr *.fpk*
-	cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} fpk
+		cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_FEED_NAME} || exit 1; \
+		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME} || exit 1; \
+	fi; \
+	cd ${gPLATFORM_DIR}/dl; rm -fr *.fpk*; \
+	cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} fpk || exit 1
 sdk_adjust:
 	# 对底层SDK打补丁
 	if [ -e ${gPLATFORM_DIR}/adjust/patch/patch.sh ]; then \
 		${gPLATFORM_DIR}/adjust/patch/patch.sh; \
 	fi
 sdk_menu:
-	# 更新并安装所有的菜单项
+	@set -e; \
 	if [ ! -d ${gSDK_DIR}/feeds ]; then \
-		if [ ! -e ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME} ]; then \
-			cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_FEED_NAME}; \
-		fi; \
-		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME}; \
-	fi
-	# 对底层SDK打补丁
+		cd ${gPLATFORM_DIR}/dl; repo-update wrt5 ${gHARDWARE} ${gCUSTOM} ${OPENWRT_FEED_NAME} || exit 1; \
+		cd ${gSDK_DIR}; tar -Jxvf ${gPLATFORM_DIR}/dl/${OPENWRT_FEED_NAME} || exit 1; \
+	fi; \
 	if [ -e ${gPLATFORM_DIR}/adjust/patch/patch.sh ]; then \
 		${gPLATFORM_DIR}/adjust/patch/patch.sh; \
-	fi
-	#cd ${gSDK_DIR};./scripts/feeds update -a
-	cd ${gSDK_DIR};./scripts/feeds update project
-	cd ${gSDK_DIR};./scripts/feeds update rice
-	cd ${gSDK_DIR};./scripts/feeds install -a -f
+	fi; \
+	cd ${gSDK_DIR}; ./scripts/feeds update project; \
+	cd ${gSDK_DIR}; ./scripts/feeds update rice; \
+	cd ${gSDK_DIR}; ./scripts/feeds install -a -f
 sdk_menuconfig: kernel_dep
 	# 显示菜单供用户配置
 	cd ${gSDK_DIR};make menuconfig
