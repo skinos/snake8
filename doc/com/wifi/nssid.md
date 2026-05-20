@@ -12,6 +12,14 @@ Manage 2.4G wireless SSID (access point) interfaces. Each 2.4G radio can have mu
 
 
 
+### Network Architecture
+
+`wifi@nssid` is a **LAN-side device layer** component — a 2.4G wireless access point. Unlike station components, it does NOT act as an uplink. Its netdev is added to `bridge@lan`, which `ifname@lan` uses as its ifdev. It does NOT register directly with `network@frame`; the bridge handles registration as a "local" interface. It is controlled by the `wifi@n` radio component.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( wifi@nssid )
 
 ```json

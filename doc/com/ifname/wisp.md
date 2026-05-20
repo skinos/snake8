@@ -13,6 +13,14 @@ Usually ifname@wisp is the first WISP (2.4G) network. If there are multiple WISP
 
 
 
+### Network Architecture
+
+`ifname@wisp` is an **extern interface** registered by `network@frame` during boot. It uses `ifname@ethcon` as concom and `wifi@nsta` (or `wifi@asta` for 5.8G) as ifdev — a wireless station connecting to a remote AP. As an extern interface, it is subject to multi-uplink scheduling and applies NAT masquerade. It publishes `network/onextern` / `network/offextern` joint events on state changes.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( ifname@wisp )
 
 ```json

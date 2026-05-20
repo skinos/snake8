@@ -11,6 +11,200 @@ The **network frame** component (`network@frame`) is the hub for LAN/WAN/VPN reg
 
 
 
+### Network Architecture
+
+The network subsystem uses a layered architecture that separates configuration, infrastructure management, logical interfaces, and hardware devices.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              Configuration Layer (arch@net)                                 │
+│                                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  NET_CONFIG (arch@net)                                                              │    │
+│  │                                                                                     │    │
+│  │  "local": {                           "extern": {                                   │    │
+│  │    "ifname@lan": {                      "ifname@wan": {                             │    │
+│  │      "concom":"ifname@ethcon",            "concom":"ifname@ethcon",                 │    │
+│  │      "ifdev":"bridge@lan"                 "ifdev":"ethernet@lan1"                   │    │
+│  │    },                                    },                                         │    │
+│  │    "ifname@lan2": { ... }                "ifname@lte": {                            │    │
+│  │  }                                        "concom":"ifname@ltecon",                 │    │
+│  │                                           "ifdev":"modem@lte"                       │    │
+│  │  "vlan": { ... }                        },                                          │    │
+│  │  "bridge": { ... }                      "ifname@wisp": {                            │    │
+│  │                                           "concom":"ifname@ethcon",                 │    │
+│  │  "connect": {                             "ifdev":"wifi@nsta"                       │    │
+│  │    "type":"hot4",                       }                                           │    │
+│  │    "1":"ifname@wan",                  }                                             │    │
+│  │    "2":"ifname@lte",                                                                │    │
+│  │    ...                                                                              │    │
+│  │  }                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                │ reads at setup
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                            Infrastructure Layer (network@frame)                             │
+│                                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  network@frame                                                                      │    │
+│  │                                                                                     │    │
+│  │  • reads arch@net for local/extern lists                                            │    │
+│  │  • registers ifname instances: register(ifname, concom, ifdev, type)                │    │
+│  │  • manages iptables NAT/masq, flow offload, IP rules                                │    │
+│  │  • publishes joint events: network/on, network/off, network/online, ...             │    │
+│  │  • coordinates VLAN (network@vlan) and Bridge (network@bridge)                      │    │
+│  │  • starts connect service for multi-uplink scheduling                               │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                             │
+│  ┌──────────────────────────────┐  ┌──────────────────────────────-┐                        │
+│  │  network@vlan                │  │  network@bridge               │                        │
+│  │  creates vlan@<id> instances │  │  creates bridge@<id> instances│                        │
+│  └──────────────────────────────┘  └─────────────────────────────-─┘                        │
+│                                                                                             │
+│  ┌──────────────────────────────┐                                                           │
+│  │  network@connect             │  multi-link scheduler service                             │
+│  │  cold/hot/lazy backup        │  selects active default route                             │
+│  └──────────────────────────────┘                                                           │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                │ registers & manages
+                                                ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           Logical Interface Layer (ifname@*)                                │
+│                                                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │   ifname@lan    │  │   ifname@wan    │  │   ifname@lte    │  │   ifname@wisp   │         │
+│  │                 │  │                 │  │                 │  │                 │         │
+│  │  concom:        │  │  concom:        │  │  concom:        │  │  concom:        │         │
+│  │  ifname@ethcon  │  │  ifname@ethcon  │  │  ifname@ltecon  │  │  ifname@ethcon  │         │
+│  │                 │  │                 │  │                 │  │                 │         │
+│  │  ifdev:         │  │  ifdev:         │  │  ifdev:         │  │  ifdev:         │         │
+│  │  bridge@lan     │  │  ethernet@lan1  │  │  modem@lte      │  │  wifi@nsta      │         │
+│  │                 │  │                 │  │                 │  │                 │         │
+│  │  mode: static   │  │  mode: dhcpc    │  │  mode: ppp      │  │  mode: dhcpc    │         │
+│  │  dhcps: enable  │  │  ppoec/static   │  │  masq: enable   │  │  masq: enable   │         │
+│  │  masq: disable  │  │  masq: enable   │  │  keeplive: ...  │  │  keeplive: ...  │         │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘         │
+│           │                    │                    │                    │                  │
+│           │ setup/shut         │ setup/shut         │ setup/shut         │ setup/shut       │
+│           │ status/netdev      │ status/netdev      │ status/netdev      │ status/netdev    │
+│           │ keepon/keepoff     │ keepon/keepoff     │ keepon/keepoff     │ keepon/keepoff   │
+│           ▼                    ▼                    ▼                    ▼                  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  ethcon / ltecon (connection handlers)                                              │    │
+│  │  • manages connection lifecycle (setup → connect → online → keepalive)              │    │
+│  │  • calls network@frame online/offline/upline/downline when state changes            │    │
+│  │  • handles keeplive (ICMP, DNS, recv) and failover actions                          │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                │
+                                                │ uses as ifdev
+                                                ▼
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              Device Layer (ifdev components)                               │
+│                                                                                            │
+│  ┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐           │
+│  │   Ethernet Devices    │  │    Modem Devices      │  │    WiFi Devices       │           │
+│  │                       │  │                       │  │                       │           │
+│  │  ethernet@lan         │  │  modem@lte            │  │  wifi@nsta (2.4G STA) │           │
+│  │  ethernet@lan1        │  │  modem@lte2           │  │  wifi@asta (5.8G STA) │           │
+│  │  ethernet@lan2        │  │                       │  │                       │           │
+│  │                       │  │  atd (AT daemon)      │  │  wifi@nssid (2.4G AP) │           │
+│  │  APIs:                │  │  smsd (SMS daemon)    │  │  wifi@assid (5.8G AP) │           │
+│  │  • setup/shut         │  │                       │  │                       │           │
+│  │  • up/connect/down    │  │  APIs:                │  │  wifi@n (2.4G radio)  │           │
+│  │  • connected/reset    │  │  • setup/shut         │  │  wifi@a (5.8G radio)  │           │
+│  │  • status/netdev      │  │  • up/connect/down    │  │                       │           │
+│  │  • online/offline     │  │  • connected/reset    │  │  APIs:                │           │
+│  │  • keeplive/setmac    │  │  • status/netdev/tty  │  │  • setup/shut         │           │
+│  │  • hwnat              │  │  • sim/pin/plmn/signal│  │  • up/connect/down    │           │
+│  │                       │  │  • operator/imei/imsi │  │  • connected/reset    │           │
+│  └───────────┬───────────┘  │  • custom_set/watch   │  │  • status/netdev      │           │
+│              │              │  • lock_imei/lock_imsi│  │  • aplist/chlist      │           │
+│              │              │  • bsim_back/main     │  │  • securelist/stalist │           │
+│              │              │                       │  │  • hostapd/wpa        │           │
+│              │              └───────────┬───────────┘  └───────────┬───────────┘           │
+│              │                          │                          │                       │
+└──────────────┼──────────────────────────┼──────────────────────────┼───────────────────────┘
+               │                          │                          │
+               │ network@frame.add        │ network@frame.add        │ network@frame.add
+               ▼                          ▼                          ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              Hardware Layer (Linux netdev)                                  │
+│                                                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │   eth0/eth1     │  │   usb0/usb1     │  │   wlan0/wlan1   │  │     lan         │         │
+│  │   (SoC ETH)     │  │   (USB modem)   │  │   (WiFi radio)  │  │   (Bridge)      │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Relationships:**
+
+| From | To | Relationship | Mechanism |
+|------|-----|--------------|-----------|
+| `arch@net` | `network@frame` | provides topology | `sget(NET_CONFIG)` reads local/extern/vlan/bridge/connect |
+| `network@frame` | `ifname@*` | registers | `register(ifname, concom, ifdev, type)` |
+| `network@frame` | `network@vlan` | coordinates | `scall(VLAN_COM, "setup")` |
+| `network@frame` | `network@bridge` | coordinates | `scall(BRIDGE_COM, "setup")` |
+| `network@frame` | `network@connect` | starts | `scall(CONNECT_COM, "setup")` |
+| `ifname@*` | `concom` (ethcon/ltecon) | delegates | `sstarts(object, drvcom, "service", ...)` |
+| `ifname@*` | `ifdev` (ethernet/modem/wifi) | references | `reg_string(this, "ifdev")` |
+| `ifname@*` | `network@frame` | notifies | `scall(NETWORK_COM, "online/offline/upline/downline")` |
+| `ethernet@*` | `network@frame` | registers devices | `scalls(NETWORK_COM, "add", "%s,%s", object, netdev)` |
+| `modem@*` | `network@frame` | registers devices | `scalls(NETWORK_COM, "add", "%s,%s", object, netdev)` |
+| `wifi@*` | `network@frame` | registers devices | `scalls(NETWORK_COM, "add", "%s,%s", object, netdev)` |
+| `arch@ethernet` | `arch@net` | configures per mode | `config_sgets(COM_IDPATH, mode)` |
+
+**Data Flow for Interface Lifecycle:**
+
+```
+1. Boot:  arch@net → network@frame.setup()
+              │
+              ├─ reads local/extern lists
+              ├─ for each: register(ifname, concom, ifdev, type)
+              ├─ setup VLAN/bridge
+              └─ start connect service (if multi-link)
+
+2. Interface Up:  ifname@wan.setup()
+              │
+              ├─ ethcon: gets ifdev (ethernet@lan1)
+              ├─ calls ifdev "up" → ifconfig eth0 up
+              ├─ calls ifdev "connect" → link check
+              ├─ acquires IP (DHCP/Static/PPPoE)
+              └─ calls network@frame "online" → publishes network/onextern, network/online
+
+3. Interface Down:  ifname@wan.shut()
+              │
+              ├─ ethcon: calls network@frame "offline" → publishes network/offextern, network/offline
+              ├─ releases IP
+              └─ calls ifdev "down" → ifconfig eth0 down
+
+4. Multi-link Failover:  network@connect (scheduler)
+              │
+              ├─ monitors extern interfaces via network@frame.status
+              ├─ selects best uplink based on type (cold/hot/lazy)
+              └─ switches default route and DNS
+```
+
+**Multi-link Scheduling Types:**
+
+| Type | Behavior | Slots |
+|------|----------|-------|
+| `cold` | Only one uplink active; others shut down | 1-10 |
+| `hot` | Multiple uplinks up; default route follows best slot | 1-10 |
+| `hot2..hot5` | Like hot, but only first N slots participate | 2-5 |
+| `lazy` | Like hot, but won't fail back until current fails | 1-10 |
+| `lazy2..lazy5` | Like lazy, but only first N slots participate | 2-5 |
+
+
+
 ### Configuration reference ( network@frame )
 
 ```json

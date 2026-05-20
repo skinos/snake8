@@ -12,6 +12,14 @@ Manage 5.8G wireless SSID (access point) interfaces. Each 5.8G radio can have mu
 
 
 
+### Network Architecture
+
+`wifi@assid` is a **LAN-side device layer** component — a 5.8G wireless access point. Unlike station components, it does NOT act as an uplink. Its netdev is added to `bridge@lan`, which `ifname@lan` uses as its ifdev. It does NOT register directly with `network@frame`; the bridge handles registration as a "local" interface. It is controlled by the `wifi@a` radio component.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( wifi@assid )
 
 ```json

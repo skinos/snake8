@@ -12,6 +12,14 @@ Usually `ifname@lan` is the first local network. If there are multiple local net
 
 
 
+### Network Architecture
+
+`ifname@lan` is a **local interface** registered by `network@frame` during boot. It uses `ifname@ethcon` as concom and `bridge@lan` as ifdev. Unlike extern interfaces, it does NOT apply NAT masquerade and is NOT subject to multi-uplink scheduling. It can run a DHCP server to assign IPs to local clients. When the LAN comes up or down, it publishes `network/on` / `network/off` joint events.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( ifname@lan )
 
 ```json

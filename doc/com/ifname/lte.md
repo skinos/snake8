@@ -14,6 +14,14 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
 
 
 
+### Network Architecture
+
+`ifname@lte` is an **extern interface** registered by `network@frame` during boot. It uses `ifname@ltecon` as concom and `modem@lte` as ifdev. It provides a unified configuration view: modem-side configs (`sms`, `gnss`, `atport`, `lock_*`, `custom_*`, `watch_interval`) are stored in `modem@lte` but accessible and settable through `ifname@lte`. Modem-specific APIs (`operator`, `reset`, `lock_imei`, etc.) are also proxied. As an extern interface, it is subject to multi-uplink scheduling and publishes `network/onextern` / `network/offextern` joint events.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( ifname@lte )
 
 ```json

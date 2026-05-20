@@ -13,6 +13,14 @@ Usually `ifname@wan` is the first WAN network. If there are multiple WANs, `ifna
 
 
 
+### Network Architecture
+
+`ifname@wan` is an **extern interface** registered by `network@frame` during boot. It uses `ifname@ethcon` as concom and `ethernet@lan1` as ifdev. As an extern interface, it is subject to multi-uplink scheduling by `network@connect` and applies NAT masquerade for LAN clients. It monitors link health via keeplive (ICMP/DNS/recv) and publishes `network/onextern` / `network/offextern` joint events on state changes.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( ifname@wan )
 
 ```json

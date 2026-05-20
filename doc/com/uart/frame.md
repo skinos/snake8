@@ -10,6 +10,81 @@ The UART infrastructure component manages serial port instances and their driver
 
 
 
+### Device-Driver Separation Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                                   uart@frame                                        │
+│                          (UART Infrastructure Manager)                              │
+│                                                                                     │
+│  register(object, ttydev, devcom, drvcom)                                           │
+│  unregister(object)                                                                 │
+│  add(devcom) / delete(devcom)                                                       │
+│  list[]                                                                             │
+└──────────────────────────────┬──────────────────────────────────────────────────────┘
+                               │
+                               │ manages (register/unregister/setup/shut)
+                               ▼
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              Device Layer (Instances)                               │
+│                                                                                     │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                      │
+│  │   uart@tty      │  │   uart@tty2     │  │   uart@tty3     │  ...                 │
+│  │                 │  │                 │  │                 │                      │
+│  │  ttydev ─────────┼─▶│  ttydev ─────────┼─▶│  ttydev ─────────┼─▶ /dev/ttyS0      │
+│  │  devcom ─────────┼─▶│  devcom ─────────┼─▶│  devcom ─────────┼─▶ usb@tty-2-32    │
+│  │  drvcom ─────────┼─▶│  drvcom ─────────┼─▶│  drvcom ─────────┼─▶ uartdrv@dtu     │
+│  │                 │  │                 │  │                 │                      │
+│  │  speed, parity  │  │  speed, parity  │  │  speed, parity  │                      │
+│  │  databit, stop  │  │  databit, stop  │  │  databit, stop  │                      │
+│  │  flow, dtu cfg  │  │  flow, dtu cfg  │  │  flow, dtu cfg  │                      │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘                      │
+│           │                    │                    │                               │
+└───────────┼────────────────────┼────────────────────┼───────────────────────────────┘
+            │                    │                    │
+            │ sstarts(object, drvcom, "service", object, ttydev)
+            ▼                    ▼                    ▼
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              Driver Layer (Drivers)                                 │
+│                                                                                     │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                      │
+│  │  uartdrv@dtu    │  │  uartdrv@tui    │  │  uartdrv@xxx    │  ...                 │
+│  │                 │  │                 │  │                 │                      │
+│  │  service[]      │  │  service[]      │  │  service[]      │                      │
+│  │    ↓            │  │    ↓            │  │    ↓            │                      │
+│  │  DTU forwarding │  │  Terminal access│  │  Custom logic   │                      │
+│  │  (serial↔net)   │  │  (serial↔CLI)   │  │                 │                      │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘                      │
+│                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              Hardware Layer (Devices)                               │
+│                                                                                     │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                      │
+│  │  usb@tty-2-32   │  │  usb@tty-2-3    │  │  soc@uart0      │  ...                 │
+│  │  (USB serial)   │  │  (USB serial)   │  │  (SoC UART)     │                      │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘                      │
+│           │                    │                    │                               │
+│           ▼                    ▼                    ▼                               │
+│      /dev/ttyUSB8         /dev/ttyUSB3         /dev/ttyS0                           │
+│                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Relationships:**
+
+| From | To | Relationship | Field/Mechanism |
+|------|-----|--------------|-----------------|
+| `uart@frame` | `uart@tty*` | manages | `register()` / `unregister()` / `setup()` / `shut()` |
+| `uart@tty*` | Linux TTY device | references | `ttydev` register (e.g. `/dev/ttyS0`) |
+| `uart@tty*` | `usb@tty-*` / `soc@uart*` | references | `devcom` register (device component name) |
+| `uart@tty*` | `uartdrv@*` | references | `drvcom` config field (driver object name) |
+| `uart@frame` | `uartdrv@*` | launches | `sstarts(object, drvcom, "service", object, ttydev)` |
+| `usb@tty-*` | `uart@frame` | triggers | `uart@frame.add[devcom]` when USB device appears |
+
+
+
 ### Concepts
 
 **Device-driver separation**
