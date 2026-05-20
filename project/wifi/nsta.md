@@ -12,6 +12,14 @@ Manage 2.4G wireless station (client) connections. This component provides wirel
 
 
 
+### Network Architecture
+
+`wifi@nsta` is the **device layer** component used by `ifname@wisp` as its ifdev. It handles the actual wireless connection to a remote AP (via wpa_supplicant), while `ifname@wisp` handles IP addressing, routing, and integration with `network@frame`. `wifi@nsta` does NOT register directly with `network@frame`; `ifname@wisp` registers the netdev when it comes online. It is controlled by the `wifi@n` radio component.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+
+
 ### Configuration reference ( wifi@nsta )
 
 ```json
