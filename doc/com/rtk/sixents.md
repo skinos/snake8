@@ -10,6 +10,7 @@ The Sixents driver bridges a GNSS module connected via UART to the Sixents cloud
 - watchdog: trigger uart power reset if no GGA received for configurable timeout
 - support custom GNSS module initialization commands
 - query SDK state, GGA quality, and I/O counters via IPC
+- optional GGA broadcast over Unix datagram socket for local consumers
 
 
 
@@ -64,7 +65,8 @@ When `drvcom` is `uartdrv@sixents`, the following configuration fields are read 
         "auth_port": "HTTPS auth server port",             // [ number ], default be 443
         "rtcm_port": "RTCM data server port",              // [ number ], default be 4402, selectable from 4401-4405
         "tty_cmd": "custom GNSS init command",             // [ string ], optional, if empty sends Unicore N4/UM982 default commands
-        "gga_timeout": "GGA watchdog timeout"              // [ number ], seconds without GGA before uart power reset, default be 30, minimum 10
+        "gga_timeout": "GGA watchdog timeout",             // [ number ], seconds without GGA before uart power reset, default be 30, minimum 10
+        "gga_sock": "GGA broadcast unix socket path"       // [ string ], optional, if set, each valid GGA is sent to this unix datagram socket
     }
 }
 ```
@@ -91,7 +93,8 @@ land@uart@tty
         "devtype":"GNSS-RTK-01",               # device type
         "auth_port":"443",                     # HTTPS auth port
         "rtcm_port":"4402",                    # RTCM data port
-        "gga_timeout":"30"                     # GGA watchdog timeout in seconds
+        "gga_timeout":"30",                    # GGA watchdog timeout in seconds
+        "gga_sock":"/var/run/gga.sock"         # optional, broadcast GGA to this unix socket
     }
 }
 ```
