@@ -70,7 +70,22 @@ kernel_distclean: kernel_clean
 .PHONY: kernel kernel_dep kernel_menuconfig kernel_install kernel_clean kernel_distclean
 
 app: app_dep
-	@echo "Nothing be done"
+	@set -e; \
+	if [ "X${COMPILE_PROJECT}" != "X" ]; then \
+		pkg="${COMPILE_PROJECT}"; \
+		case "$$pkg" in */*) ;; \
+		*) \
+			for feed in project rice; do \
+				if [ -d "${gSDK_DIR}/package/feeds/$$feed/$$pkg" ]; then \
+					pkg="feeds/$$feed/$$pkg"; \
+					break; \
+				fi; \
+			done; \
+		esac; \
+		cd ${gSDK_DIR}; make V=s package/$$pkg/compile; \
+	else \
+		echo "Nothing be done"; \
+	fi
 app_dep:
 	@echo "Nothing be done"
 app_menuconfig: app_dep
@@ -78,7 +93,20 @@ app_menuconfig: app_dep
 app_install:
 	@echo "Nothing be done"
 app_clean:
-	@echo "Nothing be done"
+	@set -e; \
+	if [ "X${COMPILE_PROJECT}" != "X" ]; then \
+		pkg="${COMPILE_PROJECT}"; \
+		case "$$pkg" in */*) ;; \
+		*) \
+			for feed in project rice; do \
+				if [ -d "${gSDK_DIR}/package/feeds/$$feed/$$pkg" ]; then \
+					pkg="feeds/$$feed/$$pkg"; \
+					break; \
+				fi; \
+			done; \
+		esac; \
+		cd ${gSDK_DIR}; make V=s package/$$pkg/clean; \
+	fi
 app_distclean: app_clean
 	@echo "Nothing be done"
 .PHONY: app app_dep app_menuconfig app_install app_clean app_distclean

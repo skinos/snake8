@@ -44,7 +44,7 @@ gOEM := default
 endif 
 # Get the date
 #gPUBLISH ?= $(shell date +%m%d%y)
-gPUBLISH ?= v8.6.0522
+gPUBLISH ?= v8.6.0527
 #gPUBLISH ?= v8.6.0402
 gVERSION ?= $(gPUBLISH)
 # Name for compiler
@@ -148,8 +148,7 @@ export PATH
 #####################################
 all:
 	if [ "X${obj}" != "X" ]; then \
-		make -f target.makefile kernel COMPILE_PROJECT=package/${obj}/compile; \
-		make -f target.makefile app COMPILE_PROJECT=package/${obj}/compile; \
+		make -f target.makefile app COMPILE_PROJECT=${obj}; \
 	else \
 		make dep; \
 		make kernel_dep app_dep; \
@@ -178,8 +177,7 @@ rootfs_install: # call before image, copy all the file of config/xxxx/**rootfs**
 
 clean:
 	if [ "X${obj}" != "X" ]; then \
-		make -f target.makefile kernel COMPILE_PROJECT=package/${obj}/clean; \
-		make -f target.makefile app COMPILE_PROJECT=package/${obj}/clean; \
+		make -f target.makefile app_clean COMPILE_PROJECT=${obj}; \
 	else \
 		make kernel_clean; \
 		make app_clean; \
