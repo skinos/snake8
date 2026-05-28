@@ -195,7 +195,7 @@
     "Display": "显示",
     "Enter AT Command": "请输入AT指令",
     "Enter Command Name": "请输入名称",
-    "Fields marked with * are required": "带 * 的字段为必填项",
+    "Fields marked with * are required": "带*的字段为必填项",
     "Failover": "切换保持时长",
     "Keeplive Fail Switch": "保活失败切卡",
     "SIM Function": "SIM功能",

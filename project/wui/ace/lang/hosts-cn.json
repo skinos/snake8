@@ -6,7 +6,7 @@
     "Warnning: Intranet device to use this mapping need set DNS to this router": "注意：局域网设备要使用此映射，需要将DNS设置为此路由器",
     "Enter Hostname": "输入主机名",
     "Enter IP": "输入IP地址",
-    "Fields marked with * are required": "带 * 的字段为必填项",
+    "Fields marked with * are required": "带*的字段为必填项",
     "Modify successfully": "修改成功",
     "Settings unchanged": "配置未修改，不需要应用",
     "Apply": "应用",

@@ -237,7 +237,7 @@
 	"Apply":"应用",
 	"Settings unchanged":"配置未修改，不需要应用",
 	"Make sure that the device is reconnected":"请确保设备已重新连接",
-	"Fields marked with * are required":"带 * 的字段为必填项",
+	"Fields marked with * are required":"带*的字段为必填项",
 	"Enter MAC Address":"输入MAC地址",
 	"Enter Hostname":"输入主机名",
 	"Enter IP Address":"输入IP地址",
