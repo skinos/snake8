@@ -692,7 +692,7 @@ var clients_pager = '#clients-grid-pager';
                
             ],
             pager: '#clients-grid-pager',
-            rowNum: 10,
+            rowNum: 20,
             viewrecords: true,
             multiselect:false,
 

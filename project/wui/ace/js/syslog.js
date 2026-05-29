@@ -206,7 +206,7 @@ $.i18n().load( page.lang('syslog') ).then( function () {
                 { formatoptions:{ delOptions:{ onclickSubmit:function(params, data) { syslog_delete(data); } }, editformbutton:false, editbutton:false } } )
         ],
         pager: '#syslogs-grid-pager',
-        rowNum: 10,
+        rowNum: 20,
         viewrecords: true,
 
         pgbuttons: true,

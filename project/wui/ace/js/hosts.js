@@ -110,7 +110,7 @@ $.i18n().load( page.lang('hosts') ).then( function () {
                 //jqtable.actionOptions,
                 customInline
             ],
-            rowNum: 10,
+            rowNum: 20,
             viewrecords: true,
 
             pgbuttons: true,

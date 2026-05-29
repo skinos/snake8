@@ -184,7 +184,7 @@ function init_sms(){
                   { formatoptions:{ delOptions:{ onclickSubmit:function(params, data) { delete_smss(data); } }, editformbutton:false, editbutton:false } } )
           ],
           pager: '#smslist-grid-pager',
-          rowNum: 10,
+          rowNum: 20,
           viewrecords: true,
 
           pgbuttons: true,
