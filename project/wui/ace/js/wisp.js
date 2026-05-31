@@ -927,7 +927,7 @@ $.i18n().load( page.lang('wisp') ).then( function () {
                 }
             ],
             pager: '#aplist-grid-pager',
-            rowNum: 10,
+            rowNum: 20,
             viewrecords: true,
 
             pgbuttons: true,

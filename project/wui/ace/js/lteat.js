@@ -197,7 +197,7 @@ function init_at() {
             customInline
         ],
         pager: set_pager,
-        rowNum: 10,
+        rowNum: 20,
         viewrecords: true,
         pgbuttons: true,
         pagerpos: 'center',
@@ -230,7 +230,7 @@ function init_at() {
             customInline
         ],
         pager: watch_pager,
-        rowNum: 10,
+        rowNum: 20,
         viewrecords: true,
         pgbuttons: true,
         pagerpos: 'center',

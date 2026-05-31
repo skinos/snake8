@@ -773,7 +773,7 @@ var jqtable =
             delete defaults.rowList;
         }
         // 添加水平滚动条
-        $( grid_selector ).wrap( '<div style="overflow-x:auto;"></div>' );
+        $( grid_selector ).wrap( '<div style="overflow-x:hidden;"></div>' );
         // 结合自定义的参数初始化一个表格
         var item =  $(grid_selector).jqGrid( $.extend( true, defaults, custom ) );
         // 添加响应式布局的功能
