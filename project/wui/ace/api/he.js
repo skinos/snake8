@@ -385,7 +385,7 @@ var he =
         });
         // 执行cmds中的命令
         var cmds = arg.cmds || [];
-        cmds.push('machine.restart');
+        cmds.push('machine.restart[0,wui]');
         // 设置正在重启的标志位
         window.rebooting = true;
         he.cmd(cmds, null, function () {});
@@ -436,7 +436,7 @@ var he =
         });
         // 执行cmds中的命令
         var cmds = arg.cmds || [];
-        cmds.push('machine.restart');
+        cmds.push('machine.restart[0,wui]');
         // 设置正在重启的标志位
         window.rebooting = true;
         he.cmd(cmds, null, function () {});

@@ -1945,7 +1945,7 @@ boole_t _keepoff( obj_t this, param_t param )
 		else
 		{
 		    keeplive_warn( "%s keeplive check failed, must reboot the system", object );
-			machine_restart( 1, "keeplive failed" );
+			machine_restart( 1, "keeplive_failed" );
 		}
 	}
 	else if ( ptr != NULL && 0 == strcmp( ptr, "reset" ) )
