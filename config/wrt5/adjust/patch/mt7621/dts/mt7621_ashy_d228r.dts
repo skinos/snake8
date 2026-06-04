@@ -45,12 +45,13 @@
 	};
 
 	watchdog_706: watchdog-706 {
-		compatible = "linux,wdt-gpio";
+		compatible = "linux,wdt-sp706";
 		always-enabled;
 		always-running;
 		gpios = <&gpio 14  GPIO_ACTIVE_HIGH>;
 		hw_algo = "toggle";
-		hw_margin_ms = <600>;
+		hw_margin_ms = <500>;
+		hw_timer_times = <10>;
 		status = "okay";
 	};
 };
@@ -193,5 +194,9 @@
 };
 
 &uartlite3 {
+	status = "okay";
+};
+
+&wdt {
 	status = "okay";
 };
