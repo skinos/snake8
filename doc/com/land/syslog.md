@@ -8,6 +8,7 @@ Manage the system log service including log output mode, log level filtering, lo
 - forward logs to a remote syslog server
 - display, list, and delete log files
 - write log messages at different severity levels
+- critical log to internal storage with automatic rotation
 
 
 
@@ -39,6 +40,8 @@ Manage the system log service including log output mode, log level filtering, lo
     "remote":"remote syslog server address",       // [ string ], IP address or hostname of remote syslog server, empty means disabled
     "port":"remote syslog server port",            // [ string ], port number for remote syslog, default be "514"
     "klog":"kernel log",                           // [ "disable", "enable" ], enable kernel log daemon, default be "disable"
+    "critical":"critical log",                     // [ "disable", "enable" ], enable critical log to internal storage, default be "disable"
+    "critical_size":"critical log size limit in KB", // [ number ], maximum critical log file size in kilobytes, default be 100
 
     "location":"log file storage location",        // [ "storage", "internal", "sd*", "mm*", "<path>" ], where to store log files
                                                       // "storage": use the first available storage device
@@ -62,6 +65,8 @@ land@syslog
     "remote":"192.168.1.100",                  # forward to remote syslog server
     "port":"514",                              # remote syslog port
     "klog":"enable",                           # kernel log enabled
+    "critical":"enable",                       # critical log enabled
+    "critical_size":"50",                      # critical log file size limit 50KB
     "location":"storage",                      # log stored on storage device
     "size":"100"                               # log file size limit 100KB
 }
@@ -84,6 +89,18 @@ ttrue
 Example, merge set the syslog configure( include "status" "level" "remote" "port" )
 ```shell
 land@syslog|{"status":"enable","level":"debug","remote":"192.168.1.100","port":"514"}
+ttrue
+```
+
+Example, enable the critical log
+```shell
+land@syslog:critical=enable
+ttrue
+```
+
+Example, merge set the syslog configure with critical log( include "status" "critical" "critical_size" )
+```shell
+land@syslog|{"status":"enable","critical":"enable","critical_size":"50"}
 ttrue
 ```
 
@@ -127,7 +144,7 @@ ttrue
 
 + `list[]` **list all log files in the log directory**
     - failed return NULL
-    - succeed return [ json ], a map of log filename to full file path
+    - succeed return [ json ], a map of log filename to full file path, including critical log files if enabled
     ```json
     {
         "log filename": "full file path",  // [ string ]: [ string ], log filename and its absolute path
@@ -140,7 +157,8 @@ ttrue
     land@syslog.list
     {
         "12345-syslog.log":"/var/log/12345-syslog.log",    # log filename and path
-        "12345-syslog.log.0":"/var/log/12345-syslog.log.0" # rotated log filename and path
+        "critical.txt":"/var/internal/critical.txt",        # critical log file
+        "critical.0.txt":"/var/internal/critical.0.txt"    # rotated critical log file
     }
     ```
 
@@ -155,7 +173,7 @@ ttrue
     ttrue
     ```
 
-+ `show[ [html] ]` **display the contents of the current log file**
++ `show[ html ]` **display the contents of the current log file**
     - html ----------- [ string ], optional, when set to "html", output as an HTML table
     - failed return tfalse, log file not found
     - succeed return ttrue
@@ -172,6 +190,24 @@ ttrue
     ttrue
     ```
 
++ `critical_show[ html ]` **display the contents of the critical log file**
+    - html ----------- [ string ], optional, when set to "html", output as an HTML table
+    - failed return tfalse, critical log file not found
+    - succeed return ttrue
+    - Shows the rotated backup file (.0) first, then the current critical log file
+
+    Example, show critical log file contents
+    ```shell
+    land@syslog.critical_show
+    ttrue
+    ```
+
+    Example, show critical log file as HTML table
+    ```shell
+    land@syslog.critical_show[ html ]
+    ttrue
+    ```
+
 #### Control APIs
 
 + `clear[]` **delete the current log file**
@@ -185,13 +221,19 @@ ttrue
     ```
 
 + `delete[ file ]` **delete a specific log file**
-    - file ----------- [ string ], the log filename to delete (as returned by list)
+    - file ----------- [ string ], the log filename to delete (as returned by list, including "critical.txt" and "critical.0.txt")
     - failed return tfalse
     - succeed return ttrue
 
     Example, delete a specific log file
     ```shell
     land@syslog.delete[ 12345-syslog.log.0 ]
+    ttrue
+    ```
+
+    Example, delete the critical log file
+    ```shell
+    land@syslog.delete[ critical.txt ]
     ttrue
     ```
 

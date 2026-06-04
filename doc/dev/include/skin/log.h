@@ -616,5 +616,10 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 
 
 
+/* critical log function */
+void critical_warn( const char *format, ...  );
+
+
+
 #endif   /* ----- #ifndef H_LAND_LOG_H  ----- */
 
