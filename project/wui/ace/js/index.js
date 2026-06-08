@@ -420,21 +420,20 @@ function request_machine_status_silent()
 		return Promise.reject( "talkkey is empty" );
 	}
 
-	return fetch( window.location.origin + window.hepath + "?rand=" + Math.random(), {
+	return $.ajax({
+		url: window.location.origin + window.hepath + "?rand=" + Math.random(),
 		method: "POST",
+		dataType: "json",
 		headers: {
 			"accept": "application/json, text/javascript, */*; q=0.01",
 			"content-type": "application/json",
 			"x-requested-with": "XMLHttpRequest"
 		},
-		body: JSON.stringify({
+		data: JSON.stringify({
 			he: "land@machine.status",
 			key: key,
 			username: window.username || "admin"
 		})
-	})
-	.then(function(res){
-		return res.json();
 	})
 	.then(function(data){
 
@@ -519,7 +518,7 @@ function start_ill_status_watch()
 				check_ill_and_goto_factory( window.machines );
 			}
 		})
-		.catch(function(err){
+		.fail(function(err){
 
 			console.warn( "request land@machine.status failed:", err );
 
@@ -527,7 +526,7 @@ function start_ill_status_watch()
 			// 不在这里强制跳转，也不刷新页面
 			window.talkkey = sessionStorage.getItem( "talkkey" );
 		})
-		.finally(function(){
+		.always(function(){
 
 			window.ill_status_loading = false;
 			window.ill_status_timer = setTimeout( poll, 5000 );

@@ -1,113 +1,200 @@
-***
-## Management of L2TP Client
-Management of L2TP client
+## vpn@l2tp — L2TP Client Instance Management
 
-#### Configuration( vpn@l2tp )
-**vpn@l2tp** is first l2tp client
-**vpn@l2tp2** is second l2tp client
+### Overview
+
+Manage an individual L2TP VPN client connection. Each instance (`vpn@l2tp`, `vpn@l2tp2`, …) connects to an L2TP server using `openl2tpd` with PPP, and integrates with the network framework as a VPN-type extern interface. Instances are created and managed by [`vpn@l2tplist`](l2tplist.md).
+
+- manages L2TP connection lifecycle: setup, shutdown, online/offline
+- resolves server domain to IP and routes via the specified extern interface
+- supports CHAP and simple authentication modes
+- configures PPP options: MTU, MSS, LCP echo, DNS, custom IP, raw options
+- handles NAT masquerade, default route, and custom route tables
+- monitors connection state and flow statistics
+
+
+
+### Network Architecture
+
+`vpn@l2tp` is a **VPN extern interface** registered by `vpn@l2tplist` with `network@frame`. It uses a specific extern interface (e.g. `ifname@wan`) or the default gateway as its underlying transport. When the L2TP tunnel comes up, it notifies `network@frame.online`, which triggers VPN routing and multi-link scheduling updates.
+
+For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+
+### Configuration reference ( vpn@l2tp )
 
 ```json
 // Attributes introduction 
 {
-    // common attributes
-    "status":"client status",                              // [ disable, enable ]
-    "extern":"reset when the extern online",                        // [ "disable", "default", "ifname@wan", ... ]
-                                                                        // "disable" for no reset when ifname online
-                                                                        // "default" for reset when the gateway online 
-                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+    "status":"client status",                                  // [ "disable", "enable" ]
+    "extern":"extern ifname dependency",                       // [ "disable", "default", "ifname@wan", "ifname@lte", ... ]
+                                                                    // "disable" for no extern dependency
+                                                                    // "default" to use the system default gateway
+                                                                    // "ifname@wan", "ifname@lte", ... for a specific extern interface
 
-    "server":"l2tp server address",                // [ string ]
-    "port":"server port",                          // [ nubmer ], default is 1701
+    "server":"L2TP server address",                            // [ string ], IP address or domain name
+    "port":"L2TP server port",                                 // [ number ], default 1701
 
-    // seucre attributes
-    "username":"user name",                        // [ string ]
-    "password":"user password",                    // [ string ]
-    "authmode":"authentication type",              // [ disable, simple, chap ]
-    "secret":"tunnel secret key",                  // [ string ], vaild when "authmode" is "chap"
+    // Authentication
+    "username":"PPP username",                                 // [ string ]
+    "password":"PPP password",                                 // [ string ]
+    "authmode":"authentication type",                          // [ "disable", "simple", "chap" ]
+    "secret":"tunnel secret key",                              // [ string ], valid when authmode is "chap"
 
-    // ppp attributes
-    "ppp":
+    // PPP options
+    "ppp":                                 // PPP configuration
     {
-        "mtu":"Maximum transmission unit",               // [ number ], The unit is in bytes
-        "mss":"TCP Maximum Segment Size",                // [ number ], The unit is in bytes
-        "lcp_echo_interval":"LCP echo interval",         // [ number ], The unit is in seconds
-        "lcp_echo_failure":"LCP echo failure times",     // [ number ]
-        "custom_dns":"Custom DNS",                       // [ disable, enable ]
-        "dns":"Custom DNS1",                             // [ IP address ], This is valid when custom_dns is [ enable ]
-        "dns2":"Custom DNS2",                            // [ IP address ], This is valid when custom_dns is [ enable ]
-        "txqueuelen":"tx queue len",
-        "custom_ip":"custom the ppp interface ip",       // [ disable, enable ]
-        "localip":"ppp interface local ip",              // [ ip address ], vaild when "custom_ip" is "enable"
-        "remoteip":"ppp interface remote ip",            // [ ip address ], vaild when "custom_ip" is "enable"
-        "pppopt":"ppp original options"                  // [ string ], multiple options are separated by semicolons
+        "mtu":"Maximum transmission unit",         // [ number ], the unit is bytes, default 1400
+        "mss":"TCP Maximum Segment Size",          // [ number ], the unit is bytes
+        "lcp_echo_interval":"LCP echo interval",   // [ number ], the unit is seconds
+        "lcp_echo_failure":"LCP echo failure times",// [ number ]
+        "custom_dns":"Custom DNS",                 // [ "disable", "enable" ]
+        "dns":"Custom DNS1",                       // [ ip address ], valid when custom_dns is "enable"
+        "dns2":"Custom DNS2",                      // [ ip address ], valid when custom_dns is "enable"
+        "txqueuelen":"TX queue length",            // [ number ]
+        "custom_ip":"custom PPP interface IP",     // [ "disable", "enable" ]
+        "localip":"PPP local IP",                  // [ ip address ], valid when custom_ip is "enable"
+        "remoteip":"PPP remote IP",                // [ ip address ], valid when custom_ip is "enable"
+        "pppopt":"raw PPP options"                 // [ string ], semicolon-separated PPP options
     },
 
-    // route attributes
-    "masq":"share interface address to access",    // [ disable, enable ]
-    "defaultroute":"set it default route",         // [ disable, enable ]
-    "route_table":                                 // you can custom the route rule on this connect, vaild when "defaultroute" is "disable"
+    // Routing
+    "masq":"NAT masquerade",                                   // [ "disable", "enable" ]
+    "defaultroute":"set as default route",                     // [ "disable", "enable" ]
+    "metric":"route metric",                                   // [ number ], optional
+    "route_table":                             // custom route rules, valid when defaultroute is "disable"
     {
-        "route rule name":                         // [ string ]
+        "route rule name":                     // [ string ]
         {
-            "target":"destination address",           // [ string ], ip address or network
+            "target":"destination address",        // [ string ], IP address or network
             "mask":"destination network mask"      // [ string ]
         }
-        // ...more route rule
+        // "...":{}  How many routes show how many properties
     }
 }
+```
 
+#### Configuration example
+
+Example, show all L2TP client configuration
+```shell
+vpn@l2tp
+{
+    "status":"enable",
+    "extern":"default",
+    "server":"l2tp.example.com",
+    "port":"1701",
+    "username":"vpnuser",
+    "password":"vpnpass",
+    "authmode":"chap",
+    "secret":"tunnelsecret",
+    "masq":"enable",
+    "defaultroute":"enable",
+    "ppp":
+    {
+        "mtu":"1400",
+        "lcp_echo_interval":"10",
+        "lcp_echo_failure":"6"
+    }
+}
+```
+
+#### Configuration settings example
+
+Example, enable the L2TP client
+```shell
+vpn@l2tp:status=enable
+ttrue
+```
+
+Example, change the L2TP server
+```shell
+vpn@l2tp:server=new-l2tp.example.com
+ttrue
+```
+
+Example, merge set L2TP configure( include "server" "username" "password" )
+```shell
+vpn@l2tp|{"server":"l2tp.example.com","username":"user","password":"pass"}
+ttrue
 ```
 
 
-#### **Methods**
 
-+ `setup[]` **setup the l2tp client**, *succeed return ttrue, failed return tfalse, error return terror*
+### API Reference
 
-+ `shut[]` **shutdown the l2tp client**, *succeed return ttrue, failed return tfalse, error return terror*
+#### Management APIs
 
-+ `status[]` **get the l2tp client infomation**, *succeed return talk to describes infomation, failed return NULL, error return terror*
++ `setup[]` **start the L2TP client service**
+    - succeed return ttrue
+    - only starts if status is "enable"
+    - launches the openl2tpd service subprocess
+
++ `shut[]` **shut down the L2TP client**
+    - succeed return ttrue
+    - notifies `network@frame.offline`, stops the service, clears connect_failed counter
+
+
+#### Query APIs
+
++ `status[]` **get L2TP client status**
+    - failed return NULL
+    - succeed return [ json ], connection status and statistics
     ```json
-    // Attributes introduction of talk by the method return
     {
-        "status":"Current status",        // [ uping, down, up ]
-                                             // uping for connecting
-                                             // down for the network is down
-                                             // up for the network is connect succeed
-        "netdev":"netdev name",         // [ string ]
-        "gw":"gateway ip address",      // [ ip address ]
-        "dns":"dns ip address",         // [ ip address ]
-        "dns2":"dns2 ip address",       // [ ip address ]
-        "ip":"ip address",              // [ ip address ]
-        "mask":"network mask",          // [ ip address ]
-        "livetime":"online time",       // hour:minute:second:day
-        "rx_bytes":"send bytes",        // [ number ]
-        "rx_packets":"send packets",    // [ number ]
-        "tx_bytes":"receive bytes",     // [ number ]
-        "tx_packets":"receive packets", // [ number ]
+        "status":"Current state",        // [ "disable", "uping", "down", "up" ]
+                                             // "disable" client is disabled
+                                             // "uping" L2TP is connecting
+                                             // "down" L2TP is down
+                                             // "up" L2TP tunnel is established
+        "netdev":"netdev name",          // [ string ], e.g. "ppp0"
+        "serverip":"server IP",          // [ ip address ], resolved server IP
+        "ip":"IP address",               // [ ip address ], local tunnel IP
+        "dstip":"destination IP",        // [ ip address ], remote tunnel IP
+        "mask":"network mask",           // [ ip address ]
+        "gw":"gateway IP",               // [ ip address ], Optional
+        "dns":"DNS server",              // [ ip address ], Optional, present when connected
+        "dns2":"backup DNS",             // [ ip address ], Optional, present when connected
+        "livetime":"online time",        // [ string ], format hour:minute:second:day
+        "rx_bytes":"received bytes",     // [ string ]
+        "rx_packets":"received packets", // [ string ]
+        "tx_bytes":"sent bytes",         // [ string ]
+        "tx_packets":"sent packets"      // [ string ]
     }
     ```
+
+    Example, get the first L2TP client status
     ```shell
-    # examples, get the first l2tp client infomation
     vpn@l2tp.status
     {
-        "status":"up",                     # connect is succeed
-        "netdev":"ppp0",                   # netdev is ppp0
-        "ip":"192.168.10.1",               # ip address is 192.168.1.1
-        "mask":"255.255.255.0",            # network mask is 255.255.255.0
-        "gw":"192.168.10.254",             # gateway is 192.168.10.254
-        "dns":"114.114.114.114",           # dns is 114.114.114.114
-        "livetime":"01:15:50:0",           # already online 1 hour and 15 minute and 50 second
-        "rx_bytes":"1256",                 # receive 1256 bytes
-        "rx_packets":"4",                  # receive 4 packets
-        "tx_bytes":"1320",                 # send 1320 bytes
-        "tx_packets":"4"                   # send 4 packets
+        "status":"up",
+        "netdev":"ppp0",
+        "ip":"10.0.0.2",
+        "dstip":"10.0.0.1",
+        "mask":"255.255.255.255",
+        "serverip":"198.51.100.1",
+        "dns":"8.8.8.8",
+        "livetime":"02:30:15:0",
+        "rx_bytes":"123456",
+        "rx_packets":"789",
+        "tx_bytes":"654321",
+        "tx_packets":"987"
     }
     ```
 
-+ `netdev[]` **get the l2tp client netdev**, *succeed return netdev, failed return NULL, error return terror*
++ `netdev[]` **get the L2TP netdev name**
+    - failed return NULL
+    - succeed return [ string ], the PPP netdev name (e.g. "ppp0")
+
+    Example, get the first L2TP client netdev
     ```shell
-    # examples, get the first l2tp client netdev
     vpn@l2tp.netdev
     ppp0
     ```
 
+
+#### Control APIs
+
++ `reset[]` **restart the L2TP client**
+    - succeed return ttrue
+    - behavior depends on the `extern` setting:
+        - "default": restarts immediately
+        - specific ifname: restarts only when the specified extern interface comes online
