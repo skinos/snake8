@@ -18,6 +18,9 @@ all:
 	mkdir $(FPK_BUILD_DIR)/admin
 	cp -fr ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
 	cp -fr ./ace/* $(FPK_BUILD_DIR)/admin
+	# 给JS文件添加版本参数，防止IE缓存导致跨项目冲突
+	find $(FPK_BUILD_DIR)/admin -name "*.html" -exec sed -i 's|/api/\([^"]*\.js\)"|/api/\1?v=$(PKG_VERSION)"|g' {} \;
+	find $(FPK_BUILD_DIR)/admin -name "*.html" -exec sed -i 's|/js/\([^"]*\.js\)"|/js/\1?v=$(PKG_VERSION)"|g' {} \;
 	$(call Build/Install/fpk,$(gSTORE_DIR))
 install:
 	$(call Build/Install/fpk2rootfs,$(gosROOT_DIR))
