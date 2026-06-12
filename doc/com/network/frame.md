@@ -529,34 +529,257 @@ ttrue
     - ifname ----------- [ string ], optional, if given returns ttrue/tfalse
     - failed return NULL
     - succeed return [ json ] or ttrue/tfalse, the interface that owns the default route
+    - Returns the **full status** of the interface that owns the default route (same as calling `status` on that interface). The exact fields depend on the interface type: WAN returns Ethernet fields, LTE returns modem fields, WISP returns WiFi fields.
     ```json
     {
-        "ifname":"interface name",     // [ string ]
-        "ifdev":"device name",         // [ string ]
-        "netdev":"network device"      // [ string ]
+        "status":"Current state",        // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "down" ]
+        "mode":"IPV4 address mode",     // [ "dhcpc", "static", "pppoec", "ppp" ], Optional
+        "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
+        "ifname":"ifname name",         // [ string ], Optional
+        "gw":"gateway ip address",      // [ ip address ], Optional
+        "dns":"dns ip address",         // [ ip address ], Optional
+        "dns2":"dns2 ip address",       // [ ip address ], Optional
+        "ip":"ip address",              // [ ip address ]
+        "dstip":"destination ip",       // [ ip address ], Optional, for PPP links
+        "mask":"network mask",          // [ ip address ]
+        "mac":"MAC address",            // [ mac address ]
+        "livetime":"online time",       // [ string ], format is hour:minute:second:day
+        "rx_bytes":"received bytes",    // [ number ]
+        "rx_packets":"received packets",// [ number ]
+        "tx_bytes":"sent bytes",        // [ number ]
+        "tx_packets":"sent packets",    // [ number ]
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, for extern interfaces
+
+        // LTE/NR modem fields (only present when default is ifname@lte)
+        "imei":"IMEI number",           // [ string ], Optional
+        "imsi":"IMSI number",           // [ string ], Optional
+        "iccid":"ICCID number",         // [ string ], Optional
+        "plmn":"MCC and MNC",           // [ string ], Optional
+        "operator":"operator name",     // [ string ], Optional
+        "nettype":"network type",       // [ string ], Optional
+        "signal":"signal level",        // [ "0", "1", "2", "3", "4" ], Optional
+        "rssi":"signal intensity",      // [ number ], Optional, the unit is dBm
+        "csq":"CSQ number",             // [ number ], Optional
+
+        // WiFi station fields (only present when default is ifname@wisp)
+        "peer":"Peer SSID",             // [ string ], Optional
+        "peermac":"Peer BSSID",         // [ mac address ], Optional
+        "channel":"Peer channel",       // [ number ], Optional
+        "signal":"signal level",        // [ "0", "1", "2", "3", "4" ], Optional
+        "rssi":"Peer RSSI",             // [ number ], Optional, the unit is dBm
+        "rate":"connect rate"           // [ number ], Optional, the unit is M
     }
     ```
 
-    Example, get current default connection
+    Example, get current default connection when it is WAN (Ethernet)
     ```shell
     network@frame.default
     {
-        "ifname":"ifname@wan",
+        "status":"up",
+        "mode":"dhcpc",
+        "netdev":"eth0",
         "ifdev":"ethernet@lan1",
-        "netdev":"eth0"
+        "ifname":"ifname@wan",
+        "ip":"192.168.10.1",
+        "mask":"255.255.255.0",
+        "gw":"192.168.10.254",
+        "dns":"8.8.8.8",
+        "dns2":"8.8.4.4",
+        "mac":"00:11:22:33:44:55",
+        "livetime":"02:30:15:0",
+        "rx_bytes":"123456",
+        "rx_packets":"789",
+        "tx_bytes":"654321",
+        "tx_packets":"987"
     }
+    ```
+
+    Example, get current default connection when it is LTE modem
+    ```shell
+    network@frame.default
+    {
+        "status":"up",
+        "mode":"ppp",
+        "netdev":"ppp0",
+        "ifdev":"modem@lte",
+        "ifname":"ifname@lte",
+        "ip":"10.0.0.2",
+        "dstip":"10.0.0.1",
+        "mask":"255.255.255.255",
+        "dns":"8.8.8.8",
+        "dns2":"8.8.4.4",
+        "mac":"02:50:F4:00:00:00",
+        "livetime":"01:15:30:0",
+        "rx_bytes":"5678",
+        "rx_packets":"42",
+        "tx_bytes":"1234",
+        "tx_packets":"18",
+        "imei":"867160040494084",
+        "imsi":"460015356123463",
+        "iccid":"89860121801097564807",
+        "plmn":"46001",
+        "operator":"ChinaMobile",
+        "nettype":"WCDMA",
+        "signal":"3",
+        "rssi":"-107",
+        "csq":"23"
+    }
+    ```
+
+    Example, get current default connection when it is WISP (WiFi station)
+    ```shell
+    network@frame.default
+    {
+        "status":"up",
+        "mode":"dhcpc",
+        "netdev":"ath11",
+        "ifdev":"wifi@nsta",
+        "ifname":"ifname@wisp",
+        "ip":"192.168.1.100",
+        "mask":"255.255.255.0",
+        "gw":"192.168.1.1",
+        "dns":"8.8.8.8",
+        "mac":"02:50:F4:00:00:01",
+        "livetime":"00:45:20:0",
+        "rx_bytes":"98765",
+        "rx_packets":"543",
+        "tx_bytes":"12345",
+        "tx_packets":"67",
+        "peer":"MyWiFi-AP",
+        "peermac":"AA:BB:CC:DD:EE:FF",
+        "channel":"6",
+        "signal":"3",
+        "rssi":"-52",
+        "rate":"72"
+    }
+    ```
+
+    Example, check if ifname@lte is the current default connection
+    ```shell
+    network@frame.default[ ifname@lte ]
+    ttrue
     ```
 
 + `gateway[ ifname ]` **get or check the current gateway connection**
     - ifname ----------- [ string ], optional, if given returns ttrue/tfalse
     - failed return NULL
     - succeed return [ json ] or ttrue/tfalse, the interface that owns the gateway route
+    - Returns the **full status** of the interface that owns the gateway route (same as calling `status` on that interface). The exact fields depend on the interface type: WAN returns Ethernet fields, LTE returns modem fields, WISP returns WiFi fields.
     ```json
     {
-        "ifname":"interface name",     // [ string ]
-        "ifdev":"device name",         // [ string ]
-        "netdev":"network device"      // [ string ]
+        "status":"Current state",        // [ "nodevice", "reset", "setup", "register", "uping", "scanning", "block", "up", "failed", "down" ]
+        "mode":"IPV4 address mode",     // [ "dhcpc", "static", "pppoec", "ppp" ], Optional
+        "netdev":"netdev name",         // [ string ]
+        "ifdev":"ifdev name",           // [ string ], Optional
+        "ifname":"ifname name",         // [ string ], Optional
+        "gw":"gateway ip address",      // [ ip address ], Optional
+        "dns":"dns ip address",         // [ ip address ], Optional
+        "dns2":"dns2 ip address",       // [ ip address ], Optional
+        "ip":"ip address",              // [ ip address ]
+        "dstip":"destination ip",       // [ ip address ], Optional, for PPP links
+        "mask":"network mask",          // [ ip address ]
+        "mac":"MAC address",            // [ mac address ]
+        "livetime":"online time",       // [ string ], format is hour:minute:second:day
+        "rx_bytes":"received bytes",    // [ number ]
+        "rx_packets":"received packets",// [ number ]
+        "tx_bytes":"sent bytes",        // [ number ]
+        "tx_packets":"sent packets",    // [ number ]
+        "delay":"delay time",           // [ "failed", "block", number ], Optional, for extern interfaces
+
+        // LTE/NR modem fields (only present when gateway is ifname@lte)
+        "imei":"IMEI number",           // [ string ], Optional
+        "imsi":"IMSI number",           // [ string ], Optional
+        "iccid":"ICCID number",         // [ string ], Optional
+        "plmn":"MCC and MNC",           // [ string ], Optional
+        "operator":"operator name",     // [ string ], Optional
+        "nettype":"network type",       // [ string ], Optional
+        "signal":"signal level",        // [ "0", "1", "2", "3", "4" ], Optional
+        "rssi":"signal intensity",      // [ number ], Optional, the unit is dBm
+        "csq":"CSQ number",             // [ number ], Optional
+
+        // WiFi station fields (only present when gateway is ifname@wisp)
+        "peer":"Peer SSID",             // [ string ], Optional
+        "peermac":"Peer BSSID",         // [ mac address ], Optional
+        "channel":"Peer channel",       // [ number ], Optional
+        "signal":"signal level",        // [ "0", "1", "2", "3", "4" ], Optional
+        "rssi":"Peer RSSI",             // [ number ], Optional, the unit is dBm
+        "rate":"connect rate"           // [ number ], Optional, the unit is M
     }
+    ```
+
+    Example, get current gateway connection when it is WAN (Ethernet)
+    ```shell
+    network@frame.gateway
+    {
+        "status":"up",
+        "mode":"dhcpc",
+        "netdev":"eth0",
+        "ifdev":"ethernet@lan1",
+        "ifname":"ifname@wan",
+        "ip":"192.168.10.1",
+        "mask":"255.255.255.0",
+        "gw":"192.168.10.254",
+        "dns":"8.8.8.8",
+        "dns2":"8.8.4.4",
+        "mac":"00:11:22:33:44:55",
+        "livetime":"02:30:15:0",
+        "rx_bytes":"123456",
+        "rx_packets":"789",
+        "tx_bytes":"654321",
+        "tx_packets":"987"
+    }
+    ```
+
+    Example, get current gateway connection when it is LTE modem
+    ```shell
+    network@frame.gateway
+    {
+        "status":"up",
+        "mode":"ppp",
+        "netdev":"ppp0",
+        "ifdev":"modem@lte",
+        "ifname":"ifname@lte",
+        "ip":"10.0.0.2",
+        "dstip":"10.0.0.1",
+        "mask":"255.255.255.255",
+        "dns":"8.8.8.8",
+        "mac":"02:50:F4:00:00:00",
+        "livetime":"01:15:30:0",
+        "imei":"867160040494084",
+        "plmn":"46001",
+        "operator":"ChinaMobile",
+        "signal":"3"
+    }
+    ```
+
+    Example, get current gateway connection when it is WISP (WiFi station)
+    ```shell
+    network@frame.gateway
+    {
+        "status":"up",
+        "mode":"dhcpc",
+        "netdev":"ath11",
+        "ifdev":"wifi@nsta",
+        "ifname":"ifname@wisp",
+        "ip":"192.168.1.100",
+        "mask":"255.255.255.0",
+        "gw":"192.168.1.1",
+        "dns":"8.8.8.8",
+        "mac":"02:50:F4:00:00:01",
+        "livetime":"00:45:20:0",
+        "peer":"MyWiFi-AP",
+        "peermac":"AA:BB:CC:DD:EE:FF",
+        "channel":"6",
+        "signal":"3",
+        "rssi":"-52"
+    }
+    ```
+
+    Example, check if ifname@wan is the current gateway connection
+    ```shell
+    network@frame.gateway[ ifname@wan ]
+    ttrue
     ```
 
 + `extup[]` **get the first extern interface that is currently up**
