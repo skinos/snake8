@@ -9,7 +9,7 @@
 
 
 /* set the time to system */
-static boole time_setting( const char *tt, const char *zone )
+static boole time_setting( const char *tt, const char *zone, const char *src )
 {
     int i;
 	boole ret;
@@ -90,14 +90,17 @@ static boole time_setting( const char *tt, const char *zone )
 			/* tell the hardware clock */
 			shell( "hwclock -w >/dev/null 2>&1" );
 			/* record time source */
-			h = register_open( NULL, O_RDWR, 0644, 0, 0 );
-			if ( h != NULL )
-			{
-				register_value_set( h, "date_src", "set", strlen("set"), 40 );
-				register_close( h );
-			}
-			/* cast joint event */
-			joint_calls( "date/modify", "set" );
+            if ( src != NULL && *src != '\0' )
+            {
+                h = register_open( NULL, O_RDWR, 0644, 0, 0 );
+                if ( h != NULL )
+                {
+                    register_value_set( h, "date_src", src, strlen(src), 40 );
+                    register_close( h );
+                }
+                /* cast joint event */
+                joint_calls( "date/modify", "set" );
+            }
 			ret = true;
 	    }
 	}
@@ -159,7 +162,7 @@ boole_t _setup( obj_t this, param_t param )
     start = json_string( cfg, "inittime" );
 	syslog( LOG_INFO, COM_IDPATH" init the date zone" );
 	/* set the timezone first */
-	time_setting( start, ptr );
+	time_setting( start, ptr, NULL );
 	/* read from the RTC when have RTC */
 
     talk_free( cfg );
@@ -194,7 +197,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 	    	ptr = "8";
 	    }
 		/* set the timezone first */
-		time_setting( NULL, ptr );
+		time_setting( NULL, ptr, "set" );
 		/* read from the RTC when have RTC */
 		/* run the service of ntpclient depend attribute value of "ntpclient" */
 		ptr = json_string( cfg, "ntpclient" );
@@ -357,7 +360,7 @@ boole_t _current( obj_t this, param_t param )
 	zone = param_string( param, 2 );
 	if ( ptr != NULL || zone != NULL )
 	{
-		if ( time_setting( ptr, zone ) == true )
+		if ( time_setting( ptr, zone, "set" ) == true )
 		{
 			return ttrue;
 		}
