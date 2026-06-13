@@ -50,6 +50,11 @@ if ( !window.location.origin )
 	window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
 }
 
+function update_copyright_year()
+{
+	$("#copyright-year").text( new Date().getFullYear() );
+}
+
 // logout
 function logout_system()
 {
@@ -537,6 +542,7 @@ function start_ill_status_watch()
 }
 
 jQuery(function($) {
+	update_copyright_year();
 
 	// Configure load
 	he.load( [ window.object,
