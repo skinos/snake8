@@ -140,7 +140,7 @@ route add -net 127.0.0.0 netmask 255.255.255.0 dev lo
 
 # init the raw syslog
 ln -s /dev/log /var/syslogd
-syslogd -L -O /var/bootup.syslog
+syslogd -L -O /var/bootup.syslog -t
 
 # run the land
 . /etc/init.d/land;start

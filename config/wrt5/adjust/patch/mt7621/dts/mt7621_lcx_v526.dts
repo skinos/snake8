@@ -35,6 +35,12 @@
 		};
 	};
 
+	can_osc: can-osc {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <40000000>;
+	};
+
 	watchdog_706: watchdog-706 {
 		compatible = "linux,wdt-sp706";
 		always-enabled;
@@ -43,6 +49,38 @@
 		hw_algo = "toggle";
 		hw_margin_ms = <500>;
 		hw_timer_times = <10>;
+		status = "okay";
+	};
+
+	/* spix based gpio */
+	spix {
+		compatible = "spi-gpio";
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+
+		sck-gpios = <&gpio 6 0>;
+		miso-gpios = <&gpio 8 0>;
+		mosi-gpios = <&gpio 5 0>;
+		cs-gpios = <&gpio 7 0>;
+		num-chipselects = <1>;
+	    spi-max-frequency = <1000000>;
+
+		status = "okay";
+		
+		/* clients */
+		mcp-can@0 {
+			compatible = "microchip,mcp251xfd";
+		    reg = <0>;
+			//clock-frequency = <40000000>;
+	        spi-max-frequency = <1000000>;
+	        //interrupts-extended = <&gpio 43 IRQ_TYPE_EDGE_FALLING>;
+	        microchip,rx-int-gpios = <&gpio 43 GPIO_ACTIVE_LOW>;
+			clocks = <&can_osc>;
+		};
+    };
+
+	ashy-vmem {
+		compatible = "linux,sysfs_vmem_config";
 		status = "okay";
 	};
 };
@@ -93,6 +131,17 @@
 			};
 		};
 	};
+/*
+	mcp-can@0 {
+		compatible = "microchip,mcp251xfd";
+		reg = <0>;
+		//clock-frequency = <40000000>;
+	    spi-max-frequency = <1000000>;
+	    //interrupts-extended = <&gpio 43 IRQ_TYPE_EDGE_FALLING>;
+	    microchip,rx-int-gpios = <&gpio 43 GPIO_ACTIVE_LOW>;
+		clocks = <&can_osc>;
+	};
+*/
 };
 
 &gmac0 {

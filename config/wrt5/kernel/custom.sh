@@ -30,6 +30,7 @@ src2kernel net_phy_Kconfig ${LINUX_DIR}/drivers/net/phy/Kconfig
 src2kernel net_phy_Makefile ${LINUX_DIR}/drivers/net/phy/Makefile
 src2kernel gpio_gpio-mt7621.c ${LINUX_DIR}/drivers/gpio/gpio-mt7621.c
 src2kernel mediatek_mtk_eth_soc.c ${LINUX_DIR}/drivers/net/ethernet/mediatek/mtk_eth_soc.c
+src2kernel can_mcp251xfd-core.c ${LINUX_DIR}/drivers/net/can/spi/mcp251xfd/mcp251xfd-core.c
 
 # 7628 Control
 src2kernel arch_mips_pci_pci-mt7620.c ${LINUX_DIR}/arch/mips/pci/pci-mt7620.c
