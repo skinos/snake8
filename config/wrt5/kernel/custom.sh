@@ -39,3 +39,7 @@ src2kernel arch_mips_pci_pci-mt7620.c ${LINUX_DIR}/arch/mips/pci/pci-mt7620.c
 src2kernel watchdog_sp706_wdt.c ${LINUX_DIR}/drivers/watchdog/sp706_wdt.c
 src2kernel watchdog_kconfig ${LINUX_DIR}/drivers/watchdog/Kconfig
 src2kernel watchdog_makefile ${LINUX_DIR}/drivers/watchdog/Makefile
+
+# option for lte/nr modem
+src2kernel option.c ${LINUX_DIR}/drivers/usb/serial
+

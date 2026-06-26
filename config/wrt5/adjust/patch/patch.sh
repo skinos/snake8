@@ -111,6 +111,7 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/010-mt7663-disable-vht160-st
 # patch mt76 rmmod/insmod: disable rx/tx napi before netif_napi_del
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/020-mt76-dma-cleanup-disable-rx-napi.patch" "${gSDK_DIR}/package/kernel/mt76/patches/020-mt76-dma-cleanup-disable-rx-napi.patch"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/021-mt7603-unregister-stop-irq-before-dma-cleanup.patch" "${gSDK_DIR}/package/kernel/mt76/patches/021-mt7603-unregister-stop-irq-before-dma-cleanup.patch"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/022-mt7603-mcu-reload-recovery.patch" "${gSDK_DIR}/package/kernel/mt76/patches/022-mt7603-mcu-reload-recovery.patch"
 
 # proftpd
 if [ ! -e ${gSDK_DIR}/package/network/services/proftpd ]; then
