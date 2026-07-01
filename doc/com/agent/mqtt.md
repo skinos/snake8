@@ -7,9 +7,8 @@ It does not send Heport receipt packets or application-level keeplive; broker **
 Optional TLS uses certificate files under the product configuration directory (**`mqtt.ca`**, **`mqtt.crt`**, **`mqtt.key`**), same layout as **`agent@io`** MQTT clients.
 
 - Publish device registration, update, heartbeat, and optional proactive reports to configurable topics
-- Subscribe to server command and heart-modify topics when configured
-- Execute remote JSON HE commands and publish acknowledgements
-- Coordinate **`agent@portc`** and **`agent@gtog`** through the local **`adjust`** API
+- Subscribe to server command topics when configured
+- Execute remote JSON HE commands and publish HE command results
     > Empty publish or subscribe topic strings disable the corresponding feature entirely
 
 
@@ -28,7 +27,7 @@ Optional TLS uses certificate files under the product configuration directory (*
     "mqtt_username":"MQTT broker username",                 // [ string ], optional
     "mqtt_password":"MQTT broker password",                 // [ string ], optional
     "mqtt_keepalive":"MQTT session keepalive in seconds",   // [ number ], default 60
-    "connect_timeout":"broker connect timeout in seconds",  // [ number ], default 20
+    "reconnect_interval":"broker reconnect timer in seconds", // [ number ], default 10
 
     "user":"account username for device registration",       // [ string ], written into registration JSON
     "vcode":"account verification code",                    // [ string ], optional, written into registration JSON
@@ -42,17 +41,15 @@ Optional TLS uses certificate files under the product configuration directory (*
     "topic_update":"publish topic for device snapshot update",      // [ string ], empty skips update publish
     "topic_heart":"publish topic for periodic heartbeat",             // [ string ], empty skips heart publish
     "topic_send":"publish topic for proactive JSON report",         // [ string ], empty disables send API publish
-    "topic_ack":"publish topic for command acknowledgement",        // [ string ], empty executes commands without reply
-    "topic_heart_modify":"subscribe topic for runtime heart change",  // [ string ], empty skips subscribe and handling
-    "topic_command":"subscribe topic for remote HE commands",         // [ string ], empty skips command subscribe
+    "topic_ret":"publish topic for HE command result",        // [ string ], empty executes commands without reply
+    "topic_he":"subscribe topic for remote HE commands",         // [ string ], empty skips command subscribe
 
     "topic_register_qos":"QoS for topic_register",            // [ number ], default 1
     "topic_update_qos":"QoS for topic_update",                // [ number ], default 1
     "topic_heart_qos":"QoS for topic_heart",                  // [ number ], default 0
     "topic_send_qos":"QoS for topic_send",                    // [ number ], default 1
-    "topic_ack_qos":"QoS for topic_ack",                      // [ number ], default 1
-    "topic_heart_modify_qos":"QoS for topic_heart_modify",    // [ number ], default 1
-    "topic_command_qos":"QoS for topic_command",              // [ number ], default 1
+    "topic_ret_qos":"QoS for topic_ret",                      // [ number ], default 1
+    "topic_he_qos":"QoS for topic_he",              // [ number ], default 1
 
     "heart":                              // [ string ]: { json }, periodic HE snapshot collection
     {
@@ -75,7 +72,7 @@ agent@mqtt
     "mqtt_username":"device",                             # broker login username
     "mqtt_password":"secret",                             # broker login password
     "mqtt_keepalive":"60",                                # MQTT keepalive 60 seconds
-    "connect_timeout":"20",                               # connect timeout 20 seconds
+    "reconnect_interval":"10",                            # reconnect timer 10 seconds
     "user":"ashyelf",                                     # account bound to this device
     "vcode":"123456",                                     # account verification code
     "type":"router",                                      # device type is router
@@ -83,17 +80,15 @@ agent@mqtt
     "topic_register":"agent/device/register",             # registration publish topic
     "topic_update":"agent/device/update",                 # update publish topic
     "topic_heart":"agent/device/heart",                   # heartbeat publish topic
-    "topic_heart_modify":"agent/device/heart/set",        # heart modify subscribe topic
     "topic_send":"",                                      # proactive send topic disabled
-    "topic_command":"agent/device/command",               # remote command subscribe topic
-    "topic_ack":"agent/device/ack",                       # command acknowledgement publish topic
+    "topic_he":"agent/device/command",               # remote command subscribe topic
+    "topic_ret":"agent/device/ret",                       # HE command result publish topic
     "topic_register_qos":"1",
     "topic_update_qos":"1",
     "topic_heart_qos":"0",
     "topic_send_qos":"1",
-    "topic_ack_qos":"1",
-    "topic_heart_modify_qos":"1",
-    "topic_command_qos":"1",
+    "topic_ret_qos":"1",
+    "topic_he_qos":"1",
     "heart":
     {
         "gnss@nmea":"10"                                  # collect gnss every 10 seconds
@@ -121,9 +116,9 @@ agent@mqtt:topic_heart=agent/device/heart
 ttrue
 ```
 
-Example, merge set broker and topic attributes ( include "server" "port" "topic_register" "topic_command" )
+Example, merge set broker and topic attributes ( include "server" "port" "topic_register" "topic_he" )
 ```shell
-agent@mqtt|{"server":"broker.example.com","port":"8883","topic_register":"dev/reg","topic_command":"dev/cmd"}
+agent@mqtt|{"server":"broker.example.com","port":"8883","topic_register":"dev/reg","topic_he":"dev/cmd"}
 ttrue
 ```
 
@@ -137,15 +132,20 @@ ttrue
 
 **Heartbeat**
 * Each entry in **`heart`** starts a timer. When it fires, the service collects the named HE command and publishes the result JSON to **`topic_heart`**.
-* A message on **`topic_heart_modify`** replaces the runtime heart schedule without writing configuration; payload format matches the **`heart`** object.
+* The **`heart`** API reads or replaces the runtime heart schedule without writing configuration; payload format matches the **`heart`** object in configuration.
 
 **Remote commands**
-* JSON received on **`topic_command`** is passed to **`talk_he_command`**. The result JSON is published to **`topic_ack`** when that topic is configured.
+* JSON received on **`topic_he`** is passed to **`talk_he_command`**. The result JSON is published to **`topic_ret`** when that topic is configured.
 * Only JSON command objects are supported (not single HE strings).
 
 **Device identity on the broker**
 * **`mqtt_id`** (default machine macid) and optional **`mqtt_username`** / **`mqtt_password`** identify the client to the broker.
 * **`user`** and **`vcode`** remain in the registration JSON for the application server.
+
+**Extern interface and reset**
+* When **`extern`** is not **`disable`**, the service waits for the selected gateway or interface, adds a host route to the broker, and registers a joint handler for **`agent@mqtt.reset`**.
+* **`extern=default`**: registers on **`network/online`**; **`extern=ifname@…`**: registers on **`network/onextern`**.
+* **`reset`** restarts the background service when the outbound path changes so routing and MQTT session are rebuilt.
 
 
 ### API Reference
@@ -158,7 +158,7 @@ ttrue
     - This is a lifecycle method called automatically by the system during startup
     - Not intended for manual invocation
 
-+ `shut[]` **stop the mqtt background service and shut managed agent@portc and agent@gtog**
++ `shut[]` **stop the mqtt background service**
     - failed return tfalse
     - succeed return ttrue
 
@@ -168,9 +168,23 @@ ttrue
     ttrue
     ```
 
++ `reset[]` **restart the mqtt background service when extern route changes**
+    - Used as a joint handler registered by the service when **`extern`** is configured
+    - **`extern=default`**: triggered from **`network/online`**
+    - **specific interface**: triggered from **`network/onextern`** when event **`ifname`** matches configured **`extern`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, restart after default gateway comes online (normally invoked by joint, not manually)
+    ```shell
+    agent@mqtt.reset
+    ttrue
+    ```
+
 + `service[]` **internal background worker (not called via HE)**
-    - Maintains the MQTT session, publishes registration/update/heart messages, subscribes to command and heart-modify topics, and handles reconnect according to platform policy
-    - Returns **`ttrue`** when extern network is not ready yet (platform may retry); returns **`terror`** on fatal configuration errors
+    - Maintains the MQTT session, publishes registration/update/heart messages, subscribes to command topics, and reconnects on **`reconnect_interval`**
+    - Returns **`tfalse`** when **`extern`** dependency is not satisfied (gateway or interface not ready)
+    - Returns **`terror`** on fatal configuration errors (for example missing **`user`** or **`server`**)
 
 
 #### Query APIs
@@ -218,17 +232,6 @@ ttrue
     ttrue
     ```
 
-+ `adjust[ adjust configuration ]` **adjust configuration and runtime state of other components**   
-    - adjust configuration ----------- [ json ], map of component object name to full configuration
-    - failed return tfalse
-    - succeed return ttrue
-
-    Example, enable port client and disable gtog
-    ```shell
-    agent@mqtt.adjust[{"agent@portc":{"status":"enable"},"agent@gtog":{"status":"disable"}}]
-    ttrue
-    ```
-
 + `send[ json payload ]` **publish a JSON payload to topic_send from the running service**   
     - json payload ----------------- [ json ], arbitrary JSON object to publish
     - failed return tfalse
@@ -237,6 +240,25 @@ ttrue
     Example, publish a proactive report when topic_send is configured
     ```shell
     agent@mqtt.send[{"land@machine.status":{}}]
+    ttrue
+    ```
+
++ `heart[ json payload ]` **get or replace the runtime heart schedule in the running service**   
+    - json payload ----------------- [ json ], optional heart object; same format as configuration **`heart`**
+    - without json payload --------- return the current runtime heart object
+    - with json payload ------------ replace runtime heart timers with the given object; failed return tfalse, succeed return ttrue
+
+    Example, get current runtime heart schedule
+    ```shell
+    agent@mqtt.heart
+    {
+        "gnss@nmea":"10"
+    }
+    ```
+
+    Example, replace runtime heart schedule
+    ```shell
+    agent@mqtt.heart[{"gnss@nmea":"30","land@machine.status":"60"}]
     ttrue
     ```
 
@@ -250,3 +272,10 @@ The product manifest registers the following platform joint handlers for **`agen
 |-----------|-------------|
 | `network/online` | `agent@mqtt.setup` |
 | `machine/status` | `agent@mqtt.update` |
+
+When **`extern`** is configured, the background service also registers at runtime:
+
+| Joint key | Method | Condition |
+|-----------|-------------|-----------|
+| `network/online` | `agent@mqtt.reset` | **`extern=default`** |
+| `network/onextern` | `agent@mqtt.reset` | **`extern`** is a specific interface name |
