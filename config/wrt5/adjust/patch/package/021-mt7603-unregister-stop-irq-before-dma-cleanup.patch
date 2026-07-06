@@ -1,10 +1,20 @@
 --- a/mt7603/init.c
 +++ b/mt7603/init.c
-@@ -564,6 +564,8 @@ void mt7603_unregister_device(struct mt7603_dev *dev)
+@@ -564,8 +564,16 @@
+ void mt7603_unregister_device(struct mt7603_dev *dev)
  {
  	tasklet_disable(&dev->mt76.pre_tbtt_tasklet);
++	cancel_delayed_work_sync(&dev->mphy.mac_work);
++
++	if (dev->mcu_running)
++		mt7603_mcu_exit(dev);
++
 +	if (dev->mt76.mmio.irqmask)
 +		mt7603_irq_disable(dev, dev->mt76.mmio.irqmask);
++
++	clear_bit(MT76_STATE_INITIALIZED, &dev->mphy.state);
  	mt76_unregister_device(&dev->mt76);
- 	mt7603_mcu_exit(dev);
+-	mt7603_mcu_exit(dev);
  	mt7603_dma_cleanup(dev);
+ 	mt76_free_device(&dev->mt76);
+ }

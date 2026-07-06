@@ -173,14 +173,20 @@ ttrue
     ttrue
     ```
 
-+ `show[ html ]` **display the contents of the current log file**
-    - html ----------- [ string ], optional, when set to "html", output as an HTML table
++ `show[ arg ]` **display the contents of the current log file**
+    - arg ------------ [ string ], optional, first parameter; when "html", output the entire log file as an HTML table; when a numeric string (e.g. "100"), output the latest N log lines as plain text; when omitted or "0", output the entire log file as plain text
     - failed return tfalse, log file not found
     - succeed return ttrue
 
     Example, show log file contents
     ```shell
     land@syslog.show
+    ttrue
+    ```
+
+    Example, show the latest 100 log lines
+    ```shell
+    land@syslog.show[100]
     ttrue
     ```
 

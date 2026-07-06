@@ -1,0 +1,107 @@
+--- --- a/mt7603/mcu.c
++++ b/mt7603/mcu.c
+@@ -107,19 +107,47 @@
+ 				 sizeof(req), true);
+ }
+ 
++
++static void mt7603_mcu_poke_reset(struct mt7603_dev *dev)
++{
++	u32 addr = mt7603_reg_map(dev, 0x50012498);
++
++	mt76_wr(dev, addr, 0x5);
++	mt76_wr(dev, addr, 0x5);
++	udelay(1);
++
++	mt76_rmw(dev, MT_SCH_4, MT_SCH_4_FORCE_QID,
++		 MT_SCH_4_BYPASS | FIELD_PREP(MT_SCH_4_FORCE_QID, 5));
++}
++
+ static int
+ mt7603_mcu_restart(struct mt76_dev *dev)
+ {
+ 	return mt76_mcu_send_msg(dev, -MCU_CMD_RESTART_DL_REQ, NULL, 0, true);
+ }
+ 
++
++static int mt7603_mcu_stop(struct mt7603_dev *dev)
++{
++	int ret;
++
++	ret = mt7603_mcu_restart(&dev->mt76);
++	if (!ret)
++		return 0;
++
++	mt7603_mcu_poke_reset(dev);
++
++	return mt76_poll_msec(dev, MT_TOP_MISC2, BIT(0) | BIT(1), BIT(0), 500) ?
++	       0 : -EIO;
++}
++
+ static int mt7603_load_firmware(struct mt7603_dev *dev)
+ {
+ 	const struct firmware *fw;
+ 	const struct mt7603_fw_trailer *hdr;
+ 	const char *firmware;
+ 	int dl_len;
+-	u32 addr, val;
++	u32 val;
+ 	int ret;
+ 
+ 	if (is_mt7628(dev)) {
+@@ -150,19 +178,14 @@
+ 	dev_info(dev->mt76.dev, "Firmware Version: %.10s\n", hdr->fw_ver);
+ 	dev_info(dev->mt76.dev, "Build Time: %.15s\n", hdr->build_date);
+ 
+-	addr = mt7603_reg_map(dev, 0x50012498);
+-	mt76_wr(dev, addr, 0x5);
+-	mt76_wr(dev, addr, 0x5);
+-	udelay(1);
+-
+-	/* switch to bypass mode */
+-	mt76_rmw(dev, MT_SCH_4, MT_SCH_4_FORCE_QID,
+-		 MT_SCH_4_BYPASS | FIELD_PREP(MT_SCH_4_FORCE_QID, 5));
++	mt7603_mcu_poke_reset(dev);
+ 
+ 	val = mt76_rr(dev, MT_TOP_MISC2);
+ 	if (val & BIT(1)) {
+-		dev_info(dev->mt76.dev, "Firmware already running...\n");
+-		goto running;
++		dev_info(dev->mt76.dev, "Firmware already running, restarting...\n");
++		if (mt7603_mcu_restart(&dev->mt76))
++			mt7603_mcu_poke_reset(dev);
++		val = mt76_rr(dev, MT_TOP_MISC2);
+ 	}
+ 
+ 	if (!mt76_poll_msec(dev, MT_TOP_MISC2, BIT(0) | BIT(1), BIT(0), 500)) {
+@@ -174,6 +197,12 @@
+ 	dl_len = le32_to_cpu(hdr->dl_len) + 4;
+ 	ret = mt7603_mcu_init_download(dev, MCU_FIRMWARE_ADDRESS, dl_len);
+ 	if (ret) {
++		mt7603_mcu_poke_reset(dev);
++		if (mt76_poll_msec(dev, MT_TOP_MISC2, BIT(0) | BIT(1), BIT(0), 500))
++			ret = mt7603_mcu_init_download(dev, MCU_FIRMWARE_ADDRESS,
++						     dl_len);
++	}
++	if (ret) {
+ 		dev_err(dev->mt76.dev, "Download request failed\n");
+ 		goto out;
+ 	}
+@@ -197,7 +226,6 @@
+ 		goto out;
+ 	}
+ 
+-running:
+ 	mt76_clear(dev, MT_SCH_4, MT_SCH_4_FORCE_QID | MT_SCH_4_BYPASS);
+ 
+ 	mt76_set(dev, MT_SCH_4, BIT(8));
+@@ -229,7 +257,8 @@
+ 
+ void mt7603_mcu_exit(struct mt7603_dev *dev)
+ {
+-	mt7603_mcu_restart(&dev->mt76);
++	mt7603_mcu_stop(dev);
++	dev->mcu_running = false;
+ 	skb_queue_purge(&dev->mt76.mcu.res_q);
+ }
+ 
