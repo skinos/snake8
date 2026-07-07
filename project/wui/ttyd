@@ -13,8 +13,9 @@ port()
 {
     if [ ! -x "$TTYD" ]; then
         creturn NULL
+    else
+        creturn $TTYD_PORT
     fi
-    creturn $TTYD_PORT
 }
 
 setup()
@@ -22,13 +23,14 @@ setup()
     if [ ! -x "$TTYD" ]; then
         logger "ttyd not found, skip service.start: $TTYD"
         creturn ttrue
+    else
+        TTYD_PID=$(/usr/bin/he land@service.pid[ttyd] 2>/dev/null)
+        if [ -z "$TTYD_PID" ]; then
+            /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
+            sleep 1
+        fi
+        creturn ttrue
     fi
-    TTYD_PID=$(/usr/bin/he land@service.pid[ttyd] 2>/dev/null)
-    if [ -z "$TTYD_PID" ]; then
-        /usr/bin/he land@service.start[ttyd, wui@ttyd, service] >/dev/null
-        sleep 1
-    fi
-    creturn ttrue
 }
 shut()
 {
@@ -40,10 +42,11 @@ service()
     if [ ! -x "$TTYD" ]; then
         logger "ttyd not found, skip service.start: $TTYD"
         creturn terror
+    else
+        logger "ttyd running: $TTYD -p $TTYD_PORT"
+        exec $TTYD -W -p $TTYD_PORT /usr/bin/eline
+        creturn tfalse
     fi
-    logger "ttyd running: $TTYD -p $TTYD_PORT"
-    exec $TTYD -W -p $TTYD_PORT /usr/bin/eline
-    creturn tfalse
 }
 
 # call the method, you cannot delete this

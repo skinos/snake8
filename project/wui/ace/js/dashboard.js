@@ -877,7 +877,7 @@ function wifi_24g(info) {
     $("#wifi_24g_ssid").text(info.ssid || "");
     $("#wifi_24g_bssid").text(info.bssid || "");
     $("#wifi_24g_channel").text(info.channel || "");
-    $("#wifi_24g_secure").text($.i18n(info.secure) || "");
+    $("#wifi_24g_secure").text(info.status !== "down" && typeof info.secure === "string" ? ($.i18n(info.secure) || "") : "");
 
     // 流量统计
     $("#wifi_24g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
@@ -895,7 +895,7 @@ function wifi_58g(info) {
     $("#wifi_58g_ssid").text(info.ssid || "");
     $("#wifi_58g_bssid").text(info.bssid || "");
     $("#wifi_58g_channel").text(info.channel || "");
-    $("#wifi_58g_secure").text($.i18n(info.secure) || "");
+    $("#wifi_58g_secure").text(info.status !== "down" && typeof info.secure === "string" ? ($.i18n(info.secure) || "") : "");
     
     // 流量统计
     $("#wifi_58g_bytes").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
