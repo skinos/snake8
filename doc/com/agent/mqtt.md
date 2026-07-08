@@ -127,7 +127,7 @@ ttrue
 ### Concepts
 
 **Registration and update payloads**
-* On connect, when **`topic_register`** is configured, the service publishes one JSON object containing device type, verification code, machine status, gateway, IO, GNSS, and sensor snapshots (same content as the **`{JSON}`** portion of a Heport register packet).
+* On connect, when **`topic_register`** is configured, the service publishes one retained JSON object containing device type, verification code, machine status, gateway, IO, GNSS, and sensor snapshots (same content as the **`{JSON}`** portion of a Heport register packet).
 * **`update`** and the **`machine/status`** joint event trigger the same JSON on **`topic_update`** when that topic is configured.
 
 **Heartbeat**
