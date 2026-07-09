@@ -48,7 +48,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // Certificate authentication (when auth_method is "pubkey")
     // Certificate files are stored in the ipsec project configuration directory,
-    // named after the instance object: client.ca / client.cert / client.key for
+    // named after the instance object: client.ca / client.crt / client.key for
     // ipsec@client, client2.* for ipsec@client2, etc. Use import_*/clear_* APIs
     // or the web UI to upload, download, and delete these files.
 
@@ -114,7 +114,7 @@ ipsec@client
 }
 ```
 
-Certificate authentication uses files in the ipsec project configuration directory, named after the instance object: **`client.cert`**, **`client.key`**, and **`client.ca`** for `ipsec@client`; **`client2.cert`**, etc. for `ipsec@client2`. The runtime resolves them via `config_path()`; a file that exists is treated as configured.
+Certificate authentication uses files in the ipsec project configuration directory, named after the instance object: **`client.crt`**, **`client.key`**, and **`client.ca`** for `ipsec@client`; **`client2.crt`**, etc. for `ipsec@client2`. The runtime resolves them via `config_path()`; a file that exists is treated as configured.
 
 #### Configuration settings example
 
@@ -205,7 +205,7 @@ ttrue
 + `import_cert[ file ]` **import a client certificate**
     - file ------------ [ string ], uploaded temporary file path
     - succeed return ttrue
-    - copies to `{instance}.cert`
+    - copies to `{instance}.crt`
 
 + `import_key[ file ]` **import a client private key**
     - file ------------ [ string ], uploaded temporary file path
@@ -226,7 +226,7 @@ ttrue
     ```json
     {
         "ca":"path to client.ca",
-        "cert":"path to client.cert",
+        "crt":"path to client.crt",
         "key":"path to client.key"
     }
     ```

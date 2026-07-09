@@ -347,6 +347,16 @@ int         string3file( const char *filename, const char *format, ... );
  */
 const char *file2string( const char *filename, char *buffer, int bufsize );
 /**
+ * @brief compare two text files line by line
+ * @param[in] filea first file path
+ * @param[in] fileb second file path
+ * @return comparison result
+ *		@retval 1 files are identical
+ *		@retval 0 files differ or only one file exists
+ *		@retval -1 invalid argument or read error, errno is set
+ */
+int         fileline_compare( const char *filea, const char *fileb );
+/**
  * @brief write a number to a file
  * @param[in] filename file pathname
  * @param[in] number integer value to write

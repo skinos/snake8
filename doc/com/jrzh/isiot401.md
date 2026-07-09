@@ -2,7 +2,8 @@
 
 ### Overview
 
-Read gas concentration data (O2, CO, H2S, CH4) from ISIOT-401 device via Modbus RTU and report to cloud platform via TCP socket with AES encryption.
+Read gas concentration data from ISIOT-401 device via Modbus RTU and report to cloud platform via TCP socket with AES encryption.
+- Default gas types: O2, CO, H2S, CH4 (configurable via `modbus_reg0` ~ `modbus_reg3`)
 - Step 1 register via `BALL_POINT_INFO`, Step 2 report via `BALL_MONITOR_REAL_DATA` every `report_interval`
 - Manual read and report via Control APIs
     > Data is encrypted with AES-128-CBC and base64 encoded before transmission
@@ -11,7 +12,7 @@ Read gas concentration data (O2, CO, H2S, CH4) from ISIOT-401 device via Modbus 
 ### Configuration reference ( isiot401 )
 
 ```json
-// Attributes introduction 
+// Attributes introduction
 {
     "modbus_addr": "1",                                        // [ number ], Modbus device address, default 1, range 1-253
     "report_interval": "10",                                   // [ number ], report interval in seconds, default 10, minimum 5
@@ -22,16 +23,25 @@ Read gas concentration data (O2, CO, H2S, CH4) from ISIOT-401 device via Modbus 
     "device_name": "device display name",                      // [ string ], default from MACHINE_COM name, fallback "ISIOT-401"
     "server": "125.75.45.254:50023",                           // [ string ], cloud platform server, http://host:port or host:port
     "aes_key": "f271379419e349ba",                             // [ string ], default "f271379419e349ba"
-    "hlimit_o2": "19.5",                                       // [ number ], O2 high alarm threshold (%VOL), default 19.5
-    "hlimit_co": "24",                                         // [ number ], CO high alarm threshold (ppm), default 24
-    "hlimit_h2s": "10",                                        // [ number ], H2S high alarm threshold (ppm), default 10
-    "hlimit_ch4": "25",                                        // [ number ], CH4 high alarm threshold (%LEL), default 25
-    "hhlimit_o2": "23.5",                                      // [ number ], O2 high-high alarm threshold (%VOL), default 23.5
-    "hhlimit_co": "40",                                        // [ number ], CO high-high alarm threshold (ppm), default 40
-    "hhlimit_h2s": "15",                                       // [ number ], H2S high-high alarm threshold (ppm), default 15
-    "hhlimit_ch4": "50"                                        // [ number ], CH4 high-high alarm threshold (%LEL), default 50
+    "modbus_reg0": "O2",                                       // [ "O2", "CO", "H2S", "CH4", "C6H6", "H2", ... ], register 0 gas type, default "O2"
+    "modbus_reg1": "CO",                                       // [ "O2", "CO", "H2S", "CH4", "C6H6", "H2", ... ], register 1 gas type, default "CO"
+    "modbus_reg2": "H2S",                                      // [ "O2", "CO", "H2S", "CH4", "C6H6", "H2", ... ], register 2 gas type, default "H2S"
+    "modbus_reg3": "CH4"                                       // [ "O2", "CO", "H2S", "CH4", "C6H6", "H2", ... ], register 3 gas type, default "CH4"
 }
 ```
+
+#### Supported gas types
+
+| Gas Name | Factor | Divisor | Unit | Unit Code | hlimit | hhlimit |
+|----------|--------|---------|------|-----------|--------|---------|
+| O2 | 1 | 100 | %VOL | 3 | 19.5 | 23.5 |
+| CO | 2 | 1 | ppm | 2 | 24 | 40 |
+| H2S | 3 | 10 | ppm | 2 | 10 | 15 |
+| CH4 | 17 | 10 | %LEL | 1 | 25 | 50 |
+| C6H6 | 20 | 10 | ppm | 2 | 10 | 15 |
+| H2 | 4 | 10 | ppm | 2 | 10 | 15 |
+
+To add new gas types, edit the `gas_defs` table in `isiot401.c`.
 
 #### Configuration example
 
@@ -46,16 +56,21 @@ isiot401
     "ent_code":"LZ7300300243",                                 # enterprise code
     "device_code":"00037F124020",                              # device identifier
     "device_name":"D218-124020",                               # device display name
-    "server":"125.75.45.254:50023",                              # cloud platform server
+    "server":"125.75.45.254:50023",                            # cloud platform server
     "aes_key":"f271379419e349ba",                              # AES encryption key
-    "hlimit_o2":"19.5",                                        # O2 high alarm threshold
-    "hlimit_co":"24",                                          # CO high alarm threshold
-    "hlimit_h2s":"10",                                         # H2S high alarm threshold
-    "hlimit_ch4":"25",                                         # CH4 high alarm threshold
-    "hhlimit_o2":"23.5",                                       # O2 high-high alarm threshold
-    "hhlimit_co":"40",                                         # CO high-high alarm threshold
-    "hhlimit_h2s":"15",                                        # H2S high-high alarm threshold
-    "hhlimit_ch4":"50"                                         # CH4 high-high alarm threshold
+    "modbus_reg0":"O2",                                        # register 0: O2 (default)
+    "modbus_reg1":"CO",                                        # register 1: CO (default)
+    "modbus_reg2":"H2S",                                       # register 2: H2S (default)
+    "modbus_reg3":"CH4"                                        # register 3: CH4 (default)
+}
+```
+
+Example, change register 2 to benzene (C6H6) and register 3 to hydrogen (H2)
+```shell
+isiot401
+{
+    "modbus_reg2":"C6H6",                                      # register 2: benzene
+    "modbus_reg3":"H2"                                         # register 3: hydrogen
 }
 ```
 
@@ -115,6 +130,10 @@ ttrue
         "report_interval": "10",         // [ number ], report interval in seconds
         "last_read": "12345",            // [ number ], uptime_int() of last successful read
         "registered": "yes",             // [ string ], device info registered: "yes" or "no"
+        "modbus_reg0": "O2",             // [ string ], register 0 gas type
+        "modbus_reg1": "CO",             // [ string ], register 1 gas type
+        "modbus_reg2": "H2S",            // [ string ], register 2 gas type
+        "modbus_reg3": "CH4",            // [ string ], register 3 gas type
         "O2": "20.50",                   // [ number ], oxygen concentration (%VOL)
         "CO": "5",                       // [ number ], carbon monoxide concentration (ppm)
         "H2S": "0.3",                    // [ number ], hydrogen sulfide concentration (ppm)
@@ -130,16 +149,20 @@ ttrue
         "report_interval":"10",
         "last_read":"12345",
         "registered":"yes",
+        "modbus_reg0":"O2",
+        "modbus_reg1":"CO",
+        "modbus_reg2":"C6H6",
+        "modbus_reg3":"H2",
         "O2":"20.50",
         "CO":"5",
-        "H2S":"0.3",
-        "CH4":"1.2"
+        "C6H6":"0.3",
+        "H2":"1.2"
     }
     ```
 
 + `read` **read gas data from device immediately**
     - failed return tfalse
-    - succeed return [ json ], gas concentrations
+    - succeed return [ json ], gas concentrations (gas names depend on modbus_regX configuration)
     ```json
     {
         "O2": "20.50",                   // [ number ], oxygen concentration (%VOL)
@@ -271,20 +294,13 @@ Response failure:
 {"code":500,"dataId":"1717382400000","message":"未授权的访问"}@@
 ```
 
-**Modbus RTU Register Map**
+**Modbus RTU Register Map (default configuration)**
 
-| Register | Address | Data | Type | Formula |
-|----------|---------|------|------|---------|
-| 0x0000 | 0 | O2 concentration | UINT16 | value = raw / 100 |
-| 0x0001 | 1 | CO concentration | UINT16 | value = raw / 1 |
-| 0x0002 | 2 | H2S concentration | UINT16 | value = raw / 10 |
-| 0x0003 | 3 | CH4 concentration | UINT16 | value = raw / 10 |
+| Register | Address | Default Gas | Type | Formula |
+|----------|---------|-------------|------|---------|
+| 0x0000 | 0 | O2 | UINT16 | value = raw / 100 |
+| 0x0001 | 1 | CO | UINT16 | value = raw / 1 |
+| 0x0002 | 2 | H2S | UINT16 | value = raw / 10 |
+| 0x0003 | 3 | CH4 | UINT16 | value = raw / 10 |
 
-**Chemical Factor Codes**
-
-| Gas | Factor Code | Unit Code | Unit |
-|-----|-------------|-----------|------|
-| O2 | 1 | 3 | %VOL |
-| CO | 2 | 2 | ppm |
-| H2S | 3 | 2 | ppm |
-| CH4 | 17 | 1 | %LEL |
+Register gas types can be changed via `modbus_reg0` ~ `modbus_reg3` configuration. See "Supported gas types" table above.
