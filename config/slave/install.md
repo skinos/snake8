@@ -1,9 +1,10 @@
 # SkinOS Cloud Management Platform — Installation Guide (Ubuntu)
 
 This guide installs and runs the **SkinOS cloud management platform** on Ubuntu
-using the host/debug board identity `slave-x86-ubuntu2004`.
+using the host/debug board identity `slave-x86-ubuntu2004` (Ubuntu 20.04)
+or `slave-x86-ubuntu2404` (Ubuntu 24.04).
 
-**Recommended OS:** Ubuntu 20.04 (18.04 also works)
+**Recommended OS:** Ubuntu 20.04 or Ubuntu 24.04
 
 ---
 
@@ -35,14 +36,19 @@ git clone https://gitee.com/snake8/snake8.git
 cd snake8
 ```
 
-Confirm the board identity is the Ubuntu host build:
+Select the board identity for your Ubuntu version:
 
 ```bash
+# Ubuntu 20.04
 make pid gBOARDID=slave-x86-ubuntu2004
+
+# Ubuntu 24.04
+make pid gBOARDID=slave-x86-ubuntu2404
 ```
 
-> Tip: If `gBOARDID` is not set, the top-level Makefile already defaults to
-> `slave-x86-ubuntu2004`.
+> Tip: If `gBOARDID` is not set, the top-level Makefile defaults to
+> `slave-x86-ubuntu2004`. On Ubuntu 24.04, set `slave-x86-ubuntu2404`
+> explicitly as shown above.
 
 ---
 
@@ -70,8 +76,8 @@ Compile the SkinOS cloud management platform:
 make
 ```
 
-This prepares the build directories, compiles the application components for
-`slave-x86-ubuntu2004`, and stages the result under `build/rootfs/`.
+This prepares the build directories, compiles the application components for the
+selected Ubuntu board identity, and stages the result under `build/rootfs/`.
 
 ---
 
@@ -197,7 +203,8 @@ sudo systemctl start rc-local
 | Step | Command |
 | --- | --- |
 | Clone | `git clone https://gitee.com/snake8/snake8.git` |
-| Select board | `make pid gBOARDID=slave-x86-ubuntu2004` |
+| Select board (20.04) | `make pid gBOARDID=slave-x86-ubuntu2004` |
+| Select board (24.04) | `make pid gBOARDID=slave-x86-ubuntu2404` |
 | Install tools | `make preset` |
 | Update packages / SDK | `make update` |
 | Build | `make` |
