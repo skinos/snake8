@@ -146,7 +146,7 @@ sdk_uninstall:
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
-	sudo rm -fr /mnt/skinos
+	#sudo rm -fr /mnt/skinos well clear all device
 	sudo ldconfig
 .PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_clean
 
