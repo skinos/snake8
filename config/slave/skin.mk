@@ -97,7 +97,6 @@ endef
 #     如果对应的子目录下无Makefile, 使用MakefilePath为Makefile
 #     CompileTarget给出编译的目标
 define Build/Compile/bin
-	+$(MAKE_VARS); \
 	for i in $(1) ;do \
 		if [ -f $(PKG_BUILD_DIR)/$$i/Makefile ]; then \
 			$(MAKE) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$$i $(MAKE_FLAGS) $(3) || exit -1; \
@@ -110,7 +109,6 @@ endef
 # $(call Build/Compile/ko, MakeArgs);
 #     MakeArgs给出Make编译时的参数
 define Build/Compile/ko
-	+$(MAKE_VARS); \
 	for i in $(1) ;do \
 		$(MAKE) $(2) LINUX_DIR=$(LINUX_DIR) STAGING_DIR=$(STAGING_DIR) -C $(LINUX_DIR) SUBDIRS="$(PKG_BUILD_DIR)/$$i" ARCH="$(LINUX_KARCH)" CROSS_COMPILE="$(TARGET_CROSS)" modules; \
 	done
