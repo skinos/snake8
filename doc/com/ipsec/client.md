@@ -2,23 +2,18 @@
 
 ### Overview
 
-Manage an individual IPsec VPN client connection using strongSwan. Each instance (`ipsec@client`, `ipsec@client2`, …) creates an IPsec tunnel to a remote gateway, and integrates with the network framework as a VPN-type extern interface. Instances are created and managed by [`ipsec@list`](list.md).
+Manage an individual IPsec VPN client connection using strongSwan. Each instance (`ipsec@client`, `ipsec@client2`, …) creates a policy-based IPsec tunnel to a remote gateway (no dedicated tunnel netdev such as `ipsec0`). Instances are created and managed by [`ipsec@list`](list.md).
 
 - manages IPsec tunnel lifecycle: setup (swanctl --initiate), shutdown (swanctl --terminate)
-- generates strongSwan `swanctl.conf` from instance configuration
+- generates strongSwan `swanctl.conf` from instance configuration (CHILD `start_action` is always `none`, `dpd_action` is always `restart`; landos `_service` initiates after load-all)
 - supports PSK and certificate authentication (IKEv2)
-- configures traffic selectors (local/remote subnets)
+- configures traffic selectors (empty local_ts => ifname@lan subnet; empty remote_ts omitted)
 - handles IKE/ESP encryption proposals, DPD, rekeying
-- handles NAT masquerade, default route, and custom route tables
 - monitors connection state via swanctl --list-sas
+- resolves server domain to IP and routes via the specified extern interface
+- restarts via `reset[]` when the depend extern / default gateway comes online again
 
 
-
-### Network Architecture
-
-`ipsec@client` is a **VPN extern interface** registered by `ipsec@list` with `network@frame`. It uses a specific extern interface (e.g. `ifname@wan`) or the default gateway as its underlying transport. When the IPsec tunnel comes up, it notifies `network@frame.online`, which triggers VPN routing and multi-link scheduling updates.
-
-For the full network architecture, see [`../network/frame.md`](../network/frame.md).
 
 ### Configuration reference ( ipsec@client )
 
@@ -41,6 +36,8 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
                                                                     // "psk" for pre-shared key
                                                                     // "pubkey" for certificate-based
     "local_id":"local identifier",                             // [ string ], optional, local IKE ID (IP, FQDN, email)
+                                                                    // empty: use outbound extern / default-gateway interface IP
+                                                                    // (same default as many vendor UIs)
     "remote_id":"remote identifier",                           // [ string ], optional, remote IKE ID
 
     // PSK authentication (when auth_method is "psk")
@@ -52,9 +49,14 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     // ipsec@client, client2.* for ipsec@client2, etc. Use import_*/clear_* APIs
     // or the web UI to upload, download, and delete these files.
 
+    // Virtual IP (Mode Config)
+    "vip":"request virtual IP from server",                    // [ "enable", "disable" ], default "disable"
+                                                                    // enable: swanctl vips = 0.0.0.0 (for hybrid / roadwarrior pools)
+                                                                    // disable: pure site-to-site (no VIP request)
+
     // Child SA / Traffic selectors
-    "local_ts":"local traffic selector",                       // [ string ], local subnet (e.g. "10.1.0.0/24")
-    "remote_ts":"remote traffic selector",                     // [ string ], remote subnet (e.g. "10.2.0.0/24")
+    "local_ts":"local traffic selector",                       // [ string ], optional; empty => ifname@lan subnet (e.g. 192.168.1.0/24)
+    "remote_ts":"remote traffic selector",                     // [ string ], optional; empty => omit (not 0.0.0.0/0)
 
     // Encryption proposals
     "ike_proposals":"IKE cipher suites",                       // [ string ], optional, e.g. "aes256-sha256-modp2048"
@@ -62,29 +64,9 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // DPD (Dead Peer Detection)
     "dpd_delay":"DPD check interval",                          // [ string ], optional, e.g. "30s"
-    "dpd_action":"DPD action",                                 // [ "restart", "clear", "none" ], default "restart"
 
-    // Connection behavior
-    "start_action":"start action",                             // [ "start", "trap", "add" ], default "start"
-                                                                    // "start" to initiate connection at startup
-                                                                    // "trap" to install trap policies, initiate on matching traffic
-                                                                    // "add" to add connection without initiating
     "reauth_time":"reauthentication interval",                 // [ string ], optional, e.g. "0" to disable
     "rekey_time":"rekey interval",                             // [ string ], optional
-
-    // Routing
-    "masq":"NAT masquerade",                                   // [ "disable", "enable" ]
-    "defaultroute":"set as default route",                     // [ "disable", "enable" ]
-    "metric":"route metric",                                   // [ number ], optional
-    "route_table":                             // custom route rules, valid when defaultroute is "disable"
-    {
-        "route rule name":                     // [ string ]
-        {
-            "target":"destination address",        // [ string ], IP address or network
-            "mask":"destination network mask"      // [ string ]
-        }
-        // "...":{}  How many routes show how many properties
-    }
 }
 ```
 
@@ -106,11 +88,7 @@ ipsec@client
     "remote_ts":"10.2.0.0/24",
     "ike_proposals":"aes256-sha256-modp2048",
     "esp_proposals":"aes256-sha256",
-    "dpd_delay":"30s",
-    "dpd_action":"restart",
-    "start_action":"start",
-    "masq":"enable",
-    "defaultroute":"disable"
+    "dpd_delay":"30s"
 }
 ```
 
@@ -149,27 +127,43 @@ ttrue
 
 + `shut[]` **shut down the IPsec client**
     - succeed return ttrue
-    - terminates the IPsec connection via swanctl --terminate, notifies `network@frame.offline`
+    - terminates the IPsec connection via swanctl --terminate
 
 
 #### Query APIs
 
 + `status[]` **get IPsec client status**
-    - failed return NULL
-    - succeed return [ json ], connection status and statistics
+    - instance does not exist: return NULL
+    - instance exists but config `status` is not `"enable"`: return `{ "status":"disable" }`
+    - enabled: return [ json ], parsed from `swanctl --list-sas --ike <object> --pretty`
     ```json
     {
         "status":"Current state",        // [ "disable", "connecting", "established", "down" ]
-                                             // "disable" client is disabled
-                                             // "connecting" IKE/SA negotiation in progress
-                                             // "established" IPsec tunnel is up
-                                             // "down" tunnel is down
-        "serverip":"server IP",          // [ ip address ], resolved gateway IP
-        "local_ts":"local subnet",       // [ string ], local traffic selector
-        "remote_ts":"remote subnet",     // [ string ], remote traffic selector
-        "livetime":"online time",        // [ string ], format hour:minute:second:day
-        "rx_bytes":"received bytes",     // [ string ]
-        "tx_bytes":"sent bytes"          // [ string ]
+        "serverip":"server IP",          // [ ip ], resolved gateway or remote-host
+        "ip":"virtual IP",               // [ ip ], local-vips
+        "local_id":"local IKE ID",
+        "remote_id":"remote IKE ID",
+        "local_host":"local outer IP",
+        "remote_host":"remote outer IP",
+        "ike_state":"IKE SA state",      // e.g. ESTABLISHED
+        "child_state":"CHILD SA state",  // e.g. INSTALLED
+        "ike_version":"2",
+        "ike_proposal":"IKE proposal",
+        "esp_proposal":"ESP proposal",
+        "local_ts":"local traffic selector",
+        "remote_ts":"remote traffic selector",
+        "rx_bytes":"bytes in",
+        "tx_bytes":"bytes out",
+        "rx_packets":"packets in",
+        "tx_packets":"packets out",
+        "established":"IKE age seconds",
+        "livetime":"online time",        // hour:minute:second:day
+        "install_time":"CHILD age seconds",
+        "spi_in":"inbound SPI",
+        "spi_out":"outbound SPI",
+        "mode":"TUNNEL",
+        "protocol":"ESP",
+        "reqid":"reqid"
     }
     ```
 
@@ -179,11 +173,14 @@ ttrue
     {
         "status":"established",
         "serverip":"203.0.113.1",
-        "local_ts":"10.1.0.0/24",
-        "remote_ts":"10.2.0.0/24",
-        "livetime":"02:30:15:0",
-        "rx_bytes":"123456",
-        "tx_bytes":"654321"
+        "ip":"10.10.10.2",
+        "local_id":"ipsec-client",
+        "remote_id":"ipsec-server",
+        "ike_state":"ESTABLISHED",
+        "child_state":"INSTALLED",
+        "rx_bytes":"924",
+        "tx_bytes":"0",
+        "livetime":"00:03:27:0"
     }
     ```
 
@@ -192,7 +189,6 @@ ttrue
 
 + `reset[]` **restart the IPsec client**
     - succeed return ttrue
-    - terminates current connection and re-initiates
     - behavior depends on the `extern` setting:
         - "default": restarts immediately
         - specific ifname: restarts only when the specified extern interface comes online

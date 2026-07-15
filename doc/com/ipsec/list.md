@@ -2,21 +2,19 @@
 
 ### Overview
 
-Manage the lifecycle of all IPsec VPN client instances using strongSwan. This component scans for configured instances (`ipsec@client`, `ipsec@client2`, … up to `ipsec@client10`) and registers each enabled one with `network@frame` as a VPN interface. It also provides instance creation and deletion APIs.
+Manage the lifecycle of all IPsec VPN client instances using strongSwan. This component scans for configured instances (`ipsec@client`, `ipsec@client2`, … up to `ipsec@client10`) and provides instance creation and deletion APIs.
 
-- registers/unregisters all configured IPsec instances with `network@frame` at boot/shutdown
+- schedules setup for all configured IPsec instances at boot/shutdown
 - lists all IPsec client configurations and statuses
 - creates new IPsec instances with sensible defaults
-- deletes existing IPsec instances and unregisters them from the network frame
+- deletes existing IPsec instances
 - generates strongSwan `swanctl.conf` for each instance
 
 
 
-### Network Architecture
+### Architecture
 
-`ipsec@list` is the **infrastructure manager** for IPsec VPN clients. At boot, it iterates all configured `ipsec@client*` instances and registers each one with `network@frame` as a VPN interface. Each instance then manages its own IPsec tunnel independently via strongSwan's `swanctl`. `ipsec@list` does not hold its own configuration — all per-instance settings live in `ipsec@client`, `ipsec@client2`, etc.
-
-For the full network architecture, see [`../network/frame.md`](../network/frame.md).
+`ipsec@list` is the **infrastructure manager** for IPsec VPN clients. At boot, it iterates all configured `ipsec@client*` instances and schedules each one's setup. Each instance manages its own IPsec tunnel independently via strongSwan's `swanctl` (policy-based IPsec, no dedicated tunnel netdev). `ipsec@list` does not hold its own configuration — all per-instance settings live in `ipsec@client`, `ipsec@client2`, etc.
 
 
 
@@ -26,11 +24,11 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
 + `setup[]` **initialize IPsec infrastructure**
     - succeed return ttrue
-    - iterates ipsec@client through ipsec@client10, registers each configured instance with `network@frame` and schedules its setup
+    - iterates ipsec@client through ipsec@client10, schedules each configured instance setup
 
 + `shut[]` **shut down all IPsec clients**
     - succeed return ttrue
-    - calls shut on each instance, then unregisters from `network@frame`
+    - calls shut on each instance, then stops the shared charon service
 
 
 #### Query APIs
@@ -68,14 +66,39 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
 + `status[]` **list all IPsec client statuses**
     - failed return NULL
-    - succeed return [ json ], all configured instances with their runtime status
+    - succeed return [ json ], all existing instances with their runtime status
+    - for each `ipsec@client*` slot, calls that instance's `status[]` and stores the result when non-NULL
+    - each instance status is the same payload as [`ipsec@client.status`](client.md)
     ```json
     {
         "ipsec@client":                     // [ string ]: { json }, instance name
         {
             "status":"Current state",       // [ "disable", "connecting", "established", "down" ]
-            "serverip":"server IP",         // [ ip address ], resolved server IP
-            // ... other status fields when established
+            "serverip":"server IP",         // [ ip ], resolved gateway or remote-host
+            "ip":"virtual IP",              // [ ip ], local-vips
+            "local_id":"local IKE ID",
+            "remote_id":"remote IKE ID",
+            "local_host":"local outer IP",
+            "remote_host":"remote outer IP",
+            "ike_state":"IKE SA state",     // e.g. ESTABLISHED
+            "child_state":"CHILD SA state", // e.g. INSTALLED
+            "ike_version":"2",
+            "ike_proposal":"IKE proposal",
+            "esp_proposal":"ESP proposal",
+            "local_ts":"local traffic selector",
+            "remote_ts":"remote traffic selector",
+            "rx_bytes":"bytes in",
+            "tx_bytes":"bytes out",
+            "rx_packets":"packets in",
+            "tx_packets":"packets out",
+            "established":"IKE age seconds",
+            "livetime":"online time",       // hour:minute:second:day
+            "install_time":"CHILD age seconds",
+            "spi_in":"inbound SPI",
+            "spi_out":"outbound SPI",
+            "mode":"TUNNEL",
+            "protocol":"ESP",
+            "reqid":"reqid"
         }
         // "...":{}  How many instances show how many properties
     }
@@ -89,11 +112,14 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
         {
             "status":"established",
             "serverip":"203.0.113.1",
-            "local_ts":"10.1.0.0/24",
-            "remote_ts":"10.2.0.0/24",
-            "livetime":"02:30:15:0",
-            "rx_bytes":"123456",
-            "tx_bytes":"654321"
+            "ip":"10.10.10.2",
+            "local_id":"ipsec-client",
+            "remote_id":"ipsec-server",
+            "ike_state":"ESTABLISHED",
+            "child_state":"INSTALLED",
+            "rx_bytes":"924",
+            "tx_bytes":"0",
+            "livetime":"00:03:27:0"
         }
     }
     ```
@@ -105,8 +131,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     - server ------------ [ string ], IPsec gateway address (IP or domain)
     - failed return NULL (all 10 slots full)
     - succeed return [ string ], the new instance name (e.g. "ipsec@client3")
-    - creates with defaults: status=disable, extern=default, version=2, auth_method=psk, start_action=start, dpd_action=restart
-    - registers the new instance with `network@frame`
+    - creates with defaults: status=disable, extern=default, version=2, auth_method=psk, dpd_delay=30s
 
     Example, add an IPsec client
     ```shell
@@ -118,7 +143,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     - object ------------ [ string ], the instance name to delete (e.g. "ipsec@client3")
     - failed return tfalse (object not found or not a valid IPsec instance)
     - succeed return ttrue
-    - shuts down the instance (swanctl --terminate), unregisters from `network@frame`, and removes configuration
+    - shuts down the instance (swanctl --terminate) and removes configuration
 
     Example, delete an IPsec client
     ```shell
