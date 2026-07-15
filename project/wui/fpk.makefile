@@ -15,7 +15,7 @@ export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FP
 all:
 	$(call Build/Prepare/Default)
 	$(call Build/Compile/Default)
-	mkdir $(FPK_BUILD_DIR)/admin
+	$(INSTALL_DIR) $(FPK_BUILD_DIR)/admin
 	cp -fr ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
 	cp -fr ./ace/* $(FPK_BUILD_DIR)/admin
 	# 给JS文件添加版本参数，防止IE缓存导致跨项目冲突
