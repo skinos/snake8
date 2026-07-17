@@ -15,11 +15,18 @@ do
         DIR_LIST=`ls ${DIR_ROOT}`
         for dir in $DIR_LIST
         do
-            echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
-            rm -fr ${DIR_ROOT}/${dir}/skinos_*
-            echo "rm -fr ${DIR_ROOT}/${dir}/root*"
-            rm -fr ${DIR_ROOT}/${dir}/root*
+            if [ $# -gt 0 ]; then
+                for name in "$@"
+                do
+                    echo "rm -fr ${DIR_ROOT}/${dir}/skinos_${name}*"
+                    rm -fr ${DIR_ROOT}/${dir}/skinos_${name}*
+                done
+            else
+                echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
+                rm -fr ${DIR_ROOT}/${dir}/skinos_*
+                echo "rm -fr ${DIR_ROOT}/${dir}/root*"
+                rm -fr ${DIR_ROOT}/${dir}/root*
+            fi
         done
     fi
 done
-

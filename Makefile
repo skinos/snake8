@@ -44,7 +44,7 @@ gOEM := default
 endif 
 # Get the date
 #gPUBLISH ?= $(shell date +%m%d%y)
-gPUBLISH ?= v8.6.0703
+gPUBLISH ?= v8.6.0705
 #gPUBLISH ?= v8.6.0402
 gVERSION ?= $(gPUBLISH)
 # Name for compiler
@@ -148,6 +148,7 @@ export PATH
 #####################################
 all:
 	if [ "X${obj}" != "X" ]; then \
+		./mkdel ${obj}; \
 		make -f target.makefile app COMPILE_PROJECT=${obj}; \
 	else \
 		make dep; \
