@@ -6,7 +6,7 @@ Manage an individual IPsec VPN client connection using strongSwan. Each instance
 
 - manages IPsec tunnel lifecycle: setup (swanctl --initiate), shutdown (swanctl --terminate)
 - generates strongSwan `swanctl.conf` from instance configuration (CHILD `start_action` is always `none`, `dpd_action` is always `restart`; landos `_service` initiates after load-all)
-- supports PSK and certificate authentication (IKEv2)
+- supports PSK and certificate authentication (IKEv1 Main/Aggressive Mode, IKEv2)
 - configures traffic selectors (empty local_ts => ifname@lan subnet; empty remote_ts omitted)
 - handles IKE/ESP encryption proposals, DPD, rekeying
 - monitors connection state via swanctl --list-sas
@@ -30,15 +30,21 @@ Manage an individual IPsec VPN client connection using strongSwan. Each instance
 
     // IKE version
     "version":"IKE version",                                   // [ "1", "2" ], default 2 (IKEv2)
+    "aggressive":"IKEv1 exchange mode",                        // [ "enable", "disable" ], default "disable"
+                                                                    // enable: Aggressive Mode (IKEv1 only; swanctl aggressive=yes)
+                                                                    // disable: Main Mode (IKEv1 default); ignored for IKEv2
+    "natt":"NAT traversal",                                    // [ "auto", "force" ], default "auto"
+                                                                    // auto: strongSwan detects NAT and uses UDP-encap when needed
+                                                                    // force: always UDP-encap ESP (swanctl encap=yes)
 
     // Authentication
     "auth_method":"authentication method",                     // [ "psk", "pubkey" ]
                                                                     // "psk" for pre-shared key
                                                                     // "pubkey" for certificate-based
     "local_id":"local identifier",                             // [ string ], optional, local IKE ID (IP, FQDN, email)
-                                                                    // empty: use outbound extern / default-gateway interface IP
-                                                                    // (same default as many vendor UIs)
+                                                                    // empty: use extern / default-gateway interface IP
     "remote_id":"remote identifier",                           // [ string ], optional, remote IKE ID
+                                                                    // empty: omit (swanctl remote.id defaults to %any)
 
     // PSK authentication (when auth_method is "psk")
     "psk":"pre-shared key",                                    // [ string ]
@@ -49,24 +55,42 @@ Manage an individual IPsec VPN client connection using strongSwan. Each instance
     // ipsec@client, client2.* for ipsec@client2, etc. Use import_*/clear_* APIs
     // or the web UI to upload, download, and delete these files.
 
-    // Virtual IP (Mode Config)
+    // Assign IP / Hybrid Mode Config (UI: "Assign IP (Hybrid)")
     "vip":"request virtual IP from server",                    // [ "enable", "disable" ], default "disable"
-                                                                    // enable: swanctl vips = 0.0.0.0 (for hybrid / roadwarrior pools)
-                                                                    // disable: pure site-to-site (no VIP request)
+                                                                    // enable: swanctl vips = 0.0.0.0 (Hybrid / roadwarrior pools)
+                                                                    // disable: site-to-site (no VIP request); not needed just because TS is set
 
     // Child SA / Traffic selectors
     "local_ts":"local traffic selector",                       // [ string ], optional; empty => ifname@lan subnet (e.g. 192.168.1.0/24)
+                                                                    // comma-separated for multiple selectors (IKEv2)
     "remote_ts":"remote traffic selector",                     // [ string ], optional; empty => omit (not 0.0.0.0/0)
+                                                                    // comma-separated for multiple selectors (IKEv2)
 
     // Encryption proposals
     "ike_proposals":"IKE cipher suites",                       // [ string ], optional, e.g. "aes256-sha256-modp2048"
+                                                                    // (Phase 1; DH group numbers: 14=modp2048, 15=3072, 19=ecp256, ...)
     "esp_proposals":"ESP cipher suites",                       // [ string ], optional, e.g. "aes256-sha256"
+                                                                    // with PFS (Phase 2): append DH group, e.g. "aes256-sha256-modp2048"
+
+    // Lifetime (Phase 1 / Phase 2). Values are seconds if no unit; s/m/h/d also accepted.
+    // Web UI exposes rekey_time and esp_rekey only (seconds placeholders); reauth_time / esp_life are HE/advanced.
+    "rekey_time":"IKE rekey interval",                         // [ string ], optional, e.g. "10800" or "3h" (Phase 1)
+    "reauth_time":"IKE reauthentication interval",             // [ string ], optional, e.g. "0" to disable (not in web UI)
+    "esp_rekey":"ESP rekey interval",                          // [ string ], optional, e.g. "3600" or "1h" (Phase 2)
+    "esp_life":"ESP hard lifetime",                            // [ string ], optional (not in web UI); empty => strongSwan default from esp_rekey
 
     // DPD (Dead Peer Detection)
-    "dpd_delay":"DPD check interval",                          // [ string ], optional, e.g. "30s"
+    "dpd_delay":"DPD check interval",                          // [ string ], optional, e.g. "30" or "30s"
+    "dpd_timeout":"DPD timeout",                               // [ string ], optional, e.g. "150" or "150s"
 
-    "reauth_time":"reauthentication interval",                 // [ string ], optional, e.g. "0" to disable
-    "rekey_time":"rekey interval",                             // [ string ], optional
+    // Advanced swanctl snippets (optional)
+    "connections_opt":"extra connection options",              // [ string ], optional, raw swanctl.conf fragment
+                                                                    // written to /etc/swanctl/conf.d/<object>.conn
+                                                                    // and included inside the connection block
+                                                                    // (after children), e.g. custom marks / includes
+    "secret_opt":"extra secret options",                       // [ string ], optional, raw swanctl.conf fragment
+                                                                    // written to /etc/swanctl/conf.d/<object>.sec
+                                                                    // and included inside the ike-/private- secret block
 }
 ```
 
@@ -139,14 +163,18 @@ ttrue
     ```json
     {
         "status":"Current state",        // [ "disable", "connecting", "established", "down" ]
+                                         // disable: config status is not enable
+                                         // established: ike_state=ESTABLISHED and child_state=INSTALLED
+                                         // connecting: IKE up but child not INSTALLED, or IKE still negotiating
+                                         // down: no usable IKE SA
         "serverip":"server IP",          // [ ip ], resolved gateway or remote-host
-        "ip":"virtual IP",               // [ ip ], local-vips
+        "ip":"virtual IP",               // [ ip ], local-vips (when vip/Hybrid assigned)
         "local_id":"local IKE ID",
         "remote_id":"remote IKE ID",
         "local_host":"local outer IP",
         "remote_host":"remote outer IP",
-        "ike_state":"IKE SA state",      // e.g. ESTABLISHED
-        "child_state":"CHILD SA state",  // e.g. INSTALLED
+        "ike_state":"IKE SA state",      // Phase 1, e.g. ESTABLISHED
+        "child_state":"CHILD SA state",  // Phase 2 / ESP, e.g. INSTALLED
         "ike_version":"2",
         "ike_proposal":"IKE proposal",
         "esp_proposal":"ESP proposal",

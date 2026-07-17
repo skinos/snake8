@@ -74,14 +74,15 @@ Manage the lifecycle of all IPsec VPN client instances using strongSwan. This co
         "ipsec@client":                     // [ string ]: { json }, instance name
         {
             "status":"Current state",       // [ "disable", "connecting", "established", "down" ]
+                                            // same semantics as ipsec@client.status
             "serverip":"server IP",         // [ ip ], resolved gateway or remote-host
             "ip":"virtual IP",              // [ ip ], local-vips
             "local_id":"local IKE ID",
             "remote_id":"remote IKE ID",
             "local_host":"local outer IP",
             "remote_host":"remote outer IP",
-            "ike_state":"IKE SA state",     // e.g. ESTABLISHED
-            "child_state":"CHILD SA state", // e.g. INSTALLED
+            "ike_state":"IKE SA state",     // Phase 1, e.g. ESTABLISHED
+            "child_state":"CHILD SA state", // Phase 2 / ESP, e.g. INSTALLED
             "ike_version":"2",
             "ike_proposal":"IKE proposal",
             "esp_proposal":"ESP proposal",
@@ -131,7 +132,7 @@ Manage the lifecycle of all IPsec VPN client instances using strongSwan. This co
     - server ------------ [ string ], IPsec gateway address (IP or domain)
     - failed return NULL (all 10 slots full)
     - succeed return [ string ], the new instance name (e.g. "ipsec@client3")
-    - creates with defaults: status=disable, extern=default, version=2, auth_method=psk, dpd_delay=30s
+    - creates with defaults: status=disable, extern=default, version=2, aggressive=disable, natt=auto, auth_method=psk, vip=disable, dpd_delay=30s
 
     Example, add an IPsec client
     ```shell
