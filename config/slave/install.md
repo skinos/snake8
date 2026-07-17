@@ -17,16 +17,6 @@ sudo apt-get update
 sudo apt-get install -y git make
 ```
 
-Optionally install the full build toolchain used by this repository:
-
-```bash
-cd snake8
-make preset
-```
-
-`make preset` installs compilers, libraries, and related development packages
-required to build SkinOS on Ubuntu.
-
 ---
 
 ## 2. Download the source code
@@ -35,6 +25,23 @@ required to build SkinOS on Ubuntu.
 git clone https://gitee.com/snake8/snake8.git
 cd snake8
 ```
+
+---
+
+## 3. Install build tools
+
+After the source tree is available, install the full build toolchain:
+
+```bash
+make preset
+```
+
+`make preset` installs compilers, libraries, and related development packages
+required to build SkinOS on Ubuntu.
+
+---
+
+## 4. Select board identity
 
 Select the board identity for your Ubuntu version:
 
@@ -52,7 +59,7 @@ make pid gBOARDID=slave-x86-ubuntu2404
 
 ---
 
-## 3. Update FPK packages and SDK
+## 5. Update FPK packages and SDK
 
 Download / refresh the FPK packages and platform SDK assets for the current board:
 
@@ -68,7 +75,7 @@ What this step does (internally):
 
 ---
 
-## 4. Build
+## 6. Build
 
 Compile the SkinOS cloud management platform:
 
@@ -81,7 +88,7 @@ selected Ubuntu board identity, and stages the result under `build/rootfs/`.
 
 ---
 
-## 5. Install
+## 7. Install
 
 Install the staged SkinOS runtime onto the host system:
 
@@ -101,7 +108,7 @@ and refreshes the shared library cache with `ldconfig`.
 
 ---
 
-## 6. Start the cloud platform
+## 8. Start the cloud platform
 
 Start SkinOS:
 
@@ -123,7 +130,7 @@ make sdk_uninstall # stop and remove /usr/share/skinos
 
 ---
 
-## 7. Enable auto-start on boot (Ubuntu)
+## 9. Enable auto-start on boot (Ubuntu)
 
 To start the cloud platform automatically after reboot, arrange for
 `/usr/share/skinos/setup.sh` to run at boot.
@@ -203,9 +210,9 @@ sudo systemctl start rc-local
 | Step | Command |
 | --- | --- |
 | Clone | `git clone https://gitee.com/snake8/snake8.git` |
+| Install tools | `make preset` |
 | Select board (20.04) | `make pid gBOARDID=slave-x86-ubuntu2004` |
 | Select board (24.04) | `make pid gBOARDID=slave-x86-ubuntu2404` |
-| Install tools | `make preset` |
 | Update packages / SDK | `make update` |
 | Build | `make` |
 | Install to host | `make sdk_install` |
@@ -220,4 +227,3 @@ sudo systemctl start rc-local
 - Run `make sdk_install` again after rebuilding if you need to refresh the host installation.
 - Boot auto-start must target `/usr/share/skinos/setup.sh` on the installed host path, not the source tree.
 - The platform layout and board selection are driven by `gBOARDID` in the top-level Makefile.
-`)
