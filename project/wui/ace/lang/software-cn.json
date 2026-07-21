@@ -2,6 +2,7 @@
     "Firmware Version": "固件版本",
     "Firmware SDK": "固件SDK",
     "Firmware Identifier": "固件标识",
+    "Restart after success": "成功后重启",
     "Upgrade": "软件更新",
     "Success": "成功",
     "Hardware type mismatch": "芯片类型不匹配",

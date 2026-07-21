@@ -1,6 +1,6 @@
 # HTTP HE 桥接 (WUI / `webs`)
 
-设备提供一个小型的 JSON-over-HTTP API，运行与 CLI 相同的 **HE** 命令行（参见 [`doc/com/land/eline.cn.md`](../../doc/com/land/eline.cn.md)）。Ace WUI 登录后通过 **`POST /he`** 进行通信，并使用 **`POST /auth`** 获取会话密钥。未认证的 **`POST /public`** 仅允许匹配设备上 **`wui@admin.publist`** 的命令。
+设备提供一个小型的 JSON-over-HTTP API，运行与 CLI 相同的 **HE** 命令行（参见 [`doc/com/land/eline.md`](../../doc/com/land/eline.md)）。Ace WUI 登录后通过 **`POST /he`** 进行通信，并使用 **`POST /auth`** 获取会话密钥。未认证的 **`POST /public`** 仅允许匹配设备上 **`wui@admin.publist`** 的命令。
 
 **示例中使用的测试基础 URL：** `http://192.168.8.1`  
 **测试凭据：** 用户名 `admin`，密码 `admin`（仅适用于该演示主机；生产设备可能不同）。
@@ -337,7 +337,7 @@ Content-Type: text/plain; charset=UTF-8
 
 ## HE 语法（快速参考）
 
-完整语法：**[`doc/com/land/eline.cn.md`](../../doc/com/land/eline.cn.md)**。
+完整语法：**[`doc/com/land/eline.md`](../../doc/com/land/eline.md)**。
 
 | 目标 | HE 命令行 |
 |------|---------|

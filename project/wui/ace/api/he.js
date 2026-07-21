@@ -434,15 +434,16 @@ var he =
                 })
             }
         });
-        // 执行cmds中的命令
-        var cmds = arg.cmds || [];
-        cmds.push('machine.restart[0,wui]');
-        // 设置正在重启的标志位
+        // 执行cmds中的命令（norestart 时只显示进度条，不发重启指令）
         window.rebooting = true;
-        he.cmd(cmds, null, function () {});
+        if ( !arg.norestart )
+        {
+            var cmds = arg.cmds || [];
+            cmds.push('machine.restart[0,wui]');
+            he.cmd(cmds, null, function () {});
+        }
     }
   
 
 }
-
 

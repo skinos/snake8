@@ -103,6 +103,12 @@ $.i18n().load( page.lang('software') ).then( function () {
 			callback: function( result ) {
 				if ( result )
 				{
+					var url = '/upload?username='+window.username+'&key='+window.talkkey+'&object=arch@firmware&api=zz&p=[]';
+					if ( $('#restart').is(':checked') )
+					{
+						url += '&p2=restart';
+					}
+					data.url = url;
 					// 提示正在升级
 					page.overlay($.i18n('Upgrading...'));
 					// 执行升级
@@ -141,8 +147,19 @@ $.i18n().load( page.lang('software') ).then( function () {
 		}
 		page.overlay2hide();
 		if ( result.status === 'success' )
-		{ // 升级成功重启
-			if ( !result.restart )
+		{ // 升级成功
+			if ( $('#restart').is(':checked') )
+			{ // 用户已勾选重启，直接提示后进入重启进度条
+				if ( !hint )
+				{
+					hint = $.i18n( "Success" );
+				}
+				page.alert( { message: hint, callback: function()
+				{
+					he.upgrade_reboot( { title: $.i18n('Update successfully, now restarting...'), hint:$.i18n('Make sure that the device is reconnected'), restartTime:wait, norestart: true } );
+				}});
+			}
+			else if ( !result.restart )
 			{
 				if ( !hint )
 				{

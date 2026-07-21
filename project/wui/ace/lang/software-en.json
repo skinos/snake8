@@ -2,6 +2,7 @@
     "Firmware Version": "Firmware Version",
     "Firmware SDK": "Firmware SDK",
     "Firmware Identifier": "Firmware Identifier",
+    "Restart after success": "Restart after success",
     "Upgrade": "Upgrade",
     "The device may need to be restarted, confirm whether to continue": "The device may need to restart. Confirm to continue.",
     "Update successfully, now restarting...": "Update succeeded, now restarting...",
