@@ -1,10 +1,14 @@
 # libskin API Documentation
 
 > **Readership:** This volume is for **embedded integration** (C-level APIs). Operators who only use **`he`** or a Web UI should start with `he.md` and per-component guides instead.
+>
+> **Distribution (no land source):** When the `land` project is shipped only as an FPK (`skinos_land` + `libskin.so`) without C sources, **this document plus the installed public headers** (`skin/*.h`, typically under the SDK `doc/dev/include/skin/` or `build/install/include/skin/` after build) are the **authoritative API contract** for writing `com` / `exe` / `cmd`. Keep this file in the SDK/docs release even if `project/land/skin/*.c` is not published.
+>
+> **Agent / project scaffolding:** See also `.claude/skills/skinos-project/reference-skin-api.md` (quick patterns) and `.claude/skills/skinos-project/SKILL.md`.
 
 ## Overview
 
-**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, and related facilities.
+**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, and related facilities. It is built from `project/land` as shared library **`libskin.so`** (`prj.json` → `"lib": { "skin": ... }`) and linked by other skinos packages (`-lskin`).
 
 **Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to the umbrella header. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
 
@@ -24,7 +28,7 @@
    - [4.4 Sample program (every `path.h` API)](#44-sample-program-every-pathh-api)
 5. [Component Communication API (com.h)](#5-component-communication-api-comh)  
    - [5.0 Summary](#50-summary)
-   - [5.6 Shell invocation context (com.h)](#56-shell-invocation-context-comh)
+   - [5.6 Shell invocation context (com.h)](#56-shell-invocation-context-comh) — includes **`MAIN2API`**
    - [5.7 Sample program (every `com.h` function)](#57-sample-program-every-comh-function)
 6. [Configuration of Component Management API (config.h)](#6-configuration-management-api-configh)  
    - [6.0 Summary](#60-summary)
@@ -619,13 +623,14 @@ int param_size(param_t parameter);
 ```
 **Description:** Get parameter count
 
-#### param_string / param_talk / param_pointer
+#### param_string / param_number / param_talk / param_pointer
 ```c
 const char *param_string(param_t parameter, int serial);
-talk_t param_talk(param_t parameter, int serial);
-void *param_pointer(param_t parameter, int serial);
+int         param_number(param_t parameter, int serial);
+talk_t      param_talk(param_t parameter, int serial);
+void       *param_pointer(param_t parameter, int serial);
 ```
-**Description:** Get parameter value at specified serial (starts from 1, -1 for last)
+**Description:** Get parameter at **1-based** `serial` (`-1` = last). **`param_number`** parses the option as an integer (`atoi`-style); returns **0** and may set **`errno`** if missing/invalid.
 
 #### param_combine
 ```c
@@ -641,6 +646,7 @@ param_t p = param_create("eth0,192.168.1.1,24");
 // Get parameters
 const char *ifname = param_string(p, 1);  // "eth0"
 const char *ip = param_string(p, 2);      // "192.168.1.1"
+int prefix = param_number(p, 3);          // 24
 
 // Add parameter
 p = param_adds(p, "gateway");
@@ -673,6 +679,7 @@ static void demo_param_all(void)
     (void)param_size(p);
     (void)param_string(p, 1);
     (void)param_string(p, -1);
+    (void)param_number(p, 1);
     (void)param_talk(p, 1);
     (void)param_combine(p);
     param_free(p);
@@ -876,116 +883,96 @@ static void demo_path_all(void)
 
 | Topic | Details |
 |-------|---------|
-| **Types** | `com_t` handle; **`COM_FILE_*`** file kinds; optional **`comget_t` / `comset_t` / `comfetch_t` / `comsave_t`** typedefs for standard hooks. |
-| **Discovery** | `com_list`, `com_project_list`, `com_register` aliases, **`com_path`** → buffer + returns **`char`** component type code. |
-| **Open / symbol** | `com_open` / `com_sopen`, **`com_symbol`** (names use **`COM_API_PREFIX`**, e.g. `_status`). |
-| **Calls** | **`ccall` / `scall`** + variants: `*t` (JSON), `*s` (format string), `*st`, `*4p`, `*_string` (result into user buffer). Results are **`void *`**: often **`talk_t` JSON** (caller **`talk_free`**) or sentinels **`ttrue` / `tfalse` / `terror` / `tpanic` / `tnull`** — see §1.1. |
-| **Shell child** | **`execute_object`**, **`execute_param`**, **`execute_api`**, **`execute_pipe`** when running inside a **shell-spawned** `COM_FILE_EXECUTE` component (§5.6). Environment variables **`OBJECT`**, **`PARAM_SIZE`**, **`PARAM1..N`**, **`API`**, **`cpipe`** are set by the parent. |
+| **Types** | `com_t` handle; **`COM_FILE_LIB` / `COM_FILE_EXECUTE`**; typedefs **`comget_t` / `comset_t` / `comfetch_t` / `comsave_t` / `comapi_t`** / **`eapi_table_t`**. |
+| **Discovery** | **`com_list(prefix, project)`**, **`com_register(object, origin, type)`**, **`com_unregister`**, **`com_path(object, buf, len)`** → type code in return value, path in buffer. |
+| **Open / symbol** | **`com_open(const char *object)`** only (there is **no** `com_sopen`). **`com_symbol`**, **`com_close`**. Symbol names use **`COM_API_PREFIX`** (`_`), e.g. `_status`. |
+| **Existence** | **`com_exist(com_t, api)`** on an open handle; **`com_have(object, api)`** by string path (opens briefly). There is **no** `com_sexist`. |
+| **Calls** | **`ccall` / `scall`** + variants: `*t` (JSON), `*s` (format string), `*st`, `*4p`, `*_string`. Results are **`void *`**: JSON (**`talk_free`**) or sentinels — see §1.1. |
+| **Runtime get/set** | **`cget` / `sget` / `cset` / `sset`** (+ `*s` / `*_string`). Persist DB is **`dbs_*`** in `dbs.h` — **not** `cfetch`/`csave` (those names are obsolete; do not use). |
+| **Exe entry** | **`MAIN2API(table)`** + **`execute_object` / `execute_param` / `execute_api` / `execute_pipe`** (§5.6). |
+
+> **Synced with `project/land/skin/com.h`:** older docs mentioned `com_sopen`, `com_sexist`, `com_project_list`, `com_register_list`, `cfetch`/`csave`. Those symbols are **not** in the public headers — use the APIs in this table instead.
 
 ---
 
 ### 5.1 Component file kinds (`com_t`)
 
-As in `com.h` today (only these two are defined on the `com_t.type` field):
-
 ```c
-#define COM_FILE_LIB      1    /* shared object (.com, etc.) */
-#define COM_FILE_EXECUTE  2    /* executable helper; reply pipe uses fixed fd SHELL_COM_PIPE (7) */
+#define COM_FILE_LIB      1    /* shared library component */
+#define COM_FILE_EXECUTE  2    /* executable; reply pipe uses SHELL_COM_PIPE (7) */
+#define COMPONENT_MAX     200
 ```
 
 ### 5.2 Component Discovery and Registration
 
-#### com_project_list
-```c
-talk_t com_project_list(void);
-```
-**Description:** Get project component list
-**Returns:** JSON object with keys as "project@component" and values as paths
-
 #### com_list
 ```c
-talk_t com_list(const char *project);
+talk_t com_list(const char *prefix, const char *project);
 ```
-**Description:** Get component list
-**Parameters:** project - Project name (NULL for all)
-**Returns:** JSON object
+**Description:** List components. `prefix` filters driver-style prefixes (e.g. `"usbdrv"`); `project` filters by project id. Either may be **NULL** for “all”.
+**Returns:** JSON list — caller **`talk_free`**.
 
 #### com_register / com_unregister
 ```c
-boole com_register(const char *target, const char *origin);
-boole com_unregister(const char *target);
+boole com_register(const char *object, const char *origin, char type);
+boole com_unregister(const char *object);
 ```
-**Description:** Register/Unregister component alias
-
-#### com_register_list
-```c
-talk_t com_register_list(void);
-```
-**Description:** Get registered component list
+**Description:** Register/unregister an object name. `type` is **`COM_FILE_LIB`** or **`COM_FILE_EXECUTE`**. `origin` is the backing path/object.
 
 #### com_path
 ```c
-char com_path(obj_t obj, char *buffer, int buflen);
+char com_path(const char *object, char *buffer, int buflen);
 ```
-**Description:** Get component file path
-**Returns:** Component type (COM_FILE_*) or 0 for failure
+**Description:** Resolve component file path into `buffer`.
+**Returns:** **`COM_FILE_LIB`**, **`COM_FILE_EXECUTE`**, **0** if not found, or negative on error.
 
 **Example:**
 ```c
-// Get all component list
-talk_t list = com_list(NULL);
+talk_t list = com_list(NULL, NULL);
 talk_free(list);
 
-// Register component alias
-com_register("mywan", "network@wan");
+/* type 0 when origin is another component; COM_FILE_* when origin is a file path */
+com_register("myproj@alias", "myproj@real", 0);
 
-// Get component path
-obj_t o = obj_create("land@machine");
 char path[PATH_MAX];
-char type = com_path(o, path, sizeof(path));  /* COM_FILE_* or 0 on failure */
-obj_free(o);
+char type = com_path("land@machine", path, sizeof(path));
 ```
 
 ### 5.3 Component Open and Close
 
-#### com_open / com_sopen
+#### com_open
 ```c
-com_t com_open(obj_t obj);
-com_t com_sopen(const char *com);
+com_t com_open(const char *object);
 ```
-**Description:** Open component
-**Returns:** Component handle
+**Description:** Open/load component by `"project@component"` string. Call **`com_close`** when done.
 
 #### com_symbol
 ```c
 void *com_symbol(com_t com, const char *name);
 ```
-**Description:** Get symbol from component
+**Description:** Resolve a symbol (usually `"_status"`, `"_setup"`, …).
 
 #### com_close
 ```c
 void com_close(com_t com);
 ```
-**Description:** Close component
 
-#### com_exist / com_sexist
+#### com_exist / com_have
 ```c
-boole com_exist(obj_t obj, const char *api);
-boole com_sexist(const char *com, const char *api);
+boole com_exist(com_t com, const char *api);           /* api may be NULL = component only */
+boole com_have(const char *object, const char *api); /* string path; opens then checks */
 ```
-**Description:** Check if component/API exists
 
 **Example:**
 ```c
-com_t c = com_sopen("land@machine");
+com_t c = com_open("land@machine");
 if (c) {
     void *fn = com_symbol(c, "_status");
+    (void)com_exist(c, "status");
     com_close(c);
 }
-
-// Check if API exists
-if (com_sexist("land@machine", "status")) {
-    // API exists
+if (com_have("land@machine", "status")) {
+    /* API present */
 }
 ```
 
@@ -1082,7 +1069,7 @@ param_free(p);
 
 ### 5.6 Shell invocation context (`com.h`)
 
-When a **`COM_FILE_EXECUTE`** component runs as a **child of the shell RPC path**, it reads context from the environment (set by the loader’s **`execute_ccall`** when spawning the child):
+When a **`COM_FILE_EXECUTE`** component runs as a **child of the shell RPC path**, the parent sets environment variables (**`OBJECT`**, **`PARAM_SIZE`**, **`PARAM1`…`N`**, **`API`**, **`cpipe`**). The child reads them via:
 
 #### execute_object / execute_param / execute_api / execute_pipe
 ```c
@@ -1094,6 +1081,32 @@ int         execute_pipe(void);
 **Description:** **`execute_object`** builds **`obj_t`** from **`OBJECT`**. **`execute_param`** builds **`param_t`** from **`PARAM_SIZE`** and **`PARAM1`…`PARAMn`** (via **`param_adds`**; missing env vars become NULL string slots). It returns **NULL** only on allocation failure — an empty call still yields a non-NULL **`param_t`** with zero options when **`PARAM_SIZE`** is absent or zero. **`execute_api`** returns **`getenv("API")`**. **`execute_pipe`** returns **`atoi(cpipe)`** or **`-1`** if unset — this is the fd where **`talk2fd`** should write the JSON reply (**`SHELL_COM_PIPE`** = 7 after **`dup2`** in the child).
 
 **Outside** that child context, **`execute_object`** / **`execute_api`** typically see **NULL** env vars and return **NULL**; **`execute_pipe`** is **`-1`**.
+
+#### MAIN2API / eapi_table_t
+```c
+typedef struct eapi_table_st {
+    const char *name;
+    comapi_t    fn;   /* void *(*)(obj_t, param_t) */
+} eapi_table_t;
+
+#define MAIN2API(table)  /* expands to int main(argc, argv) */
+```
+**Description:** Macro that generates **`main()`** for a **`COM_FILE_EXECUTE`** binary. Prefer an **array** of **`eapi_table_t`** (so `sizeof(table)/sizeof(table[0])` works).
+
+**Dispatch order:**
+1. If **`execute_object()`** succeeds → shell-spawned context: use **`execute_param` / `execute_api` / `execute_pipe`**, reply with **`talk2fd`**.
+2. Else → CLI mode: **`argv2he(argc, argv)`** (`he2com.h`), print result to stdout, then **`he_free`**.
+
+> Prefer **`execute_*`** in the shell-spawned path; CLI fallback uses **`argv2he`**.
+
+**Minimal sketch:**
+```c
+static void *api_status(obj_t o, param_t p) { (void)o; (void)p; return ttrue; }
+static const eapi_table_t g_api[] = {
+    { "status", api_status },
+};
+MAIN2API(g_api)
+```
 
 ### 5.7 Sample program (every `com.h` function)
 
@@ -1124,26 +1137,19 @@ static void demo_com_all(void)
     (void)execute_api();
     (void)execute_pipe();
 
-    tl = com_project_list();
-    if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
-    (void)com_register("demo_alias@com", "land@machine");
+    (void)com_register("demo_alias@com", "land@machine", 0); /* type 0 when origin is another component */
     (void)com_unregister("demo_alias@com");
-    tl = com_register_list();
-    if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
-    (void)com_path(o, cbuf, sizeof cbuf);
-    tl = com_list(NULL);
+    (void)com_path("land@machine", cbuf, sizeof cbuf);
+    tl = com_list(NULL, NULL);
     if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
 
-    ch = com_open(o);
+    ch = com_open("land@machine");
     if (ch) {
-        (void)com_symbol(ch, "_api");
+        (void)com_symbol(ch, "_status");
+        (void)com_exist(ch, "status");
         com_close(ch);
     }
-    ch = com_sopen("land@machine");
-    if (ch) com_close(ch);
-
-    (void)com_exist(o, "status");
-    (void)com_sexist("land@machine", "status");
+    (void)com_have("land@machine", "status");
 
     rv = ccall(o, "status", pm);
     if (rv > (void *)tpanic && rv && json_check((talk_t)rv)) talk_free((talk_t)rv);
@@ -1210,28 +1216,7 @@ static void demo_com_all(void)
     (void)sget_string(cbuf, sizeof cbuf, "land@machine", ak);
     (void)sgets_string(cbuf, sizeof cbuf, "land@machine", "%s", "walk/key");
 
-    (void)csave(o, fad, j1, ak);
-    (void)csaves(o, fad, j1, "%s", "walk/key");
-    (void)ssave("land@machine", "/var/tmp/skin_walkthrough.db", j1, ak);
-    (void)ssaves("land@machine", "/var/tmp/skin_walkthrough.db", j1, "%s", "walk/key");
-    (void)csave_string(o, fad, "sv", ak);
-    (void)csaves_string(o, fad, "sv", "%s", "walk/key");
-    (void)ssave_string("land@machine", "/var/tmp/skin_walkthrough.db", "sv", ak);
-    (void)ssaves_string("land@machine", "/var/tmp/skin_walkthrough.db", "sv", "%s", "walk/key");
-
-    rv = cfetch(o, fad, ak);
-    if (rv > (void *)tpanic && rv && json_check((talk_t)rv)) talk_free((talk_t)rv);
-    rv = cfetchs(o, fad, "%s", "walk/key");
-    if (rv > (void *)tpanic && rv && json_check((talk_t)rv)) talk_free((talk_t)rv);
-    rv = sfetch("land@machine", "/var/tmp/skin_walkthrough.db", ak);
-    if (rv > (void *)tpanic && rv && json_check((talk_t)rv)) talk_free((talk_t)rv);
-    rv = sfetchs("land@machine", "/var/tmp/skin_walkthrough.db", "%s", "walk/key");
-    if (rv > (void *)tpanic && rv && json_check((talk_t)rv)) talk_free((talk_t)rv);
-
-    (void)cfetch_string(cbuf, sizeof cbuf, o, fad, ak);
-    (void)cfetchs_string(cbuf, sizeof cbuf, o, fad, "%s", "walk/key");
-    (void)sfetch_string(cbuf, sizeof cbuf, "land@machine", "/var/tmp/skin_walkthrough.db", ak);
-    (void)sfetchs_string(cbuf, sizeof cbuf, "land@machine", "/var/tmp/skin_walkthrough.db", "%s", "walk/key");
+    /* Persistent DB: use dbs_* in dbs.h (§7). There is no cfetch/csave in com.h. */
 
     talk_free(j1);
     talk_free(j2);
@@ -1832,6 +1817,12 @@ void landlog(unsigned int flags, const char *filename, int line, const char *for
 ```
 **Description:** Log with identifier
 
+#### critical_warn
+```c
+void critical_warn(const char *format, ...);
+```
+**Description:** Dedicated critical-path warning (not the `*_warn` macros). Use for rare, high-severity operational alerts; see `log.h`.
+
 ### 9.5 Predefined Log Macros
 
 **Default Logs:**
@@ -2195,7 +2186,7 @@ static void demo_project_all(void)
 |-------|------|
 | **Types** | **`HE_GET` / `HE_SET` / `HE_OR` / `HE_CALL` / `HE_DBS_*`** — operation kind stored in **`he_t`’s `flags` field**. |
 | **`he_t`** | Parsed command: object, file attr, method, **`param_t`**, value JSON, buffers — **`he_free`**. |
-| **Parse** | **`string2he`**, **`json2he`**; **serialize** **`he2json`**, **`he2string`**. |
+| **Parse** | **`argv2he`**, **`string2he`**, **`json2he`**; **serialize** **`he2json`**, **`he2string`**. |
 | **Execute** | **`he_execute`**, **`string_he_execute`**, **`json_he_execute`**, **`talk_he_command`** (batch array); **`line_he_command`** for terminal-oriented use. |
 
 Results are usually **`talk_t`** JSON (**`talk_free`** if not a sentinel) or **`ttrue` / `tfalse` / `NULL` / `terror` / `tpanic`** per `he2com.h`. Ownership: anything attached to **`he_t`** is freed by **`he_free`**; execution APIs document whether returned JSON is new.
@@ -2217,13 +2208,13 @@ Results are usually **`talk_t`** JSON (**`talk_free`** if not a sentinel) or **`
 
 ### 12.2 HE Structure Operations
 
-#### string2he / json2he
+#### argv2he / string2he / json2he
 ```c
+he_t argv2he(int argc, const char **argv);
 he_t string2he(const char *cmd);
 he_t json2he(talk_t cmd);
 ```
-**Description:** Parse HE command from string/JSON
-
+**Description:** Parse HE from **`main` argv** (used by **`MAIN2API`** CLI path), a command string, or JSON. Caller **`he_free`**.
 #### he2json / he2string
 ```c
 talk_t he2json(he_t h);
@@ -2280,6 +2271,12 @@ static void demo_he2com_all(void)
     talk_t batch;
 
     (void)(HE_GET | HE_SET | HE_OR | HE_CALL | HE_DBS_GET | HE_DBS_SET | HE_DBS_OR | HE_DBS_CALL);
+
+    {
+        const char *av[] = { "demo", "land@machine.status" };
+        h = argv2he(2, av);
+        if (h) he_free(h);
+    }
 
     h = string2he("land@machine.status");
     t = he2json(h);
@@ -2547,13 +2544,14 @@ time_t date_adjust(time_t seconds, const char* zone);
 
 ### 14.9 System Commands
 
-#### shell / execute / silent_execute
+#### shell / execute / silent_execute / shell_injection_check
 ```c
-int shell(const char *format, ...);
-int execute(int timeout, boole silent, const char *format, ...);
+int   shell(const char *format, ...);
+int   execute(int timeout, boole silent, const char *format, ...);
 #define silent_execute(...) execute(0, 1, __VA_ARGS__)
+boole shell_injection_check(const char *cmd);
 ```
-**Description:** **`shell`** formats the command into a **`LINE_MAX`** buffer, rejects **empty** / **oversized** commands and patterns unsafe for **`/bin/sh -c`** (e.g. `` ` ``, `|`, `;`, `<`, `$(` / `${`, stray `&` except `>&`), then calls **`system(3)`** — returns its status, **`errno`** preserved from the last relevant failure. **`execute`** **`fork`**s and runs **`execvp`** on the **first whitespace-separated token** as argv\[0\] (up to **19** more tokens); optional **`timeout`** seconds and **`SIGALRM`**; on timeout sends **`SIGKILL`**. Return value is the child’s **`WEXITSTATUS`** when exited cleanly, or **`-1`** with **`errno`** on fork/exec/wait/signal errors or non-normal exit. **`silent_execute`** is **`execute(0, 1, …)`** (stdio to **`/dev/null`** in the child when supported).
+**Description:** **`shell`** formats the command into a **`LINE_MAX`** buffer, rejects **empty** / **oversized** commands and patterns unsafe for **`/bin/sh -c`** (e.g. `` ` ``, `|`, `;`, `<`, `$(` / `${`, stray `&` except `>&`), then calls **`system(3)`** — returns its status, **`errno`** preserved from the last relevant failure. **`execute`** **`fork`**s and runs **`execvp`** on the **first whitespace-separated token** as argv\[0\] (up to **19** more tokens); optional **`timeout`** seconds and **`SIGALRM`**; on timeout sends **`SIGKILL`**. Return value is the child’s **`WEXITSTATUS`** when exited cleanly, or **`-1`** with **`errno`** on fork/exec/wait/signal errors or non-normal exit. **`silent_execute`** is **`execute(0, 1, …)`** (stdio to **`/dev/null`** in the child when supported). **`shell_injection_check`** returns **`true`** if the string contains injection-prone characters (same class of checks used before **`system`**).
 
 #### killpid
 ```c
@@ -2686,11 +2684,12 @@ boole partlabel_dev(const char *name, char *mmc);
 ```
 **Description:** Get MTD/MMC device paths
 
-#### fileline_merge
+#### fileline_merge / fileline_compare
 ```c
 boole fileline_merge(const char *gap, const char *src, const char *adjust, const char *merge);
+int   fileline_compare(const char *filea, const char *fileb);
 ```
-**Description:** Merge file lines
+**Description:** Merge file lines; **`fileline_compare`** returns whether two files’ line sets match (see `utility.h` for return codes).
 
 ### 14.14 UART
 
@@ -3321,4 +3320,4 @@ gcc -o myapp myapp.c \
 ---
 
 *Document Version: 1.0*
-*Last Updated: 2026-03-22*
+*Last Updated: 2026-07-21*

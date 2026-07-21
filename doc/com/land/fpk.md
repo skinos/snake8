@@ -95,6 +95,7 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - path, ... ----------- [ string ], each argument may be an fpk archive file or a directory containing prj.json
     - failed return tfalse
     - succeed return ttrue
+    - After files are placed, calls `land@uninit.knock[ name ]` (if replacing) then `land@init.knock[ name ]` so the package's `prj.json` init/uninit hooks run without reboot
 
     Example, install an fpk package
     ```shell
@@ -106,6 +107,7 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - name, ... ----------- [ string ], one or more project names to uninstall; firmware projects are skipped
     - failed return tfalse
     - succeed return ttrue
+    - Before removal, calls `land@uninit.knock[ name ]` to run that project's `prj.json` uninit hooks
 
     Example, uninstall the wui project
     ```shell

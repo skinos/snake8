@@ -159,6 +159,33 @@ ttrue
     ttrue
     ```
 
++ `call[ level, parameter ]` **execute all shutdown tasks registered for a shutdown level**
+    - level ----------- [ string ], shutdown level (e.g. "general", "app", "land")
+    - parameter ------- [ json ], optional, passed as the second param to each task
+    - failed return tfalse
+    - succeed return ttrue
+    - Invoked by the shutdown path (`land.init` / uninit sequence) for each level; forks one child per task
+    - Not intended for routine manual use; for debugging only
+
+    Example, run all tasks at the general shutdown level
+    ```shell
+    land@uninit.call[ general ]
+    ttrue
+    ```
+
++ `knock[ project ]` **run a project's prj.json uninit section (hot uninstall path)**
+    - project --------- [ string ], project name
+    - failed return tfalse
+    - succeed return ttrue
+    - Reads that project's `prj.json` → `uninit` and invokes each `project@component.method`
+    - Used by `land@fpk.uninstall` (and before replace on install); empty `uninit` still returns ttrue
+
+    Example, apply uninit hooks from project wui before/after FPK removal
+    ```shell
+    land@uninit.knock[ wui ]
+    ttrue
+    ```
+
 #### Query APIs
 
 + `list[ [level] ]` **list registered shutdown tasks**

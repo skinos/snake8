@@ -150,6 +150,33 @@ ttrue
     ttrue
     ```
 
++ `call[ event, parameter ]` **execute all handlers registered for a joint event**
+    - event ----------- [ string ], joint event name (e.g. "network/online", "storage/insert")
+    - parameter ------- [ json ], optional, passed as the second param to each handler
+    - failed return tfalse
+    - succeed return ttrue
+    - Invoked when the system publishes the event (`joint_calls` / publishers); forks one child per handler
+    - Not intended for routine manual use; for debugging only
+
+    Example, run all handlers for network/online
+    ```shell
+    land@joint.call[ network/online ]
+    ttrue
+    ```
+
++ `knock[ project ]` **run a project's prj.json joint section (hot install path)**
+    - project --------- [ string ], project name
+    - failed return tfalse
+    - succeed return ttrue
+    - Reads that project's `prj.json` → `joint` and invokes each registered `project@component.method`
+    - Empty `joint` section returns ttrue
+
+    Example, apply joint hooks from project wui
+    ```shell
+    land@joint.knock[ wui ]
+    ttrue
+    ```
+
 #### Query APIs
 
 + `list[ [event] ]` **list registered joint event handlers**

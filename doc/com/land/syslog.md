@@ -196,6 +196,26 @@ ttrue
     ttrue
     ```
 
++ `critical_path[]` **get the critical log file path and size limit**
+    - failed return NULL
+    - succeed return [ json ], critical log path and size information
+    ```json
+    {
+        "path": "critical log file path",  // [ string ], absolute path (typically under internal storage)
+        "size": "size limit in KB"         // [ number ], critical log size limit in kilobytes
+    }
+    ```
+    - Also refreshes register variables `critical_file` / `critical_limit` used by the logger
+
+    Example, get the critical log path
+    ```shell
+    land@syslog.critical_path[]
+    {
+        "path":"/mnt/internal/critical.txt",   # absolute path to the critical log
+        "size":100                             # size limit in KB
+    }
+    ```
+
 + `critical_show[ html ]` **display the contents of the critical log file**
     - html ----------- [ string ], optional, when set to "html", output as an HTML table
     - failed return tfalse, critical log file not found

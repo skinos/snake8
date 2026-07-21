@@ -66,7 +66,8 @@ typedef struct eapi_table_st
  * @brief Define main() for a standalone executable: read shell context, dispatch by API name, exit.
  * @param table Array of eapi_table_t. Must be an array identifier (e.g. static const eapi_table_t foo[]),
  *              not a pointer, so sizeof(table)/sizeof((table)[0]) yields the entry count.
- * @note Expects shell_object / shell_param / shell_api / shell_pipe; maps return like ccall peers.
+ * @note Prefer execute_object / execute_param / execute_api / execute_pipe when spawned by shell;
+ *       otherwise falls back to argv2he(argc, argv). Maps return like ccall peers.
  */
 #define MAIN2API( table ) \
 int main( int argc, const char **argv ) \
@@ -343,7 +344,7 @@ talk_t com_list( const char *prefix, const char *project );
 com_t  com_open( const char *object );
 /**
  * @brief search for a symbol (function) in the component's shared library
- * @param[in] com component handler returned by com_open()/com_sopen()
+ * @param[in] com component handler returned by com_open()
  * @param[in] name symbol name to search for (e.g., "_status", "_setup")
  * @return pointer to the symbol
  * 	@retval function pointer for succeed
@@ -356,17 +357,18 @@ void  *com_symbol( com_t com, const char *name );
  * @param[in] com component handler to close
  * @return none
  * @note Decrements reference count; actual unload occurs when count reaches 0
- * @see com_open, com_sopen
+ * @see com_open
  */
 void   com_close( com_t com );
 /**
- * @brief determine whether a component exists and optionally check for a specific API (string version)
- * @param[in] com component handler returned by com_open()/com_sopen()
+ * @brief determine whether a component exists and optionally check for a specific API
+ * @param[in] com component handler returned by com_open()
  * @param[in] api API method name to check (e.g., "status"), NULL to only check component existence
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
  * @note For shared-library components, the named symbol is checked; for executable components, API presence is not verified here
+ * @see com_have to check by object string without keeping a handle open
  * @see ccall, scall to invoke an API on an object
  */
 boole  com_exist( com_t com, const char *api );
@@ -583,7 +585,7 @@ const char   *scalls_string( char *buffer, int buflen, const char *object, const
  * @note This sets persistent configuration when runtime API not exist
  * @note The value is copied internally, caller retains ownership
  * @note Creates intermediate objects if they don't exist
- * @note Difference from csave: cset can affects runtime, csave persists to database
+ * @note Difference from dbs_save: cset can affect runtime; dbs_save persists to database
  * @note Example:
  * @code
  * // Set runtime IP address
@@ -608,7 +610,7 @@ const char   *scalls_string( char *buffer, int buflen, const char *object, const
  * talk_free(v);
  * @endcode
  * @see cget for getting configuration values
- * @see csave for persistent database storage
+ * @see dbs_save for persistent database storage
  * @see sset, csets, ssets for alternative interfaces
  */
 boole cset( obj_t objp,           talk_t value, attr_t attr );
@@ -648,7 +650,7 @@ boole ssets_string( const char *object, const char *value, const char *attr, ...
  * @note This gets runtime configuration
  * @note This gets persistent configuration when runtime API not exist 
  * @note The returned talk_t is dynamically allocated, caller must free it
- * @note Difference from cfetch: cget can reads runtime config, cfetch reads from database
+ * @note Difference from dbs_fetch: cget can read runtime config; dbs_fetch reads from database
  * @note Example:
  * @code
  * // Get runtime IP address
@@ -667,7 +669,7 @@ boole ssets_string( const char *object, const char *value, const char *attr, ...
  * if (ip && ip > tpanic) talk_free(ip);
  * @endcode
  * @see cset for setting configuration values
- * @see cfetch for persistent database retrieval
+ * @see dbs_fetch for persistent database retrieval
  * @see cget_string for string return version
  */
 void          *cget( obj_t objp, attr_t attr );

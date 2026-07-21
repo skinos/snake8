@@ -165,6 +165,33 @@ ttrue
     ttrue
     ```
 
++ `call[ level, parameter ]` **execute all startup tasks registered for a boot level**
+    - level ----------- [ string ], boot level (e.g. "arch", "land", "app", "general")
+    - parameter ------- [ json ], optional, passed as the second param to each task (joint-style payload)
+    - failed return tfalse
+    - succeed return ttrue
+    - Invoked by the boot script (`land.init`) for each level; forks one child per task and runs the HE call string
+    - Not intended for routine manual use; for debugging only
+
+    Example, run all tasks at the app boot level
+    ```shell
+    land@init.call[ app ]
+    ttrue
+    ```
+
++ `knock[ project ]` **run a project's prj.json init section (hot install path)**
+    - project --------- [ string ], project name (directory under the installed projects root)
+    - failed return tfalse
+    - succeed return ttrue
+    - Reads that project's `prj.json` → `init` and invokes each `project@component.method` entry
+    - Used by `land@fpk.install` after placing a package; empty `init` section still returns ttrue
+
+    Example, apply init hooks from project wui after FPK install
+    ```shell
+    land@init.knock[ wui ]
+    ttrue
+    ```
+
 #### Query APIs
 
 + `list[ [level] ]` **list registered startup tasks**

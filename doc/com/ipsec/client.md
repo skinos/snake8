@@ -68,7 +68,7 @@ Manage an individual IPsec VPN client connection using strongSwan. Each instance
 
     // Encryption proposals
     "ike_proposals":"IKE cipher suites",                       // [ string ], optional, e.g. "aes256-sha256-modp2048"
-                                                                    // (Phase 1; DH group numbers: 14=modp2048, 15=3072, 19=ecp256, ...)
+                                                                    // (Phase 1; DH: 2=modp1024, 5=modp1536, 14=modp2048, 15=3072, 19=ecp256, ...)
     "esp_proposals":"ESP cipher suites",                       // [ string ], optional, e.g. "aes256-sha256"
                                                                     // with PFS (Phase 2): append DH group, e.g. "aes256-sha256-modp2048"
 

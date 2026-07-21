@@ -1,6 +1,14 @@
 # `prj.json` — Skinos project manifest
 
-This document describes the **project information file `prj.json`**: fields, semantics, packaging layout, and runtime behavior. For the **FPK product model** and **`land@fpk` APIs**, see [`fpk.md`](./fpk.md).
+This document is the **field reference** for the project information file `prj.json`: shapes, semantics, validation, and what **`land@fpk.register`** reads at runtime.
+
+| Doc | Owns |
+|-----|------|
+| **This file** | `prj.json` fields, format reference, register/runtime notes |
+| [`project.md`](../../project.md) | On-disk project parts and when to use which |
+| [`project2fpk.md`](../../project2fpk.md) | Project tree → `.fpk` pack pipeline |
+| [`fpk2rootfs.md`](../../fpk2rootfs.md) | Image install via `fpk-install` |
+| [`fpk.md`](./fpk.md) | `land@fpk` APIs and runtime path symbols (`⟨PRJ_ROOT⟩`, …) |
 
 ---
 
@@ -46,7 +54,7 @@ Each of these is an object: `"name": "brief description"`. The **key** is the **
 | `lib` | Shared **libraries**; build output becomes `.so` under the FPK **lib** area. Headers listed for dev install go to **`install/include/<lib>/`**. |
 | `exe` | **Executables** used **inside this project** only (not necessarily on global `PATH`). |
 | `cmd` | **Commands** meant to be run from a Linux shell — packaged so they appear under the FPK **`bin/`** layout (e.g. `he`, `daemon`). |
-| `com` | **Components** (e.g. `.com`); key = component source dir; runtime object is typically **`name@key`** where `name` is `prj.json`’s `name`. |
+| `com` | **Loadable components**; key = component source dir. Default SDK pack places an **unsuffixed** binary named like the key at the FPK root (see [`project2fpk.md`](../../project2fpk.md)). Runtime object is typically **`name@key`** where `name` is `prj.json`’s `name`. |
 | `osc` | Bundled **third-party / open-source** programs (directory per key). |
 | `ko` | **Kernel modules** (`.ko`) built from the named directory. |
 | `res` | **Resource files or trees** copied as a unit into the FPK (paths / names as declared by the packager). |
@@ -102,7 +110,7 @@ Each top-level key under `wui` is a **page id**. Per page, common fields:
 | `mode` | Optional object: **keys** are **work-mode** identifiers; they must match the runtime string in the default-object register **`network_mode`** (product code usually keeps this aligned with **`land@machine` → `mode`**, e.g. `ap`, `gateway`, `mix`). **Values** are strings; when the entry for the **current** mode is exactly **`"disable"`**, this **`wui`** page is **omitted** from **`land@fpk.wui_menu`**. Omit **`mode`**, omit the key for the current mode, or use any value other than **`"disable"`** to leave the page visible (still subject to **`config` / `object` / `attr`**). **Global prerequisite:** if register **`network_mode`** is missing or empty, **`wui_menu`** returns **NULL** for the whole menu. |
 | `attr` | When `config` is non-null, optional **attribute path** for finer visibility rules. |
 
-See **§15** for a composite example; match keys to real directories in your SDK tree.
+See **§14** for a composite example; match keys to real directories in your SDK tree.
 
 ---
 
@@ -119,118 +127,22 @@ See **§15** for a composite example; match keys to real directories in your SDK
 
 ---
 
-## 12. Compile, pack, and install — Skinos resource flow
+## 12. Build / pack / install pointers
 
-**Notation:** **`prj.json:section`** means “every **key** under that JSON object”: e.g. `prj.json:cmd` builds one command per key (`he`, `daemon`, …). **`FPK:/`** is the **root of the `.fpk` archive**.
+This file does **not** own pack or image-install layout tables. Use:
 
-**On-device paths** use the same **symbols** as **[`fpk.md`](./fpk.md)** (*Runtime install paths*): **`⟨PRJ_ROOT⟩`** (typically the installed-project root macro **`PROJECT_DIR`**), **`⟨PRJ_NAME⟩`** (installed project = `prj.json` → `name`), **`⟨LIB_DIR⟩`** / **`⟨BIN_DIR⟩`** (**`PROJECT_LIB_DIR`** / **`PROJECT_BIN_DIR`**), **`⟨SYS_ROOT⟩`** (running system root for merged trees). Per-project install prefix: **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**.
+| Concern | Document |
+|---------|----------|
+| Project tree → `.fpk` (prepare / compile / stage) | [`project2fpk.md`](../../project2fpk.md) |
+| `.fpk` → target rootfs (`fpk-install`) | [`fpk2rootfs.md`](../../fpk2rootfs.md) |
+| Runtime install / hot deploy / path symbols (`⟨PRJ_ROOT⟩`, …) | [`fpk.md`](./fpk.md) |
+| On-disk parts overview | [`project.md`](../../project.md) |
 
-**Pipeline:** (1) **Compile** sources in subdirectories named by `prj.json` keys → (2) **Pack** outputs and loose files into an **FPK** → (3) **Install** under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**, and copy `install/*` into the **SDK `INSTALL/`** tree.
-
-Exact steps follow your **SDK Makefile / packaging scripts**; the tables below are the **layout contract** Skinos tooling targets.
-
-### 12.1 Manifest file → FPK
-
-| Stage | Source (project tree) | Destination in FPK |
-|-------|------------------------|-------------------|
-| Copy | `./prj.json` | `FPK:/prj.json` |
-
-### 12.2 Build outputs declared in `prj.json` → FPK
-
-| `prj.json` section | Typical build output (per key under that section) | Destination in FPK |
-|--------------------|---------------------------------------------------|--------------------|
-| `lib` | `*.so` shared library | `FPK:/lib/` |
-| `com` | `*.com` component | `FPK:/` (FPK root) |
-| `cmd` | Executable installed as a shell command (basename = key) | `FPK:/bin/` |
-| `exe` | Project-local executable | `FPK:/` |
-| `osc` | Third-party / open-source program binary | `FPK:/` |
-| `ko` | `*.ko` kernel module | `FPK:/` |
-| `res` | Resource files or trees (as defined by the packager) | `FPK:/` (per project rules) |
-
-### 12.3 Pre-built trees under the project → FPK (copy-only)
-
-| Source (project tree) | Destination in FPK |
-|-----------------------|--------------------|
-| `./lib/*.so*` | `FPK:/lib/` |
-| `./bin/*` | `FPK:/bin/` |
-| `./etc/*` | `FPK:/etc/` |
-| `./internal/*` | `FPK:/internal/` |
-| `./rootfs/*` | `FPK:/rootfs/` |
-
-### 12.4 Loose files at project root → FPK
-
-| Source (project root) | Destination in FPK |
-|-----------------------|--------------------|
-| `*.cfg`, `*.sh`, `*.ash`, `*.png`, `*.jpg`, `*.json`, `*.html` | `FPK:/` |
-
-### 12.5 Developer payloads (`install/`) → FPK
-
-`<lib>` = a **library key** from `prj.json:lib` (e.g. `skin`).
-
-| Source | Destination in FPK |
-|--------|-------------------|
-| `*.h` headers shipped for that library | `FPK:/install/include/<lib>/` |
-| Development `.so` copies for linking on the SDK host | `FPK:/install/lib/` |
-
-### 12.6 Documentation / COM-face assets
-
-| Source | Destination |
-|--------|-------------|
-| `*.md`, `*.png` (when routed by the packager for docs / UI face) | `gCOMFACE_DIR/<project-name>/` |
-
-*(Some `*.png` may also be packed at `FPK:/` per §12.4; which rule applies depends on the packaging recipe.)*
+**Register vs image install:** `land@fpk.register` reads `com` / `exe` / `obj` / `init` / `uninit` / `joint` (plus `name`) as described in §2. Overlay behavior for `etc` / `internal` under register (often copy-if-missing) is part of **`land@fpk`**, not `fpk-install` — see [`fpk.md`](./fpk.md). Image builds that call `fpk-install` merge overlays as documented in [`fpk2rootfs.md`](../../fpk2rootfs.md).
 
 ---
 
-## 13. Installing an FPK onto the system
-
-After **`land@fpk.install`** (or equivalent), FPK contents are expanded under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** (see **`fpk.md`** — **Runtime install paths**).
-
-### 13.1 Manifest on device
-
-| In FPK | On device |
-|--------|-----------|
-| `prj.json` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/prj.json` |
-
-### 13.2 Built / staged payloads from FPK → per-project prefix
-
-| In FPK | On device (typical) | Notes |
-|--------|---------------------|-------|
-| `lib/*` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/lib/` | Often symlinked into **`⟨LIB_DIR⟩`** |
-| `*.com` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | Alongside other root-level payloads |
-| `bin/*` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/bin/` | Often symlinked into **`⟨BIN_DIR⟩`** |
-| Binaries that were packed as **`exe`** or **`osc`** entries | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | Same prefix as `.com` |
-| `*.ko` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
-| **`res`** content as packed | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` | |
-
-### 13.3 Optional trees inside the FPK → system paths (`land@fpk.register`)
-
-When **`land@fpk.register`** runs against a project directory, it may **copy** payloads (only if the destination file does not already exist):
-
-| In project / FPK tree | Typical destination (platform macros) | Notes |
-|------------------------|-----------------------------------------------|--------|
-| `etc/*` (under **`FPK_ETC_DIR`**, i.e. `etc/`) | **`PROJECT_ETC_DIR`** (often `/etc`) | Copy when the target path is not already present |
-| `internal/*` (under **`FPK_INT_DIR`**, i.e. `internal/`) | **`PROJECT_INT_DIR`** (under **`PROJECT_MNT_DIR`**, product-defined) | Same rule |
-| `rootfs/*` | **`⟨SYS_ROOT⟩/`** | **Not** applied by the **`land`** FPK register path; treat as **packaging / product installer** convention if your SDK emits this tree (see §12.3) |
-
-### 13.4 Loose files at FPK root → per-project prefix
-
-| In FPK (root) | On device |
-|-----------------|-----------|
-| `*.cfg`, `*.sh`, `*.ash`, `*.png`, `*.jpg`, `*.json`, `*.html` | `⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/` |
-
-### 13.5 Developer tree: `install/` → SDK (not kept under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**)
-
-| In FPK | Copied to (SDK / host) | Note |
-|--------|-------------------------|------|
-| `install/include/<lib>/*` | `INSTALL/include/<lib>/` | For compiling against the project’s libraries |
-| `install/lib/*` | `INSTALL/lib/` | Development link libraries |
-
-These paths are usually **consumed at install time** and **not** left as a runtime subtree under **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`**.
-
----
-
-## 14. `prj.json` format reference
+## 13. `prj.json` format reference
 
 The following JSON shows the complete `prj.json` structure with type annotations. All fields are described by their type and purpose.
 
@@ -259,7 +171,7 @@ The following JSON shows the complete `prj.json` structure with type annotations
         "command directory": "description"                   // [ string ]: [ string ], command source directory name and its description
         // "...":"..."  How many commands show how many properties
     },
-    "com":                                                   // [ json ], components (.com files)
+    "com":                                                   // [ json ], loadable components (pack artifact = unsuffixed key name)
     {
         "component directory": "description"                 // [ string ]: [ string ], component source directory name and its description
         // "...":"..."  How many components show how many properties
@@ -344,7 +256,7 @@ The following JSON shows the complete `prj.json` structure with type annotations
 
 ---
 
-## 15. Example — `land` project (this repository)
+## 14. Example — `land` project (this repository)
 
 The `land` project provides core infrastructure: authentication, component management, init/uninit/joint scheduling, register variables, syslog, service supervision, machine info, and FPK packaging.
 
@@ -486,4 +398,4 @@ The `tui` project provides terminal user interface services: telnet and SSH serv
 
 ---
 
-**TL;DR:** **`prj.json`** = project identity + **which directories become lib/com/cmd/exe/…** + **`obj` aliases** + **when to call `project@component.method`** + optional **`wui`**. **§12–§13** connect the JSON to **FPK** layout and **on-device paths** **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** (see **Runtime install paths** in **`fpk.md`**).
+**TL;DR:** **`prj.json`** = project identity + **which directories become lib/com/cmd/exe/…** + **`obj` aliases** + **when to call `project@component.method`** + optional **`wui`**. Pack layout → [`project2fpk.md`](../../project2fpk.md); image rootfs → [`fpk2rootfs.md`](../../fpk2rootfs.md); runtime paths → [`fpk.md`](./fpk.md).
