@@ -403,6 +403,22 @@ boole_t _service( obj_t this, param_t param )
 			return bsim_service( this, param, cfg, ifdev, object, obj, sim_state, bsim_times );
 		}
 	}
+	else
+	{
+		/* bsim disabled: clear switch counters and fall back to main if on backup */
+		const char *sim_state;
+		char sim_buffer[NAME_MAX];
+
+		scall( ifdev, "bsim_clear", NULL );
+		reg_set_string( this, "switch_reason", NULL );
+		sim_state = scall_string( sim_buffer, sizeof(sim_buffer), ifdev, "bsim_state", NULL );
+		if ( sim_state != NULL && 0 == strcmp( sim_state, "back" ) )
+		{
+			scall( ifdev, "bsim_main", NULL );
+			talk_free( cfg );
+			return ttrue;
+		}
+	}
 	/***********************************/
 	/******** Backup SIM END ***********/
 	/***********************************/

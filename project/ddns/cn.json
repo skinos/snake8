@@ -1,0 +1,24 @@
+{
+  "Client": "客户端",
+  "Client2": "客户端2",
+  "Client3": "客户端3",
+
+  "State":"当前状态",
+  "register":"正在注册",
+  "succeed":"更新成功",
+  "already":"注册成功, 未更新",
+  "noneed":"无需更新",
+  "deny":"注册成功, 拒绝更新",
+
+  "Domain IP Address":"域名对应IP地址",
+  "Extern IP Address":"设备IP地址",
+  "Extern Interface":"外部接口",
+  "Default Gateway":"默认网关",
+  "Disable":"禁用",
+
+  "Service Provider": "服务商",
+  "oray.com":"花生壳(Oray)",
+  "Domain": "域名",
+  "Username": "账号",
+  "Password": "密码"
+}

@@ -1,0 +1,582 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+
+
+      <!-- 客户端状态 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Client"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="client" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+
+
+      <div id="client-config" style="display: none;">
+
+
+        <div id="client-state" style="display: none;">
+          <!-- 当前状态 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="State"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client_state"></span>
+            </div>
+          </div>
+          <!-- 域名对应IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client_domain_ip"></span>
+            </div>
+          </div>
+          <!-- 外部接口IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client_extern_ip"></span>
+            </div>
+          </div>
+        </div><!--client-state-->
+
+        <!-- 外部接口 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern Interface"></label>
+          <div class="col-sm-9">
+            <select id="client_extern" class="col-xs-10 col-sm-5"></select>
+          </div>
+        </div>
+        <!-- 服务商 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Service Provider"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="client_isp">
+            </select>
+          </div>
+        </div>
+        <!-- 域名 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client_domain" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 账号 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client_username" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 密码 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+          <div class="col-sm-9">
+            <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+              <input type="password" id="client_password" maxlength="128" autocomplete="new-password" />
+              <i class="ace-icon fa fa-eye-slash" id="client_password-icon"></i>
+            </span>
+          </div>
+        </div>
+      </div><!--client-config-->
+
+
+      <div class="hr hr32 hr-dotted"></div>
+
+
+      <!-- 客户端2状态 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Client2"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="client2" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="client2-config" style="display: none;">
+      
+        <div id="client2-state" style="display: none;">
+          <!-- 当前状态 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="State"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client2_state"></span>
+            </div>
+          </div>
+          <!-- 域名对应IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client2_domain_ip"></span>
+            </div>
+          </div>
+          <!-- 外部接口IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client2_extern_ip"></span>
+            </div>
+          </div>
+        </div><!--client2-state-->
+
+        <!-- 外部接口 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern Interface"></label>
+          <div class="col-sm-9">
+            <select id="client2_extern" class="col-xs-10 col-sm-5"></select>
+          </div>
+        </div>
+        <!-- 服务商 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Service Provider"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="client2_isp">
+            </select>
+          </div>
+        </div>
+        <!-- 域名 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client2_domain" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 账号 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client2_username" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 密码 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+          <div class="col-sm-9">
+            <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+              <input type="password" id="client2_password" maxlength="128" autocomplete="new-password" />
+              <i class="ace-icon fa fa-eye-slash" id="client2_password-icon"></i>
+            </span>
+          </div>
+        </div>
+      </div><!--client2-config-->
+
+
+      <div class="hr hr32 hr-dotted"></div>
+
+
+      <!-- 客户端3状态 -->
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Client3"></label>
+        <div class="col-sm-9">
+          <label>
+            <input id="client3" class="ace ace-switch ace-switch-6" type="checkbox" />
+            <span class="lbl"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="client3-config" style="display: none;">
+      
+        <div id="client3-state" style="display: none;">
+          <!-- 当前状态 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="State"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client3_state"></span>
+            </div>
+          </div>
+          <!-- 域名对应IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client3_domain_ip"></span>
+            </div>
+          </div>
+          <!-- 外部接口IP -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern IP Address"></label>
+            <div class="col-sm-9 form-right-text">
+              <span id="client3_extern_ip"></span>
+            </div>
+          </div>
+        </div><!--client3-state-->
+
+        <!-- 外部接口 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Extern Interface"></label>
+          <div class="col-sm-9">
+            <select id="client3_extern" class="col-xs-10 col-sm-5"></select>
+          </div>
+        </div>
+        <!-- 服务商 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Service Provider"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="client3_isp">
+            </select>
+          </div>
+        </div>
+        <!-- 域名 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Domain"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client3_domain" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 账号 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="text" id="client3_username" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+        <!-- 密码 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+          <div class="col-sm-9">
+            <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+              <input type="password" id="client3_password" maxlength="128" autocomplete="new-password" />
+              <i class="ace-icon fa fa-eye-slash" id="client3_password-icon"></i>
+            </span>
+          </div>
+        </div>
+      </div><!--client3-config-->
+
+
+
+
+
+      <!-- 接键 -->
+      <div class="clearfix form-actions">
+        <div class="col-md-offset-3 col-md-9">
+          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+          &nbsp; &nbsp; &nbsp;
+          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+        </div>
+      </div>
+
+
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+
+<!-- page specific plugin scripts -->
+<script type="text/javascript">
+(function () {
+    var cfg;
+    var status;
+    var iflist = {};
+    var object = "ddns@scripts";
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+
+    function build_extern_select( sel_id, cur )
+    {
+        var k;
+        var $sel = $( '#' + sel_id );
+        var html = '';
+        var value = cur != null && cur !== '' ? cur : 'default';
+        html += '<option value="disable">' + $.i18n( 'Disable' ) + '</option>';
+        html += '<option value="default">' + $.i18n( 'Default Gateway' ) + '</option>';
+        if ( iflist && typeof iflist === 'object' )
+        {
+            for ( k in iflist )
+            {
+                if ( !iflist.hasOwnProperty( k ) )
+                {
+                    continue;
+                }
+                html += '<option value="' + k.replace( /"/g, '&quot;' ) + '">' + $.i18n( k ) + '</option>';
+            }
+        }
+        $sel.html( html );
+        $sel.val( value );
+        if ( $sel.val() !== value )
+        {
+            $sel.append( $( '<option></option>' ).attr( 'value', value ).text( value ) );
+            $sel.val( value );
+        }
+    }
+
+    function extern_from_ui( sel_id )
+    {
+        var v = $( '#' + sel_id ).val() || 'default';
+        if ( v === 'default' || v === 'disable' )
+        {
+            return '';
+        }
+        return v;
+    }
+
+    function load_options()
+    {
+        return he.bkload( [ object+".isplist", "network@frame.list[extern]" ] ).then( function(v){
+            var str = '';
+            var i;
+            var isplist = v[0] || {};
+            iflist = v[1] || {};
+            for ( i in isplist )
+            {
+                if ( !isplist.hasOwnProperty( i ) )
+                {
+                    continue;
+                }
+                str += '<option value="' + i + '">' + $.i18n( i ) + '</option>';
+            }
+            $('#client_isp').html(str);
+            $('#client2_isp').html(str);
+            $('#client3_isp').html(str);
+            build_extern_select( 'client_extern', '' );
+            build_extern_select( 'client2_extern', '' );
+            build_extern_select( 'client3_extern', '' );
+        });
+    }
+    function load_cfg()
+    {
+        he.load( [ object ] ).then( function(v){
+            cfg = v[0];
+
+            var client = cfg.client;
+            if ( !client )
+            {
+                client = {};
+            }
+            $('#client').prop('checked', able2boole(client.status));
+            $('#client').unbind('change').change(function () {
+                if ($(this).prop('checked'))
+                {
+                    build_extern_select( 'client_extern', client.extern || '' );
+                    $('#client_isp').val( client.isp || '' );
+                    $('#client_domain').val( client.domain || '' );
+                    $('#client_username').val( client.username || '' );
+                    $('#client_password').val( client.password || '' );
+                    $('#client-config').show();
+                }
+                else
+                {
+                    $('#client-config').hide();
+                }
+            }).trigger('change');
+
+            var client2 = cfg.client2;
+            if ( !client2 )
+            {
+                client2 = {};
+            }
+            $('#client2').prop('checked', able2boole(client2.status));
+            $('#client2').unbind('change').change(function () {
+                if ($(this).prop('checked'))
+                {
+                    build_extern_select( 'client2_extern', client2.extern || '' );
+                    $('#client2_isp').val( client2.isp || '' );
+                    $('#client2_domain').val( client2.domain || '' );
+                    $('#client2_username').val( client2.username || '' );
+                    $('#client2_password').val( client2.password || '' );
+                    $('#client2-config').show();
+                }
+                else
+                {
+                    $('#client2-config').hide();
+                }
+            }).trigger('change');
+
+            var client3 = cfg.client3;
+            if ( !client3 )
+            {
+                client3 = {};
+            }
+            $('#client3').prop('checked', able2boole(client3.status));
+            $('#client3').unbind('change').change(function () {
+                if ($(this).prop('checked'))
+                {
+                    build_extern_select( 'client3_extern', client3.extern || '' );
+                    $('#client3_isp').val( client3.isp || '' );
+                    $('#client3_domain').val( client3.domain || '' );
+                    $('#client3_username').val( client3.username || '' );
+                    $('#client3_password').val( client3.password || '' );
+                    $('#client3-config').show();
+                }
+                else
+                {
+                    $('#client3-config').hide();
+                }
+            }).trigger('change');
+
+        });
+    }
+    function load_status()
+    {
+        he.bkload( [ object+".status" ] ).then( function(v){
+            status = v[0];
+            if ( status == null )
+            {
+                $('#client-state').hide();
+                $('#client2-state').hide();
+                $('#client3-state').hide();
+                return;
+            }
+
+            var client = status.client;
+            if ( client && client.state )
+            {
+                $('#client_state').text( $.i18n( client.state ) );
+                $('#client_domain_ip').text( client.domain_ip || '' );
+                $('#client_extern_ip').text( client.extern_ip || '' );
+                $('#client-state').show();
+            }
+            else
+            {
+                $('#client-state').hide();
+            }
+
+            var client2 = status.client2;
+            if ( client2 && client2.state )
+            {
+                $('#client2_state').text( $.i18n( client2.state ) );
+                $('#client2_domain_ip').text( client2.domain_ip || '' );
+                $('#client2_extern_ip').text( client2.extern_ip || '' );
+                $('#client2-state').show();
+            }
+            else
+            {
+                $('#client2-state').hide();
+            }
+
+            var client3 = status.client3;
+            if ( client3 && client3.state )
+            {
+                $('#client3_state').text( $.i18n( client3.state ) );
+                $('#client3_domain_ip').text( client3.domain_ip || '' );
+                $('#client3_extern_ip').text( client3.extern_ip || '' );
+                $('#client3-state').show();
+            }
+            else
+            {
+                $('#client3-state').hide();
+            }
+           
+        });
+    }
+    function save_cfg()
+    {
+        if ( !cfg )
+        {
+            cfg = {};
+        }
+        var cfgcopy = JSON.parse(JSON.stringify(cfg));
+
+        if ( !cfg.client )
+        {
+            cfg.client = {};
+        }
+        var client = cfg.client;
+        client.status = boole2able( $('#client').prop('checked') );
+        if ( client.status == "enable" )
+        {
+            client.extern = extern_from_ui( 'client_extern' );
+            client.isp = $('#client_isp').val();
+            client.domain = $('#client_domain').val();
+            client.username = $('#client_username').val();
+            client.password = $('#client_password').val();
+        }
+
+        if ( !cfg.client2 )
+        {
+            cfg.client2 = {};
+        }
+        var client2 = cfg.client2;
+        client2.status = boole2able( $('#client2').prop('checked') );
+        if ( client2.status == "enable" )
+        {
+            client2.extern = extern_from_ui( 'client2_extern' );
+            client2.isp = $('#client2_isp').val();
+            client2.domain = $('#client2_domain').val();
+            client2.username = $('#client2_username').val();
+            client2.password = $('#client2_password').val();
+        }
+
+        if ( !cfg.client3 )
+        {
+            cfg.client3 = {};
+        }
+        var client3 = cfg.client3;
+        client3.status = boole2able( $('#client3').prop('checked') );
+        if ( client3.status == "enable" )
+        {
+            client3.extern = extern_from_ui( 'client3_extern' );
+            client3.isp = $('#client3_isp').val();
+            client3.domain = $('#client3_domain').val();
+            client3.username = $('#client3_username').val();
+            client3.password = $('#client3_password').val();
+        }
+
+        if ( ocompare( cfg, cfgcopy ) )
+        {
+            page.alert( { message: $.i18n('Settings unchanged') } );
+            return;
+        }
+        he.exec( [ object+"="+JSON.stringify(cfg) ] ).then( function(){
+            page.hint2succeed( $.i18n('Modify successfully') );
+            load_cfg();
+            load_status();
+        });
+    }
+
+    page.password('client_password', 'client_password-icon');
+    page.password('client2_password', 'client2_password-icon');
+    page.password('client3_password', 'client3_password-icon');
+    $.i18n().load( page.lang(langjson) ).then( function () {
+      /* init the langauage */
+      $.i18n().locale = lang; $('body').i18n();
+
+      load_options().then( function () {
+          /* load the configure */
+          load_cfg();
+          load_status();
+      } );
+      page.timing({
+        refresh: function ()
+        {
+            load_status()
+        },
+        interval: 3000
+      });
+      
+      /* bind the refresh */
+      $('#refresh').on(ace.click_event, function () {
+        location.reload();
+      });
+      /* bind the apply to save configure */
+      $('#apply').on(ace.click_event, function () {
+        save_cfg();
+      });
+    });
+
+
+})()
+
+
+</script>

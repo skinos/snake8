@@ -1,0 +1,35 @@
+{
+    "name":"ddns",
+    "intro":"DDNS client",
+    "desc":"System DDNS client based on ddns-scripts",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "com":
+    {
+        "scripts":"misc ddns isp client management"
+    },
+    "joint":
+    {
+        "network/online":
+        {
+            "ddns@scripts.setup":""
+        }
+    },
+    "wui":
+    {
+        "ddns":
+        {
+            "cn": "动态域名",
+            "en": "DDNS",
+            "page": "scripts.html",
+            "config": "ddns@scripts",
+            "lang":
+            {
+                "cn": "cn.json",
+                "en": "en.json"
+            }
+        }
+    }
+}
