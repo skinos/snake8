@@ -189,8 +189,8 @@ The network subsystem uses a layered architecture that separates configuration, 
 4. Multi-link Failover:  network@connect (scheduler)
               │
               ├─ monitors extern interfaces via network@frame.status
-              ├─ selects best uplink based on type (cold/hot/lazy)
-              └─ switches default route and DNS
+              ├─ selects best uplink based on type (cold/hot/lazy/dbdc)
+              └─ switches default route and DNS (dbdc also balances LAN NEW via shunts)
 ```
 
 **Multi-link Scheduling Types:**
@@ -202,6 +202,8 @@ The network subsystem uses a layered architecture that separates configuration, 
 | `hot2..hot5` | Like hot, but only first N slots participate | 2-5 |
 | `lazy` | Like hot, but won't fail back until current fails | 1-10 |
 | `lazy2..lazy5` | Like lazy, but only first N slots participate | 2-5 |
+| `dbdc` | Load-balance among online slots (ECMP + shunts) | 1-10 |
+| `dbdc2..dbdc6` | Like dbdc, but only first N slots participate; balance caps at 6 nexthops | 2-6 |
 
 
 
@@ -210,12 +212,14 @@ The network subsystem uses a layered architecture that separates configuration, 
 ```json
 // Attributes introduction 
 {
-    "type":"Multiple link connect type",                           // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5" ]
+    "type":"Multiple link connect type",                           // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5", "dbdc", "dbdc2", "dbdc3", "dbdc4", "dbdc5", "dbdc6" ]
                                                                    // "cold" for cold backup, only one uplink active at a time
                                                                    // "hot" for hot backup, multiple uplinks may stay up, default route prefers smallest-numbered online slot
                                                                    // "hotN" (N=2..5): only slots "1".."N" participate in scheduler decisions
                                                                    // "lazy" for lazy hot backup, does not move back to higher-priority uplink until current one fails
                                                                    // "lazyN" (N=2..5): only slots "1".."N" participate in scheduler decisions
+                                                                   // "dbdc": load-balance among online slots (device ECMP + LAN NEW nth marks)
+                                                                   // "dbdcN" (N=2..6): only slots "1".."N" participate; when 2+ online, share egress evenly (max 6 nexthops)
     "concom":"Multiple link connection management components",     // [ string ], optional, custom scheduling component
 
     "1":"ifname object of extern",                                 // [ string ], priority slot 1, e.g. "ifname@wan", "ifname@lte", "ifname@wisp"
@@ -229,9 +233,13 @@ The network subsystem uses a layered architecture that separates configuration, 
     "9":"ifname object of extern",                                 // [ string ], priority slot 9
     "10":"ifname object of extern",                                // [ string ], priority slot 10
 
-    "delay_count":"Statistical delay times of last",               // [ number ], reserved for delay-based scheduling
-    "delay_divide":"delay divide line",                            // [ number ], the unit is ms
-    "delay_diff":"delay differential",                             // [ number ], the unit is ms
+    "delay_count":"Sample count for delay mean",                   // [ number ], 0=disabled; >0 average last N keeplive delays per uplink
+    "delay_divide":"delay divide line",                            // [ number ], ms; means on both sides of this line enable exclude rule
+    "delay_diff":"delay differential",                             // [ number ], ms; if mean>divide and (mean-best)>this, exclude that uplink from balancing
+    "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
+    "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
+
+    "interval":"Connect scheduler poll interval",                  // [ number ], seconds; empty or 0 defaults to 10
 
     "custom_dns":"Custom DNS",                                     // [ "disable", "enable" ]
     "dns":"Custom DNS1",                                           // [ ip address ], valid when "custom_dns" is "enable"
@@ -317,7 +325,8 @@ ttrue
                                                // "up" means ready for Internet access
                                                // "failed" for keeplive failed
                                                // "down" for the ifname is down
-            "inuse":"Whether used"         // [ "disable", "enable" ], enable for in used, disable for not used
+            "inuse":"Whether used",        // [ "disable", "enable" ], cold/hot/lazy: current default; dbdc balance mode: enable when online
+            "balance":"Whether load-balanced" // [ "enable" ], dbdc only: enable when this uplink is in the current ECMP/shunts set
         }
         // "...":{}  How many extern show how many properties
     }

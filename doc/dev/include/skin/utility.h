@@ -732,6 +732,41 @@ boole        routes_switch3( int tid, const char *dest, const char *mask, const 
  */
 boole        routes_switch4( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, boole clear );
 /**
+ * @brief switch the extern route rule with five-path (five routes for load balancing/failover)
+ * @param[in] tid routing table ID string
+ * @param[in] dest destination IP address
+ * @param[in] mask network mask
+ * @param[in] metric route metric (NULL for all)
+ * @param[in] v talk_t containing first route information
+ * @param[in] v2 talk_t containing second route information
+ * @param[in] v3 talk_t containing third route information
+ * @param[in] v4 talk_t containing fourth route information
+ * @param[in] v5 talk_t containing fifth route information
+ * @param[in] clear delete existing rule first if true
+ * @return succeed or failed
+ *		@retval true for succeed
+ *		@retval false for failed
+ */
+boole        routes_switch5( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, talk_t v5, boole clear );
+/**
+ * @brief switch the extern route rule with six-path (six routes for load balancing/failover)
+ * @param[in] tid routing table ID string
+ * @param[in] dest destination IP address
+ * @param[in] mask network mask
+ * @param[in] metric route metric (NULL for all)
+ * @param[in] v talk_t containing first route information
+ * @param[in] v2 talk_t containing second route information
+ * @param[in] v3 talk_t containing third route information
+ * @param[in] v4 talk_t containing fourth route information
+ * @param[in] v5 talk_t containing fifth route information
+ * @param[in] v6 talk_t containing sixth route information
+ * @param[in] clear delete existing rule first if true
+ * @return succeed or failed
+ *		@retval true for succeed
+ *		@retval false for failed
+ */
+boole        routes_switch6( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, talk_t v5, talk_t v6, boole clear );
+/**
  * @brief create the extern route table for ifname
  * @param[in] tid route id
  * @param[in] ifnamest ifname status

@@ -19,7 +19,7 @@ $(eval $(call Package/Define))
 
 # menuconfig的选项的位置及说明
 define Package/$(PKG_NAME)
-  CATEGORY:=Skin system
+  CATEGORY:=Skin Application
   TITLE:=$(INTRO_STR)
   DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +libcurl
 endef

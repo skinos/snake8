@@ -9,6 +9,8 @@ description: |
   "开机启动", "关机", "注册joint", "prj.json", "照着 tmptools", "skin API",
   "libskin", "config_get", "scall", "comexe", "单实例", "MAIN2API", "_service",
   "unix_listen", or asks how to call land APIs without land source.
+  For HTML page JS / he.load / he.exec / prj.json wui details, also apply
+  **skinos-wui** (mandatory before inventing he.* helpers).
   After any new/changed com/exe API surface, also apply **skinos-component-doc**
   (English `<name>.md` per auth.md) — required, not optional.
   Do NOT use for board/sdk.config/rootfs customization (skinos-sdk) or device
@@ -140,9 +142,13 @@ daemon patterns (libevent, Unix control socket, `cstart`/`flush`):
 
 ## Web page + language files (`wui`)
 
-1. Add HTML at project root (e.g. `mycom.html`). Patterns: `testcom.html`  
-   - Use `data-i18n="English Key"` on labels  
-   - Talk to HE via existing WUI JS helpers (`he.exec`, form bind to `config` object)
+**Full rules: skill `skinos-wui`** (read it before writing page JS).  
+Templates: `project/tmptools/page.html`, `testcom.html`. Allowed APIs:
+`project/wui/ace/api/he.js` — save/write is **`he.exec`**, never `he.save`.
+
+1. Add HTML at project root (e.g. `mycom.html`). Copy `tmptools/page.html`.  
+   - `data-i18n="English Key"` on labels  
+   - Load: `he.load([obj])`; save: `he.exec([obj+"="+JSON.stringify(cfg)])`
 2. Register in `prj.json`:
 
 ```json
@@ -290,6 +296,7 @@ When writing component code, **read `reference-skin-api.md` first**; for daemons
 
 | Skill | Use for |
 |-------|---------|
+| **skinos-wui** | Project HTML pages, `prj.json` wui, `he.load` / `he.exec` |
 | **skinos-component-doc** | English `<name>.md` interface doc (required after com/exe) |
 | **skinos-he** | Live device: eline / `he '…'` / `ashy` HE grammar |
 | **skinos-sdk** | `gBOARDID`, `config/swrt5` board overlays |

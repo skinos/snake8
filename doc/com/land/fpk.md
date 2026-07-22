@@ -276,6 +276,17 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
 
 #### Query APIs
 
++ `path[ name ]` **get the install directory path of a project**   
+    - name ----------- [ string ], the project name
+    - failed return NULL
+    - succeed return [ string ], the absolute path of the project directory
+
+    Example, get the path of project land
+    ```shell
+    land@fpk.path[ land ]
+    ⟨PRJ_ROOT⟩/land
+    ```
+
 + `list[ project ]` **list all installed projects or get details of a specific project**   
     - project ----------- [ string ], optional, when provided, return detailed info of that project only
     - failed return NULL

@@ -409,6 +409,35 @@ boole shunts_balancing_3ifname( boole force, const char *ifname, const char *ifn
 boole shunts_balancing_4ifname( boole force, const char *ifname, const char *ifname2, const char *ifname3, const char *ifname4 );
 
 /**
+ * @brief Load balancing among five interfaces
+ * @param[in] force Whether to force clear old connections
+ * @param[in] ifname First interface name
+ * @param[in] ifname2 Second interface name
+ * @param[in] ifname3 Third interface name
+ * @param[in] ifname4 Fourth interface name
+ * @param[in] ifname5 Fifth interface name
+ * @return Success or failure
+ * @retval true Success
+ * @retval false Failure
+ */
+boole shunts_balancing_5ifname( boole force, const char *ifname, const char *ifname2, const char *ifname3, const char *ifname4, const char *ifname5 );
+
+/**
+ * @brief Load balancing among six interfaces
+ * @param[in] force Whether to force clear old connections
+ * @param[in] ifname First interface name
+ * @param[in] ifname2 Second interface name
+ * @param[in] ifname3 Third interface name
+ * @param[in] ifname4 Fourth interface name
+ * @param[in] ifname5 Fifth interface name
+ * @param[in] ifname6 Sixth interface name
+ * @return Success or failure
+ * @retval true Success
+ * @retval false Failure
+ */
+boole shunts_balancing_6ifname( boole force, const char *ifname, const char *ifname2, const char *ifname3, const char *ifname4, const char *ifname5, const char *ifname6 );
+
+/**
  * @brief Add bind rule (bind traffic matching condition to specified interface)
  * @param[in] condition iptables match condition string
  * @param[in] ifname Interface name

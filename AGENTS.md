@@ -2,7 +2,8 @@
 
 Human-oriented SDK portal (purpose, build, develop, device management): **[`README.md`](README.md)** · [`README.cn.md`](README.cn.md).  
 Domain catalog (where to add features): **[`projects.md`](projects.md)**. Project parts: **[`project.md`](project.md)**.  
-Cellular module drivers: **`.claude/skills/skinos-modem/`**. UART protocol apps: **`.claude/skills/skinos-uart/`**.
+Cellular module drivers: **`.claude/skills/skinos-modem/`**. UART protocol apps: **`.claude/skills/skinos-uart/`**.  
+Project Web UI (HTML / `prj.json` wui / `he.load`·`he.exec`): **`.claude/skills/skinos-wui/`**.
 
 ## What this is
 
@@ -83,6 +84,7 @@ Components with TLS certificates (UART, IPsec, etc.) follow this pattern:
 ## Project authoring (new project / com / WUI / init)
 
 See **`.claude/skills/skinos-project/SKILL.md`**. Template: `project/tmptools/`.  
+**WUI HTML pages** (registration + `he.js`): **`.claude/skills/skinos-wui/SKILL.md`** — save with **`he.exec`**, never invent `he.save`; ground truth `project/wui/ace/api/he.js` + `tmptools/page.html`.  
 **libskin API** (no land sources): `doc/com/land/skin.md` + `.claude/skills/skinos-project/reference-skin-api.md`.  
 **Cellular USB module** (`project/modem`): `.claude/skills/skinos-modem/`. **UART protocol app** (`project/uart`): `.claude/skills/skinos-uart/`. Where to put new work: [`projects.md`](projects.md).
 
