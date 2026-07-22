@@ -753,207 +753,45 @@
             wan_show(data['ifname@wan4'], "#wan4");
         }
 
-        if ( list["ifname@wan"] )
+        /* dbdc/dbdcX: state column shows balance; otherwise shows inuse */
+        var ftype = (frame && frame.type) ? frame.type : $('#type').val();
+        var is_dbdc = (ftype && ftype.indexOf("dbdc") === 0);
+        var ifs = [ "wan", "wan2", "wan3", "wan4", "wisp", "wisp2", "lte", "lte2", "lte3", "lte4" ];
+        for ( var n = 0; n < ifs.length; n++ )
         {
-            if ( list["ifname@wan"].status )
+            var id = ifs[n];
+            var key = "ifname@" + id;
+            if ( list[key] )
             {
-                $('#wan_status').html( $.i18n( list["ifname@wan"].status ) );
-            }
-            if ( list["ifname@wan"].inuse == "enable" )
-            {
-                $('#wan_state').html( $.i18n('In Use') );
+                if ( list[key].status )
+                {
+                    $('#' + id + '_status').html( $.i18n( list[key].status ) );
+                }
+                if ( is_dbdc )
+                {
+                    if ( list[key].balance == "enable" )
+                    {
+                        $('#' + id + '_state').html( $.i18n('In Balance') );
+                    }
+                    else
+                    {
+                        $('#' + id + '_state').html( $.i18n('Unused') );
+                    }
+                }
+                else if ( list[key].inuse == "enable" )
+                {
+                    $('#' + id + '_state').html( $.i18n('In Use') );
+                }
+                else
+                {
+                    $('#' + id + '_state').html( $.i18n('Unused') );
+                }
+                $('#' + id).show();
             }
             else
             {
-                $('#wan_state').html( $.i18n('Unused') );
+                $('#' + id).hide();
             }
-            $('#wan').show();
-        }
-        else
-        {
-            $('#wan').hide();
-        }
-        if ( list["ifname@wan2"] )
-        {
-            if ( list["ifname@wan2"].status )
-            {
-                $('#wan2_status').html( $.i18n( list["ifname@wan2"].status ) );
-            }
-            if ( list["ifname@wan2"].inuse == "enable" )
-            {
-                $('#wan2_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#wan2_state').html( $.i18n('Unused') );
-            }
-            $('#wan2').show();
-        }
-        else
-        {
-            $('#wan2').hide();
-        }
-        if ( list["ifname@wan3"] )
-        {
-            if ( list["ifname@wan3"].status )
-            {
-                $('#wan3_status').html( $.i18n( list["ifname@wan3"].status ) );
-            }
-            if ( list["ifname@wan3"].inuse == "enable" )
-            {
-                $('#wan3_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#wan3_state').html( $.i18n('Unused') );
-            }
-            $('#wan3').show();
-        }
-        else
-        {
-            $('#wan3').hide();
-        }
-        if ( list["ifname@wan4"] )
-        {
-            if ( list["ifname@wan4"].status )
-            {
-                $('#wan4_status').html( $.i18n( list["ifname@wan4"].status ) );
-            }
-            if ( list["ifname@wan4"].inuse == "enable" )
-            {
-                $('#wan4_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#wan4_state').html( $.i18n('Unused') );
-            }
-            $('#wan4').show();
-        }
-        else
-        {
-            $('#wan4').hide();
-        }
-
-        if ( list["ifname@wisp"] )
-        {
-            if ( list["ifname@wisp"].status )
-            {
-                $('#wisp_status').html( $.i18n(list["ifname@wisp"].status) );
-            }
-            if ( list["ifname@wisp"].inuse == "enable" )
-            {
-                $('#wisp_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#wisp_state').html( $.i18n('Unused') );
-            }
-            $('#wisp').show();
-        }
-        else
-        {
-            $('#wisp').hide();
-        }
-        if ( list["ifname@wisp2"] )
-        {
-            if ( list["ifname@wisp2"].status )
-            {
-                $('#wisp2_status').html( $.i18n(list["ifname@wisp2"].status) );
-            }
-            if ( list["ifname@wisp2"].inuse == "enable" )
-            {
-                $('#wisp2_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#wisp2_state').html( $.i18n('Unused') );
-            }
-            $('#wisp2').show();
-        }
-        else
-        {
-            $('#wisp2').hide();
-        }
-        
-        if ( list["ifname@lte"] )
-        {
-            if ( list["ifname@lte"].status )
-            {
-                $('#lte_status').html( $.i18n(list["ifname@lte"].status) );
-            }
-            if ( list["ifname@lte"].inuse == "enable" )
-            {
-                $('#lte_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#lte_state').html( $.i18n('Unused') );
-            }
-            $('#lte').show();
-        }
-        else
-        {
-            $('#lte').hide();
-        }
-        if ( list["ifname@lte2"] )
-        {
-            if ( list["ifname@lte2"].status )
-            {
-                $('#lte2_status').html( $.i18n(list["ifname@lte2"].status) );
-            }
-            if ( list["ifname@lte2"].inuse == "enable" )
-            {
-                $('#lte2_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#lte2_state').html( $.i18n('Unused') );
-            }
-            $('#lte2').show();
-        }
-        else
-        {
-            $('#lte2').hide();
-        }
-        if ( list["ifname@lte3"] )
-        {
-            if ( list["ifname@lte3"].status )
-            {
-                $('#lte3_status').html( $.i18n(list["ifname@lte3"].status) );
-            }
-            if ( list["ifname@lte3"].inuse == "enable" )
-            {
-                $('#lte3_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#lte3_state').html( $.i18n('Unused') );
-            }
-            $('#lte3').show();
-        }
-        else
-        {
-            $('#lte3').hide();
-        }
-        if ( list["ifname@lte4"] )
-        {
-            if ( list["ifname@lte4"].status )
-            {
-                $('#lte4_status').html( $.i18n(list["ifname@lte4"].status) );
-            }
-            if ( list["ifname@lte4"].inuse == "enable" )
-            {
-                $('#lte4_state').html( $.i18n('In Use') );
-            }
-            else
-            {
-                $('#lte4_state').html( $.i18n('Unused') );
-            }
-            $('#lte4').show();
-        }
-        else
-        {
-            $('#lte4').hide();
         }
       });
     }
