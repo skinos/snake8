@@ -9,6 +9,10 @@
 
 ## 快速开始：从模板创建新项目
 
+完整步骤（组件 / exe / 网页 / 语言包 / init / uninit / joint）见仓库根目录：
+
+**`../.claude/skills/skinos-project/SKILL.md`**
+
 1. 复制 `project/tmptools/` 作为模板
 2. 修改 `prj.json` 中的 `name`, `intro`, `desc`
 3. 重命名组件目录
@@ -343,17 +347,18 @@ he 'project@component:key=value'
 # 调用组件API
 he 'project@component.api'
 
-# 查看组件列表
-he 'land@component.list'
+# 列出组件（HE 元命令；不是 land@component.list）
+he '@'
+# 或按工程过滤: he '*land'
 
-# 查看日志
+# 查看日志文件列表
 he 'land@syslog.list'
 ```
 
 ## 参考资源
 
 - 模板项目: `project/tmptools/`
-- 核心文档: `doc/com/land/`
-- skin API文档: `project/land/skin.md`
+- 核心文档: `doc/com/land/`（入口 `README.md`，含架构与术语）
+- skin API文档: `doc/com/land/skin.md`（`project/land/skin.md` 为同步副本）
 - HE语法: `doc/com/land/he.md`
 - 组件模型: `doc/com/land/component.md`

@@ -1,10 +1,17 @@
 # AGENTS.md — Snake8 / landos Embedded Gateway SDK
 
+Human-oriented SDK portal (purpose, build, develop, device management): **[`README.md`](README.md)** · [`README.cn.md`](README.cn.md).  
+Domain catalog (where to add features): **[`projects.md`](projects.md)**. Project parts: **[`project.md`](project.md)**.  
+Cellular module drivers: **`.claude/skills/skinos-modem/`**. UART protocol apps: **`.claude/skills/skinos-uart/`**.
+
 ## What this is
 
 Embedded Linux gateway SDK with a **component model**. Each feature is a named component (e.g. `land@machine`, `forward@nat`) with JSON config and callable APIs. The stack is called **landos**; shared libraries are **skinos**.
 
 ## Build system
+
+See **`.claude/skills/skinos-sdk/SKILL.md`** for SDK layout, `gBOARDID`, and Makefile details.  
+Per-board overlays (`config/swrt5/` `makefile.config` / `rootfs` / `config/*.cfg`): **`.claude/skills/skinos-sdk/reference-swrt5.md`**.
 
 **Platform selection** via `gBOARDID` file (format: `platform-chip-board[scope][oem]`):
 - Default: `slave-x86-ubuntu2004` (debug/host build)
@@ -53,10 +60,11 @@ FPK files can be uploaded to a running device without restart. Use `arch@firmwar
 See **`.claude/skills/device-upgrade/SKILL.md`** for the full workflow.
 
 Quick summary:
-1. **Authenticate**: `POST /public` → get `rand` → compute `MD5(pass:user:rand)` → base64 → `POST /auth` → get `key`
-2. **Full firmware (.zz)**: `POST /upload?object=arch@firmware&api=zz` → restart → wait 120s
-3. **FPK package**: `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
-4. **Test APIs**: `POST /he` with `{"username":"admin","key":"...","he":"<project>@<instance>.<api>"}`
+1. **Build firmware (.zz)**: `./mkdel` → `make` → `build/*.zz`
+2. **Authenticate**: `POST /public` → get `rand` → compute `MD5(pass:user:rand)` → base64 → `POST /auth` → get `key`
+3. **Upgrade (.zz)**: `POST /upload?...&api=zz&p2=restart` → if response has `"status":"success"` wait **30s**, if upload never returns wait **90s**, then confirm `land@machine.status` (`version` ~ `^v[0-9]`); if bad version → `land@machine.restart` ×≤3 (wait 90s each); still fail → ask user to manual reboot
+4. **FPK package**: `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
+5. **Test**: web `POST /he` first; shell via SSH/telnet if needed (`ashy`). IPsec: read hub `ipsec.conf` if user gave server SSH; poll `ipsec@client.status` until `established` (early `down` is normal). Details: `.claude/skills/device-upgrade/SKILL.md`
 
 ## Certificate handling convention
 
@@ -71,6 +79,12 @@ Components with TLS certificates (UART, IPsec, etc.) follow this pattern:
 | HTML element IDs | `<prefix>_ca`, `<prefix>_crt`, `<prefix>_key` with `_down`/`_remove` |
 | Upload URL | `/upload?...&object=<obj>&api=import_ca&p=[]` |
 | Delete command | `<obj>.clear_ca` |
+
+## Project authoring (new project / com / WUI / init)
+
+See **`.claude/skills/skinos-project/SKILL.md`**. Template: `project/tmptools/`.  
+**libskin API** (no land sources): `doc/com/land/skin.md` + `.claude/skills/skinos-project/reference-skin-api.md`.  
+**Cellular USB module** (`project/modem`): `.claude/skills/skinos-modem/`. **UART protocol app** (`project/uart`): `.claude/skills/skinos-uart/`. Where to put new work: [`projects.md`](projects.md).
 
 ## Project structure
 
@@ -87,17 +101,20 @@ Each `project/<name>/` contains:
 
 ## Device interaction
 
-**`eline`** — interactive terminal UI (prompt `$ `), type HE lines directly
-**`he`** — run one HE line from shell: **always single-quote**: `he 'land@machine.info'`
+**Skill:** `.claude/skills/skinos-he/` — operate a live device with HE / eline / `ashy` (from `he.md` + `eline.md`).
 
-**Getting a shell on the device**: telnet 进入 eline 后，输入 `ashy` 回车即可进入 BusyBox ash shell
+**`eline`** — interactive terminal UI (prompt `$ `), type HE lines directly  
+**`he`** — run one HE line from shell: **always single-quote**: `he 'land@machine.status'`
+
+**Getting a shell on the device**: telnet/SSH 进入 eline 后，输入 `ashy` 回车即可进入 BusyBox ash shell
 ```bash
-telnet <ip> <port>
+ssh -p <port> admin@<ip>   # 或 telnet <ip> <port>
 # 输入用户名密码后进入 eline ($ 提示符)
+$ land@machine.status      # eline 里直接敲 HE
 $ ashy
-# 进入 shell (# 提示符)
-/ # ls /usr/lib/ipsec/charon
-/ # exit  # 回到 eline
+# 进入 shell (~ # 提示符)
+~ # he 'land@machine.status'
+~ # exit                   # 通常直接断开会话，不会回到 eline；需要 eline 就重新连
 ```
 
 HE grammar docs: `doc/com/land/he.md`, `doc/com/land/eline.md`
@@ -133,13 +150,15 @@ Core docs under `doc/com/land/`:
 - `init.md`, `joint.md`, `uninit.md` — lifecycle events
 - `component.md`, `machine.md`, `auth.md` — core components
 
+**New/changed component APIs:** write English `<component-id>.md` next to the component using skill **`.claude/skills/skinos-component-doc/`** (layout ground truth: `doc/com/land/auth.md`). Required after scaffolding with **skinos-project**.
+
 ## Conventions
 
 - Component names: `project@directory` (e.g. `land@machine`)
 - `type: "root"` in prj.json = root-privileged/system-level package
-- Boot levels run in order: `arch → land → app → general → manage → delay`
+- Boot levels (init) run in order: `arch → land → bus → device → network → manage → local → extern → app → app2 → general → delay…delay5` (see `doc/com/land/init.md`)
 - `obj` aliases create short names (e.g. `com` → `component`, `log` → `syslog`)
-- Chinese docs available as `*.cn.md` alongside English versions
+- Component docs under `doc/com/land/` are English-only (`README.md` is the entry point)
 
 ## Gotchas
 
