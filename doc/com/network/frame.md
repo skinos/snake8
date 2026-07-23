@@ -234,8 +234,11 @@ The network subsystem uses a layered architecture that separates configuration, 
     "10":"ifname object of extern",                                // [ string ], priority slot 10
 
     "delay_count":"Sample count for delay mean",                   // [ number ], 0=disabled; >0 average last N keeplive delays per uplink
-    "delay_divide":"delay divide line",                            // [ number ], ms; means on both sides of this line enable exclude rule
-    "delay_diff":"delay differential",                             // [ number ], ms; if mean>divide and (mean-best)>this, exclude that uplink from balancing
+                                                                   // dbdc: filter slow uplinks out of ECMP; hot/lazy: may switch default by delay
+    "delay_divide":"delay divide line",                            // [ number ], ms; dbdc: rule arms when means straddle this line
+                                                                   // hot/lazy: need some online below this to delay-switch; current must be above; hot then prefers smallest below
+    "delay_diff":"delay differential",                             // [ number ], ms; dbdc: mean>divide and (mean-best)>this -> exclude from balancing
+                                                                   // hot/lazy: with some online below divide, current>divide and (current-best)>this -> switch (hot: right_low; lazy: best)
     "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
     "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
 

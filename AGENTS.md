@@ -46,7 +46,7 @@ curl -X POST "http://<device>/upload?username=admin&key=<key>&object=arch@firmwa
 
 **Outputs**:
 - `build/install/` — staged headers/libs
-- `build/rootfs/` — assembled rootfs (projects at `usr/share/skinos/`)
+- `build/rootfs/` — assembled rootfs (staging often `usr/share/skinos/` on host; **on device** use `land@fpk.path`)
 - `build/store/` — FPK packages (per-project `.fpk` files)
 - `build/*.zz` — full firmware images
 
@@ -168,3 +168,4 @@ Core docs under `doc/com/land/`:
 - Platform configs (`config/smtk2/`, `config/swrt5/`, etc.) are separate git repos
 - `build/` directory is gitignored and recreated by `make dep`
 - Many projects in `.gitignore` (land, forward, network, etc.) — may be separate repos
+- **On-device project path is dynamic** — after FPK install or firmware upgrade, use `land@fpk.path[ <project> ]` (or `land@fpk.list`) to locate the package. Do **not** hardcode `/usr/share/skinos/…`; it changes with `gBOARDID` / install mode. Skills: **device-upgrade**, **skinos-sdk**, **skinos-project**, **skinos-he**; API: `doc/com/land/fpk.md`

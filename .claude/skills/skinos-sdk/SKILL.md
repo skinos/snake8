@@ -301,11 +301,22 @@ make pidinfo          # print active gBOARDID
 | Artifact | Path |
 |----------|------|
 | Staged headers/libs | `build/install/` |
-| Assembled rootfs | `build/rootfs/` (`usr/share/skinos/`) |
+| Assembled rootfs | `build/rootfs/` (staging layout often under `usr/share/skinos/` — **host build only**) |
 | Per-project FPK | `build/store/*.fpk` |
 | Full firmware | `build/*.zz` |
 
-On device after FPK hot-install, package may live under `/mnt/internal/skinos/<name>` (vs firmware-baked `/usr/share/skinos/<name>`). See `fpk.list` on device.
+### On-device project path (do not hardcode)
+
+**Host** `build/rootfs/usr/share/skinos/<name>/` is only the image staging layout. **On a running device**, the live project directory depends on `gBOARDID` / `PROJECT_DIR`, factory bake vs FPK hot-install, and may be under overlay paths — it is **not** always `/usr/share/skinos/<name>`.
+
+**Always** resolve with:
+
+```text
+land@fpk.path[ <project> ]     # absolute install dir for one project
+land@fpk.list                  # all projects; each has "path"
+```
+
+Never `find /usr/share/skinos` or assume `/mnt/internal/skinos/…`. Same rule in **device-upgrade** / **skinos-project** / **skinos-he**. API: `doc/com/land/fpk.md`.
 
 ## Skinos project (`project/<name>/`)
 

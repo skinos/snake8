@@ -3,11 +3,10 @@
 ### Overview
 
 The UART infrastructure component manages serial port instances and their driver bindings. It implements a device-driver separation architecture where the framework creates and manages port instances (`uart@tty`, `uart@tty2`, …), and each instance is bound to a driver (`uartdrv@dtu`, `uartdrv@tui`, …) that implements the actual business logic.
-- register and unregister UART port instances at runtime
-- list all registered UART ports with their device and driver bindings
-- start and stop individual ports by device component name
+- list UART ports with their device and driver bindings
+- bind and start an instance when a hardware device appears (`register`), with optional `ttydev` / `drvcom` / instance name
+- stop and unbind when the device disappears (`unregister`)
 - resolve domain names to IP addresses for DTU client connections
-
 
 
 ### Device-Driver Separation Architecture
@@ -17,9 +16,7 @@ The UART infrastructure component manages serial port instances and their driver
 │                                   uart@frame                                        │
 │                          (UART Infrastructure Manager)                              │
 │                                                                                     │
-│  register(object, ttydev, devcom, drvcom)                                           │
-│  unregister(object)                                                                 │
-│  add(devcom) / delete(devcom)                                                       │
+│  register(devcom [, ttydev, drvcom, object]) / unregister(devcom)                            │
 │  list[]                                                                             │
 └──────────────────────────────┬──────────────────────────────────────────────────────┘
                                │
@@ -80,8 +77,9 @@ The UART infrastructure component manages serial port instances and their driver
 | `uart@tty*` | Linux TTY device | references | `ttydev` register (e.g. `/dev/ttyS0`) |
 | `uart@tty*` | `usb@tty-*` / `soc@uart*` | references | `devcom` register (device component name) |
 | `uart@tty*` | `uartdrv@*` | references | `drvcom` config field (driver object name) |
-| `uart@frame` | `uartdrv@*` | launches | `sstarts(object, drvcom, "service", object, ttydev)` |
-| `usb@tty-*` | `uart@frame` | triggers | `uart@frame.add[devcom]` when USB device appears |
+| `uart@frame` | `uartdrv@*` | launches | `sstarts(object, drvcom, "service", object, ttydev)` (except `uartdrv@gnss`) |
+| `uart@tty*` | `gnss@frame` | handoff | when `drvcom` is `uartdrv@gnss`: `register` / `unregister` |
+| `usb@tty-*` | `uart@frame` | triggers | `uart@frame.register[devcom]` when USB device appears |
 
 
 
@@ -95,9 +93,11 @@ The UART subsystem separates the physical port (device) from the business logic 
 
 * **Driver layer** (`uartdrv@dtu`, `uartdrv@tui`, …) — executable programs that implement the actual serial-to-network bridging or terminal access. The driver is bound to an instance via the `drvcom` configuration field. When the instance starts, the framework launches the driver executable and passes the instance name and TTY device path.
 
-* **Binding chain** — at boot, `uart@frame.setup` iterates all configured instances. For each instance it resolves `ttydev` (the Linux serial device path, either directly or via `devcom`), reads `drvcom` (the driver object name), and starts the driver as a service: `sstarts(object, drvcom, "service", object, ttydev)`.
+* **Binding chain** — at boot, `uart@frame.setup` iterates all configured instances. For each instance it resolves `ttydev` (the Linux serial device path, either directly or via `devcom`), reads `drvcom` (the driver object name), and starts the driver as a service: `sstarts(object, drvcom, "service", object, ttydev)`. On hotplug, `register` reuses a matching bound instance or claims the first unbound slot (`devcom` empty means unbound).
 
-**Instance naming** — instances are named `uart@tty`, `uart@tty2`, `uart@tty3`, … up to `uart@tty8`. The suffix number corresponds to the hardware UART port. Additional instances can be registered dynamically via `uart@frame.register` for USB-to-serial adapters or other external ports.
+* **GNSS handoff** — `uartdrv@gnss` is a **drvcom marker only** (no UART exe). When set, `setup` calls `gnss@frame.register[bind, ttydev, gnssdrv@nmea]` (`bind` is `devcom` if set, else the UART object name); `shut` calls `gnss@frame.unregister[bind]`. GNSS owns parse/bridge via `gnssdrv@nmea`.
+
+**Instance naming** — instances are named `uart@tty`, `uart@tty2`, `uart@tty3`, … up to `uart@tty8`. The suffix number corresponds to the hardware UART port. Hotplug may also bind a named instance via `uart@frame.register[devcom, ttydev, drvcom, object]`.
 
 **Driver objects** — drivers are registered in `prj.json` under `obj` as `uartdrv@dtu`, `uartdrv@tui`, etc. The `drvcom` field in the instance configuration references these object names. Each driver exposes a `service` entry point that the framework calls to start the driver process.
 
@@ -119,56 +119,40 @@ The UART subsystem separates the physical port (device) from the business logic 
 
 #### Control APIs
 
-+ `register[ object, ttydev, devcom, drvcom ]` **register a UART instance with optional bindings**
-    - object ----------- [ string ], the instance name (e.g. uart@tty3)
-    - ttydev ----------- [ string ], optional, the Linux serial device path (e.g. /dev/ttyUSB8)
-    - devcom ----------- [ string ], optional, the device component that provides ttydev (e.g. usb@tty-2-32)
-    - drvcom ----------- [ string ], optional, the driver object name (e.g. uartdrv@dtu)
-    - failed return tfalse
++ `register[ devcom, ttydev, drvcom, object ]` **bind/start a UART instance for a hotplugged device**
+    - devcom ----------- [ string ], required, device component name (e.g. usb@tty-2-32)
+    - ttydev ----------- [ string ], optional, Linux serial device path
+    - drvcom ----------- [ string ], optional, driver object name (e.g. uartdrv@dtu)
+    - object ----------- [ string ], optional, instance name (e.g. uart@tty)
+    - failed return tfalse, no free/matching instance or setup failed
     - succeed return ttrue
+    - if `object` is given: write provided fields into that instance register, `com_register`, then `setup`
+    - else if an instance already has the same `devcom` (register, else config): optionally refresh `ttydev`/`drvcom`, then `setup`
+    - else claim the first unbound instance (empty `devcom` in both register and config), write `devcom` (and optional `ttydev`/`drvcom`), then `setup`
+    - a non-empty `devcom` means the instance is already bound
 
-    Example, register uart@tty3 with a USB serial device
+    Example, auto-bind an unbound uart@tty and start it
     ```shell
-    uart@frame.register[ uart@tty3, /dev/ttyUSB8 ]
+    uart@frame.register[ usb@tty-2-3 ]
     ttrue
     ```
 
-    Example, register with all bindings specified
+    Example, bind a named instance with ttydev and drvcom
     ```shell
-    uart@frame.register[ uart@tty-2-32, /dev/ttyUSB8, usb@tty-2-32, uartdrv@dtu ]
+    uart@frame.register[ usb@tty-2-32, /dev/ttyUSB8, uartdrv@dtu, uart@tty ]
     ttrue
     ```
 
-+ `unregister[ object ]` **unregister a UART instance**
-    - object ----------- [ string ], the instance name to unregister
-    - failed return tfalse
-    - succeed return ttrue
-
-    Example, unregister uart@tty3
-    ```shell
-    uart@frame.unregister[ uart@tty3 ]
-    ttrue
-    ```
-
-+ `add[ devcom ]` **start the UART port whose device component matches**
-    - devcom ----------- [ string ], the device component name to match against each instance's `devcom` register
-    - failed return tfalse, no matching instance or setup failed
-    - succeed return ttrue
-
-    Example, start the port bound to usb@tty-2-3
-    ```shell
-    uart@frame.add[ usb@tty-2-3 ]
-    ttrue
-    ```
-
-+ `delete[ devcom ]` **stop the UART port whose device component matches**
++ `unregister[ devcom ]` **stop and unbind the UART instance for a removed device**
     - devcom ----------- [ string ], the device component name to match
     - failed return tfalse, no matching instance or shut failed
     - succeed return ttrue
+    - matches register `devcom` only (set by `register` or by instance `setup` from config)
+    - after `shut`, clears the register `devcom` so the slot can be claimed again
 
-    Example, stop the port bound to usb@tty-2-3
+    Example, stop and unbind the instance bound to usb@tty-2-3
     ```shell
-    uart@frame.delete[ usb@tty-2-3 ]
+    uart@frame.unregister[ usb@tty-2-3 ]
     ttrue
     ```
 

@@ -16,6 +16,7 @@ Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@
 | `uartdrv@dtu` | **[dtu.md](dtu.md)** | `dtu` | Serial-to-network bridge (TCP/UDP/MQTT) |
 | `uartdrv@sixents` | **[sixents.md](sixents.md)** | `sixents` | GNSS differential correction (RTK) |
 | `uartdrv@tui` | **[tui.md](tui.md)** | *(none)* | Eline serial terminal |
+| `uartdrv@gnss` | **[../gnss/nmea.md](../gnss/nmea.md)** | *(marker)* | Hand off to `gnss@frame` → `gnssdrv@nmea` (no UART exe) |
 
 
 

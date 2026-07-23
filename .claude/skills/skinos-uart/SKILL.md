@@ -170,3 +170,4 @@ Network-triggered reconnect: frame registers **joint** on `network/online` or `n
 - `_service` must not return if it should keep running (daemon-style); process is supervised via `sstarts`.
 - `project/uart` may be a **nested git repo** — edits live there.
 - Docs may mention `uartdrv@sixents` (RTK); in-tree GNSS driver is **`uartdrv@gnss`** — align UI/docs when adding RTK.
+- On-device package files: `land@fpk.path[ uart ]` (never hardcode `/usr/share/skinos/uart`).

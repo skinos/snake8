@@ -132,8 +132,10 @@ $TIP -s 115200 -A 'AT' /dev/ttyUSB1 # exit 0=OK, 1=ERROR/+CME, 2=timeout
 5. **`udhcpc` 取地址**（必要时先保证网卡不在错误 bridge 里），再建议 `ping`：
 
 ```bash
+# Resolve network project root first (path is board/install dependent — never hardcode /usr/share/skinos)
+NET=$(he 'land@fpk.path[ network ]')   # eline: land@fpk.path[ network ]
 ip link set eth1 up          # 或实际 netdev
-udhcpc -i eth1 -n -q -t 5 -T 3 -s /usr/share/skinos/network/udhcpc.sh
+udhcpc -i eth1 -n -q -t 5 -T 3 -s "$NET/udhcpc.sh"
 ip addr show eth1
 ping -c 3 -I eth1 223.5.5.5
 ```
@@ -264,4 +266,4 @@ HE/config 面变更时用 **skinos-component-doc** 更新 `doc/com/modem/*.md`�
 - 同 VID:PID 多 SKU（如 MT5710 与 MT5700M）可共用 `option.c` + 一驱动（接口一致时）。
 - `new_id` 只是临时；长期支持在 **`config/.../kernel/option.c`**。
 - 内核覆盖修改必须带 **`/* add by <name> for … */`**。
-- netdev 名用 `modem_netlist` 原样（如 `eth1`）；无 tip 时优先 **`/mnt/internal/skinos/modem/bin/tip`**（FPK 后）。
+- netdev 名用 `modem_netlist` 原样（如 `eth1`）；无 tip 时先 `land@fpk.path[ modem ]` 再跑 `$PATH/bin/tip`（勿写死 `/usr/share/skinos` 或 `/mnt/internal/skinos`）。

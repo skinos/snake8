@@ -182,8 +182,34 @@ FPK packages are **hot-swappable**.
 - **Do not restart** the device (`land@machine.restart`, reboot, power cycle, etc.)
 - **Do not** wait for a reboot window (that is only for `.zz` firmware)
 - The new code is already active — **start debugging immediately** (HE APIs, telnet/`he`, logs, traffic checks)
+- **Resolve on-device project paths with `land@fpk.path`** (see below) — never assume `/usr/share/skinos/…`
 
 Only restart if a later debug step explicitly requires it (rare; not part of FPK install).
+
+### Resolve project install path (`land@fpk.path`) — mandatory
+
+After **FPK install** or **firmware (`.zz`) upgrade**, the live install directory of a project is **dynamic**. It changes with `gBOARDID` / `PROJECT_DIR`, overlay vs image bake, and hot-install vs factory path.
+
+**Do not** hardcode or `find` under `/usr/share/skinos`, `/mnt/internal/skinos`, `/tmp/mnt/…`, etc.
+
+**Always** query first:
+
+```text
+# eline
+$ land@fpk.path[ gnss ]
+/tmp/mnt/internal/skinos/gnss
+
+# ash
+~ # he 'land@fpk.path[ gnss ]'
+```
+
+| Need | HE |
+|------|-----|
+| One project root | `land@fpk.path[ <project> ]` → absolute directory string |
+| All projects + paths | `land@fpk.list` → each entry has `"path"` |
+
+Then use that root for binaries (`…/bin/<cmd>`), `prj.json`, libs, WUI assets, logs under the package, etc.  
+Full API: `doc/com/land/fpk.md` (`path` / `list`).
 
 ### Build FPK
 
@@ -294,7 +320,7 @@ $ ashy
 
 # --- Linux shell (~ #): OS commands + he ---
 ~ # uname -a
-~ # ls /usr/share/skinos
+~ # he 'land@fpk.path[ gnss ]'    # NEVER assume /usr/share/skinos
 ~ # he 'land@machine.status'
 ~ # exit          # disconnects the session (reconnect for eline again)
 ```
@@ -402,5 +428,6 @@ When implementing certificate management for a new component, follow the UART pa
 | Upload `/zz` never returns | Likely upgrade/reboot mid-request | Do **not** retry upload immediately; wait **90s**, then run confirm |
 | `status` OK but `version` not `^v[0-9]` | Abnormal post-upgrade state | `land@machine.restart[3,upgrade]` → wait 90s → confirm; max **3** cycles; then tell user to **manual reboot** |
 | FPK install but APIs return NULL | Instance not created | Set config with pipe syntax first |
+| Cannot find FPK files / `cmd` under `/usr/share/skinos` | Install path is dynamic | `land@fpk.path[ <project> ]` (or `land@fpk.list`) — never hardcode share/mnt paths |
 | `ipsec@client.status` = `down` right after enable/reset | Still negotiating | Poll 15–60s for `established`; check `swanctl --list-sas` / hub `ipsec statusall` |
 | IPsec params unknown | No prior session record | SSH to hub, read `/etc/ipsec.conf` (+ secrets); map left* → `ipsec@client` (see IPsec section) |

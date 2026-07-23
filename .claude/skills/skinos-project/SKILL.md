@@ -277,10 +277,21 @@ Verify before build:
 ```bash
 make obj=myproj
 # Device: upload FPK (device-upgrade), then
+# he 'land@fpk.path[ myproj ]'   # ONLY way to get on-device project root (path is dynamic)
 # he 'myproj@mycom'
 # he 'myproj@mycom.setup'
-# fpk.list   # path may be /usr/share/skinos/myproj or /mnt/internal/skinos/myproj
 ```
+
+### On-device project location (mandatory)
+
+Installed project paths are **dynamic** (`gBOARDID` / `PROJECT_DIR`, image vs FPK overlay). Agents and docs must **not** hardcode `/usr/share/skinos/<name>`, `/mnt/internal/skinos/<name>`, or similar.
+
+| Goal | Use |
+|------|-----|
+| Current project root on device | `land@fpk.path[ <prj.json name> ]` |
+| Map of all installs | `land@fpk.list` (each `"path"`) |
+
+`cmd` binaries live under that root’s `bin/` (and may be symlinked into a PATH dir — still discover via `path` first). See `doc/com/land/fpk.md`; deploy skill: **device-upgrade**.
 
 ## libskin API (land)
 

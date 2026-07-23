@@ -316,8 +316,21 @@ typedef int boole;
 
 /// gnss project
 #define GNSS_PROJECT       "gnss"
-/** gnss management component */
+/** gnss frame component */
+#define GNSS_COM           GNSS_PROJECT""PROJECT_OBJECT_GAPS"frame"
+/** gnss device instances */
 #define NMEA_COM           GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea"
+#define NMEA2_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea2"
+#define NMEA3_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea3"
+#define NMEA4_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea4"
+#define NMEA5_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea5"
+#define NMEA6_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea6"
+#define NMEA7_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea7"
+#define NMEA8_COM          GNSS_PROJECT""PROJECT_OBJECT_GAPS"nmea8"
+/// gnss driver management component
+#define GNSSDRV_PROJECT    "gnssdrv"
+#define GNSSDRV_ITEM       GNSSDRV_PROJECT
+#define GNSSDRV_NMEA       GNSSDRV_PROJECT""PROJECT_OBJECT_GAPS"nmea"
 
 /// uart management project
 #define UART_PROJECT       "uart"
@@ -336,7 +349,7 @@ typedef int boole;
 #define UARTDRV_ITEM      UARTDRV_PROJECT
 #define UARTDRV_DTU       UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"dtu"
 #define UARTDRV_TUI       UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"tui"
-#define UARTDRV_NMEA      UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"nmea"
+#define UARTDRV_GNSS      UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"gnss"
 #define UARTDRV_MODBUS    UARTDRV_PROJECT""PROJECT_OBJECT_GAPS"modbus"
 
 /// uart modbus driver management component

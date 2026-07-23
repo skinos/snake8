@@ -166,17 +166,29 @@
 #define LANDLOG_UART_TTY7           (0x07)
 #define LANDLOG_UART_TTY8           (0x08)
 
+/// GNSS
+#define LANDLOG_GNSS                (0x0b)
+#define LANDLOG_GNSS_DEFAULT        (0x00)
+#define LANDLOG_GNSS_TTY            (0x01)
+#define LANDLOG_GNSS_TTY2           (0x02)
+#define LANDLOG_GNSS_TTY3           (0x03)
+#define LANDLOG_GNSS_TTY4           (0x04)
+#define LANDLOG_GNSS_TTY5           (0x05)
+#define LANDLOG_GNSS_TTY6           (0x06)
+#define LANDLOG_GNSS_TTY7           (0x07)
+#define LANDLOG_GNSS_TTY8           (0x08)
+
 /// VPN
-#define LANDLOG_VPN                 (0x0b)
+#define LANDLOG_VPN                 (0x0c)
 #define LANDLOG_VPN_DEFAULT         (0x00)
 #define LANDLOG_VPN_OVPN            (0x01)
 /// VPN Server
-#define LANDLOG_VPNS                (0x0c)
+#define LANDLOG_VPNS                (0x0d)
 #define LANDLOG_VPNS_DEFAULT        (0x00)
 #define LANDLOG_VPNS_OVPN           (0x01)
 
 /// APP
-#define LANDLOG_APP                 (0x0f)
+#define LANDLOG_APP                 (0x0e)
 #define LANDLOG_APP_DEFAULT         (0x00)
 
 

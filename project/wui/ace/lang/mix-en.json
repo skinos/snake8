@@ -1,5 +1,4 @@
 {
-    "After <Delay Statistics> checks, if average link delays are on opposite sides of <Delay Boundary(ms)> and their difference exceeds <Delay Difference(ms)>, the link with higher average delay will be disabled.": "After <Delay Statistics> checks, if average link delays are on opposite sides of <Delay Boundary(ms)> and their difference exceeds <Delay Difference(ms)>, the link with higher average delay will be disabled.",
     "Apply": "Apply",
     "Backup(Cold)": "Backup(Cold)",
     "Backup(Hot)": "Backup(Hot)",
@@ -16,6 +15,7 @@
     "Balancing on First/Second": "Balancing on First/Second",
     "Balancing on First/Second/Third": "Balancing on First/Second/Third",
     "Balancing on First/Second/Third/Fourth": "Balancing on First/Second/Third/Fourth",
+    "Balancing on First/Second/Third/Fourth/Fifth": "Balancing on First/Second/Third/Fourth/Fifth",
     "Connection Scheme": "Connection Scheme",
     "Custom DNS": "Custom DNS",
     "DNS": "DNS",
@@ -58,5 +58,7 @@
     "ifname@wan4": "WAN4",
     "ifname@wisp": "WISP(2.4G)",
     "ifname@wisp2": "WISP(5.8G)",
-    "Statistics <Delay Statistics> times, in the link average delay are located in <Delay Boundary(ms)> different sides and the average delay between links is greater than <Delay Difference(ms)> disables the link with high average delay": "Statistics <Delay Statistics> times, in the link average delay are located in <Delay Boundary(ms)> different sides and the average delay between links is greater than <Delay Difference(ms)> disables the link with high average delay"
+    "delay tip dbdc": "Average the last <Delay Statistics> delay samples per online link (select 0 to disable the delay rule).\nWhen to filter:\n\t1. Among balancing online links, some means are below and some above <Delay Boundary(ms)>; otherwise do not filter, all stay in balancing\nWho joins balancing:\n\t1. Links whose mean is below the boundary\n\t2. Links whose mean is above the boundary, but exceeds the best mean by no more than <Delay Difference(ms)>\n\t(Others may stay online, but are not used for load sharing)",
+    "delay tip hot": "Average the last <Delay Statistics> delay samples per online link (select 0 to disable delay switching; then prefer smallest slot number only).\nWhen to switch:\n\t1. Current link offline: switch now\n\t2. Current link still up: all of the following\n\t\t- Some online link is below <Delay Boundary(ms)>\n\t\t- Current mean is above the boundary\n\t\t- Current exceeds the best mean by more than <Delay Difference(ms)>\nSwitch target:\n\t1. Prefer: smallest-numbered online link below the boundary\n\t2. Otherwise: lowest-mean online link",
+    "delay tip lazy": "Average the last <Delay Statistics> delay samples per online link (select 0 to disable delay switching; while current link stays up and delay is off, do not fail back by slot number).\nWhen to switch:\n\t1. Current link offline: switch now\n\t2. Current link still up: all of the following\n\t\t- Some online link is below <Delay Boundary(ms)>\n\t\t- Current mean is above the boundary\n\t\t- Current exceeds the best mean by more than <Delay Difference(ms)>\nSwitch target:\n\t1. Lowest-mean online link"
 }

@@ -135,6 +135,17 @@ Full list: [reference.md](reference.md).
 4. Call: `$ land@syslog.show` / `$ land@machine.restart[3,upgrade]`
 5. Or `set land@syslog` for multi-field edits, then `s`.
 
+## On-device project files (`land@fpk.path`)
+
+When you need a project’s install directory, binaries (`bin/`), `prj.json`, or package assets on the device:
+
+```text
+$ land@fpk.path[ gnss ]
+~ # he 'land@fpk.path[ gnss ]'
+```
+
+**Do not** assume `/usr/share/skinos/…` (or any fixed path). Location varies by board/`gBOARDID` and FPK vs image install. Prefer `land@fpk.path[ <project> ]` or `land@fpk.list`. Details: **device-upgrade** + `doc/com/land/fpk.md`.
+
 ## Agent workflow checklist
 
 ```
@@ -142,6 +153,7 @@ Full list: [reference.md](reference.md).
 - [ ] Detect prompt: $ / # / ~ #
 - [ ] Prefer eline HE for interactive checks; ash + he '…' for scripts/OS tools
 - [ ] Single-quote every he payload in ash
+- [ ] Project files/binaries: land@fpk.path[ name ] — never hardcode /usr/share/skinos
 - [ ] Do not treat first ashy exit as “back to eline” — reconnect if needed
 - [ ] Map failures via return table; re-read component .md for API shape
 ```

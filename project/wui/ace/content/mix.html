@@ -256,6 +256,7 @@
             <option value="dbdc2" data-i18n="Balancing on First/Second"></option>
             <option value="dbdc3" data-i18n="Balancing on First/Second/Third"></option>
             <option value="dbdc4" data-i18n="Balancing on First/Second/Third/Fourth"></option>
+            <option value="dbdc5" data-i18n="Balancing on First/Second/Third/Fourth/Fifth"></option>
           </select>
         </div>
       </div>
@@ -339,32 +340,38 @@
 
     <div id="delay-sets" style="display:none;">
         <div class="hr hr32 hr-dotted"></div>
-        <!-- -->
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Statistics"></label>
           <div class="col-sm-9">
-            <div class="clearfix">
-              <input type="text" id="delay_count" class="col-xs-10 col-sm-5" maxlength="32" />
+            <select class="col-xs-10 col-sm-5" id="delay_count"></select>
+          </div>
+        </div>
+        <div id="delay-detail">
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Boundary(ms)"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="delay_divide" class="col-xs-10 col-sm-5" maxlength="32" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Difference(ms)"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="delay_diff" class="col-xs-10 col-sm-5" maxlength="32" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <div id="delay_tip" class="grey col-xs-10 col-sm-5" style="white-space: pre-wrap;" data-i18n="delay tip dbdc"></div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Boundary(ms)"></label>
-          <div class="col-sm-9">
-            <div class="clearfix">
-              <input type="text" id="delay_divide" class="col-xs-10 col-sm-5" maxlength="32" />
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Difference(ms)"></label>
-          <div class="col-sm-9">
-            <div class="clearfix">
-              <input type="text" id="delay_diff" class="col-xs-10 col-sm-5" maxlength="32" />
-            </div>
-          </div>
-        </div>
-        <span class="grey" data-i18n="Statistics <Delay Statistics> times, in the link average delay are located in <Delay Boundary(ms)> different sides and the average delay between links is greater than <Delay Difference(ms)> disables the link with high average delay"></span>
     </div>
       
 
@@ -535,6 +542,56 @@
         options += '<option value="enable">' + $.i18n( "Enable" ) + '</option>';
 
         $("#custom_dns").html( options );
+    }
+    /* fill delay_count select: 0 (Disable) .. 60 (keeplive delay_buf size) */
+    function delay_count_html()
+    {
+        var i;
+        var options = "";
+        for ( i = 0; i <= 60; i++ )
+        {
+            if ( i === 0 )
+            {
+                options += '<option value="0">0 (' + $.i18n( "Disable" ) + ')</option>';
+            }
+            else
+            {
+                options += '<option value="' + i + '">' + i + '</option>';
+            }
+        }
+        $( "#delay_count" ).html( options );
+    }
+    /* show boundary/diff/tip only when delay statistics is enabled */
+    function delay_detail_update()
+    {
+        var n = parseInt( $( "#delay_count" ).val(), 10 );
+        if ( isNaN( n ) || n <= 0 )
+        {
+            $( "#delay-detail" ).hide();
+        }
+        else
+        {
+            $( "#delay-detail" ).show();
+        }
+    }
+    /* update delay help text for current connection scheme */
+    function delay_tip_update( type )
+    {
+        var key = "delay tip dbdc";
+        if ( type && type.indexOf( "hot" ) === 0 )
+        {
+            key = "delay tip hot";
+        }
+        else if ( type && type.indexOf( "lazy" ) === 0 )
+        {
+            key = "delay tip lazy";
+        }
+        else if ( type && type.indexOf( "dbdc" ) === 0 )
+        {
+            key = "delay tip dbdc";
+        }
+        /* set text directly: .i18n() will not refresh an already-localized node */
+        $( "#delay_tip" ).attr( "data-i18n", key ).text( $.i18n( key ) );
     }
     
     function lte_show(info,id)
@@ -829,7 +886,19 @@
             $('#custom_dns').val( frame.custom_dns||"disable" );
             $('#cdns').val( frame.dns );
             $('#cdns2').val( frame.dns2 );
-            $('#delay_count').val( frame.delay_count );
+            delay_count_html();
+            (function () {
+                var n = parseInt( frame.delay_count, 10 );
+                if ( isNaN( n ) || n < 0 )
+                {
+                    n = 0;
+                }
+                if ( n > 60 )
+                {
+                    n = 60;
+                }
+                $( '#delay_count' ).val( String( n ) );
+            })();
             $('#delay_divide').val( frame.delay_divide );
             $('#delay_diff').val( frame.delay_diff );
             /* load the configure */
@@ -840,10 +909,12 @@
                   $('#dns-sets').hide();
                   $('#delay-sets').hide();
               }
-              else if ( type == "dbdc" || type == "dbdc2" || type == "dbdc3" || type == "dbdc4" )
+              else if ( type.indexOf("dbdc") === 0 || type.indexOf("hot") === 0 || type.indexOf("lazy") === 0 )
               {
                 $('#dns-sets').show();
                 $('#delay-sets').show();
+                delay_tip_update( type );
+                delay_detail_update();
               }
 			  else
               {
@@ -851,6 +922,9 @@
                 $('#delay-sets').hide();
 			  }
             }).trigger('change');
+            $('#delay_count').unbind('change').change(function () {
+              delay_detail_update();
+            });
             $('#custom_dns').unbind('change').change(function (e) {
               var type = e.target.value;
               if ( type == "enable" )
@@ -885,7 +959,7 @@
             frame.dns = $('#cdns').val();
             frame.dns2 = $('#cdns2').val();
         }
-        if ( frame.type == "dbdc" )
+        if ( frame.type.indexOf("dbdc") === 0 || frame.type.indexOf("hot") === 0 || frame.type.indexOf("lazy") === 0 )
         {
             frame.delay_count = $('#delay_count').val();
             frame.delay_divide = $('#delay_divide').val();
