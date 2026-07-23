@@ -38,7 +38,7 @@ Each mapping in **`camera@osd2he`** must resolve to a plain string (or empty str
     "address":"camera IP address or hostname",               // [ string ]
     "username":"camera login username",                        // [ string ]
     "password":"camera login password",                        // [ string ]
-    "interval":"seconds between successful update cycles"     // [ number ], default 5 when empty or invalid
+    "interval":"milliseconds between successful update cycles" // [ number ], default 5000 when empty or invalid
 }
 ```
 
@@ -54,7 +54,7 @@ camera@osd
     "address":"192.168.8.64",           # camera IP address
     "username":"admin",                 # camera username
     "password":"12345",                 # camera password
-    "interval":"15"                     # update every 15 seconds after success
+    "interval":"15000"                  # update every 15000 ms after success
 }
 ```
 
@@ -74,7 +74,7 @@ ttrue
 
 Example, merge set camera connection and interval( include "address" "username" "password" "interval" )
 ```shell
-camera@osd|{"address":"192.168.8.64","username":"admin","password":"12345","interval":"30"}
+camera@osd|{"address":"192.168.8.64","username":"admin","password":"12345","interval":"30000"}
 ttrue
 ```
 

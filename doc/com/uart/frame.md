@@ -161,6 +161,7 @@ The UART subsystem separates the physical port (device) from the business logic 
 + `list[]` **list all registered UART instances with their bindings**
     - failed return NULL
     - succeed return [ json ], a map of instance name to binding information
+    - only objects that have a config (`config_sget`) are listed; infrastructure such as `uart@frame` itself is omitted
     ```json
     {
         "instance name":                       // [ string ]: { json }, UART instance name (e.g. uart@tty, uart@tty2)
