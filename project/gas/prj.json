@@ -1,0 +1,16 @@
+{
+    "name":"gas",
+    "intro":"Gas detection project",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "exe":
+    {
+        "isiot4xx":"ISIOT-4xx gas detector Modbus reader"
+    },
+    "obj":
+    {
+        "uartdrv@isiot4xx":"isiot4xx"
+    }
+}
