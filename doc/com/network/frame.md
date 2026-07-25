@@ -236,9 +236,10 @@ The network subsystem uses a layered architecture that separates configuration, 
     "delay_count":"Sample count for delay mean",                   // [ number ], 0=disabled; >0 average last N keeplive delays per uplink
                                                                    // dbdc: filter slow uplinks out of ECMP; hot/lazy: may switch default by delay
     "delay_divide":"delay divide line",                            // [ number ], ms; dbdc: rule arms when means straddle this line
-                                                                   // hot/lazy: need some online below this to delay-switch; current must be above; hot then prefers smallest below
+                                                                   // hot: online below this -> prefer smallest-numbered (failback); lazy: see delay_diff
     "delay_diff":"delay differential",                             // [ number ], ms; dbdc: mean>divide and (mean-best)>this -> exclude from balancing
-                                                                   // hot/lazy: with some online below divide, current>divide and (current-best)>this -> switch (hot: right_low; lazy: best)
+                                                                   // lazy: with some online below divide, current>divide and (current-best)>this -> switch to best
+                                                                   // hot: failback uses divide (right_low), not this diff
     "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
     "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
 

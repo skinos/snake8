@@ -173,6 +173,104 @@ ttrue
     ttrue
     ```
 
++ `list_type[]` **list all supported component type tokens in a two-level map**
+    - failed return NULL
+    - succeed return [ json ], outer key is the major type (e.g. "land"), inner key is subtype short name, value is the full type token for add/del APIs
+    ```json
+    {
+        "major type": {                        // [ string ]: [ json ], major type name (e.g. "land", "modem")
+            "subtype": "full type token"       // [ string ], subtype short name -> full token (e.g. "auth" -> "land@auth")
+            // "...":"..."  How many subtypes show how many properties
+        }
+        // "...":{...}  How many major types show how many properties
+    }
+    ```
+
+    Example, list supported type tokens
+    ```shell
+    land@syslog.list_type
+    {
+        "land":{
+            "default":"land_default",
+            "auth":"land@auth",
+            "init":"land@init"
+        },
+        "modem":{
+            "default":"modem_default",
+            "lte":"modem@lte"
+        }
+    }
+    ```
+
++ `list_fault[]` **list component types with fault level enabled**
+    - failed return NULL
+    - succeed return [ json ], keys are type tokens that currently have fault logging enabled in the log mask
+    ```json
+    {
+        "type token": "",                      // [ string ]: [ string ], enabled type token; value is empty
+        // "...":""  How many enabled types show how many properties
+    }
+    ```
+
+    Example, list types with fault enabled
+    ```shell
+    land@syslog.list_fault
+    {
+        "land":"",
+        "arch@usb":""
+    }
+    ```
+
++ `list_warn[]` **list component types with warn level enabled**
+    - failed return NULL
+    - succeed return [ json ], keys are type tokens that currently have warn logging enabled in the log mask
+
+    Example, list types with warn enabled
+    ```shell
+    land@syslog.list_warn
+    {
+        "network":"",
+        "ifname@lte":""
+    }
+    ```
+
++ `list_info[]` **list component types with info level enabled**
+    - failed return NULL
+    - succeed return [ json ], keys are type tokens that currently have info logging enabled in the log mask
+
+    Example, list types with info enabled
+    ```shell
+    land@syslog.list_info
+    {
+        "land@auth":"",
+        "modem@lte":""
+    }
+    ```
+
++ `list_debug[]` **list component types with debug level enabled**
+    - failed return NULL
+    - succeed return [ json ], keys are type tokens that currently have debug logging enabled in the log mask
+
+    Example, list types with debug enabled
+    ```shell
+    land@syslog.list_debug
+    {
+        "uart@tty":""
+    }
+    ```
+
++ `list_verb[]` **list component types with verbose level enabled**
+    - failed return NULL
+    - succeed return [ json ], keys are type tokens that currently have verbose logging enabled in the log mask
+
+    Example, list types with verbose enabled
+    ```shell
+    land@syslog.list_verb
+    {
+        "default_shell":""
+    }
+    ```
+
 + `show[ arg ]` **display the contents of the current log file**
     - arg ------------ [ string ], optional, first parameter; when "html", output the entire log file as an HTML table; when a numeric string (e.g. "100"), output the latest N log lines as plain text; when omitted or "0", output the entire log file as plain text
     - failed return tfalse, log file not found

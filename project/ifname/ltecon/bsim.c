@@ -17,6 +17,7 @@ boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, 
 	talk_t mcfg;
 	talk_t profile;
 	const char *ptr;
+	const char *apn;
 	const char *pin;
 	const char *mode;
 	const char *netdev;
@@ -268,9 +269,17 @@ simagain:
 	/*****************************************/
 	if ( profile != NULL )
 	{
-		ifname_info( obj, "%s custom profile setting", object );
+		apn = json_string( profile, "apn" );
+		ifname_info( obj, "%s set the profile APN(%s)", object, apn?:"" );
 		ret = scallt( ifdev, "up", profile );
-		
+		/* tfalse: modem_off in progress; abort this round and wait fun on next _service */
+		if ( ret != ttrue )
+		{
+			ifname_info( obj, "%s custom profile modem_off, retry later", object );
+			talk_free( cfg );
+			sleep( 5 );
+			return tfalse;
+		}
 	}
 
 	/*****************************************/

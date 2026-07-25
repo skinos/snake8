@@ -66,7 +66,7 @@
 
 /// default
 #define LANDLOG_DEFAULT             (0x00)
-#define LANDLOG_DEFAULT_NONE        (0x00)
+#define LANDLOG_DEFAULT_DEFAULT     (0x00)
 #define LANDLOG_DEFAULT_SHELL       (0x01)
 #define LANDLOG_DEFAULT_EXECUTE     (0x02)
 
@@ -252,13 +252,13 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
  * @endcode
  */
 /* default log function */
-#define default_verbose( ... )      landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define default_debug( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define default_info( ... )         landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define default_warn( ... )         landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define default_warning( ... )      landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-#define default_fault( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define default_faulting( ... )     landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_NONE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+#define default_verbose( ... )      landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define default_debug( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define default_info( ... )         landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define default_warn( ... )         landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define default_warning( ... )      landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+#define default_fault( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define default_faulting( ... )     landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_DEFAULT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 /* shell type log function */
 #define shell_verbose( ... )        landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_SHELL<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define shell_debug( ... )          landlog( ((LANDLOG_DEFAULT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_DEFAULT_SHELL<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )

@@ -123,10 +123,7 @@ boole _set( obj_t this, talk_t v, attr_t path )
 	const char *ptr;
 	const char *ifdev;
 
-	// shut
-	_shut( this, NULL );
 	ifdev = reg_string( this, "ifdev" );
-
 	ret = dret = false;
     ptr = attr_layer( path, 1 );
     if ( ptr == NULL || *ptr == '\0' )
@@ -216,7 +213,9 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		creset( NULL, NULL, NULL, ifdev );
 		ret = true;
     }
-	// setup ifname
+	/* Must stay after config_set — do not move _shut earlier: network/offline
+	 * may SIGHUP connect, which immediately re-setups this ifname from disk. */
+	_shut( this, NULL );
 	_setup( this, NULL );
     return ret;
 }
@@ -304,6 +303,7 @@ boole_t _service( obj_t this, param_t param )
 	talk_t mcfg;
 	talk_t profile;
 	const char *ptr;
+	const char *apn;
 	const char *obj;
 	const char *pin;
 	const char *mode;
@@ -643,9 +643,17 @@ simagain:
 	/*****************************************/
 	if ( profile != NULL )
 	{
-		ifname_info( obj, "%s custom profile setting", object );
+		apn = json_string( profile, "apn" );
+		ifname_info( obj, "%s set the profile APN(%s)", object, apn?:"" );
 		ret = scallt( ifdev, "up", profile );
-		
+		/* tfalse: modem_off in progress; abort this round and wait fun on next _service */
+		if ( ret != ttrue )
+		{
+			ifname_info( obj, "%s custom profile modem_off, retry later", object );
+			talk_free( cfg );
+			sleep( 5 );
+			return tfalse;
+		}
 	}
 
 	/*****************************************/

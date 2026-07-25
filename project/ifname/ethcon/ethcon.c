@@ -111,14 +111,12 @@ boole _set( obj_t this, talk_t v, attr_t path )
 	object = obj_name( this );
 	if ( NULL == strstr( object, LAN_COM ) )
 	{
-		// shut
-		_shut( this, NULL );
-		// clear the reconnect count
+		ret = config_set( this, v, path );
 		i = 0;
 		reg_set_int( this, "connect_failed", i );
-		// set
-		ret = config_set( this, v, path );
-		// setup
+		/* Must stay after config_set: do not move _shut earlier — network/offline
+		 * may SIGHUP connect, which immediately re-setups this ifname from disk. */
+		_shut( this, NULL );
 		_setup( this, NULL );
 	}
 	else
