@@ -224,6 +224,12 @@
     "Software": "软件管理",
     "Configure": "配置管理",
     "Password": "密码管理",
+
+    "Device Manage":"设备管理",
+    "Software Manage":"软件管理",
+    "Configure Manage":"配置管理",
+    "Password Manage":"密码管理",
+
     "Auto Reboot": "自动重启",
     "Debug": "调试",
     "Syslog": "系统日志",

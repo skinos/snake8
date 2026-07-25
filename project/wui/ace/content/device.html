@@ -1,6 +1,30 @@
 <!-- ajax layout which only needs content area -->
 <div class="row">
   <div class="col-xs-12 form-btn-wrapper">
+
+    <!-- 标签页导航 -->
+    <ul class="nav nav-tabs" id="controlTabs" role="tablist">
+      <li class="active">
+        <a href="#device" data-i18n="Device Manage"></a>
+      </li>
+
+      <li data-tab-menu="configure">
+        <a href="#configure" data-i18n="Configure Manage"></a>
+      </li>
+
+      <li data-tab-menu="software">
+        <a href="#software" data-i18n="Software Manage"></a>
+      </li>
+
+      <li>
+        <a href="#password" data-i18n="Password Manage"></a>
+      </li>
+     
+    </ul>
+
+    <div class="tab-content">
+    <div class="tab-pane active" id="device">
+
     <!-- PAGE CONTENT BEGINS -->
     <div class="form-horizontal" role="form">
 
@@ -142,9 +166,9 @@
     <div id="apply_panel" style="display: none;">
       <div class="clearfix form-actions">
         <div class="col-md-offset-3 col-md-9">
-          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+          <button class="btn btn-second" type="button" id="device_refresh"><span data-i18n="Refresh"></span></button>
           &nbsp; &nbsp; &nbsp;
-          <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+          <button class="btn btn-main" type="button" id="device_apply"><span data-i18n="Apply"></span></button>
         </div>
       </div>
     </div>
@@ -154,7 +178,17 @@
     </div>
     <!-- PAGE CONTENT ENDS -->
   </div><!-- /.col -->
+
+  <div class="tab-pane" id="configure"></div>
+
+  <div class="tab-pane" id="software"></div>
+      
+  <!-- 设置标签页（内容通过AJAX加载） -->
+  <div class="tab-pane" id="password"></div>
+
 </div><!-- /.row -->
+</div>
+</div>
 
 <script src="/js/device.js"></script>
 
