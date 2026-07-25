@@ -220,13 +220,15 @@ var page =
     lang: function( name )
     {
         var lango = {};
+        /* __WUI_VERSION__ is replaced with PKG_VERSION at package time */
+        var ver = "__WUI_VERSION__";
         if ( name.indexOf('/') == 0 )
         {
-            lango[ window.lang ] = name;
+            lango[ window.lang ] = name + "?v=" + ver;
         }
         else
         {
-            lango[ window.lang ] = "/lang/"+name+"-"+window.lang+".json";
+            lango[ window.lang ] = "/lang/"+name+"-"+window.lang+".json?v=" + ver;
         }
         return lango;
     },
