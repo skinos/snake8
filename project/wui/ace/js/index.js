@@ -957,15 +957,6 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'System' ), 'device', 'menu-icon fa fa-cogs' );
 			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Device' ), 'device' );
-			if ( !wuimenu || wuimenu.configure != "disable" )
-			{
-				menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Configure' ), 'configure' );
-			}
-			if ( !wuimenu || wuimenu.software != "disable" )
-			{
-				menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Software' ), 'software' );
-			}
-			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Password' ), 'password' );
 
 			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
 			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );

@@ -333,13 +333,230 @@ $.i18n().load( page.lang('device') ).then( function () {
   date_load();
 
   /* bind the refresh */
-  $('#refresh').on(ace.click_event, function () {
+  $('#device_refresh').on(ace.click_event, function () {
     location.reload();
   });
   /* bind the apply */
-  $('#apply').on(ace.click_event, function () {
+  $('#device_apply').on(ace.click_event, function () {
     date_save();
   });
     
+});
+
+// 点击标签页 动态加载html内容 不刷新页面
+$(document).ready(function() {    
+    var TabManager = {    
+        // 记录进入页面时的主路径，只在当前页面 hash 上追加/更新 tab 参数
+        // 不能重建整个 URL，否则会丢失 Ace 框架生成的 lang/config 等编码参数
+        mainRoute: window.location.hash.split('?')[0],
+
+        // 新增标签页直接增加tabs内容以及html代码段即可
+        tabs: {
+            configure: { htmlUrl: '/content/configure.html'},
+            software: { htmlUrl: '/content/software.html'},    
+            password: { htmlUrl: '/content/password.html'},    
+        },    
+        
+        // 原来是控制某菜单栏的显示 现在改成控制某标签页的显示
+        applyTabPermission: function() {
+            if (wuimenu && wuimenu.configure === 'disable') {
+                $('#controlTabs li[data-tab-menu="configure"]').hide();
+            }
+            if (wuimenu && wuimenu.software === 'disable') {
+                $('#controlTabs li[data-tab-menu="software"]').hide();
+            }
+        },
+
+        isTabEnabled: function(tabId) {
+            if (tabId === 'configure' && wuimenu && wuimenu.configure === 'disable') {
+                return false;
+            }
+            if (tabId === 'software' && wuimenu && wuimenu.software === 'disable') {
+                return false;
+            }
+            return true;
+        },
+
+        // 初始化
+        init: function() {    
+            this.applyTabPermission();
+            this.syncParams();   
+            
+            $('#controlTabs a').off('click').on('click', this.handleTabClick.bind(this));    
+
+            this.restoreState();   
+        },   
+
+        splitHash: function(hash) {
+            var value = hash || window.location.hash || '';
+            var index = value.indexOf('?');
+
+            return {
+                route: index >= 0 ? value.substring(0, index) : value,
+                query: index >= 0 ? value.substring(index + 1) : ''
+            };
+        },
+
+        parseQuery: function(query) {
+            var params = {};
+
+            if (!query) {
+                return params;
+            }
+
+            $.each(query.split('&'), function(_, pair) {
+                var index;
+                var key;
+                var value;
+
+                if (!pair) {
+                    return;
+                }
+
+                index = pair.indexOf('=');
+                key = index >= 0 ? pair.substring(0, index) : pair;
+                value = index >= 0 ? pair.substring(index + 1) : '';
+
+                if (key) {
+                    params[decodeURIComponent(key)] = value;
+                }
+            });
+
+            return params;
+        },
+
+        buildQuery: function(params) {
+            var pairs = [];
+
+            $.each(params, function(key, value) {
+                if (value == null || value === '') {
+                    return;
+                }
+                pairs.push(encodeURIComponent(key) + '=' + value);
+            });
+
+            return pairs.join('&');
+        },
+
+        getHashParam: function(name) {
+            var hashParts = this.splitHash(window.location.hash);
+            var params = this.parseQuery(hashParts.query);
+            var value = params[name];
+
+            return value == null ? '' : decodeURIComponent(value);
+        },
+
+        // 同步 url 参数
+        syncParams: function() {
+            var tabId = this.getHashParam('tab') || 'device';
+
+            if (!this.tabs[tabId] && tabId !== 'device') {
+                tabId = 'device';
+            }
+            if (!this.isTabEnabled(tabId)) {
+                tabId = 'device';
+            }
+            this.updateUrl(tabId);
+        },
+
+        // 更新 url：保留原有编码参数，只替换 tab
+        updateUrl: function(tabId) {
+            var hashParts = this.splitHash(window.location.hash);
+            var params = this.parseQuery(hashParts.query);
+            var query;
+            var newHash;
+
+            params.tab = encodeURIComponent(tabId);
+            query = this.buildQuery(params);
+            newHash = (hashParts.route || this.mainRoute) + (query ? '?' + query : '');
+
+            if (window.location.hash === newHash) return;
+            history.replaceState(null, '', window.location.pathname + newHash);
+        },
+
+        handleTabClick: function(e) {    
+            e.preventDefault();    
+            var tabId = $(e.currentTarget).attr('href').substring(1);    
+
+            if (!this.isTabEnabled(tabId)) {
+                tabId = 'device';
+            }
+
+            this.updateUrl(tabId);// 更新地址栏 
+            this.switchToTab(tabId);// 切换标签页显示内容
+        },    
+
+        restoreState: function() {   
+            var tabId = this.getHashParam('tab') || sessionStorage.getItem('device_active_tab') || 'device';
+            if (!this.isTabEnabled(tabId)) {
+                tabId = 'device';
+            }
+            this.switchToTab(tabId);   
+        },   
+            
+        switchToTab: function(tabId) {
+          if (!this.isTabEnabled(tabId)) {
+              tabId = 'device';
+          }
+          var self = this;
+          var $tabContent = $('.tab-content');
+          var $newPane = $('#' + tabId);
+          var $oldPane = $('.tab-pane.active');
+
+          // 仅更新标签页按钮的高亮 不切内容
+          $('#controlTabs li').removeClass('active');      
+          $('#controlTabs a[href="#' + tabId + '"]').parent().addClass('active');      
+
+          // 锁定当前高度 防止大变小时高度塌陷导
+          // 只有在切换时才锁定，并在完成后释放
+          var currentHeight = $oldPane.outerHeight();
+          if(currentHeight > 0) {
+              $tabContent.css('min-height', currentHeight + 'px');
+          }
+
+          // 立即隐藏面板 不再等待ajax
+          $oldPane.removeClass('active');
+
+          // 首页逻辑 静态内容直接切
+          if (tabId === 'device') {      
+              $('.tab-pane').removeClass('active');
+              $('#device').addClass('active');
+              $tabContent.css('min-height', ''); // 释放高度
+              sessionStorage.setItem('device_active_tab', tabId);
+              if (typeof load_agent === 'function') load_agent();      
+              return;
+          }
+
+          // 加载完内容后 再把旧的隐 新的显
+          var tab = this.tabs[tabId];
+          if (!tab) {
+              this.switchToTab('device');
+              return;
+          }
+
+          $.ajax({
+              url: tab.htmlUrl,
+              type: 'GET',
+              dataType: 'html',
+              success: function(data) {
+                  // 先往隐藏的 $newPane 里填内容
+                  $newPane.html(data);
+
+                  // 此时才执行切换
+                  // 旧的移除 active 新的添加 active 高度锁定了 不会闪
+                  $oldPane.removeClass('active');
+                  $newPane.addClass('active');
+                  sessionStorage.setItem('device_active_tab', tabId);
+
+                  // 延迟释放高度锁定 给浏览器渲染 HTML 留出大概 100ms 的吞吐时间
+                  setTimeout(function() {
+                      $tabContent.css('min-height', '');
+                  }, 100);
+              }
+          });
+      },    
+    };    
+    
+    TabManager.init();    
 });
 
