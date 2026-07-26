@@ -1,0 +1,34 @@
+{
+	"Status": "状态",
+	"Port":"端口",
+	"RO Community":"只读共同体",
+	"RW Community":"读写共同体",
+
+	"Disable":"禁用",
+	"None Authentication":"无验证&无加密",
+	"Authentication":"验证",
+	"Privacy":"验证&加密",
+	"SNMPv3":"SNMPv3",
+	"SNMPv3 Username":"SNMPv3用户名",
+	"SNMP V3 Authentication":"SNMPv3验证",
+	"Authentication Password":"验证密码",
+	"SNMP V3 Privacy":"SNMPv3加密",
+	"Privacy Key":"加密密钥",
+
+	"System Name":"系统名称",
+	"System Contact":"系统联系人",
+	"System Location":"系统位置",
+
+	"Configure Options": "配置选项(多项以分号分隔)",
+	"OIDs Table":"OID表",
+	"Display":"显示",
+	"Name":"名称",
+	"OID":"OID",
+	"Command":"命令",
+	"Operation":"操作",
+
+	"Refresh":"刷新",
+	"Apply":"应用",
+	"Settings unchanged":"配置未修改，不需要应用",
+	"Modify successfully":"修改成功"
+}

@@ -1,0 +1,474 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+        <!-- Status -->
+        <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+            <div class="col-sm-9">
+                <label>
+                    <input id="status" class="ace ace-switch ace-switch-6" type="checkbox" />
+                    <span class="lbl"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="status-sets" style="display: none;">
+
+            <!-- Port -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="Port"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="port" class="col-xs-10 col-sm-5" maxlength="18" />
+                </div>
+              </div>
+            </div>
+
+            <!-- RO Community -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="RO Community"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="rocommunity" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+            <!-- RW Community -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="RW Community"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="rwcommunity" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+
+            <div class="hr hr32 hr-dotted"></div>
+            <!-- SNMPv3 -->
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="SNMPv3"></label>
+              <div class="col-sm-9">
+                <select class="col-xs-10 col-sm-5" id="v3">
+                  <option value="disable" data-i18n="Disable"></option>
+                  <option value="noauth" data-i18n="None Authentication"></option>
+                  <option value="auth" data-i18n="Authentication"></option>
+                  <option value="privacy" data-i18n="Privacy"></option>
+                </select>
+              </div>
+            </div>
+
+            <div id="snmpv3-sets" style="display: none;">
+                <div class="form-group">
+                  <label class="col-sm-3 control-label no-padding-right" data-i18n="SNMPv3 Username"></label>
+                  <div class="col-sm-9">
+                    <div class="clearfix">
+                      <input type="text" id="username" class="col-xs-10 col-sm-5" maxlength="128" />
+                    </div>
+                  </div>
+                </div>
+                <div id="auth-sets" style="display: none;">
+                    <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="SNMP V3 Authentication"></label>
+                      <div class="col-sm-9">
+                        <select class="col-xs-10 col-sm-5" id="auth">
+                          <option value="MD5">MD5</option>
+                          <option value="SHA">SHA</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="Authentication Password"></label>
+                      <div class="col-sm-9">
+                        <div class="clearfix">
+                          <input type="text" id="password" class="col-xs-10 col-sm-5" maxlength="128" />
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <div id="privacy-sets" style="display: none;">
+                    <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="SNMP V3 Privacy"></label>
+                      <div class="col-sm-9">
+                        <select class="col-xs-10 col-sm-5" id="privacy">
+                          <option value="DES">DES</option>
+                          <option value="AES">AES</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="col-sm-3 control-label no-padding-right" data-i18n="Privacy Key"></label>
+                      <div class="col-sm-9">
+                        <div class="clearfix">
+                          <input type="text" id="key" class="col-xs-10 col-sm-5" maxlength="128" />
+                        </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hr hr32 hr-dotted"></div>
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="System Name"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="name" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="System Contact"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="contact" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="System Location"></label>
+              <div class="col-sm-9">
+                <div class="clearfix">
+                  <input type="text" id="location" class="col-xs-10 col-sm-5" maxlength="128" />
+                </div>
+              </div>
+            </div>
+
+            <div class="hr hr32 hr-dotted"></div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Configure Options"></label>
+                <div class="col-sm-9">
+                  <textarea type="text" id="options" class="col-xs-10 col-sm-5" maxlength="1024"></textarea>
+                </div>
+            </div>
+
+            <div class="hr hr32 hr-dotted"></div>
+            <table id="oids-grid-table"></table>
+            <div id="oids-grid-pager"></div>
+            <div id="grid-controls" style="display: none;">
+                <div style="display: flex; align-items: center">
+                    <label for="rowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+                    <select id="rowNums" style="width: 60px;">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="30">30</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="clearfix form-actions">
+          <div class="col-md-offset-3 col-md-9">
+            <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+            &nbsp; &nbsp; &nbsp;
+            <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+          </div>
+        </div>
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+
+
+<!-- page specific plugin scripts -->
+<script type="text/javascript">
+  (function () {
+    var cfg;
+    var object = "snmp@agent";
+    var index = page.param( 'object', location.hash );
+    if ( index )
+    {
+        object = index;
+    }
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+    var oids_table = '#oids-grid-table';
+    var oids_pager = '#oids-grid-pager';
+    var rowSeq = 0;
+
+    /* Same as wifi/acl + vpn/l2tplist: width from visible form parent, not the hidden status-sets */
+    function oids_set_width()
+    {
+        var containerWidth;
+
+        containerWidth = $( '#status-sets' ).parent().width() ||
+                $( window ).width() - 100;
+        if ( $( oids_table )[0] && $( oids_table )[0].grid )
+        {
+            $( oids_table ).jqGrid( 'setGridWidth', containerWidth );
+        }
+    }
+
+    function oids_rows_from_cfg( custom )
+    {
+        var rows = [];
+        var id;
+        var rule;
+
+        rowSeq = 0;
+        custom = custom || {};
+        for ( id in custom )
+        {
+            rule = custom[id] || {};
+            rows.push( {
+                rid: String( ++rowSeq ),
+                identify: id,
+                oid: rule.oid || '',
+                cmd: rule.cmd || ''
+            } );
+        }
+        return rows;
+    }
+
+    function oids_reload_grid( rows )
+    {
+        var scrollPos;
+        var currentPage;
+        var currentRowNum;
+
+        scrollPos = jqtable.getScrollPos();
+        currentPage = $( oids_table ).jqGrid( 'getGridParam', 'page' );
+        currentRowNum = $( oids_table ).jqGrid( 'getGridParam', 'rowNum' );
+        $( oids_table ).jqGrid( 'setGridParam', {
+            data: rows || [],
+            page: currentPage,
+            rowNum: currentRowNum
+        } ).trigger( 'reloadGrid' );
+        jqtable.setScrollPos( scrollPos );
+        $( oids_table ).jqGrid( 'setCaption',
+            $.i18n( 'OIDs Table' ) + ' (' + ( rows ? rows.length : 0 ) + ')' );
+        oids_set_width();
+    }
+
+    function cfg_load()
+    {
+        he.load( [ object ] ).then( function(v){
+            cfg = v[0];
+            if ( !cfg )
+            {
+                cfg = {};
+            }
+
+            $('#status').prop('checked', able2boole(cfg.status));
+            $('#port').val(cfg.port);
+            $('#rocommunity').val(cfg.rocommunity);
+            $('#rwcommunity').val(cfg.rwcommunity);
+
+            $('#v3').val(cfg.v3||"disable");
+            $('#username').val(cfg.username);
+            $('#auth').val(cfg.auth||"MD5");
+            $('#password').val(cfg.password);
+            $('#privacy').val(cfg.privacy||"AES");
+            $('#key').val(cfg.key);
+
+            $('#name').val(cfg.name);
+            $('#contact').val(cfg.contact);
+            $('#location').val(cfg.location);
+            $('#options').val(cfg.options);
+
+            if ( !cfg.custom )
+            {
+                cfg.custom = {};
+            }
+
+            $('#v3').unbind('change').change(function (e) {
+              var type = e.target.value;
+              switch (type)
+              {
+                case 'disable':
+                  $('#snmpv3-sets').hide();
+                  break;
+                case 'noauth':
+                  $('#snmpv3-sets').show();
+                  $('#auth-sets').hide();
+                  $('#privacy-sets').hide();
+                  break;
+                case 'auth':
+                  $('#snmpv3-sets').show();
+                  $('#auth-sets').show();
+                  $('#privacy-sets').hide();
+                  break;
+                case 'privacy':
+                  $('#snmpv3-sets').show();
+                  $('#auth-sets').show();
+                  $('#privacy-sets').show();
+                  break;
+              }
+            }).trigger('change');
+
+            /* Show container first, then size grid — same as wifi/acl.html */
+            $('#status').unbind('change').change(function () {
+                if ($(this).prop('checked'))
+                {
+                    $('#status-sets').show();
+                    oids_set_width();
+                }
+                else
+                {
+                    $('#status-sets').hide();
+                }
+            }).trigger('change');
+
+            oids_reload_grid( oids_rows_from_cfg( cfg.custom ) );
+        });
+    }
+
+    function cfg_save()
+    {
+        if ( cfg == null )
+        {
+            cfg = {};
+        }
+        var cfgcopy = JSON.parse(JSON.stringify(cfg));
+
+        cfg.status = boole2able($('#status').prop('checked'));
+        if ( cfg.status == "enable" )
+        {
+            cfg.port = $('#port').val();
+            cfg.rocommunity = $('#rocommunity').val();
+            cfg.rwcommunity = $('#rwcommunity').val();
+
+            cfg.v3 = $('#v3').val();
+            cfg.username = $('#username').val();
+            cfg.auth = $('#auth').val();
+            cfg.password = $('#password').val();
+            cfg.privacy = $('#privacy').val();
+            cfg.key = $('#key').val();
+
+            cfg.name = $('#name').val();
+            cfg.contact = $('#contact').val();
+            cfg.location = $('#location').val();
+            cfg.options = $('#options').val();
+            cfg.custom = {};
+            var rowNum =  $(oids_table).jqGrid('getGridParam', 'rowNum');
+            var total = $(oids_table).jqGrid('getGridParam', 'records');
+            $(oids_table).jqGrid('setGridParam', { rowNum: total }).trigger('reloadGrid');
+            var rows =  $(oids_table).jqGrid('getDataIDs');
+            for ( var i = 0; i < rows.length; i++ )
+            {
+                var row = $(oids_table).jqGrid('getRowData', rows[i] );
+                if ( !row.identify )
+                {
+                    continue;
+                }
+                cfg.custom[row.identify] = { "oid":row.oid, "cmd":row.cmd };
+            }
+            $(oids_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');
+        }
+
+        if ( ocompare( cfg, cfgcopy ) )
+        {
+            page.alert( { message: $.i18n('Settings unchanged') } );
+            return;
+        }
+        he.exec( [ object+"="+JSON.stringify(cfg) ] ).then( function(){
+            page.hint2succeed( $.i18n('Modify successfully') );
+            cfg_load();
+        });
+    }
+
+    function init_oids_table()
+    {
+        jqtable.create( oids_table, oids_pager,
+            {
+                caption: ' ',
+                toolbar: [ true, 'top' ],
+                colNames: [
+                    '',
+                    $.i18n( 'Name' ),
+                    $.i18n( 'OID' ),
+                    $.i18n( 'Command' ),
+                    $.i18n( 'Operation' )
+                ],
+                colModel:
+                [
+                    { name: 'rid', width: 1, hidden: true },
+                    {
+                        name: 'identify', width: 128, editable: true,
+                        editoptions: { maxlength: '128' },
+                        editrules: { required: true }
+                    },
+                    {
+                        name: 'oid', width: 256, editable: true,
+                        editoptions: { maxlength: '256' },
+                        editrules: { required: true }
+                    },
+                    {
+                        name: 'cmd', width: 256, editable: true,
+                        editoptions: { maxlength: '256' },
+                        editrules: { required: true }
+                    },
+                    jqtable.actionOptions
+                ],
+                pager: '#oids-grid-pager',
+                rowNum: 20,
+                viewrecords: true,
+                pgbuttons: true,
+                pagerpos: 'center',
+                pginput: true,
+                autowidth: true,
+                loadonce: true,
+                shrinkToFit: true,
+                responsive: true
+            }
+        ).jqGrid( 'navGrid', oids_pager,
+            $.extend( true, {}, jqtable.navOptions,
+                {
+                    add: true, addicon: 'ace-icon fa fa-plus-circle purple',
+                    del: true, delicon: 'ace-icon fa fa-trash-o red',
+                    edit: true, editicon: 'ace-icon fa fa-pencil blue',
+                    search: false, refresh: false, view: false
+                }
+            ),
+            jqtable.editOptions,
+            jqtable.addOptions,
+            jqtable.deleteOptions
+        );
+
+        var $toolbar = $( '#t_' + oids_table.replace( '#', '' ) );
+        $toolbar.append( $( '#grid-controls' ).children() );
+        $toolbar.css( {
+            'display': 'flex',
+            'justify-content': 'space-between',
+            'align-items': 'center',
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto'
+        } );
+
+        $( '#rowNums' ).on( 'change', function () {
+            var newRowNum = parseInt( $( this ).val(), 10 );
+            $( oids_table ).jqGrid( 'setGridParam', { rowNum: newRowNum } ).trigger( 'reloadGrid' );
+        } );
+
+        $( window ).off( 'resize.oidsGrid' ).on( 'resize.oidsGrid', function () {
+            if ( $( '#status-sets' ).is( ':visible' ) )
+            {
+                oids_set_width();
+            }
+        } );
+    }
+
+
+    $.i18n().load( page.lang(langjson) ).then( function () {
+        $.i18n().locale = lang; $('body').i18n();
+
+        init_oids_table();
+        cfg_load();
+
+        $('#refresh').on(ace.click_event, function () {
+            location.reload();
+        });
+        $('#apply').on(ace.click_event, function () {
+            cfg_save();
+        });
+    });
+
+  })();
+</script>

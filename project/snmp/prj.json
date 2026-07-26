@@ -1,0 +1,37 @@
+{
+    "name":"snmp",
+    "intro":"SNMP agent suite",
+    "desc":"Manage net-snmp snmpd agent for Skinos gateway monitoring",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "com":
+    {
+        "agent":"SNMP agent (net-snmp snmpd)"
+    },
+    "init":
+    {
+        "app":
+        {
+            "snmp@agent.setup":""
+        }
+    },
+
+    "wui":
+    {
+        "agent":
+        {
+            "menu":"System",
+            "en":"SNMP Agent",
+            "cn":"SNMP代理",
+            "page":"agent.html",
+            "config":"snmp@agent",
+            "lang":
+            {
+                "cn":"cn.json",
+                "en":"en.json"
+            }
+        }
+    }
+}

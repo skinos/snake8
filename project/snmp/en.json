@@ -1,0 +1,34 @@
+{
+	"Status": "Status",
+	"Port":"Port",
+	"RO Community":"RO Community",
+	"RW Community":"RW Community",
+
+	"Disable":"Disable",
+	"None Authentication":"None Authentication",
+	"Authentication":"Authentication",
+	"Privacy":"Privacy",
+	"SNMPv3":"SNMPv3",
+	"SNMPv3 Username":"SNMPv3 Username",
+	"SNMP V3 Authentication":"SNMP V3 Authentication",
+	"Authentication Password":"Authentication Password",
+	"SNMP V3 Privacy":"SNMP V3 Privacy",
+	"Privacy Key":"Privacy Key",
+
+	"System Name":"System Name",
+	"System Contact":"System Contact",
+	"System Location":"System Location",
+
+	"Configure Options": "Configure Options (semicolon-separated)",
+	"OIDs Table":"OIDs Table",
+	"Display":"Display",
+	"Name":"Name",
+	"OID":"OID",
+	"Command":"Command",
+	"Operation":"Operation",
+
+	"Refresh":"Refresh",
+	"Apply":"Apply",
+	"Settings unchanged":"Settings unchanged",
+	"Modify successfully":"Modified successfully"
+}
