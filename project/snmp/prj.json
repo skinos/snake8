@@ -22,16 +22,10 @@
     {
         "agent":
         {
-            "menu":"System",
             "en":"SNMP Agent",
             "cn":"SNMP代理",
             "page":"agent.html",
-            "config":"snmp@agent",
-            "lang":
-            {
-                "cn":"cn.json",
-                "en":"en.json"
-            }
+            "config":"snmp@agent"
         }
     }
 }

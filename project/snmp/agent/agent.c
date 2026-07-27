@@ -46,7 +46,6 @@ boole_t _setup( obj_t this, param_t param )
 	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
 	{
 		/* Avoid conflict with OpenWrt procd snmpd if present. */
-		shell( "/etc/init.d/snmpd stop >/dev/null 2>&1" );
 		cstart( this, "service", NULL, COM_IDPATH );
 	}
 	return ttrue;
