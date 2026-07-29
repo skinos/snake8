@@ -19,10 +19,14 @@
     "pond":"连接池中的空闲连接数",                       // [ number ], 默认 3
 
     // 超时控制
-    "connect_timeout":"连接超时时间（秒）",                     // [ number ], 默认 15
-    "idle_keeplive_interval":"空闲连接的保活间隔",      // [ number ], 默认 8，单位为秒
-    "idle_keeplive_timeout":"空闲连接的超时时间",                 // [ number ], 默认 30，单位为秒
-    "use_keeplive_timeout":"活跃代理连接的超时时间"           // [ number ], 默认 360，单位为秒
+    "connect_timeout":"注册连接与 TCP hand 连接预算",                     // [ number ], 默认 14，单位秒
+                                                                              // 仅用于 total_write==0（尚未发出 Register）
+                                                                              // 或 TCP hand 仍在连接中（hand_read 未就绪）
+                                                                              // heport 推送 connect_timeout = center@pport mating_timeout - 1
+    "nomate_timeout":"待机（未配对）链路空闲超时",                      // [ number ], 默认 46，最小 10，单位秒
+                                                                              // 心跳间隔 = (nomate_timeout-1)/3；可由 heport 推送
+    "mate_timeout":"已配对会话空闲超时"                                  // [ number ], 默认 180，单位秒
+                                                                              // 可由 heport 从 center@pport mate_timeout 推送
 }
 ```
 
@@ -47,9 +51,9 @@ agent@portc:pond=5
 ttrue
 ```
 
-示例，修改空闲保活间隔为 15 秒
+示例，设置待机空闲超时为 46 秒
 ```shell
-agent@portc:idle_keeplive_interval=15
+agent@portc:nomate_timeout=46
 ttrue
 ```
 

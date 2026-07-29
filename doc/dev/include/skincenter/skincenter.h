@@ -7,6 +7,7 @@
 */
 
 #define HEPORT_NAME "heport"
+#define PPORT_NAME "pport"
 #define HEPORT_HOSTNAME "HEPORT"
 
 #define USER_DEVICE_DIR        "dev"                 /// DEVPORT_DIR/username/dev/
@@ -78,6 +79,24 @@ talk_t json_hh_execute( const char *macid, talk_t v, int timeout );
  * @return json command result
  */
 talk_t talk_hh_execute( const char *macid, talk_t helist, int timeout );
+
+/**
+ * @brief call heport service control (Unix JSON: list/knock/dump/nport...)
+ * @param[in] cmd control command name
+ * @param[in] v argument json (ownership taken)
+ * @param[in] timeout timeout in seconds
+ * @return talk result
+ */
+talk_t heport_call( const char *cmd, talk_t v, int timeout );
+
+/**
+ * @brief call pport service control (Unix JSON: list/tcp_map/udp_map/...)
+ * @param[in] cmd control command name
+ * @param[in] v argument json (ownership taken)
+ * @param[in] timeout timeout in seconds
+ * @return talk result
+ */
+talk_t pport_call( const char *cmd, talk_t v, int timeout );
 
 
 

@@ -1,54 +1,75 @@
-## agent@heclient — HE Client — Heport remote management client
-Connects to the remote Heport service for administration: remote commands, status reporting, and coordinated control of related agent components (**`agent@portc`**, **`agent@gtog`**, etc.).
+## agent@heclient — Heport Remote Management Client
 
-### Configuration ( `agent@heclient` )
+### Overview
+
+Connect the device to a remote Heport service over TLS for registration, status reporting, periodic heartbeats, and remote HE command execution.
+The service uses a line-oriented Heport protocol (not MQTT). Related agent components such as **`agent@portc`** and **`agent@gtog`** can be started or reconfigured through **`adjust`**.
+
+- Register the device with account **`user`** / **`vcode`** and push machine, gateway, IO, GNSS, and sensor snapshots
+- Keep the session alive with application keeplive; republish snapshots on **`update`**
+- Execute remote JSON talk commands and string HE lines from the server, then ACK results
+- Optional outbound bind via **`extern`** (default gateway or a specific interface) with joint **`reset`** when the path changes
+    > Account errors (**`usererror`** / **`vcodeerror`**) stop the service without auto-restart; connect or extern-not-ready failures retry by platform policy
+
+### Configuration reference ( agent@heclient )
+
 ```json
+// Attributes introduction 
 {
-    // basic
-    "status":"connect to heport server for remote management",   // [ "disable", "enable" ]
-    "server":"heport server address",                            // [ string ], domain name or ip address
-    "port":"heport server port",                                 // [ number ], default 20002
-    "user":"username for bindding to the account",               // [ string ]
-    "vcode":"verification code for the account",                 // [ string ], optional
+    "status":"connect to heport server for remote management",  // [ "disable","enable" ], service master switch
+                                                                   // "disable": background service not started
+                                                                   // "enable": connect when setup runs
 
-    // bindding extern network
-    "extern":"bindding extern ifname to connect server",             // call network@frame.list[extern] get the list
-                                                                   // [ "disable", "default", "ifname@wan", ... ]
-                                                                        // "disable" for no reset when ifname online
-                                                                        // "default" for reset when the gateway online 
-                                                                        // "ifname@wan", "ifname@lte", ... for reset when the ifname online
+    "server":"heport server address",                           // [ string ], domain name or ip address
+    "port":"heport server port",                                // [ number ], default 20002
+    "user":"account username for device registration",          // [ string ], required when status is enable
+    "vcode":"account verification code",                        // [ string ], optional
+    "type":"device type reported to server",                    // [ string ], default router
 
+    "extern":"outbound interface before connect",               // [ string ]: [ "disable","default","ifname@wan",... ]
+                                                                   // empty string is treated as "default"
+                                                                   // "disable": no outbound bind, no network reset joint
+                                                                   // "default": bind default gateway, reset on network/online
+                                                                   // "ifname@wan", "ifname@lte", ...: bind that interface, reset on network/onextern when ifname matches
 
-    // connection control
-    "connect_timeout":"timeout for connection in seconds",       // [ number ], default 20
-    "keeplive_interval":"keeplive interval in seconds",          // [ number ], default 10
-    "keeplive_timeout":"timeout for keeplive in seconds"         // [ number ], default 35
+    "connect_timeout":"TCP/TLS connect timeout in seconds",     // [ number ], default 20; covers tcp_connect and TLS handshake
+    "keeplive_interval":"keeplive probe interval in seconds",   // [ number ], default 10
+    "keeplive_timeout":"idle timeout before session exit",      // [ number ], default 35
 
-    // heart beat
-    "heart":
+    "heart":                              // [ string ]: { json }, periodic HE snapshot collection
     {
-        "he command":"update internal"                           // [ string ]:[ number ]
-        // ... more the object
+        "he command":"interval in seconds"  // [ string ]:[ number ], HE command and timer interval
+        // "...":"..."  How many heartbeat entries show how many properties
     }
 }
 ```
 
-Example, show all the configure
+#### Configuration example
+
+Example, show all the heclient configure
 ```shell
 agent@heclient
 {
-    "status":"enable",                        # remote management is enabled
-    "server":"cls.ashyelf.com",               # heport server address
-    "port":"20002",                           # heport server port
-    "user":"ashyelf",                         # bindding to account ashyelf
-    "type":"router",                          # device type is router
-    "connect_timeout":"20",                   # connection timeout 20 seconds
-    "keeplive_interval":"10",                 # keeplive interval 10 seconds
-    "keeplive_timeout":"35"                   # keeplive timeout 35 seconds
+    "status":"enable",                                    # remote management is enabled
+    "extern":"default",                                   # bind default gateway before connect
+    "server":"cls.ashyelf.com",                           # heport server address
+    "port":"20002",                                       # heport server port
+    "user":"ashyelf",                                     # account bound to this device
+    "vcode":"123456",                                     # account verification code
+    "type":"router",                                      # device type is router
+    "connect_timeout":"20",                               # TCP/TLS connect timeout 20 seconds
+    "keeplive_interval":"10",                             # keeplive interval 10 seconds
+    "keeplive_timeout":"35",                              # idle timeout 35 seconds
+    "heart":
+    {
+        "gnss@nmea":"10"                                  # collect gnss every 10 seconds
+    }
 }
 ```
 
-Example, enable the he client and bindding to account dimmalex@gmail.com
+#### Configuration settings example
+
+Example, enable the he client and bind account
 ```shell
 agent@heclient={"status":"enable","server":"devport.ashyelf.com","port":"20002","user":"dimmalex@gmail.com","vcode":"123456"}
 ttrue
@@ -60,42 +81,54 @@ agent@heclient:status=disable
 ttrue
 ```
 
-Example, modify the heport server to heport.ashyelf.com
-```shell
-agent@heclient:server=heport.ashyelf.com
-ttrue
-```
-
-Example, modify the keeplive interval to 30 seconds
-```shell
-agent@heclient:keeplive_interval=30
-ttrue
-```
-
 Example, set the extern network interface to ifname@lte
 ```shell
 agent@heclient:extern=ifname@lte
 ttrue
 ```
 
+Example, merge set server and keeplive attributes ( include "server" "keeplive_interval" "keeplive_timeout" )
+```shell
+agent@heclient|{"server":"heport.ashyelf.com","keeplive_interval":"30","keeplive_timeout":"60"}
+ttrue
+```
 
-### Component API
-**Directly callable** APIs from HE / eline / HTTP `/he`.
-+ `setup[]` **setup the he client, start the connection service**
-    setup will read the configuration, if status is "enable", start the background service process to connect to the heport server
-    - succeed return ttrue
+### Concepts
+
+**Registration and update**
+* After TLS connect, the service sends one register line: **`{macid}+{user}|{pubkey}|{json}`**. The JSON includes type, vcode, machine status, gateway, IO, GNSS, and sensor snapshots.
+* **`update`** (and the **`machine/status`** joint) asks the running service to send **`0+r{json}`** with the same snapshot content.
+
+**Heartbeat and keeplive**
+* Each entry in **`heart`** starts a timer. When it fires, the service collects the named HE command and sends **`0+h{json}`**.
+* Application keeplive uses **`keeplive_interval`** / **`keeplive_timeout`**. Idle beyond timeout exits the service so the platform can retry.
+
+**Remote commands**
+* Server JSON talk objects are executed with **`talk_he_command`**; string HE lines use **`he_execute`**. Results are ACKed on the same talk id.
+* Non-zero talk id means a forwarded unix/http request on the server; the device must echo the same tid in the ACK.
+
+**Extern interface and reset**
+* When **`extern`** is not **`disable`**, the service waits for the selected gateway or interface, adds a host route to the resolved server IP, and registers **`agent@heclient.reset`**.
+* **`extern=default`** (or empty): joint on **`network/online`**. Specific **`ifname@…`**: joint on **`network/onextern`**.
+* **`reset`** restarts the background service when the outbound path matches so routing and session are rebuilt.
+
+**Account errors**
+* Server **`0-u…`** / **`0-v…`** set **`usererror`** / **`vcodeerror`**, unregister network reset joints, and exit with **`terror`** (no auto-restart until configuration is fixed and setup runs again).
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **initialize the heclient component and start the background service when status is enable**
     - failed return tfalse
-
-    Example, setup the he client
-    ```shell
-    agent@heclient.setup
-    ttrue
-    ```
-
-+ `shut[]` **shutdown the he client and all managed components**
-    Stops the background client and tears down managed **`agent@gtog`** / **`agent@portc`** state as configured.
     - succeed return ttrue
+    - This is a lifecycle method called automatically by the system during startup
+    - Not intended for manual invocation
+
++ `shut[]` **stop the heclient background service and tear down managed agent@gtog / agent@portc**
+    - Unregisters runtime **`network/online`** and **`network/onextern`** reset handlers
     - failed return tfalse
+    - succeed return ttrue
 
     Example, shutdown the he client
     ```shell
@@ -103,143 +136,131 @@ ttrue
     ttrue
     ```
 
-+ `status[]` **get the he client current status information**
++ `reset[ event, event data ]` **restart the heclient background service when the bound extern changes**
+    - event ----------------------- [ string ], joint event name (for example network/online)
+    - event data ------------------ [ json ], event payload; must include **`ifname`**
+    - Used as a joint handler registered by the service when **`extern`** is not **`disable`**
+    - **`extern=default`**: acts only when event is **`network/online`**
+    - **specific interface**: acts when event **`ifname`** equals configured **`extern`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, reset when default gateway comes online (normally invoked by joint)
+    ```shell
+    agent@heclient.reset[ network/online, {"ifname":"ifname@wan"} ]
+    ttrue
+    ```
+
+    Example, reset when bound interface ifname@lte comes online
+    ```shell
+    agent@heclient.reset[ network/onextern, {"ifname":"ifname@lte"} ]
+    ttrue
+    ```
+
+#### Query APIs
+
++ `status[]` **get current heclient connection status**
     - failed return NULL
-    - succeed return json to describes status information
+    - succeed return [ json ], connection state and resolved server address
     ```json
-    // Attributes introduction of talk by the API return
     {
-        "status":"current status",        // [ "uping", "down", "online", "usererror", "vcodeerror" ]
-                                             // "uping" for connecting to server
-                                             // "down" for service is not running
-                                             // "online" for connected to server successfully
-                                             // "usererror" for username is wrong or not exist
-                                             // "vcodeerror" for verification code is wrong
-        "server":"resolved heport server ip" // [ ip address ], only available when status is "uping" or "online"
+        "status":"connection state",        // [ string ]: [ "down", "uping", "online", "usererror", "vcodeerror" ]
+                                                // "down": background service is not running
+                                                // "uping": service is running but session not ready
+                                                // "online": connected and session marked succeed
+                                                // "usererror": username wrong or not exist; service stopped
+                                                // "vcodeerror": verification code wrong; service stopped
+        "server":"resolved heport server ip" // [ string ], present when status is uping or online
     }
     ```
 
-    Example, get the he client status when connected
+    Example, get status when connected
     ```shell
     agent@heclient.status
     {
-        "status":"online",                    # connected to server successfully
-        "server":"114.132.219.158"            # heport server resolved ip address
+        "status":"online",                  # connected to heport successfully
+        "server":"114.132.219.158"          # resolved heport server ip
     }
     ```
 
-    Example, get the status when connecting
+    Example, get status when service is stopped
     ```shell
     agent@heclient.status
     {
-        "status":"uping",                     # connecting to server
-        "server":"114.132.219.158"
+        "status":"down"                     # service is not running
     }
     ```
 
-    Example, get the status when service is stopped
+    Example, get status when username is wrong
     ```shell
     agent@heclient.status
     {
-        "status":"down"                       # service is not running
+        "status":"usererror"                # username rejected; service exited
     }
     ```
 
-    Example, get the status when username is wrong
-    ```shell
-    agent@heclient.status
-    {
-        "status":"usererror"                  # username wrong, the service will exit
-    }
-    ```
+#### Control APIs
 
-    Example, get the status when vcode is wrong
-    ```shell
-    agent@heclient.status
-    {
-        "status":"vcodeerror"                 # verification code wrong, the service will exit
-    }
-    ```
++ `update[]` **ask the running service to re-send the device snapshot to heport**
+    - failed return tfalse
+    - succeed return ttrue
 
-+ `update[]` **notify the service to re-send device information to server**
-    Asks the running client to refresh and upload a device snapshot (machine, gateway, optional GNSS/sensors, etc.) to the server.
-    - succeed return ttrue, the service process is running and signal sent
-    - failed return tfalse, the service process is not running
-
-    Example, update the device information to server
+    Example, update device information to the server
     ```shell
     agent@heclient.update
     ttrue
     ```
 
-+ `adjust[ {adjust configuration} ]` **adjust the configuration and state of other components**
-    adjust will modify the configuration of specified components and restart them accordingly. 
-    If the new configuration is the same as existing, it will only start or stop the component based on its status field.
-    If the configuration is different, it will shut down the component, apply new configuration, then start it
-    - {adjust configuration} ------ json
++ `send[ json payload ]` **send a JSON payload to heport from the running service**
+    - json payload ----------------- [ json ], arbitrary JSON object sent as **`0+s{...}`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, send a proactive report
+    ```shell
+    agent@heclient.send[{"network@frame.gateway":{}}]
+    ttrue
+    ```
+
++ `adjust[ adjust configuration ]` **apply configuration to other components and setup or shut them**
+    - adjust configuration --------- [ json ], map of component object name to full configure object
+    - When the new configure equals the cached configure, only **`setup`** or **`shut`** by **`status`**
+    - When different, **`shut`**, write configure, then **`setup`**
+    - failed return tfalse
+    - succeed return ttrue
     ```json
-    // Attributes introduction of json pass to API
     {
-        "component name":                           // [ string ], the full component object name (e.g. "agent@portc", "agent@gtog")
+        "component name":                  // [ string ]: { json }, full object name (e.g. "agent@portc")
         {
-            // the complete configuration for this component
+            // complete configuration for this component
         }
-        // ...more other component configurations
+        // "...":{ ... }  How many components show how many properties
     }
     ```
-    - succeed return ttrue
-    - failed return tfalse
 
-    Example, adjust to enable the port client, disable the network client
+    Example, enable portc and disable gtog
     ```shell
     agent@heclient.adjust[{"agent@portc":{"status":"enable"},"agent@gtog":{"status":"disable"}}]
     ttrue
     ```
 
-    Example, adjust to enable gtog with server configuration
+    Example, enable gtog with server configuration
     ```shell
     agent@heclient.adjust[{"agent@gtog":{"status":"enable","server":"192.168.1.1","port":"20000"}}]
     ttrue
     ```
 
-+ `service[]` **internal (not called via HE)**
-    Background worker started by **`setup[]`**: maintains the session to the Heport service, registers the device, keeps the link alive, executes remote **`object.method`** requests, and returns results. On **account / verification** errors the client stops without auto-restart; on **connect / timeout / extern not ready** it retries according to platform policy.
+### Joint Events Hook
 
-### Lifecycle API
-+ `setup[]` / `shut[]` — **when implemented** for **`agent@heclient`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
+The product manifest registers the following platform joint handler for **`agent@heclient`**:
 
-### Joint Handlers
 | Joint key | Method |
-|-----------|--------|
-| `network/online` | `agent@heclient.setup` |
+|-----------|-------------|
 | `machine/status` | `agent@heclient.update` |
 
+When **`extern`** is not **`disable`**, the background service also registers at runtime:
 
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_agent_heclient(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "agent@heclient", "status") == NULL)
-        return -1;
-    return ssets_string("agent@heclient", "enable", "status") ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* e.g. scall("agent@heclient", "list", NULL); talk_free if JSON */
-```
+| Joint key | Method | Condition |
+|-----------|-------------|-----------|
+| `network/online` | `agent@heclient.reset` | **`extern=default`** (or empty) |
+| `network/onextern` | `agent@heclient.reset` | **`extern`** is a specific interface name |

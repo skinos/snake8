@@ -235,11 +235,15 @@ The network subsystem uses a layered architecture that separates configuration, 
 
     "delay_count":"Sample count for delay mean",                   // [ number ], 0=disabled; >0 average last N keeplive delays per uplink
                                                                    // dbdc: filter slow uplinks out of ECMP; hot/lazy: may switch default by delay
-    "delay_divide":"delay divide line",                            // [ number ], ms; dbdc: rule arms when means straddle this line
-                                                                   // hot: online below this -> prefer smallest-numbered (failback); lazy: see delay_diff
-    "delay_diff":"delay differential",                             // [ number ], ms; dbdc: mean>divide and (mean-best)>this -> exclude from balancing
-                                                                   // lazy: with some online below divide, current>divide and (current-best)>this -> switch to best
-                                                                   // hot: failback uses divide (right_low), not this diff
+    "delay_divide":"delay divide line",                            // [ number ], ms
+                                                                   // dbdc: 0=ignore absolute boundary (filter by delay_diff vs best only);
+                                                                   //       >0 arms when means straddle this line (with delay_diff rules)
+                                                                   // hot/lazy: 0=ignore divide (online switch by delay_diff only); >0 used with delay_diff rules below
+    "delay_diff":"delay differential",                             // [ number ], ms
+                                                                   // dbdc: 0=hard cut at delay_divide when straddling; >0 allow above-divide if (mean-best)<=this
+                                                                   //       when delay_divide==0: drop from balancing if (mean-best)>this
+                                                                   // hot/lazy: 0=ignore diff (online switch by delay_divide only); >0 with divide>0 needs both
+                                                                   // hot target: prefer smallest-numbered below divide, else best; lazy target: best
     "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
     "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
 

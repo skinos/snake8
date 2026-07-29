@@ -5,6 +5,11 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
 ```json
 {
     "status":"io agent service status",                    // [ "disable", "enable" ]
+    "extern":"outbound interface before client/mqtt connect", // [ string ]: [ "disable","default","ifname@wan",... ]
+                                                              // empty or omit: same as "default"
+                                                              // "disable": no wait / no host route / no reset joint
+                                                              // "default": wait default gateway, reset on network/online
+                                                              // "ifname@wan", "ifname@lte", ...: bind that interface, reset on network/onextern when ifname matches
 
     // GPIO initialization map
     "init":                                                // define initial state for each GPIO
@@ -95,6 +100,7 @@ Example, show all the configure
 agent@io
 {
     "status":"enable",
+    "extern":"default",                                   # wait for default gateway before client/mqtt connect
     "init":
     {
         "g1":"0b",                                         # gpio1 input both edge
@@ -158,6 +164,11 @@ agent@io:mqtt={"status":"enable","server":"mqtt.example.com","port":"1883","mqtt
 ttrue
 ```
 
+Example, set the extern network interface to ifname@lte
+```shell
+agent@io:extern=ifname@lte
+ttrue
+```
 
 ### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
@@ -173,12 +184,34 @@ ttrue
     ```
 
 + `shut[]` **shutdown the io agent service**
+    - Unregisters runtime **`network/online`** and **`network/onextern`** reset handlers
     - succeed return ttrue
     - failed return tfalse
 
     Example, shutdown the io agent
     ```shell
     agent@io.shut
+    ttrue
+    ```
+
++ `reset[ event, event data ]` **restart the io background service when the bound extern changes**
+    - event ----------------------- [ string ], joint event name (for example network/online)
+    - event data ------------------ [ json ], event payload; must include **`ifname`**
+    - Used as a joint handler registered by the service when **`extern`** is not **`disable`**
+    - **`extern=default`**: acts only when event is **`network/online`**
+    - **specific interface**: acts when event **`ifname`** equals configured **`extern`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, reset when default gateway comes online (normally invoked by joint)
+    ```shell
+    agent@io.reset[ network/online, {"ifname":"ifname@wan"} ]
+    ttrue
+    ```
+
+    Example, reset when bound interface ifname@lte comes online
+    ```shell
+    agent@io.reset[ network/onextern, {"ifname":"ifname@lte"} ]
     ttrue
     ```
 
@@ -321,63 +354,17 @@ ttrue
     ttrue
     ```
 
-+ `service[]` **internal background service (not called directly)**
-    this is the main event-driven service started by setup, it handles:
-    1. Initialize GPIO according to init map (set input/output mode)
-    2. Initialize libevent and mosquitto library
-    3. Register signal handlers (SIGINT/SIGTERM for exit, SIGWINCH for IO change, SIGUSR1 for report)
-    4. Create UNIX domain socket control interface for inter-process communication
-    5. Create MQTT clients (mqtt, mqtt2, ... mqtt9) from configuration
-    6. Create TCP/UDP clients (client, client2, ... client9) from configuration
-    7. Create TCP/UDP servers (server, server2, ... server9) from configuration
-    8. Run event loop to handle all IO events
-
-    **IO state report protocol (TCP/UDP):**
-    - Format: `gN=STATE;gN=STATE;...`
-    - Example: `g1=01;g2=11;g3=10;`
-
-    **IO remote control protocol (TCP/UDP):**
-    - Format: `gN=STATE;gN=STATE;...` (same as report, must end with semicolon)
-    - Example: `g1=10;g2=11;` (set g1 output low, g2 output high)
-
-    **TCP/UDP client registration packet:**
-    - Format: `macid=<macid>;id=<id>;user=<user>;vcode=<vcode>;`
-
-    **MQTT client:**
-    - Publish IO state to configured topic
-    - Subscribe to configured topics for remote control
-    - Support TLS with CA/cert/key files at: `<config_path>/io-<name>.ca`, `io-<name>.crt`, `io-<name>.key`
-
 ### Lifecycle API
-+ `setup[]` / `shut[]` — **when implemented** for **`agent@io`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-+
++ `setup[]` / `shut[]` — start/stop the component service. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
+When **`extern`** is not **`disable`**, the background service also registers at runtime:
 
-### C Code Example
-**Read and update configuration**
+| Event | Handler | When |
+|-------|---------|------|
+| `network/online` | `agent@io.reset` | **`extern=default`** (or empty) |
+| `network/onextern` | `agent@io.reset` | **`extern`** is a specific interface name |
 
-```c
-#include "skin/skin.h"
+* Service waits for the selected gateway or interface IP before starting peers.
+* Adds host routes to enabled **client** / **mqtt** server addresses via that path.
+* If the interface is not ready yet, the service exits **`ttrue`** (no busy restart); joint **`reset`** restarts it when the path comes up.
 
-static int example_config_agent_io(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "agent@io", "status") == NULL)
-        return -1;
-    return ssets_string("agent@io", "enable", "status") ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* e.g. scall("agent@io", "list", NULL); talk_free if JSON */
-```

@@ -44,7 +44,6 @@
     "clock@restart": "重启管理",
     "clock@date": "时间管理",
     "client@station": "客户端管理",
-    "center@userwebs": "用户网页服务",
     "center@heport": "设备管理服务",
     "center@pport": "端口穿透服务",
     "PID": "进程ID",

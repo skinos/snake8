@@ -24,7 +24,6 @@ agent@gtog:net_max=5
 ttrue
 ```
 
-
 #### Network Configuration( agent@net )
 Each registered network has its own configuration object (agent@net for the first, agent@net2 for the second, etc.)
 
@@ -53,7 +52,6 @@ agent@net
     "keeptimeout":"35"
 }
 ```
-
 
 ### Component API
 + `setup[]` **setup all gtog network infrastructure**
@@ -260,9 +258,6 @@ agent@net
 
 + `offline[]` **internal**
     Invoked when the VPN link goes down. Cleans up DNS resolver entries, removes iptables MASQUERADE rules, and clears TCP MSS clamping for the interface.
-
-+ `service[]` **internal (not called via HE)**
-    Per-**`agent@net*`** worker: applies saved VPN settings, owns the WireGuard interface and peer set, exchanges keepalives with the mesh coordinator according to the current role (**master / branch / leaf**), and adjusts peers when **`endpoint` / `branch` / `leaf`** APIs update the topology. **Config errors** typically stop without auto-restart; **transient link loss** is retried.
 
 ### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@gtog`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.

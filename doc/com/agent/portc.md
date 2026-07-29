@@ -1,24 +1,41 @@
 ## agent@portc — Port client — remote port proxy
 Connects to the port-proxy service so remote sessions can reach local **TCP**, **UDP**, or **serial** targets. Keeps standby links to the server so new proxy requests can be served quickly.
 
+Standby keeplive: client sends `k`, server echoes `k`. Via heport `adjust`: `active_pond`, `idle_pond`, `nomate_timeout` (ping interval `(nomate_timeout-1)/3`), `connect_timeout = mating_timeout - 1`, `mate_timeout` (same as center@pport). Legacy key **`pond`** is accepted as **`active_pond`**.
+
 ### Configuration ( `agent@portc` )
 ```json
 {
+    "status":"port proxy client service",                                  // [ "disable","enable" ], service master switch
+                                                                              // "disable": background service not started
+                                                                              // "enable": connect pool when setup runs
+                                                                              // normally set by heport from center@pport (enable/disable)
+
     // server connection
     "server":"port proxy server address",                                  // [ string ], domain name or ip address
-                                                                              // if not set, use heclient's server
+                                                                              // if set: resolve DNS (same as heclient) and show IP in status
+                                                                              // if not set: use heclient's resolved server; status omits server
     "port":"port proxy server port",                                       // [ number ], default 20005
     "user":"username for registration",                                    // [ string ], if not set, use heclient's user
     "vcode":"verification code",                                           // [ string ], if not set, use heclient's vcode
 
     // connection pool
-    "pond":"number of idle connections in the pool",                       // [ number ], default 3
+    "active_pond":"standby pool size while proxy sessions are active", // [ number ], default 6
+                                                                              // while any mate/mating/drain link exists: keep this many idle standbys
+                                                                              // <=0 or unset (and no legacy pond): use 6
+    "idle_pond":"standby pool size when fully idle",                   // [ number ], default 1
+                                                                              // when no mate/mating/drain: shrink/grow to this many standbys
+                                                                              // shrink runs after ~6 idle create checks; <=0 or unset: use 1
+    "pond":"legacy alias for active_pond",                             // [ number ], used only if active_pond is unset
 
     // timeout control
-    "connect_timeout":"connection timeout in seconds",                     // [ number ], default 15
-    "idle_keeplive_interval":"keeplive interval for idle connections",      // [ number ], default 8, the unit is second
-    "idle_keeplive_timeout":"timeout for idle connections",                 // [ number ], default 30, the unit is second
-    "use_keeplive_timeout":"timeout for active proxy connections"           // [ number ], default 360, the unit is second
+    "connect_timeout":"connect / TCP hand connect timeout",                // [ number ], default 14, minimum 1, the unit is second
+                                                                              // normally set by heport as center@pport mating_timeout - 1
+    "nomate_timeout":"idle timeout for standby links",                     // [ number ], default 46, minimum 10, the unit is second
+                                                                              // normally set by heport from center@pport nomate_timeout
+                                                                              // ping interval = (nomate_timeout-1)/3
+    "mate_timeout":"idle timeout for mated proxy connections",             // [ number ], default 180, minimum 1, the unit is second
+                                                                              // normally set by heport as center@pport mate_timeout
 }
 ```
 
@@ -26,8 +43,11 @@ Example, show all the configure
 ```shell
 agent@portc
 {
+    "status":"enable",                        # service enabled (from heport when center@pport is on)
     "port":"20005",                           # server port
-    "pond":"3"                                # 3 idle connections in pool
+    "active_pond":"6",                        # keep 6 standbys while sessions active
+    "idle_pond":"1",                          # keep 1 standby when fully idle
+    "nomate_timeout":"46"                     # from heport / local default
 }
 ```
 
@@ -37,26 +57,21 @@ agent@portc={"server":"proxy.ashyelf.com","port":"20005","user":"ashyelf"}
 ttrue
 ```
 
-Example, modify the connection pool size to 5
+Example, keep 6 standbys when busy and 2 when idle
 ```shell
-agent@portc:pond=5
+agent@portc:active_pond=6
+ttrue
+agent@portc:idle_pond=2
 ttrue
 ```
-
-Example, modify the idle keeplive interval to 15 seconds
-```shell
-agent@portc:idle_keeplive_interval=15
-ttrue
-```
-
-
 
 ### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
-+ `setup[]` **setup the port client, start the connection service**
++ `setup[]` **setup the port client, start the connection service when status is enable**
     start the background service process to connect to the port proxy server
     - succeed return ttrue
     - failed return tfalse
+    - When **`status`** is not **`enable`**, return ttrue without starting the service
 
     Example, setup the port client
     ```shell
@@ -81,26 +96,25 @@ ttrue
     ```json
     // Attributes introduction of talk by the API return
     {
-        "status":"current status",             // [ "uping", "down", "online", "usererror", "vcodeerror" ]
+        "status":"current status",             // [ "uping", "down", "online" ]
                                                   // "uping" for connecting to server
                                                   // "down" for service is not running
                                                   // "online" for connected to server successfully
-                                                  // "usererror" for username is wrong or not exist
-                                                  // "vcodeerror" for verification code is wrong
-        "server":"resolved server ip"           // [ ip address ], only available when status is "uping" or "online"
+        "server":"resolved server ip"           // [ ip address ], only when configure server is set and status is uping/online
+                                                   // omitted when server is inherited from heclient
     }
     ```
 
-    Example, get status when connected
+    Example, get status when connected with local server configure
     ```shell
     agent@portc.status
     {
         "status":"online",                        # connected to server
-        "server":"114.132.219.158"                # resolved server ip
+        "server":"114.132.219.158"                # resolved from configure server
     }
     ```
 
-    Example, get status when connecting
+    Example, get status when connecting with local server configure
     ```shell
     agent@portc.status
     {
@@ -109,19 +123,19 @@ ttrue
     }
     ```
 
+    Example, get status when server is inherited from heclient
+    ```shell
+    agent@portc.status
+    {
+        "status":"online"                         # no server field
+    }
+    ```
+
     Example, get status when service is stopped
     ```shell
     agent@portc.status
     {
         "status":"down"                           # service is not running
-    }
-    ```
-
-    Example, get status when username is wrong
-    ```shell
-    agent@portc.status
-    {
-        "status":"usererror"                      # wrong username
     }
     ```
 
@@ -178,37 +192,3 @@ ttrue
     }
     ```
 
-+ `service[]` **internal (not called via HE)**
-    Background worker started by **`setup[]`**: uses **`agent@heclient`** (or local fields) for server identity when unset, keeps a pool of **`pond`** idle server links, renews them as proxies attach/detach, and applies the timeout fields from configuration. **Auth errors** stop without auto-restart; **network / socket** issues and **extern not ready** are retried.
-
-### Lifecycle API
-+ `setup[]` / `shut[]` — **when implemented** for **`agent@portc`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_agent_portc(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "agent@portc", "status") == NULL)
-        return -1;
-    return ssets_string("agent@portc", "enable", "status") ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* e.g. scall("agent@portc", "list", NULL); talk_free if JSON */
-```

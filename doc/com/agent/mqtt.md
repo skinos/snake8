@@ -4,13 +4,13 @@
 
 Connect the device to a remote MQTT broker for registration, status reporting, periodic heartbeats, and remote HE command execution. The component mirrors the role of **`agent@heclient`** but uses MQTT publish/subscribe instead of the Heport line protocol.
 It does not send Heport receipt packets or application-level keeplive; broker **`mqtt_keepalive`** maintains the session.
-Optional TLS uses certificate files under the product configuration directory (**`mqtt.ca`**, **`mqtt.crt`**, **`mqtt.key`**), same layout as **`agent@io`** MQTT clients.
+Optional TLS uses certificate files under the product configuration directory: **`mqtt.ca`**, and optionally **`mqtt.crt`** / **`mqtt.key`**.
+TLS is enabled only when **`mqtt.ca`** exists; with CA alone the client verifies the broker, and with **`mqtt.crt`** + **`mqtt.key`** present it also presents a client certificate.
 
 - Publish device registration, update, heartbeat, and optional proactive reports to configurable topics
 - Subscribe to server command topics when configured
 - Execute remote JSON HE commands and publish HE command results
     > Empty publish or subscribe topic strings disable the corresponding feature entirely
-
 
 ### Configuration reference ( agent@mqtt )
 
@@ -27,15 +27,16 @@ Optional TLS uses certificate files under the product configuration directory (*
     "mqtt_username":"MQTT broker username",                 // [ string ], optional
     "mqtt_password":"MQTT broker password",                 // [ string ], optional
     "mqtt_keepalive":"MQTT session keepalive in seconds",   // [ number ], default 60
-    "reconnect_interval":"broker reconnect timer in seconds", // [ number ], default 10
+                                                               // also used as the period base for mosquitto_loop_misc timer (keepalive/2)
 
-    "user":"account username for device registration",       // [ string ], written into registration JSON
+    "user":"account username for device registration",       // [ string ], required when status is enable; written into registration JSON
     "vcode":"account verification code",                    // [ string ], optional, written into registration JSON
     "type":"device type reported to server",               // [ string ], default router
     "extern":"outbound interface before broker connect",    // [ string ]: [ "disable","default","ifname@wan",... ]
-                                                               // "disable": do not wait for a specific interface
-                                                               // "default": wait for default gateway route
-                                                               // "ifname@wan", "ifname@lte", ...: wait for that interface
+                                                               // empty string is treated as "default"
+                                                               // "disable": no outbound bind, no network reset joint
+                                                               // "default": bind default gateway, reset on network/online
+                                                               // "ifname@wan", "ifname@lte", ...: bind that interface, reset on network/onextern when ifname matches
 
     "topic_register":"publish topic for device registration",       // [ string ], empty skips register publish
     "topic_update":"publish topic for device snapshot update",      // [ string ], empty skips update publish
@@ -72,7 +73,6 @@ agent@mqtt
     "mqtt_username":"device",                             # broker login username
     "mqtt_password":"secret",                             # broker login password
     "mqtt_keepalive":"60",                                # MQTT keepalive 60 seconds
-    "reconnect_interval":"10",                            # reconnect timer 10 seconds
     "user":"ashyelf",                                     # account bound to this device
     "vcode":"123456",                                     # account verification code
     "type":"router",                                      # device type is router
@@ -122,16 +122,16 @@ agent@mqtt|{"server":"broker.example.com","port":"8883","topic_register":"dev/re
 ttrue
 ```
 
-
-
 ### Concepts
 
 **Registration and update payloads**
-* On connect, when **`topic_register`** is configured, the service publishes one retained JSON object containing device type, verification code, machine status, gateway, IO, GNSS, and sensor snapshots (same content as the **`{JSON}`** portion of a Heport register packet).
+* On connect, when **`topic_register`** is configured, the service publishes one retained JSON object containing **`type`**, **`user`**, **`vcode`**, and machine / gateway / IO / GNSS / sensor snapshots.
+* The snapshot fields match the **`{JSON}`** portion of a Heport (**`agent@heclient`**) register packet; MQTT also puts **`user`** inside the JSON (heclient carries **`user`** in the Heport line prefix instead).
 * **`update`** and the **`machine/status`** joint event trigger the same JSON on **`topic_update`** when that topic is configured.
 
 **Heartbeat**
-* Each entry in **`heart`** starts a timer. When it fires, the service collects the named HE command and publishes the result JSON to **`topic_heart`**.
+* Each entry in **`heart`** starts a timer when **`topic_heart`** is non-empty. When it fires, the service collects the named HE command and publishes the result JSON to **`topic_heart`**.
+* Empty **`topic_heart`** disables heart entirely (no timers).
 * The **`heart`** API reads or replaces the runtime heart schedule without writing configuration; payload format matches the **`heart`** object in configuration.
 
 **Remote commands**
@@ -143,10 +143,11 @@ ttrue
 * **`user`** and **`vcode`** remain in the registration JSON for the application server.
 
 **Extern interface and reset**
-* When **`extern`** is not **`disable`**, the service waits for the selected gateway or interface, adds a host route to the broker, and registers a joint handler for **`agent@mqtt.reset`**.
-* **`extern=default`**: registers on **`network/online`**; **`extern=ifname@…`**: registers on **`network/onextern`**.
-* **`reset`** restarts the background service when the outbound path changes so routing and MQTT session are rebuilt.
-
+* When **`extern`** is not **`disable`**, the service waits for the selected gateway or interface, adds a host route to the broker, and registers **`agent@mqtt.reset`**.
+* **`extern=default`** (or empty): joint on **`network/online`**. Specific **`ifname@…`**: joint on **`network/onextern`**.
+* **`reset`** restarts the background service when the outbound path matches so routing and MQTT session are rebuilt.
+* Session model matches **`agent@heclient`**: resolve DNS and connect once per process; disconnect or connect failure exits so the platform can restart and re-resolve / re-route.
+* When the dependency is not ready, the service exits **`ttrue`** and waits for joint **`reset`**.
 
 ### API Reference
 
@@ -159,6 +160,7 @@ ttrue
     - Not intended for manual invocation
 
 + `shut[]` **stop the mqtt background service**
+    - Unregisters runtime **`network/online`** and **`network/onextern`** reset handlers
     - failed return tfalse
     - succeed return ttrue
 
@@ -168,24 +170,26 @@ ttrue
     ttrue
     ```
 
-+ `reset[]` **restart the mqtt background service when extern route changes**
-    - Used as a joint handler registered by the service when **`extern`** is configured
-    - **`extern=default`**: triggered from **`network/online`**
-    - **specific interface**: triggered from **`network/onextern`** when event **`ifname`** matches configured **`extern`**
++ `reset[ event, event data ]` **restart the mqtt background service when the bound extern changes**
+    - event ----------------------- [ string ], joint event name (for example network/online)
+    - event data ------------------ [ json ], event payload; must include **`ifname`**
+    - Used as a joint handler registered by the service when **`extern`** is not **`disable`**
+    - **`extern=default`**: acts only when event is **`network/online`**
+    - **specific interface**: acts when event **`ifname`** equals configured **`extern`**
     - failed return tfalse
     - succeed return ttrue
 
-    Example, restart after default gateway comes online (normally invoked by joint, not manually)
+    Example, reset when default gateway comes online (normally invoked by joint)
     ```shell
-    agent@mqtt.reset
+    agent@mqtt.reset[ network/online, {"ifname":"ifname@wan"} ]
     ttrue
     ```
 
-+ `service[]` **internal background worker (not called via HE)**
-    - Maintains the MQTT session, publishes registration/update/heart messages, subscribes to command topics, and reconnects on **`reconnect_interval`**
-    - Returns **`tfalse`** when **`extern`** dependency is not satisfied (gateway or interface not ready)
-    - Returns **`terror`** on fatal configuration errors (for example missing **`user`** or **`server`**)
-
+    Example, reset when bound interface ifname@lte comes online
+    ```shell
+    agent@mqtt.reset[ network/onextern, {"ifname":"ifname@lte"} ]
+    ttrue
+    ```
 
 #### Query APIs
 
@@ -194,11 +198,13 @@ ttrue
     - succeed return [ json ], connection state and resolved broker address
     ```json
     {
-        "status":"connection state",        // [ string ]: [ "down", "uping", "online" ]
+        "status":"connection state",        // [ string ]: [ "down", "uping", "online", "suberror" ]
                                                 // "down": background service is not running
                                                 // "uping": service is running but not connected yet
                                                 // "online": connected to broker successfully
-        "server":"resolved broker ip"       // [ string ], present when status is uping or online
+                                                // "suberror": topic_he subscribe failed; service exited
+        "server":"resolved broker ip"       // [ string ], present when status is uping, online, or suberror
+                                                // IP resolved once at service start
     }
     ```
 
@@ -218,7 +224,6 @@ ttrue
         "status":"down"                     # service is not running
     }
     ```
-
 
 #### Control APIs
 
@@ -262,20 +267,17 @@ ttrue
     ttrue
     ```
 
-
-
 ### Joint Events Hook
 
-The product manifest registers the following platform joint handlers for **`agent@mqtt`**:
+The product manifest registers the following platform joint handler for **`agent@mqtt`**:
 
 | Joint key | Method |
 |-----------|-------------|
-| `network/online` | `agent@mqtt.setup` |
 | `machine/status` | `agent@mqtt.update` |
 
-When **`extern`** is configured, the background service also registers at runtime:
+When **`extern`** is not **`disable`**, the background service also registers at runtime:
 
 | Joint key | Method | Condition |
 |-----------|-------------|-----------|
-| `network/online` | `agent@mqtt.reset` | **`extern=default`** |
+| `network/online` | `agent@mqtt.reset` | **`extern=default`** (or empty) |
 | `network/onextern` | `agent@mqtt.reset` | **`extern`** is a specific interface name |

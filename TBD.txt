@@ -1,0 +1,55 @@
+# TBD
+每条一项，新条目追加在文件末尾。
+
+--------------------------------------------------------------------------------
+1. agent@heclient — 避免读回调里长时间阻塞
+--------------------------------------------------------------------------------
+背景:
+  heclient_service.c 的 he_client_read() 在 libevent 读回调里同步执行
+  talk_he_command / he_execute。慢 HE 会卡住整个事件循环，keeplive 可能
+  因超时误判断线。
+
+目标:
+  保持现有行协议与回包语义，把耗时 HE 挪出读回调，保证收发与 keeplive 不被堵死。
+
+计划:
+  - 读回调：解析一行 → 入队（tid、载荷、json/字符串类型）
+  - 工作线程/队列：执行 talk_he_command / he_execute
+  - 完成后投回 libevent 线程，再写 ACK（tid+...\n）
+  - 退出/reset：排空或取消未完成任务，禁止对已释放 bufferevent 写回
+  - 限制队列长度；满时忙应/丢弃策略；可选单命令超时
+  - Keeplive：明确 last_recv 更新时机；长 HE 执行期间仍能跑 keeplive
+  - 测试：短命令正常；长 HE 不断线；突发命令顺序；执行中途 shut/reset 不崩溃
+
+备注:
+  改动大（线程 + 事件线程所有权），宜单独任务，勿与小修复混做。
+  可选相关项：推迟 HECLIENT_SUCCEED / keeplive 启动到会话真正就绪。
+
+状态: 计划中
+范围: project/agent/heclient（主要 heclient_service.c）
+
+--------------------------------------------------------------------------------
+2. agent@mqtt — 避免消息回调里长时间阻塞
+--------------------------------------------------------------------------------
+背景:
+  mqtt_service.c 的 cb_msg() 收到 topic_he 后同步调用 talk_he_command，
+  再 publish 到 topic_ret。慢 HE 会卡住 mosquitto/libevent 循环，影响
+  心跳、重连与其它收发。
+
+目标:
+  保持 MQTT 命令/回包语义，把耗时 HE 挪出消息回调，保证 broker 会话稳定。
+
+计划:
+  - 消息回调：校验/拷贝 payload → 入队
+  - 工作线程/队列：执行 talk_he_command
+  - 完成后在事件线程 mosquitto_publish 回 topic_ret
+  - 退出/disconnect：排空或取消未完成任务，禁止对已销毁 mosq 发布
+  - 限制队列长度；满时忙应/丢弃策略；可选单命令超时
+  - 测试：短命令正常；长 HE 不拖垮 keepalive/重连；执行中途 shut 安全
+
+备注:
+  与第 1 条同类问题，方案可复用（入队 + worker + 回投事件线程）。
+  改动大，宜单独任务。
+
+状态: 计划中
+范围: project/agent/mqtt（主要 mqtt_service.c）

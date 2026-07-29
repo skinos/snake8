@@ -338,6 +338,16 @@
     </div>
 
 
+    <div id="interval-sets" style="display:none;">
+        <div class="hr hr32 hr-dotted"></div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval(s)"></label>
+          <div class="col-sm-9">
+            <input type="text" id="interval" class="col-xs-10 col-sm-5" maxlength="32" />
+          </div>
+        </div>
+    </div>
+
     <div id="delay-sets" style="display:none;">
         <div class="hr hr32 hr-dotted"></div>
         <div class="form-group">
@@ -901,6 +911,7 @@
             })();
             $('#delay_divide').val( frame.delay_divide );
             $('#delay_diff').val( frame.delay_diff );
+            $('#interval').val( frame.interval || "10" );
             /* load the configure */
             $('#type').unbind('change').change(function (e) {
               var type = e.target.value;
@@ -908,10 +919,12 @@
               {
                   $('#dns-sets').hide();
                   $('#delay-sets').hide();
+                  $('#interval-sets').hide();
               }
               else if ( type.indexOf("dbdc") === 0 || type.indexOf("hot") === 0 || type.indexOf("lazy") === 0 )
               {
                 $('#dns-sets').show();
+                $('#interval-sets').show();
                 $('#delay-sets').show();
                 delay_tip_update( type );
                 delay_detail_update();
@@ -919,6 +932,7 @@
 			  else
               {
                 $('#dns-sets').show();
+                $('#interval-sets').show();
                 $('#delay-sets').hide();
 			  }
             }).trigger('change');
@@ -964,6 +978,10 @@
             frame.delay_count = $('#delay_count').val();
             frame.delay_divide = $('#delay_divide').val();
             frame.delay_diff = $('#delay_diff').val();
+        }
+        if ( frame.type != "default" )
+        {
+            frame.interval = $('#interval').val();
         }
         if ( ocompare( frame, framecopy ) )
         {

@@ -193,15 +193,12 @@ typedef int boole;
 /** center heport component */
 #define CENTERT_HEPORT_COM    CENTER_PROJECT""PROJECT_OBJECT_GAPS"heport"
 #define HEPORT_COM            CENTER_PROJECT""PROJECT_OBJECT_GAPS"heport"
+/** center api component */
+#define CENTER_API_COM        CENTER_PROJECT""PROJECT_OBJECT_GAPS"api"
+#define API_COM               CENTER_PROJECT""PROJECT_OBJECT_GAPS"api"
 /** center pport component */
 #define CENTER_PPORT_COM      CENTER_PROJECT""PROJECT_OBJECT_GAPS"pport"
 #define PPORT_COM             CENTER_PROJECT""PROJECT_OBJECT_GAPS"pport"
-/** center gtog component */
-#define CENTER_GPORT_COM      CENTER_PROJECT""PROJECT_OBJECT_GAPS"gport"
-#define GPORT_COM             CENTER_PROJECT""PROJECT_OBJECT_GAPS"gport"
-/** center userwebs component */
-#define CENTER_USERWEBS_COM   CENTER_PROJECT""PROJECT_OBJECT_GAPS"userwebs"
-
 /// network project
 #define NETWORK_PROJECT "network"
 #define NETWORK_MODE    "default"

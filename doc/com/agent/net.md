@@ -71,7 +71,6 @@ agent@net={"port":"20002","netid":"office-vpn","network":"10.0.1.0/24","route_ta
 ttrue
 ```
 
-
 ### Component API
 **Directly callable** APIs from HE / eline / HTTP `/he`.
 **agent@net** is first gtog network
@@ -330,9 +329,6 @@ ttrue
 + `offline[]` **internal — link went down**
     Reverts **`online[]`** side effects (DNS, NAT/MSS tweaks, etc.).
     - succeed return ttrue
-
-+ `service[]` **internal (not called via HE)**
-    Background worker for this **`agent@net*`** object: brings up WireGuard, registers with the mesh coordinator, syncs tunables (**`network`**, keepalive fields, …), maintains reachability for the current role (**master / branch / leaf**), and drives **`online[]` / `offline[]`** when the tunnel state changes. **Hard config / disable** errors stop without auto-restart; **link / socket** issues and **extern not ready** are retried.
 
 ### Lifecycle API
 + `setup[]` / `shut[]` — **when implemented** for **`agent@net`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.

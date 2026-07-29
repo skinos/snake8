@@ -119,9 +119,9 @@
 #define LANDLOG_AGENT               (0x05)
 #define LANDLOG_AGENT_DEFAULT       (0x00)
 #define LANDLOG_AGENT_LOCAL         (0x01)
-#define LANDLOG_AGENT_REMOTE        (0x02)
-#define LANDLOG_AGENT_HECLIENT      (0x03)
-#define LANDLOG_AGENT_PORTC         (0x04)
+#define LANDLOG_AGENT_HECLIENT      (0x02)
+#define LANDLOG_AGENT_PORTC         (0x03)
+#define LANDLOG_AGENT_MQTT          (0x04)
 #define LANDLOG_AGENT_GTOG          (0x05)
 #define LANDLOG_AGENT_IO            (0x06)
 /// center
@@ -130,7 +130,6 @@
 #define LANDLOG_CENTER_HEPORT       (0x01)
 #define LANDLOG_CENTER_PPORT        (0x02)
 #define LANDLOG_CENTER_NPORT        (0x03)
-#define LANDLOG_CENTER_USERWEBS     (0x05)
 
 /// wui
 #define LANDLOG_WUI                 (0x07)
@@ -493,14 +492,6 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define local_warning( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_LOCAL<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define local_fault( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_LOCAL<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define local_faulting( ... )  landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_LOCAL<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-/* agent remote log function */
-#define remote_verbose( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define remote_debug( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define remote_info( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define remote_warn( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define remote_warning( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-#define remote_fault( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define remote_faulting( ... )  landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_REMOTE<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 /* agent heclient log function */
 #define heclient_verbose( ... )  landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_HECLIENT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define heclient_debug( ... )    landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_HECLIENT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -517,7 +508,15 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define portc_warning( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_PORTC<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define portc_fault( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_PORTC<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define portc_faulting( ... )  landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_PORTC<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-/* agent gtog log function */
+/* agent mqtt log function */
+#define mqtt_verbose( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define mqtt_debug( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define mqtt_info( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define mqtt_warn( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define mqtt_warning( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+#define mqtt_fault( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define mqtt_faulting( ... )  landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_MQTT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )/* agent gtog log function */
+/* agent mqtt gtog function */
 #define gtog_verbose( ... )   landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_GTOG<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define gtog_debug( ... )     landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_GTOG<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define gtog_info( ... )      landlog( ((LANDLOG_AGENT<<LANDLOG_TYPE_OFFSET)|(LANDLOG_AGENT_GTOG<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
@@ -568,14 +567,6 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define nport_warning( ... )  landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_NPORT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define nport_fault( ... )    landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_NPORT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define nport_faulting( ... ) landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_NPORT<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-/* center userwebs log function */
-#define userwebs_verbose( ... )  landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define userwebs_debug( ... )    landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define userwebs_info( ... )     landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define userwebs_warn( ... )     landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define userwebs_warning( ... )  landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
-#define userwebs_fault( ... )    landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
-#define userwebs_faulting( ... ) landlog( ((LANDLOG_CENTER<<LANDLOG_TYPE_OFFSET)|(LANDLOG_CENTER_USERWEBS<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 
 
 
