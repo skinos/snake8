@@ -45,7 +45,7 @@ Do **not** use `make clean` (full rebuild is very slow). Prefer `./mkdel` then a
 
 ```bash
 # Check target board first
-cat gBOARDID   # or copy from gBOARDID.txt
+make pidinfo   # or: make pidlist
 
 # Incremental clean of skinos build dirs, then full firmware image
 ./mkdel

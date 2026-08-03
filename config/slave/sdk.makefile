@@ -86,7 +86,7 @@ OPENWRT_SDK_NAME:=openwrt-raw.tar.xz
 sdk_update:
 	# 下载或更新底层SDK
 	if [ ! -d ${gPLATFORM_DIR}/dl ]; then \
-		mkdir ${gPLATFORM_DIR}/dl
+		mkdir ${gPLATFORM_DIR}/dl; \
 	fi
 	# 更新dl目录, 避免每次一个一个下载
 	# 更新并安装所有的菜单项

@@ -33,7 +33,7 @@ Chinese portal: [`README.cn.md`](README.cn.md).
 
 ## Learning path (short)
 
-1. Copy [`gBOARDID.txt`](gBOARDID.txt) → `gBOARDID` and pick a board (or keep `slave-x86-ubuntu2004` for host debug).
+1. Pick a board with `make pidlist`, then `make pid gBOARDID=…` (or keep default `slave-x86-ubuntu2004` for host debug).
 2. `make preset` (Ubuntu deps) → `make dep` → `make` (or `make kernel` / `make app` as needed).
 3. Run / flash the image; log in — default UI is **`eline`** (prompt `$ `).
 4. Try `land@machine` and `land@machine.status` (no `he` prefix in eline).
@@ -46,7 +46,7 @@ Chinese portal: [`README.cn.md`](README.cn.md).
 | Path | Purpose |
 |------|---------|
 | [`Makefile`](Makefile) | Top build: `dep`, `kernel`, `app`, install into `build/` |
-| `gBOARDID` | Active board id (gitignored); template [`gBOARDID.txt`](gBOARDID.txt) |
+| `gBOARDID` | Active board id (gitignored); list with `make pidlist` |
 | `config/<platform>/` | Toolchain, kernel, rootfs overlays, product glue (often separate git repos) |
 | `project/<name>/` | Feature domains: sources + `prj.json` → FPK |
 | `build/` | Outputs: `install/`, `rootfs/`, `store/*.fpk`, `*.zz` images |
@@ -66,8 +66,7 @@ Many `project/*` and `config/*` trees are **separate git repos**. Helpers: `gits
 
 ```bash
 # Inspect / set board
-cat gBOARDID.txt          # known ids
-# edit gBOARDID, or:
+make pidlist              # list switchable gBOARDID (scanned from config/)
 make pid gBOARDID=slave-x86-ubuntu2004
 make pidinfo
 

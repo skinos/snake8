@@ -24,7 +24,7 @@ Device deploy/test: `.claude/skills/device-upgrade/SKILL.md`.
 | Path | Role |
 |------|------|
 | `Makefile` | Top entry: parses `gBOARDID`, defines globals, `all` / `dep` / `clean` / forwards |
-| `gBOARDID` | **Active board** (gitignored). Template: `gBOARDID.txt` |
+| `gBOARDID` | **Active board** (gitignored). List with `make pidlist` |
 | `target.makefile` | Forwards `kernel` / `app` / `boot` into platform SDK |
 | `mkdel` | Incremental clean of OpenWrt/`build_dir` skinos trees (prefer over `make clean`) |
 | `config/<platform>/` | Platform toolchain, `*.makefile`, overlays (often separate git repos) |
@@ -58,13 +58,11 @@ Default if no `gBOARDID` file: `slave-x86-ubuntu2004` (host debug).
 ### How to switch board
 
 ```bash
-# Inspect
-grep '^gBOARDID=' gBOARDID || cat gBOARDID.txt
+# Inspect available / current board
+make pidlist
+make pidinfo
 
-# Edit gBOARDID: uncomment one line, e.g.
-# gBOARDID=swrt5-mt7981-r607
-
-# Or append via make (adds a line — prefer editing the file cleanly)
+# Switch board
 make pid gBOARDID=swrt5-mt7981-r607
 make pidinfo
 ```
@@ -340,4 +338,4 @@ When building or explaining the SDK:
 5. sdk / rootfs / makefile.config / DTS / **`kernel/` source overlays** → **`./mkdel` && `make`** → deploy **`.zz`** (**device-upgrade**); project-only → **`make obj=`** → **FPK**
 6. For kernel USB modem IDs (`option.c`): edit winning `config/…/kernel/` for this `gBOARDID`; dial AT driver is **skinos-modem**
 7. Point deploy/upgrade to **device-upgrade** skill
-8. Do not invent board IDs — use `gBOARDID.txt` or the user’s active `gBOARDID`
+8. Do not invent board IDs — use `make pidlist` or the user’s active `gBOARDID`

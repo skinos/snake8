@@ -167,6 +167,48 @@ pid:
 	@echo "Switch the Board Identify to ${gBOARDID}"
 pidinfo:
 	echo 'gBOARDID=${gBOARDID}'
+pidlist:
+	@cfg="${gTOP_DIR}/config"; \
+	skip='adjust|arch|config|rootfs|kernel|tools|dl|center|mac|patch|odm|pdriver'; \
+	echo "Available PIDs (scanned from config/). Switch example:"; \
+	echo "  make pid gBOARDID=<platform>-<chip>-<product>[-<customer>]"; \
+	echo ""; \
+	for plat in $$(ls -1 "$$cfg" 2>/dev/null); do \
+		[ -d "$$cfg/$$plat" ] || continue; \
+		if echo "$$plat" | grep -Eq "^($$skip)$$|^\."; then continue; fi; \
+		first=1; \
+		for chip in $$(ls -1 "$$cfg/$$plat" 2>/dev/null); do \
+			[ -d "$$cfg/$$plat/$$chip" ] || continue; \
+			if echo "$$chip" | grep -Eq "^($$skip)$$|^\."; then continue; fi; \
+			for prod in $$(ls -1 "$$cfg/$$plat/$$chip" 2>/dev/null); do \
+				pdir="$$cfg/$$plat/$$chip/$$prod"; \
+				[ -d "$$pdir" ] || continue; \
+				if echo "$$prod" | grep -Eq "^($$skip)$$|^\."; then continue; fi; \
+				ok=0; \
+				if [ -e "$$pdir/makefile.config" ] || [ -e "$$pdir/sdk.config" ] || [ -e "$$pdir/dts" ]; then ok=1; fi; \
+				if [ "$$ok" = "0" ] && { [ -d "$$pdir/config" ] || [ -d "$$pdir/rootfs" ] || [ -d "$$pdir/kernel" ]; }; then ok=1; fi; \
+				if [ "$$ok" = "0" ] && [ -e "$$cfg/$$plat/$$chip/makefile.config" ]; then ok=1; fi; \
+				[ "$$ok" = "1" ] || continue; \
+				if [ "$$first" = "1" ]; then \
+					echo "# $$plat"; \
+					first=0; \
+				fi; \
+				base="$$plat-$$chip-$$prod"; \
+				echo "make pid gBOARDID=$$base"; \
+				for cust in $$(ls -1 "$$pdir" 2>/dev/null); do \
+					cdir="$$pdir/$$cust"; \
+					[ -d "$$cdir" ] || continue; \
+					if echo "$$cust" | grep -Eq "^($$skip|std)$$|^\."; then continue; fi; \
+					cok=0; \
+					if [ -e "$$cdir/makefile.config" ] || [ -e "$$cdir/sdk.config" ]; then cok=1; fi; \
+					if [ "$$cok" = "0" ] && { [ -d "$$cdir/config" ] || [ -d "$$cdir/rootfs" ] || [ -d "$$cdir/kernel" ]; }; then cok=1; fi; \
+					[ "$$cok" = "1" ] || continue; \
+					echo "make pid gBOARDID=$$base-$$cust"; \
+				done; \
+			done; \
+		done; \
+		if [ "$$first" = "0" ]; then echo ""; fi; \
+	done
 
 dep:            # prepare gBUILD_DIR gINSTALL_DIR gosROOT_DIR gSTORE_DIR, install fpk to gosROOT_DIR
 	./mkdel
@@ -185,7 +227,7 @@ clean:
 		rm -rf ${gINSTALL_DIR} ${gBUILD_DIR}; \
 	fi
 
-.PHONY: all pid pidinfo dep rootfs_install clean
+.PHONY: all pid pidinfo pidlist dep rootfs_install clean
 
 #####################################
 ######### Tools target ##############

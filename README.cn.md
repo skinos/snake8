@@ -33,7 +33,7 @@ English portal: [`README.md`](README.md).
 
 ## 学习路径（简短）
 
-1. 复制 [`gBOARDID.txt`](gBOARDID.txt) → `gBOARDID`，选定板型（主机调试可保留 `slave-x86-ubuntu2004`）。
+1. 用 `make pidlist` 查看可选板型，再 `make pid gBOARDID=…` 切换（主机调试可保留默认 `slave-x86-ubuntu2004`）。
 2. `make preset`（Ubuntu 依赖）→ `make dep` → `make`（或按需 `make kernel` / `make app`）。
 3. 运行或刷机；登录后默认界面为 **`eline`**（提示符 `$ `）。
 4. 试一下 `land@machine`、`land@machine.status`（eline 里**不要**加 `he` 前缀）。
@@ -46,7 +46,7 @@ English portal: [`README.md`](README.md).
 | 路径 | 用途 |
 |------|------|
 | [`Makefile`](Makefile) | 顶层构建：`dep`、`kernel`、`app`，输出到 `build/` |
-| `gBOARDID` | 当前板型（gitignore）；模板见 [`gBOARDID.txt`](gBOARDID.txt) |
+| `gBOARDID` | 当前板型（gitignore）；用 `make pidlist` 查看可选值 |
 | `config/<platform>/` | 工具链、内核、rootfs 叠加、产品胶水（常为独立 git 仓） |
 | `project/<name>/` | 功能域：源码 + `prj.json` → FPK |
 | `build/` | 产物：`install/`、`rootfs/`、`store/*.fpk`、`*.zz` 固件 |
@@ -66,8 +66,7 @@ English portal: [`README.md`](README.md).
 
 ```bash
 # 查看 / 设置板型
-cat gBOARDID.txt
-# 编辑 gBOARDID，或：
+make pidlist              # 列出可切换的 gBOARDID（扫描 config/）
 make pid gBOARDID=slave-x86-ubuntu2004
 make pidinfo
 

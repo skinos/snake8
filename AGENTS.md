@@ -17,7 +17,7 @@ Per-board overlays (`config/swrt5/` `makefile.config` / `rootfs` / `config/*.cfg
 
 **Platform selection** via `gBOARDID` file (format: `platform-chip-board[scope][oem]`):
 - Default: `slave-x86-ubuntu2004` (debug/host build)
-- Active board: check `gBOARDID` file; template in `gBOARDID.txt`
+- Active board: check `gBOARDID` file; list switchable ids with `make pidlist`
 - Drives `config/<platform>/` resolution
 
 **Key commands**:
@@ -165,7 +165,7 @@ Core docs under `doc/com/land/`:
 
 ## Gotchas
 
-- `gBOARDID` is gitignored — copy from `gBOARDID.txt` template
+- `gBOARDID` is gitignored — use `make pidlist` / `make pid gBOARDID=…` to select
 - Platform configs (`config/smtk2/`, `config/swrt5/`, etc.) are separate git repos
 - `build/` directory is gitignored and recreated by `make dep`
 - Many projects in `.gitignore` (land, forward, network, etc.) — may be separate repos
