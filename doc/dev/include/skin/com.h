@@ -387,6 +387,8 @@ typedef struct com_st
 	// component file type
 #define COM_FILE_LIB     1
 #define COM_FILE_EXECUTE 2
+/* obj alias placeholder → target object name; unresolved = not listed / not usable */
+#define COM_FILE_ALIAS   3
 /** Fixed fd for JSON/talk reply pipe in shell-spawned COM_FILE_EXECUTE children (dup2 from pipe write end) */
 #define SHELL_COM_PIPE   7
 	signed char type;
@@ -444,6 +446,14 @@ char   com_path( const char *object, char *buffer, int buflen );
  *  @retval NULL for error or no components, errno will be set
  */
 talk_t com_list( const char *prefix, const char *project );
+/**
+ * @brief list all obj alias placeholders and whether the target com resolves
+ * @return json map: alias → { "com":"<target>", "exist":"true"|"false" }
+ * 	@retval talk_t for succeed - caller must free with talk_free()
+ *  @retval NULL for error, errno will be set
+ * @note Unresolved aliases are included with exist=false; com_list still hides them
+ */
+talk_t com_alias( void );
 
 
 
