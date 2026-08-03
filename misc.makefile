@@ -15,7 +15,7 @@ preset:
 	git config --global http.sslVerify false
 .PHONY: preset
 
-gCLANGD_GEN := ${gTOP_DIR}/tools/gen-compile-commands.py
+gCLANGD_GEN := ${gTOP_DIR}/tools/clangd_sym.py
 gCLANGD_DIRS := ${gTOP_DIR}/project ${gTOP_DIR}/core ${gTOP_DIR}/config/slave ${gTOP_DIR}/config/swrt5
 clangd:
 	@set -e; \

@@ -1,0 +1,93 @@
+[
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/firmware-encode.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/firmware-encode.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/firmware-log.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/firmware-log.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/fpk-install.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/fpk-install.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/prj-read.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/prj-read.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/prj.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/prj.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/repo-update.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/repo-update.c"
+    ]
+  },
+  {
+    "directory": "/home/dimmalex/snake8/tools",
+    "file": "fpktools/repo-upload.c",
+    "arguments": [
+      "gcc",
+      "-fsyntax-only",
+      "-I.",
+      "-std=gnu11",
+      "-D_GNU_SOURCE",
+      "-Wno-error",
+      "fpktools/repo-upload.c"
+    ]
+  }
+]

@@ -124,7 +124,12 @@ sdk_install:
 	sudo cp -ar ${gosROOT_DIR}/usr/share/skinos /usr/share
 	sudo cp -ar ${gosROOT_DIR}/usr/local/lib/* /usr/local/lib
 	sudo sudo ldconfig
-	sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin
+	# tiger7 host install uses /usr/prj and owns /usr/local/bin/{he,daemon}
+	if [ -d /usr/prj ]; then \
+		echo "sdk_install: tiger7 (/usr/prj) detected, skip /usr/local/bin"; \
+	else \
+		sudo cp -ar ${gosROOT_DIR}/usr/local/bin/* /usr/local/bin; \
+	fi
 	if [ -f /usr/share/skinos/agent/gtog ];then \
 		sudo chown root:root /usr/share/skinos/agent/gtog; \
 		sudo chmod u+s /usr/share/skinos/agent/gtog; \

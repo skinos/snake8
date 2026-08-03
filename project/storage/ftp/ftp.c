@@ -205,9 +205,13 @@ boole_t _service( obj_t this, param_t param )
     {
         /* Local system accounts may log in; ACLs narrow paths per <Directory>. */
         string3file( cfgpath, "RootLogin on\n" );
-		/* All NAS-group accounts from auth; each share may grant read/write.
-		 * Expect a valid JSON iterator; NULL would make the inner json_next unsafe. */
+		/* All NAS-group accounts from auth; each share may grant read/write. */
 		userlist = scalls( AUTH_COM, "list", "nas" );
+		if ( userlist <= tpanic )
+		{
+			default_warn( "auth.list[nas] failed; FTP ACL will deny all local users" );
+			userlist = NULL;
+		}
 		share = json_json( cfg, "user");
 		axp = NULL;
 		while( NULL != ( axp = json_next( share, axp ) ) )
@@ -226,6 +230,10 @@ boole_t _service( obj_t this, param_t param )
 			while( NULL != ( uaxp = json_next( userlist, uaxp ) ) )
 	        {
 	            user = axp_name( uaxp );
+				if ( user == NULL || *user == '\0' )
+				{
+					continue;
+				}
 	            /* Per-user override in share["user"][username]; else share default. */
 	            ptr = json_string( permlist, user );
 	            if ( ptr == NULL || *ptr == '\0' )

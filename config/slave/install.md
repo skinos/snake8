@@ -100,9 +100,10 @@ This copies the platform files to:
 
 - `/usr/share/skinos`
 - `/usr/local/lib`
-- `/usr/local/bin`
+- `/usr/local/bin` (skipped when tiger7 is present: `/usr/prj` exists)
 
 and refreshes the shared library cache with `ldconfig`.
+Use `/usr/share/skinos/land/bin/{he,daemon}` (as `setup.sh` does) when `/usr/local/bin` was skipped.
 
 > Note: `make install` is an alias of `make sdk_install`.
 
