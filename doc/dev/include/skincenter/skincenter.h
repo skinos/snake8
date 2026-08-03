@@ -8,6 +8,7 @@
 
 #define HEPORT_NAME "heport"
 #define PPORT_NAME "pport"
+#define NPORT_NAME "nport"
 #define HEPORT_HOSTNAME "HEPORT"
 
 #define USER_DEVICE_DIR        "dev"                 /// DEVPORT_DIR/username/dev/
@@ -32,9 +33,6 @@ extern int control_port;          // 20003(TCP)
 extern int pport_port;            // 20005(TCP)
 extern int pport_dynamic_start;   // 20006(TCP)
 extern int pport_static_start;    // 25000(TCP)
-/* nport接入端口 */
-extern int network_port;          // 20002(UDP)
-extern int nettest_port;          // 20003(UDP)
 
 
 
@@ -81,7 +79,7 @@ talk_t json_hh_execute( const char *macid, talk_t v, int timeout );
 talk_t talk_hh_execute( const char *macid, talk_t helist, int timeout );
 
 /**
- * @brief call heport service control (Unix JSON: list/knock/dump/nport...)
+ * @brief call heport service control (Unix JSON: list/knock/dump)
  * @param[in] cmd control command name
  * @param[in] v argument json (ownership taken)
  * @param[in] timeout timeout in seconds
@@ -97,6 +95,15 @@ talk_t heport_call( const char *cmd, talk_t v, int timeout );
  * @return talk result
  */
 talk_t pport_call( const char *cmd, talk_t v, int timeout );
+
+/**
+ * @brief call nport service control (Unix JSON: network_knock/endpoint_knock/dump/...)
+ * @param[in] cmd control command name
+ * @param[in] v argument json (ownership taken)
+ * @param[in] timeout timeout in seconds
+ * @return talk result
+ */
+talk_t nport_call( const char *cmd, talk_t v, int timeout );
 
 
 

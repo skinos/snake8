@@ -1,85 +1,157 @@
-## agent@net — Network client — one GTOG VPN instance
-Each **`agent@net`**, **`agent@net2`**, … is one mesh VPN membership, usually managed by **`agent@gtog`**. Configuration covers server reachability, VPN addressing, keepalives, optional DNS/routing, and peer updates via **`endpoint` / `branch` / `leaf`**.
+## agent@net — One GTOG WireGuard mesh channel
 
-### Configuration ( `agent@net` )
-**agent@net** is first gtog network
-**agent@net2** is second gtog network
+### Overview
+
+Each **`agent@net`**, **`agent@net2`**, … is one WireGuard mesh channel implemented by the **`gtog`** executable (same binary as **`agent@gtog`**, different object name). There is no separate **`net`** component directory: these objects are slots in the **`agent@gtog`** pool.
+
+- Hold per-channel configuration, WireGuard interface, peers, and the long-running **`service`**
+- Accept topology on this slot via **`endpoint`** / **`branch`** / **`leaf`** (also callable as **`agent@gtog.<api>[ netid, … ]`**)
+- Expose runtime **`state`** / **`status`** and the local endpoint file via **`list`**
+    > Pool limits, object↔`netid` mapping, and **`register`** / **`unregister`** are documented in **`gtog.md`**
+
+
+### Configuration reference ( agent@net )
+
+**`agent@net`** is the first slot; **`agent@net2`** is the second; up to **`agent@gtog:net_max`**.  
+**`register`** writes under **`=cache`** (runtime). **`setup`** uses the normal project config path when no cache file is present.
 
 ```json
+// Attributes introduction 
 {
-    // server connection
-    "server":"gtog network server address",                    // [ string ], domain name or ip address
-                                                                  // if not set, use heclient's server
-    "port":"gtog network server port",                         // [ number ], default 20002
-    "key":"shared key for traffic with the mesh coordinator", // [ string ], product default if omitted
+    "status":"channel service switch",                          // [ "disable","enable" ], checked by agent@net.setup
+                                                                   // "enable": start service
+                                                                   // "disable" or unset: setup returns without starting
 
-    // network identify
-    "netid":"network identify string",                         // [ string ], unique network identifier assigned by server
-    "network":"network address (CIDR format)",                 // [ string ], e.g. "10.0.0.0/24", assigned by server or config
-    "lport":"local WireGuard listen port",                     // [ number ], auto assigned by gtog based on port_start
+    "server":"coordinator address for UDP register/keep",       // [ string ], IPv4 text for inet_pton (no DNS here)
+                                                                   // empty: fall back to agent@heclient.server
+    "port":"coordinator UDP port",                              // [ number ], default 20002
+                                                                   // destination port of central nport/heport hole
+    "listen_port":"local WireGuard and raw UDP listen port",    // [ number ]
+                                                                   // omit → agent@gtog port_start formula (agent@net → port_start, agent@netN → port_start+N-1)
+    "key":"shared key with the coordinator",                    // [ string ], default "NPORT-UDP@ashyelf.com"
+    "extern":"outbound interface before dial",                  // [ string ]: [ "disable","default","ifname@wan",... ]
+                                                                   // empty / unset / "disable" / "default": use default gateway; joint network/online
+                                                                   // "ifname@…": use that iface; joint network/onextern; WAN path → branch-capable
+                                                                   // no IP yet → service exits ttrue (done) until joint → reset → sreset
 
-    // keeplive
-    "keepintval":"keeplive interval in seconds",               // [ number ], default 15
-    "keepfailed":"keeplive max retry count",                   // [ number ], default 4
-    "keeptimeout":"keeplive timeout in seconds",               // [ number ], default 15
+    "netid":"network identify string",                          // [ string ], unique network id
+    "network":"VPN address CIDR",                               // [ string ], e.g. "10.0.1.0/24"
+                                                                   // may also arrive from coordinator UDP 'u' reply
 
-    // interface
-    "mtu":"WireGuard interface MTU",                           // [ number ], optional
+    "keepintval":"keeplive interval in seconds",                // [ number ], default 15 (≥5; may be overridden by 'u' reply
+    "keepfailed":"coordinator/ICMP keep max fail count",        // [ number ], default 4 (≥1)
+    "keeptimeout":"keeplive timeout in seconds",                // [ number ], default 15; clamped to < keepintval
 
-    // DNS (only effective when custom_dns is "enable")
-    "custom_dns":"use custom DNS settings",                    // [ "disable", "enable" ]
-    "dns":"primary DNS server",                                // [ ip address ], optional
-    "dns2":"secondary DNS server",                             // [ ip address ], optional
-    "domain":"DNS search domain",                              // [ string ], optional
+    "mtu":"WireGuard interface MTU",                            // [ number ], optional
 
-    // routing
-    "metric":"route metric value",                             // [ number ], optional
-    "defaultroute":"set as default route",                     // [ "disable", "enable" ]
-    "route_table":                                             // custom route table, only when defaultroute is not "enable"
+    "custom_dns":"use custom DNS on online",                    // [ "disable","enable" ]
+    "dns":"primary DNS server",                                 // [ ip address ], optional, only when custom_dns is enable
+    "dns2":"secondary DNS server",                              // [ ip address ], optional
+    "domain":"DNS search domain",                               // [ string ], optional
+
+    "metric":"route metric",                                    // [ number ], optional
+    "defaultroute":"install default route via mesh",            // [ "disable","enable" ]
+    "route_table":                                              // [ string ]: { json }, used when defaultroute is not enable
     {
-        "route name":
+        "route name":                                           // [ string ]: { json }
         {
-            "target":"destination network or host",            // [ ip address or network ]
-            "mask":"subnet mask"                               // [ mask ], default "255.255.255.255" (host route)
+            "target":"destination host or network",             // [ string ]
+            "mask":"subnet mask"                                // [ string ], default "255.255.255.255"
         }
+        // "...":{ ... }  How many routes show how many properties
     }
 }
 ```
 
-Example, show all the configure
+#### Configuration example
+
+Example, show a typical channel configure
+
 ```shell
 agent@net
 {
-    "port":"20002",                            # server port
-    "netid":"office-vpn",                      # network identifier
-    "network":"10.0.1.0/24",                   # VPN network address
-    "keepintval":"10",                         # keeplive interval 10 seconds
-    "keepfailed":"3",                          # max 3 keeplive failures
-    "keeptimeout":"35"                         # keeplive timeout 35 seconds
+    "status":"enable",                          # allow setup to start service
+    "server":"203.0.113.10",                    # coordinator IPv4
+    "port":"20002",                             # coordinator UDP port
+    "listen_port":"10004",                      # local WireGuard listen port
+    "netid":"office-vpn",                       # network identifier
+    "network":"10.0.1.0/24",                    # VPN CIDR
+    "keepintval":"10",                          # keep every 10 seconds
+    "keepfailed":"3",                           # exit after 3 keep failures
+    "keeptimeout":"8",                          # keep timeout (< keepintval)
+    "extern":"default",                         # wait for default gateway
+    "mtu":"1420"                                # WireGuard MTU
 }
 ```
 
-Example, configure with custom DNS and default route
+#### Configuration settings example
+
+Example, set the coordinator UDP port
+
 ```shell
-agent@net={"port":"20002","netid":"office-vpn","network":"10.0.1.0/24","custom_dns":"enable","dns":"8.8.8.8","dns2":"8.8.4.4","defaultroute":"enable","mtu":"1420"}
+agent@net:port=20002
 ttrue
 ```
 
-Example, configure with custom route table
+Example, set the local listen port
+
 ```shell
-agent@net={"port":"20002","netid":"office-vpn","network":"10.0.1.0/24","route_table":{"r1":{"target":"192.168.10.0","mask":"255.255.255.0"},"r2":{"target":"172.16.0.0","mask":"255.255.0.0"}}}
+agent@net:listen_port=10004
 ttrue
 ```
 
-### Component API
-**Directly callable** APIs from HE / eline / HTTP `/he`.
-**agent@net** is first gtog network
-**agent@net2** is second gtog network
+Example, merge set ports and network id( include "port" "listen_port" "netid" )
 
-+ `setup[]` **setup this network client, start the service**
-    when called on the network object (agent@net), start the background service process for this network
-    - succeed return ttrue
+```shell
+agent@net|{"port":"20002","listen_port":"10004","netid":"office-vpn"}
+ttrue
+```
+
+Example, merge set custom DNS and default route( include "custom_dns" "dns" "dns2" "defaultroute" )
+
+```shell
+agent@net|{"custom_dns":"enable","dns":"8.8.8.8","dns2":"8.8.4.4","defaultroute":"enable"}
+ttrue
+```
+
+
+### Concepts
+
+**Port fields**
+
+| Name | Scope | Meaning |
+|------|-------|---------|
+| **`port`** | channel config / reg | Coordinator (server) UDP port; default **20002** |
+| **`listen_port`** | channel config / reg | Local WireGuard listen and raw UDP source port; default **`port_start`** formula |
+| **`port`** in endpoint / branch / leaf JSON | peer map | That peer’s public internet UDP port (not the channel config **`port`**) |
+| **`listen_port`** in center endpoint / HE | heport network DB | Same meaning as channel **`listen_port`**; pushed via **`register[ netid, {listen_port} ]`** when set |
+
+**Lifecycle axes** (register on the channel; see **`gtog.md`** for full keep and topology rules):
+
+| Field | Values |
+|-------|--------|
+| **`phase`** | `0=init`, `1=server_dial`, `2=run` (includes waiting for topology; legacy alias `wait_mesh`), `3=exit` |
+| **`role`** | `0=none`, `1=master`, `2=branch`, `3=leaf` |
+| **`net_state`** | `0=unknown`, `1=no_master`, `2=has_master` |
+
+**NAT / peer class in endpoint JSON**
+
+| **`nattype`** | Meaning |
+|---------------|---------|
+| `1` (FREE) | Relay-capable; may become master/branch |
+| `2` or omitted on leaf push | LIMIT leaf; connects to FREE peers; extend routes via master |
+
+LIMIT peers are not wired to each other; traffic between leaves goes through the master (or other programmed FREE peers).
+
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **start this channel’s service when status is enable**
     - failed return tfalse
+    - succeed return ttrue
+    - Persistent slots are usually scheduled by **`agent@gtog.setup`**; runtime slots by **`agent@gtog.register`**
 
     Example, setup the first network
     ```shell
@@ -87,10 +159,10 @@ ttrue
     ttrue
     ```
 
-+ `shut[]` **shutdown this network client**
-    call network offline, stop the background service process, and bring down the WireGuard interface
-    - succeed return ttrue
++ `shut[]` **stop this channel**
+    - Unregister network joints, offline, stop **`service`**, bring the WireGuard interface down
     - failed return tfalse
+    - succeed return ttrue
 
     Example, shutdown the first network
     ```shell
@@ -98,52 +170,99 @@ ttrue
     ttrue
     ```
 
-+ `status[]` **get the network client current status and details**
-    - failed return NULL
-    - succeed return json to describes detailed status information
++ `reset[ event, detail ]` **restart channel service on WAN/gateway change (joint)**
+    - Registered by **`service`** as **`network/online`** (default gateway) or **`network/onextern`** (named **`extern`**)
+    - When the matching event fires, **`sreset`** the channel service so **`listen_ip`** / raw source are re-resolved
+    - event ----- [ string ], e.g. `"network/online"`
+    - detail ----- [ json ], must include **`ifname`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, joint callback after default route is up
+    ```shell
+    agent@net.reset[ "network/online", {"ifname":"ifname@wan"} ]
+    ttrue
+    ```
+
++ `online[ network information ]` **apply online DNS, routes, MASQUERADE, and MTU**
+    - Invoked when **`network@frame.online`** publishes this channel
+    - network information ----- [ json ]
     ```json
-    // Attributes introduction of talk by the API return
     {
-        "status":"current status",             // [ "uping", "down", "up", "failed", "block" ]
-                                                  // "uping" starting; "down" stopped; "up" healthy; "failed"/"block" keepalive problems
-        "delay":"keeplive round-trip delay",   // [ number ], in milliseconds, only when status is "up"
-        "ip":"local VPN ip address",           // [ ip address ], only when interface is up
-        "mask":"VPN netmask",                  // [ mask ], only when interface is up
-        "dstip":"destination ip address",      // [ ip address ], only when point-to-point
-        "livetime":"connection live time",      // [ string ], human readable, e.g. "1 hours 30 minutes"
-        "rx_bytes":"total received bytes",     // [ number ]
-        "rx_packets":"total received packets", // [ number ]
-        "tx_bytes":"total sent bytes",         // [ number ]
-        "tx_packets":"total sent packets",     // [ number ]
-        "server":"gtog server address",        // [ string ]
-        "pref":"self preference value",        // [ number ]
-        "mode":"current node mode",            // [ number ] 1=no coordinator yet, 2=leaf, 3=branch, 4=this device is coordinator
-        "mip":"master VPN ip address",         // [ ip address ], current master's VPN ip
-        "mmacid":"master mac identify",        // [ string ], current master's macid
-        "mpref":"master preference value",     // [ number ], current master's pref
-        "tid":"route table id"                 // [ number ], policy routing table id
+        "ifname":"network object name",             // [ string ], e.g. "agent@net"
+        "netdev":"WireGuard device name",           // [ string ]
+        "gw":"gateway VPN ip",                      // [ ip address ], optional
+        "dns":"primary DNS",                        // [ ip address ], optional
+        "dns2":"secondary DNS",                     // [ ip address ], optional
+        "domain":"DNS search domain",               // [ string ], optional
+        "masq":"enable NAT masquerade"              // [ string ], optional
+    }
+    ```
+    - failed return tfalse
+    - succeed return ttrue
+
++ `offline[]` **clear online side effects**
+    - failed return tfalse
+    - succeed return ttrue
+
+
+#### Query APIs
+
++ `state[]` **get this channel runtime status and details**
+    - Alias: **`status[]`**
+    - When **`phase >= run`** (legacy name **`wait_mesh`**) and the service is running, prefer live unix query; otherwise register / **`.ol`** snapshot
+    - failed return NULL
+    - succeed return [ json ], detailed status
+    ```json
+    {
+        "status":"link status",                     // [ string ]: [ "uping", "down", "up", "failed", "block" ]
+                                                       // "uping": service up, not fully online (or master_delay < 0 while service still running)
+                                                       // "down": service stopped / interface down
+                                                       // "up": interface up and master_delay > 0
+                                                       // "failed": master_delay < 0 and service not running
+                                                       // "block": master_delay == 0
+        "delay":"keeplive RTT in milliseconds",     // [ number ], when status is up
+        "ip":"local VPN ip",                        // [ ip address ], when interface is up
+        "mask":"VPN netmask",                       // [ string ], when interface is up
+        "dstip":"point-to-point peer ip",           // [ ip address ], optional
+        "livetime":"human-readable uptime",         // [ string ], optional
+        "rx_bytes":"received bytes",                // [ string ]
+        "rx_packets":"received packets",            // [ string ]
+        "tx_bytes":"sent bytes",                    // [ string ]
+        "tx_packets":"sent packets",                // [ string ]
+        "server":"coordinator address in use",      // [ string ], optional
+        "pref":"self preference",                   // [ number ], optional
+        "role":"mesh role",                         // [ number ], 0=none, 1=master, 2=branch, 3=leaf
+        "net_state":"master presence",              // [ number ], 0=unknown, 1=no_master, 2=has_master
+        "phase":"service lifecycle phase",          // [ number ], 0=init, 1=server_dial, 2=run, 3=exit
+        "mip":"master VPN ip",                      // [ ip address ], optional
+        "mmacid":"master mac identify",             // [ string ], optional
+        "mpref":"master preference",                // [ number ], optional
+        "tid":"policy route table id"               // [ number ], optional
     }
     ```
 
-    Example, get status when connected as leaf node
+    Example, get status when connected as leaf
     ```shell
     agent@net.status
     {
-        "status":"up",                            # connected and keeplive ok
-        "delay":"45",                             # 45ms round-trip to master
-        "ip":"10.0.1.3",                          # local VPN ip
-        "mask":"255.255.255.0",                   # VPN netmask
-        "livetime":"2 hours 15 minutes",          # connection live time
-        "rx_bytes":"1048576",                     # 1MB received
+        "status":"up",                              # keeplive ok
+        "delay":"45",                               # 45 ms to master
+        "ip":"10.0.1.3",
+        "mask":"255.255.255.0",
+        "livetime":"2 hours 15 minutes",
+        "rx_bytes":"1048576",
         "rx_packets":"1024",
-        "tx_bytes":"524288",                      # 512KB sent
+        "tx_bytes":"524288",
         "tx_packets":"512",
-        "server":"cls.ashyelf.com",               # gtog server
-        "pref":"50",                              # self preference
-        "mode":"2",                               # leaf mode
-        "mip":"10.0.1.1",                         # master VPN ip
-        "mmacid":"001122334455",                  # master macid
-        "mpref":"100"                             # master preference
+        "server":"203.0.113.10",
+        "pref":"50",
+        "role":"3",                                 # leaf
+        "net_state":"2",                            # has_master
+        "phase":"2",                                # run
+        "mip":"10.0.1.1",
+        "mmacid":"001122334455",
+        "mpref":"100"
     }
     ```
 
@@ -151,7 +270,7 @@ ttrue
     ```shell
     agent@net.status
     {
-        "status":"uping"                          # service running, connecting
+        "status":"uping"                            # service running, not fully online
     }
     ```
 
@@ -159,48 +278,28 @@ ttrue
     ```shell
     agent@net.status
     {
-        "status":"down"                           # service is not running
+        "status":"down"                             # service not running
     }
     ```
 
-    Example, get status as master node
-    ```shell
-    agent@net.status
-    {
-        "status":"up",
-        "delay":"30",
-        "ip":"10.0.1.1",
-        "mask":"255.255.255.0",
-        "livetime":"5 hours 10 minutes",
-        "rx_bytes":"10485760",
-        "rx_packets":"10240",
-        "tx_bytes":"5242880",
-        "tx_packets":"5120",
-        "server":"cls.ashyelf.com",
-        "pref":"100",
-        "mode":"4"                                # master mode, no master info (self is master)
-    }
-    ```
-
-+ `list[]` **list all endpoints of this network**
-    return the full endpoint list stored in the endpoint file for this network
++ `list[]` **list endpoints stored for this channel**
+    - Returns **`%s.endpoint`** JSON for this object
+    - On **`agent@gtog`**, **`list[]`** lists mapped channels instead (see **`gtog.md`**)
     - failed return NULL
-    - succeed return json with all endpoint information
+    - succeed return [ json ], endpoint map keyed by macid
     ```json
-    // Attributes introduction of json that the API return
     {
-        "endpoint mac identify":
+        "endpoint mac identify":                    // [ string ]: { json }
         {
-            "point":"endpoint VPN ip address",         // [ ip address ]
-            "extend":"endpoint local network",         // [ network address ]
-            "pubkey":"WireGuard public key",           // [ string ]
-            "nattype":"NAT type",                      // [ "1", "2" ], influences relay vs leaf-only role
-            "pref":"coordinator preference",           // [ number ], higher = stronger candidate
-            "ip":"public internet ip address",         // [ ip address ]
-            "port":"public internet port",             // [ number ]
-            "macid":"device mac identify"              // [ string ]
+            "point":"VPN tunnel ip",                // [ ip address ]
+            "extend":"local networks via peer",     // [ string ], optional
+            "pubkey":"WireGuard public key",        // [ string ]
+            "nattype":"NAT class",                  // [ number ]: [ 1, 2 ], optional on some leaf entries
+            "pref":"master preference",             // [ number ], optional
+            "ip":"public internet ip",              // [ ip address ], optional
+            "port":"public internet port"           // [ number ], optional
         }
-        // ... more endpoints
+        // "...":{ ... }  How many endpoints show how many properties
     }
     ```
 
@@ -216,8 +315,7 @@ ttrue
             "nattype":"1",
             "pref":"100",
             "ip":"1.2.3.4",
-            "port":"10004",
-            "macid":"001122334455"
+            "port":"10004"
         },
         "aabbccddeeff":
         {
@@ -225,139 +323,84 @@ ttrue
             "extend":"192.168.2.0/24",
             "pubkey":"ghi789jkl012...",
             "nattype":"2",
-            "pref":"50",
             "ip":"5.6.7.8",
-            "port":"10004",
-            "macid":"aabbccddeeff"
+            "port":"10004"
         }
     }
     ```
 
-+ `endpoint[ {endpoint list} ]` **update the full endpoint list for this network**
-    replace the entire endpoint list, reconfigure WireGuard peers, determine node role (master/branch/leaf), and update master information
-    - {endpoint list} ------ json
+
+#### Control APIs
+
++ `endpoint[ endpoint list ]` **replace the full endpoint map for this channel**
+    - endpoint list -------- [ json ], map keyed by device macid
     ```json
-    // {endpoint list} attributes introduction
     {
-        "endpoint mac identify":
+        "endpoint mac identify":                    // [ string ]: { json }
         {
-            "ip":"device public ip address",              // [ ip address ]
-            "port":"device public port",                  // [ number ]
-            "pubkey":"device WireGuard public key",       // [ string ]
-            "nattype":"device NAT type",                  // [ "1", "2" ]
-            "pref":"coordinator preference",              // [ number ]
-
-            "point":"endpoint VPN ip address",            // [ ip address ]
-            "extend":"endpoint local network"             // [ network address ]
+            "ip":"public internet ip",              // [ ip address ]
+            "port":"public internet port",          // [ number ]
+            "pubkey":"WireGuard public key",        // [ string ]
+            "nattype":"NAT class",                  // [ number ]: [ 1, 2 ], 1=FREE, 2=LIMIT
+            "pref":"master preference",             // [ number ]
+            "point":"VPN tunnel ip",                // [ ip address ]
+            "extend":"local networks via this peer" // [ string ], optional
         }
-        // ... more endpoints
+        // "...":{ ... }  How many endpoints show how many properties
     }
     ```
-
-    After the list changes, each device picks **master / branch / leaf** from **`nattype`**, **`pref`**, and peer visibility (same rules as **`agent@gtog.endpoint`**).
+    - failed return tfalse
+    - succeed return ttrue
+    - Self macid must be present; removes WireGuard peers absent from the map; sets **`role`** / **`net_state`** / **`master_*`**; unix **`reload`**
 
     Example, update endpoint list
     ```shell
-    agent@net.endpoint[{"001122334455":{"ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"},"aabbccddeeff":{"ip":"5.6.7.8","port":"10004","pubkey":"def...","nattype":"2","pref":"50","point":"10.0.1.2"}}]
+    agent@net.endpoint[ {"001122334455":{"ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"},"aabbccddeeff":{"ip":"5.6.7.8","port":"10004","pubkey":"def...","nattype":"2","pref":"50","point":"10.0.1.2"}} ]
     ttrue
     ```
 
-+ `branch[ {branch information} ]` **add or update a branch (relay) node**
-    Adds or refreshes a relay-capable peer; coordinator role may move to the stronger **`pref`** when topology allows.
-
-    - {branch information} ------ json
-    ```json
-    // {branch information} attributes introduction
-    {
-        "macid":"device mac identify",                    // [ string ]
-        "ip":"device public ip address",                  // [ ip address ]
-        "port":"device public port",                      // [ number ]
-        "pubkey":"device WireGuard public key",           // [ string ]
-        "nattype":"device NAT type",                      // [ "1", "2" ]
-        "pref":"device master preference",                // [ number ]
-
-        "point":"endpoint VPN ip address",                // [ ip address ]
-        "extend":"endpoint local network"                 // [ network address ]
-    }
-    ```
-
-    Example, add a branch node
-    ```shell
-    agent@net.branch[{"macid":"001122334455","ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"}]
-    ttrue
-    ```
-
-+ `leaf[ {leaf information} ]` **add or update a leaf node**
-    Adds or refreshes a non-relay peer; routing follows the current coordinator path.
-
-    - {leaf information} ------ json
-    ```json
-    // {leaf information} attributes introduction
-    {
-        "macid":"device mac identify",                    // [ string ]
-        "ip":"device public ip address",                  // [ ip address ]
-        "port":"device public port",                      // [ number ]
-        "pubkey":"device WireGuard public key",           // [ string ]
-
-        "point":"endpoint VPN ip address",                // [ ip address ]
-        "extend":"endpoint local network"                 // [ network address ]
-    }
-    ```
-
-    Example, add a leaf node
-    ```shell
-    agent@net.leaf[{"macid":"aabbccddeeff","ip":"5.6.7.8","port":"10004","pubkey":"def...","point":"10.0.1.2","extend":"192.168.2.0/24"}]
-    ttrue
-    ```
-
-+ `online[ {network information} ]` **internal — link came up**
-    Applies DNS, policy routes, masquerade, and MTU from configuration and the supplied snapshot.
-    - {network information} ------ json
++ `branch[ branch information ]` **add or update one FREE peer on this channel**
+    - branch information ------- [ json ]
     ```json
     {
-        "ifname":"network object name",        // [ string ], e.g. "agent@net"
-        "netdev":"WireGuard device name",      // [ string ], e.g. "wg0"
-        "gw":"gateway ip address",             // [ ip address ], master's VPN ip
-        "dns":"primary DNS server",            // [ ip address ], optional, only when custom_dns is "enable"
-        "dns2":"secondary DNS server",         // [ ip address ], optional
-        "domain":"DNS search domain",          // [ string ], optional
-        "masq":"enable NAT masquerade"         // [ "enable" ], set when no extend network configured
+        "macid":"device mac identify",              // [ string ]
+        "ip":"public internet ip",                  // [ ip address ]
+        "port":"public internet port",              // [ number ]
+        "pubkey":"WireGuard public key",            // [ string ]
+        "nattype":"NAT class",                      // [ number ], usually 1
+        "pref":"master preference",                 // [ number ]
+        "point":"VPN tunnel ip",                    // [ ip address ]
+        "extend":"local networks via this peer"     // [ string ], optional
     }
     ```
+    - failed return tfalse
     - succeed return ttrue
+    - Requires **`.endpoint`** and **`role != none`**; may move master when **`pref`** is higher; does not remove other peers
 
-+ `offline[]` **internal — link went down**
-    Reverts **`online[]`** side effects (DNS, NAT/MSS tweaks, etc.).
+    Example, add a branch peer
+    ```shell
+    agent@net.branch[ {"macid":"001122334455","ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"} ]
+    ttrue
+    ```
+
++ `leaf[ leaf information ]` **add or update one LIMIT peer on this channel**
+    - leaf information ------- [ json ]
+    ```json
+    {
+        "macid":"device mac identify",              // [ string ]
+        "ip":"public internet ip",                  // [ ip address ], optional
+        "port":"public internet port",              // [ number ], optional
+        "pubkey":"WireGuard public key",            // [ string ]
+        "point":"VPN tunnel ip",                    // [ ip address ]
+        "extend":"local networks via this peer"     // [ string ], optional
+    }
+    ```
+    - failed return tfalse
     - succeed return ttrue
+    - Requires **`.endpoint`** and **`role != none`**; does not re-elect master
 
-### Lifecycle API
-+ `setup[]` / `shut[]` — **when implemented** for **`agent@net`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_agent_net(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "agent@net", "status") == NULL)
-        return -1;
-    return ssets_string("agent@net", "enable", "status") ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* e.g. scall("agent@net", "list", NULL); talk_free if JSON */
-```
+    Example, add a leaf peer
+    ```shell
+    agent@net.leaf[ {"macid":"aabbccddeeff","ip":"5.6.7.8","port":"10004","pubkey":"def...","point":"10.0.1.2","extend":"192.168.2.0/24"} ]
+    ttrue
+    ```

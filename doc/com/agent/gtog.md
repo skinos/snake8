@@ -1,63 +1,109 @@
-## agent@gtog — Gateway to gateway (GTOG) — mesh VPN
-Manages multiple **WireGuard**-based mesh VPNs (**`agent@net`**, **`agent@net2`**, …): register networks, push endpoint lists, and add **branch** (relay-capable) or **leaf** peers. Topology and reachability follow each device’s NAT characteristics and configured preference.
+## agent@gtog — Gateway-to-gateway WireGuard mesh manager
 
-### Configuration ( `agent@gtog` )
+### Overview
+
+Manage a pool of WireGuard mesh VPN channels (**`agent@net`**, **`agent@net2`**, …). **`agent@gtog`** owns pool limits, object↔`netid` mapping, and runtime **`register`** / **`unregister`**. Each channel object runs the same **`gtog`** binary and holds per-network configuration, peers, and the long-running **`service`**.
+
+- Bring up persistent channels from on-disk config at boot (**`setup`** / **`shut`**)
+- Create or destroy runtime channels by **`netid`** (**`register`** / **`unregister`**, config under **`=cache`**)
+- Accept mesh topology from the coordinator via heclient: **`endpoint`** (full map), **`branch`** / **`leaf`** (incremental peer)
+- Coordinate with **`center@nport`** over UDP (register / NAT / keeplive / sync); one network **`seq`** on pushes and `k;netid;seq;`
+    > Per-channel options (`server`, `netid`, keepalive, DNS, routes, …) are documented in **`net.md`**
+
+
+### Configuration reference ( agent@gtog )
+
 ```json
+// Attributes introduction 
 {
-    "net_max":"maximum number of gtog networks",           // [ number ], product default
-    "port_start":"starting local UDP port for networks"    // [ number ], product default; successive nets use incrementing ports
+    "net_max":"maximum number of WireGuard channel slots",      // [ number ], default 10
+    "port_start":"base local WireGuard listen_port"             // [ number ], default 10004
+                                                                   // agent@net uses port_start; agent@netN uses port_start+N-1 when channel listen_port is unset
 }
 ```
 
+#### Configuration example
+
 Example, show all the configure
+
 ```shell
 agent@gtog
 {
-    "net_max":"10",                            # support up to 10 networks
-    "port_start":"10004"                       # first network uses port 10004
+    "net_max":"10",                         # up to 10 channel slots
+    "port_start":"10004"                    # first channel listen_port when unset
 }
 ```
 
+#### Configuration settings example
+
 Example, set max networks to 5
+
 ```shell
 agent@gtog:net_max=5
 ttrue
 ```
 
-#### Network Configuration( agent@net )
-Each registered network has its own configuration object (agent@net for the first, agent@net2 for the second, etc.)
+Example, merge set pool limits( include "net_max" "port_start" )
 
-> **Full field list:** `server`, `extern`, `key`, `lport`, DNS, routing, `mtu`, etc. are documented in **`net.md`** (Network Client). The table below is a minimal summary; use **`net.md`** as the authoritative reference for per-network options.
-
-```json
-{
-    "port":"network server port",                              // [ number ]
-    "netid":"network identify string",                         // [ string ], unique network identifier
-    "network":"network address (CIDR format)",                 // [ string ], e.g. "10.0.0.0/24"
-    "keepintval":"keeplive interval to master/server",         // [ number ], the unit is second
-    "keepfailed":"keeplive max failed count",                  // [ number ]
-    "keeptimeout":"keeplive timeout to master/server"          // [ number ], the unit is second
-}
-```
-
-Example, show network configure
 ```shell
-agent@net
-{
-    "port":"10000",
-    "netid":"office-vpn",
-    "network":"10.0.1.0/24",
-    "keepintval":"10",
-    "keepfailed":"3",
-    "keeptimeout":"35"
-}
+agent@gtog|{"net_max":"8","port_start":"10004"}
+ttrue
 ```
 
-### Component API
-+ `setup[]` **setup all gtog network infrastructure**
-    Reads **`agent@gtog`** limits, wires each registered **`agent@net*`** into **`network@frame`**, and hooks **init** / **`network/online`** so instances can start in order.
-    - succeed return ttrue
+
+### Concepts
+
+**Channel object pool**
+
+All channels share names **`agent@net`**, **`agent@net2`**, … up to **`net_max`**. Callers work with **`netid`** ↔ **`agent@net*`**; they need not care whether the slot came from product config or runtime cache.
+
+| Path | APIs | Config store | Lifetime |
+|------|------|--------------|----------|
+| Boot / product | **`setup[]`** / **`shut[]`** on **`agent@gtog`** | Normal project config | Survives reboot; brought up again by **`agent@gtog.setup`** |
+| Runtime | **`register[]`** / **`unregister[]`** | **`register`** sets **`=cache`** (under `/tmp`); **`unregister`** uses **`=nocache`** and drops the cache | Gone after reboot until **`register`** runs again |
+
+- **`setup`**: store **`net_max`** / **`port_start`** in register; for each slot that already has config, map object→`netid`, publish config **`port`** (coordinator) and **`listen_port`** (local; or **`port_start`** formula) into channel register, register with **`network@frame`**, schedule **`…setup`** on init delay.
+- **`register`**: same **`netid`** reuses the same object; a new **`netid`** takes a free slot (skip map-occupied and slots that already have on-disk config), then start/reset **`service`**.
+
+**Service phase, role, and net_state**
+
+Each channel **`service`** uses three axes (also returned by **`list`** / **`state`**):
+
+| Field | Meaning | Values |
+|-------|---------|--------|
+| **`phase`** | Service lifecycle | `0=init`, `1=server_dial`, `2=run` (includes waiting for topology), `3=exit` (legacy value `2=wait_mesh` may still appear until fully collapsed) |
+| **`role`** | Mesh role of this device | `0=none`, `1=master`, `2=branch`, `3=leaf` |
+| **`net_state`** | Whether a usable master exists | `0=unknown`, `1=no_master`, `2=has_master` |
+| **`seq`** | Last applied topology version from coordinator | matches `seq` on `endpoint`/`branch`/`leaf` and on UDP `k;netid;seq;` |
+
+Phases: **Init** (WireGuard iface) → **ServerDial** (UDP register → `u;` network JSON) → **Run** (UDP `b`/`l` until role+endpoint ready, then keeplive + **`network@frame.online`**) → **Exit**. Peers return only after **`endpoint`** / **`branch`** / **`leaf`**. Channel outbound IP / joint retry: **`agent@net*.reset`** in **`net.md`**.
+
+**Keepalive (Run)**
+
+| Target | Who | Purpose |
+|--------|-----|---------|
+| UDP `'k'` to **`center@nport`** | **every** online role (master / branch / leaf) | hole + receive `k;netid;seq;` |
+| ICMP to master VPN IP | branch / leaf with master | tunnel quality |
+
+If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`** periods, device sends UDP **`s;netid;local_seq;`** so nport pushes a full **`endpoint`**. Timers clamp as before (`keepintval` ≥ 5, …).
+
+**Topology APIs** (from coordinator over heclient)
+
+- **`endpoint`**: full replace + optional **`seq`**; program WG; elect role; store **`%s.endpoint`**; unix **`reload`**.
+- **`branch`** / **`leaf`**: incremental add/update + optional **`seq`** when **`role != none`**; full **`endpoint`** still required to drop peers.
+- Dual call style: **`agent@gtog.<api>[ netid, … ]`** or **`agent@net*.<api>[ … ]`**.
+
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **bring up the gtog pool or one channel service**
+    - On **`agent@gtog`**: apply **`net_max`** / **`port_start`**, map slots that already have config, register them with **`network@frame`**, schedule each **`agent@net*.setup`** on init delay
+    - On **`agent@net*`**: start that channel’s **`service`** when channel **`status`** is **`enable`**
     - failed return tfalse
+    - succeed return ttrue
+    - Scheduled by FPK init (**`manage`**: **`agent@gtog.setup`**)
 
     Example, setup the gtog infrastructure
     ```shell
@@ -65,10 +111,11 @@ agent@net
     ttrue
     ```
 
-+ `shut[]` **shutdown all gtog network clients**
-    Stops each **`agent@net*`** service and removes **`network@frame`** / event hooks installed by **`setup[]`**.
-    - succeed return ttrue
++ `shut[]` **tear down the gtog pool or one channel**
+    - On **`agent@gtog`**: clear object→`netid` map; **`shut`** each present channel; unregister from **`network@frame`**
+    - On **`agent@net*`**: unregister network joints, offline, stop **`service`**, bring the WireGuard interface down
     - failed return tfalse
+    - succeed return ttrue
 
     Example, shutdown all gtog networks
     ```shell
@@ -76,217 +123,169 @@ agent@net
     ttrue
     ```
 
-+ `register[ netid, {network configure} ]` **register a new gtog network**
-    register a new network, assign it to the next available network slot, save configuration, and register with the system
-    - netid -------------------- [ string ], network identifier
-    - {network configure} ------ json
-    ```json
-    // Attributes introduction of json of {network configure}
-    {
-        "port":"network server port",                         // [ number ]
-        "netid":"network identify",                           // [ string ]
-        "network":"network address",                          // [ string ], e.g. "10.0.1.0/24"
-        "keepintval":"keeplive to master/server interval",    // [ number ]
-        "keepfailed":"keeplive to master/server failed count",// [ number ]
-        "keeptimeout":"keeplive to master/server timeout"     // [ number ]
-    }
-    ```
-    - succeed return ttrue
-    - failed return tfalse
 
-    Example, register a new network
-    ```shell
-    agent@gtog.register[office-vpn,{"port":"10000","netid":"office-vpn","network":"10.0.1.0/24","keepintval":"10","keepfailed":"3","keeptimeout":"35"}]
-    ttrue
-    ```
+#### Query APIs
 
-+ `unregister[ netid ]` **unregister a gtog network**
-    find and remove the network with the given netid, stop its service, bring down the interface, and clean up configuration
-    - netid ---- [ string ], network identifier to remove
-    - succeed return ttrue
-    - failed return tfalse
-
-    Example, unregister a network
-    ```shell
-    agent@gtog.unregister[office-vpn]
-    ttrue
-    ```
-
-+ `list[]` **list all registered gtog networks and their status**
++ `list[]` **list mapped channels (on agent@gtog) or the endpoint file (on agent@net*)**
+    - On **`agent@gtog`**: slots that currently have an object→`netid` entry
+    - On **`agent@net*`**: JSON of **`%s.endpoint`** for that channel (see **`net.md`**)
     - failed return NULL
-    - succeed return json with all network information
+    - succeed return [ json ], channel map or endpoint list
     ```json
-    // Attributes introduction of talk by the API return
     {
-        "network object name":
+        "network object name":                      // [ string ]: { json }, e.g. "agent@net"
         {
-            "netid":"network identifier",              // [ string ]
-            "netdev":"network device name",            // [ string ], WireGuard interface name
-            "lport":"local listen port",               // [ number ]
-            "master":"current master endpoint",        // [ string ], "ip:port" of current master
-            "pref":"current master preference value"   // [ number ]
+            "netid":"network identifier",           // [ string ]
+            "netdev":"WireGuard interface name",    // [ string ]
+            "port":"coordinator UDP port",          // [ number ]
+            "listen_port":"local WireGuard listen", // [ number ]
+            "role":"mesh role",                     // [ number ], 0=none, 1=master, 2=branch, 3=leaf
+            "net_state":"master presence",          // [ number ], 0=unknown, 1=no_master, 2=has_master
+            "phase":"service lifecycle phase",      // [ number ], 0=init, 1=server_dial, 2=run, 3=exit
+            "pref":"self preference value"          // [ number ]
         }
-        // ... more networks
+        // "...":{ ... }  How many mapped channels show how many properties
     }
     ```
 
-    Example, list all networks
+    Example, list all mapped networks
     ```shell
     agent@gtog.list
     {
         "agent@net":
         {
             "netid":"office-vpn",
-            "netdev":"wg0",
-            "lport":"10004",
-            "master":"1.2.3.4:10000",
-            "pref":"100"
-        },
-        "agent@net2":
-        {
-            "netid":"home-vpn",
-            "netdev":"wg1",
-            "lport":"10005",
-            "master":"5.6.7.8:10000",
+            "netdev":"net",
+            "port":"20002",
+            "listen_port":"10004",
+            "role":"2",
+            "net_state":"2",
+            "phase":"2",
             "pref":"50"
         }
     }
     ```
 
-+ `endpoint[ netid, {endpoint list} ]` **update the full endpoint list for a network**
-    replace the entire endpoint list for the specified network. The local device uses this to know all peers in the network, elect a master, and establish connections
-    - netid ---------------- [ string ], network identifier
-    - {endpoint list} ------ json
-    ```json
-    // {endpoint list} attributes introduction
-    {
-        "endpoint mac identify":
-        {
-            "ip":"device public ip address",              // [ ip address ]
-            "port":"device public port",                  // [ number ]
-            "pubkey":"device WireGuard public key",       // [ string ]
-            "nattype":"device NAT type",                  // [ "1", "2" ], affects whether the node may act as relay vs leaf-only
-            "pref":"master preference value",             // [ number ], higher = stronger candidate to coordinate the mesh
+#### Control APIs
 
-            "point":"endpoint VPN ip address",            // [ ip address ], assigned IP within the VPN network
-            "extend":"endpoint local network"             // [ string ], local network to route through this endpoint
-        }
-        // ... more endpoints
-    }
-    ```
-
-    Example, update endpoint list
-    ```shell
-    agent@gtog.endpoint[office-vpn,{"001122334455":{"ip":"1.2.3.4","port":"10004","pubkey":"abc123...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"},"aabbccddeeff":{"ip":"5.6.7.8","port":"10004","pubkey":"def456...","nattype":"2","pref":"50","point":"10.0.1.2","extend":"192.168.2.0/24"}}]
-    ttrue
-    ```
-
-+ `branch[ netid, {branch information} ]` **add a branch (relay) node to the network**
-    Registers a relay-capable peer this device should use when **`nattype`** allows branch topology.
++ `register[ netid, configure ]` **bind a netid to a free or existing channel and start service**
     - netid -------------------- [ string ], network identifier
-    - {branch information} ----- json
+    - configure ---------------- [ json ], optional, merged into channel cache config (see **`net.md`**)
+    - Keys in **`configure`** overlay the existing cache; omitted keys are kept. Center **`register`** HE may push only **`listen_port`**.
+    - If the channel service is already running with the same **`port`** / **`listen_port`** and merged config is unchanged (or **`configure`** omitted), keep the mesh without restart; a changed config is applied and the service is reset
     ```json
-    // {branch information} attributes introduction
     {
-        "macid":"device mac identify",                    // [ string ]
-        "ip":"device public ip address",                  // [ ip address ]
-        "port":"device public port",                      // [ number ]
-        "pubkey":"device WireGuard public key",           // [ string ]
-        "nattype":"device NAT type",                      // [ "1", "2" ]
-        "pref":"master preference value",                 // [ number ]
-        "point":"endpoint VPN ip address",                // [ ip address ]
-        "extend":"endpoint local network"                 // [ string ]
+        "server":"coordinator address",             // [ string ], optional
+        "port":"coordinator UDP port",              // [ number ], optional, default 20002
+        "listen_port":"local WireGuard listen",     // [ number ], optional, default port_start formula
+        "netid":"network identify",                 // [ string ], optional, overwritten by argument netid
+        "network":"VPN CIDR",                       // [ string ], optional
+        "keepintval":"keeplive interval",           // [ number ], optional
+        "keepfailed":"keeplive fail count",         // [ number ], optional
+        "keeptimeout":"keeplive timeout"            // [ number ], optional
     }
     ```
+    - failed return tfalse
+    - succeed return ttrue
+    - Sets channel **`=cache`**, maps object→`netid`, registers **`network@frame`**, **`sstart`** / **`sreset`** **`service`**
 
-    Example, add a branch node
+    Example, register a network with minimal options
     ```shell
-    agent@gtog.branch[office-vpn,{"macid":"001122334455","ip":"1.2.3.4","port":"10004","pubkey":"abc123...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"}]
+    agent@gtog.register[ office-vpn, {"port":"20002","network":"10.0.1.0/24"} ]
+    ttrue
+    ```
+    Example, center push of local listen port only
+    ```shell
+    agent@gtog.register[ office-vpn, {"listen_port":10005} ]
     ttrue
     ```
 
-+ `leaf[ netid, {leaf information} ]` **add a leaf node to the network**
-    Registers a peer that participates as **leaf** (no relay role for that endpoint).
++ `unregister[ netid ]` **stop and unbind a runtime channel by netid**
+    - netid ---- [ string ], network identifier to remove
+    - failed return tfalse
+    - succeed return ttrue
+    - Offline/stop service, clear map entry, **`=nocache`**
+
+    Example, unregister a network
+    ```shell
+    agent@gtog.unregister[ office-vpn ]
+    ttrue
+    ```
+
++ `endpoint[ netid, endpoint list ]` **replace the full endpoint map for a network**
+    - netid ---------------- [ string ], network identifier
+    - endpoint list -------- [ json ], map keyed by device macid
+    ```json
+    {
+        "endpoint mac identify":                    // [ string ]: { json }
+        {
+            "ip":"public internet ip",              // [ ip address ]
+            "port":"public internet port",          // [ number ]
+            "pubkey":"WireGuard public key",        // [ string ]
+            "nattype":"NAT class",                  // [ number ]: [ 1, 2 ], 1=FREE (relay-capable), 2=LIMIT (leaf)
+            "pref":"master preference",             // [ number ], higher wins among FREE peers
+            "point":"VPN tunnel ip",                // [ ip address ]
+            "extend":"local networks via this peer" // [ string ], optional, e.g. "192.168.1.0/24"
+        }
+        // "...":{ ... }  How many endpoints show how many properties
+    }
+    ```
+    - failed return tfalse
+    - succeed return ttrue
+    - Self macid must exist in the map; programs WireGuard; elects **`role`** / **`net_state`**; unix **`reload`**
+
+    Example, push a full endpoint list
+    ```shell
+    agent@gtog.endpoint[ office-vpn, {"001122334455":{"ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"},"aabbccddeeff":{"ip":"5.6.7.8","port":"10004","pubkey":"def...","nattype":"2","pref":"50","point":"10.0.1.2"}} ]
+    ttrue
+    ```
+
++ `branch[ netid, branch information ]` **add or update one FREE (branch) peer**
+    - netid -------------------- [ string ], network identifier
+    - branch information ------- [ json ]
+    ```json
+    {
+        "macid":"device mac identify",              // [ string ]
+        "ip":"public internet ip",                  // [ ip address ]
+        "port":"public internet port",              // [ number ]
+        "pubkey":"WireGuard public key",            // [ string ]
+        "nattype":"NAT class",                      // [ number ], usually 1 (FREE)
+        "pref":"master preference",                 // [ number ]
+        "point":"VPN tunnel ip",                    // [ ip address ]
+        "extend":"local networks via this peer"     // [ string ], optional
+    }
+    ```
+    - failed return tfalse
+    - succeed return ttrue
+    - Requires existing **`.endpoint`** and **`role != none`**; may promote peer to master when **`pref`** is higher; does not delete other peers
+
+    Example, add a branch peer
+    ```shell
+    agent@gtog.branch[ office-vpn, {"macid":"001122334455","ip":"1.2.3.4","port":"10004","pubkey":"abc...","nattype":"1","pref":"100","point":"10.0.1.1","extend":"192.168.1.0/24"} ]
+    ttrue
+    ```
+
++ `leaf[ netid, leaf information ]` **add or update one LIMIT (leaf) peer**
     - netid ------------------ [ string ], network identifier
-    - {leaf information} ----- json
+    - leaf information ------- [ json ]
     ```json
-    // {leaf information} attributes introduction
     {
-        "macid":"device mac identify",                    // [ string ]
-        "ip":"device public ip address",                  // [ ip address ]
-        "port":"device public port",                      // [ number ]
-        "pubkey":"device WireGuard public key",           // [ string ]
-        "point":"endpoint VPN ip address",                // [ ip address ]
-        "extend":"endpoint local network"                 // [ string ]
+        "macid":"device mac identify",              // [ string ]
+        "ip":"public internet ip",                  // [ ip address ], optional for leaf peers
+        "port":"public internet port",              // [ number ], optional
+        "pubkey":"WireGuard public key",            // [ string ]
+        "point":"VPN tunnel ip",                    // [ ip address ]
+        "extend":"local networks via this peer"     // [ string ], optional
     }
     ```
+    - failed return tfalse
+    - succeed return ttrue
+    - Requires existing **`.endpoint`** and **`role != none`**; does not re-elect master
 
-    Example, add a leaf node
+    Example, add a leaf peer
     ```shell
-    agent@gtog.leaf[office-vpn,{"macid":"aabbccddeeff","ip":"5.6.7.8","port":"10004","pubkey":"def456...","point":"10.0.1.2","extend":"192.168.2.0/24"}]
+    agent@gtog.leaf[ office-vpn, {"macid":"aabbccddeeff","ip":"5.6.7.8","port":"10004","pubkey":"def...","point":"10.0.1.2","extend":"192.168.2.0/24"} ]
     ttrue
     ```
 
-+ `state[]` **get the VPN instance runtime state** (alias: `status[]`)
-    Only meaningful on per-network objects (`agent@net`, `agent@net2`, …).
-    When called on the main **`agent@gtog`** object, returns NULL.
-    - failed return NULL
-    - succeed return JSON describing the instance state:
-    ```json
-    {
-        "status":"current status",      // "up", "down", "uping", "failed", "block"
-        "ip":"tunnel local IP",
-        "mask":"tunnel mask",
-        "dstip":"tunnel peer IP",
-        "netdev":"WireGuard interface name",
-        "delay":"master keepalive delay (ms)",
-        "livetime":"human-readable uptime",
-        "rx_bytes":"...", "rx_packets":"...",
-        "tx_bytes":"...", "tx_packets":"...",
-        "server":"master server address",
-        "pref":"preference value",
-        "mode":"current mode",
-        "mip":"master IP",
-        "mmacid":"master MAC ID",
-        "mpref":"master preference",
-        "tid":"configuration transaction ID"
-    }
-    ```
-
-+ `online[]` **internal**
-    Invoked when **`network/online`** fires so the instance can refresh reachability context (e.g. gateway) before continuing bring-up.
-
-+ `offline[]` **internal**
-    Invoked when the VPN link goes down. Cleans up DNS resolver entries, removes iptables MASQUERADE rules, and clears TCP MSS clamping for the interface.
-
-### Lifecycle API
-+ `setup[]` / `shut[]` — **when implemented** for **`agent@gtog`**, start/stop the component service or hooks. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
-
-### C Code Example
-**Read and update configuration**
-
-```c
-#include "skin/skin.h"
-
-static int example_config_agent_gtog(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "agent@gtog", "status") == NULL)
-        return -1;
-    return ssets_string("agent@gtog", "enable", "status") ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* e.g. scall("agent@gtog", "list", NULL); talk_free if JSON */
-```
+Channel **`online`** / **`offline`** / **`reset`** (and per-channel **`state`**) are documented in **`net.md`**.

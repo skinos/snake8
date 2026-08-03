@@ -1,7 +1,11 @@
 ## agent@portc — Port client — remote port proxy
 Connects to the port-proxy service so remote sessions can reach local **TCP**, **UDP**, or **serial** targets. Keeps standby links to the server so new proxy requests can be served quickly.
 
-Standby keeplive: client sends `k`, server echoes `k`. Via heport `adjust`: `active_pond`, `idle_pond`, `nomate_timeout` (ping interval `(nomate_timeout-1)/3`), `connect_timeout = mating_timeout - 1`, `mate_timeout` (same as center@pport). Legacy key **`pond`** is accepted as **`active_pond`**.
+Standby keeplive: client sends `k`, server echoes `k`. Via heport `adjust`: `mode`, `active_pond`, `idle_pond`, `nomate_timeout` (ping interval `(nomate_timeout-1)/3`), `connect_timeout = mating_timeout - 1`, `mate_timeout` (same as center@pport).
+
+**`mode`**: `pond` (default, current) or `mux` (future multiplex entry). Unset/`pond` runs as today; `mux` or unknown value → service fails and exits (not implemented). No capability negotiation — center hard-switches when ready.
+
+**UDP payload framing** (mated `hand_proto` `u`, same as `center@pport`): after the mate line / `m` ACK, datagrams on the proxy TCP use `[u16be length][payload]` (`length` 0..65535). TCP/serial hands stay raw byte streams. Must match center version.
 
 ### Configuration ( `agent@portc` )
 ```json
@@ -19,14 +23,16 @@ Standby keeplive: client sends `k`, server echoes `k`. Via heport `adjust`: `act
     "user":"username for registration",                                    // [ string ], if not set, use heclient's user
     "vcode":"verification code",                                           // [ string ], if not set, use heclient's vcode
 
-    // connection pool
-    "active_pond":"standby pool size while proxy sessions are active", // [ number ], default 6
+    // transport / connection pool
+    "mode":"proxy transport mode",                                         // [ "pond", "mux" ], default "pond" (from heport)
+                                                                              // "pond": one proxy TCP per session (current)
+                                                                              // "mux": reserved; service exits until implemented
+    "active_pond":"standby pool size while proxy sessions are active", // [ number ], default 3
                                                                               // while any mate/mating/drain link exists: keep this many idle standbys
-                                                                              // <=0 or unset (and no legacy pond): use 6
+                                                                              // <=0 or unset: use 3
     "idle_pond":"standby pool size when fully idle",                   // [ number ], default 1
                                                                               // when no mate/mating/drain: shrink/grow to this many standbys
                                                                               // shrink runs after ~6 idle create checks; <=0 or unset: use 1
-    "pond":"legacy alias for active_pond",                             // [ number ], used only if active_pond is unset
 
     // timeout control
     "connect_timeout":"connect / TCP hand connect timeout",                // [ number ], default 14, minimum 1, the unit is second
@@ -45,7 +51,8 @@ agent@portc
 {
     "status":"enable",                        # service enabled (from heport when center@pport is on)
     "port":"20005",                           # server port
-    "active_pond":"6",                        # keep 6 standbys while sessions active
+    "mode":"pond",                            # pond now; mux reserved
+    "active_pond":"3",                        # keep 3 standbys while sessions active
     "idle_pond":"1",                          # keep 1 standby when fully idle
     "nomate_timeout":"46"                     # from heport / local default
 }
@@ -57,9 +64,9 @@ agent@portc={"server":"proxy.ashyelf.com","port":"20005","user":"ashyelf"}
 ttrue
 ```
 
-Example, keep 6 standbys when busy and 2 when idle
+Example, keep 3 standbys when busy and 2 when idle
 ```shell
-agent@portc:active_pond=6
+agent@portc:active_pond=3
 ttrue
 agent@portc:idle_pond=2
 ttrue

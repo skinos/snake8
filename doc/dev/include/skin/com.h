@@ -63,13 +63,15 @@ typedef struct eapi_table_st
 } eapi_table_t;
 
 /**
- * @brief Define main() for a standalone executable: read shell context, dispatch by API name, exit.
- * @param table Array of eapi_table_t. Must be an array identifier (e.g. static const eapi_table_t foo[]),
- *              not a pointer, so sizeof(table)/sizeof((table)[0]) yields the entry count.
- * @note Prefer execute_object / execute_param / execute_api / execute_pipe when spawned by shell;
- *       otherwise falls back to argv2he(argc, argv). Maps return like ccall peers.
+ * @brief Define main() for a standalone executable with custom get/set handlers.
+ * @param table Array of eapi_table_t (method name → comapi_t). Must be an array identifier.
+ * @param getfn comget_t (obj, attr) → talk_t; used when API is "get" (from cget/sget).
+ * @param setfn comset_t (obj, talk, attr) → boole; used when API is "set" (from cset/sset).
+ * @note "get"/"set"/"exist" are not looked up in table; methods stay in table. setfn's boole is
+ *       mapped to ttrue/tfalse before talk2fd. Prefer MAIN2API(table) when config_* is enough.
+ * @note "exist" is a meta probe (PARAM1=api name → ttrue/tfalse) used by com_exist/com_have.
  */
-#define MAIN2API( table ) \
+#define MAIN2COM( table, getfn, setfn ) \
 int main( int argc, const char **argv ) \
 { \
 	he_t h; \
@@ -83,11 +85,12 @@ int main( int argc, const char **argv ) \
 					\
 	h = NULL;	\
 	this = execute_object(); \
-	if ( this != NULL ) \
+	api = execute_api(); \
+	pipe_fd = execute_pipe(); \
+	/* Shell spawn sets API/cpipe even when OBJECT is omitted (e.g. com_exist). */ \
+	if ( api != NULL || pipe_fd >= 0 ) \
 	{ \
 		param = execute_param(); \
-		api = execute_api(); \
-		pipe_fd = execute_pipe(); \
 	} \
 	else \
 	{ \
@@ -103,17 +106,119 @@ int main( int argc, const char **argv ) \
 		pipe_fd = STDOUT_FILENO; \
 	} \
 								\
-	ret = terror; \
+	/* Default tpanic: API not exported (same as ccall dlsym miss). terror only from peer fn. */ \
+	ret = tpanic; \
 	if ( api != NULL && *api != '\0' ) \
 	{ \
-		for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
+		if ( 0 == strcmp( api, "exist" ) ) \
 		{ \
-			if ( 0 == strcmp( api, (table)[i].name ) ) \
+			/* Meta probe: PARAM1 = API name. Object unused for now. */ \
+			const char *name; \
+			boole found; \
+			name = param_string( param, 1 ); \
+			found = false; \
+			if ( name != NULL && *name != '\0' ) \
 			{ \
-				ret = (talk_t)( (table)[i].fn( this, param ) ); \
-				break; \
+				if ( 0 == strcmp( name, "get" ) || 0 == strcmp( name, "set" ) \
+					|| 0 == strcmp( name, "exist" ) ) \
+				{ \
+					found = true; \
+				} \
+				else \
+				{ \
+					for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
+					{ \
+						if ( 0 == strcmp( name, (table)[i].name ) ) \
+						{ \
+							found = true; \
+							break; \
+						} \
+					} \
+				} \
+			} \
+			ret = ( found == true ) ? ttrue : tfalse; \
+			if ( found == false ) \
+			{ \
+				errno = ENOSYS; \
 			} \
 		} \
+		else if ( 0 == strcmp( api, "get" ) ) \
+		{ \
+			if ( this == NULL ) \
+			{ \
+				errno = EINVAL; \
+				ret = tpanic; \
+			} \
+			else \
+			{ \
+				attr_t a; \
+				const char *ap; \
+				a = NULL; \
+				ap = param_string( param, 1 ); \
+				if ( ap != NULL && *ap != '\0' ) \
+				{ \
+					a = attr_create( ap ); \
+				} \
+				ret = (talk_t)( (getfn)( this, a ) ); \
+				attr_free( a ); \
+			} \
+		} \
+		else if ( 0 == strcmp( api, "set" ) ) \
+		{ \
+			if ( this == NULL ) \
+			{ \
+				errno = EINVAL; \
+				ret = tpanic; \
+			} \
+			else \
+			{ \
+				boole ok; \
+				attr_t a; \
+				talk_t v; \
+				const char *ap; \
+				a = NULL; \
+				ap = param_string( param, 1 ); \
+				v = param_talk( param, 2 ); \
+				if ( ap != NULL && *ap != '\0' ) \
+				{ \
+					a = attr_create( ap ); \
+				} \
+				ok = (setfn)( this, v, a ); \
+				ret = ( ok == true ) ? ttrue : tfalse; \
+				attr_free( a ); \
+			} \
+		} \
+		else \
+		{ \
+			boole found; \
+			found = false; \
+			if ( this == NULL ) \
+			{ \
+				errno = EINVAL; \
+				ret = tpanic; \
+			} \
+			else \
+			{ \
+				for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
+				{ \
+					if ( 0 == strcmp( api, (table)[i].name ) ) \
+					{ \
+						ret = (talk_t)( (table)[i].fn( this, param ) ); \
+						found = true; \
+						break; \
+					} \
+				} \
+				if ( found == false ) \
+				{ \
+					errno = ENOSYS; \
+				} \
+			} \
+		} \
+	} \
+	else if ( this == NULL ) \
+	{ \
+		errno = EINVAL; \
+		ret = tpanic; \
 	} \
 	else \
 	{ \
@@ -142,7 +247,7 @@ int main( int argc, const char **argv ) \
 		{ \
 			exit_code = EXIT_terror; \
 		} \
-		if ( pipe_fd > 0 ) \
+		if ( pipe_fd >= 0 ) \
 		{ \
 			talk2fd( pipe_fd, ret, errno ); \
 			close( pipe_fd ); \
@@ -203,6 +308,16 @@ int main( int argc, const char **argv ) \
 	}                    \
 	return exit_code; \
 }
+
+/**
+ * @brief Define main() for a standalone executable: methods via table; get/set via config_*.
+ * @param table Array of eapi_table_t. Must be an array identifier (e.g. static const eapi_table_t foo[]),
+ *              not a pointer, so sizeof(table)/sizeof((table)[0]) yields the entry count.
+ * @note Prefer execute_object / execute_param / execute_api / execute_pipe when spawned by shell;
+ *       otherwise falls back to argv2he(argc, argv). Maps return like ccall peers.
+ *       Equivalent to MAIN2COM(table, config_get, config_set). Use MAIN2COM for custom _get/_set.
+ */
+#define MAIN2API( table ) MAIN2COM( table, config_get, config_set )
 
 /// Prefix for component API function symbol names (e.g., function "status" is exported as "_status")
 #define COM_API_PREFIX "_"
@@ -367,7 +482,9 @@ void   com_close( com_t com );
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
- * @note For shared-library components, the named symbol is checked; for executable components, API presence is not verified here
+ * @note LIB: dlsym("_"+api). EXE: probe via MAIN2COM "exist" —
+ *       com_exist → execute_ccall(com, NULL, "exist"); com_have → execute_scall(com, object, "exist").
+ *       Peer exist only checks the API table (object unused). Only ttrue → true; tfalse/tpanic → false.
  * @see com_have to check by object string without keeping a handle open
  * @see ccall, scall to invoke an API on an object
  */

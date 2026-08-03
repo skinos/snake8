@@ -222,31 +222,31 @@ ttrue
     ttrue
     ```
 
-+ `adjust[ adjust configuration ]` **apply configuration to other components and setup or shut them**
-    - adjust configuration --------- [ json ], map of component object name to full configure object
-    - When the new configure equals the cached configure, only **`setup`** or **`shut`** by **`status`**
-    - When different, **`shut`**, write configure, then **`setup`**
-    - failed return tfalse
++ `adjust[ adjust configuration ]` **apply configuration to other components via `sset`**
+    - adjust configuration --------- [ json ], map of object name → configure object
+    - For each entry: enable cache store, then **`sset(object, cfg)`** so the target’s **`_set`** saves config and applies its restart policy (**`shut`/`setup`** or channel **`sreset`**)
+    - Prefer **`agent@portc`** and channel **`agent@net*`**; pool **`agent@gtog`** keys are mainly **`net_max`** / **`port_start`**
+    - failed return tfalse (any **`sset`** failed)
     - succeed return ttrue
     ```json
     {
         "component name":                  // [ string ]: { json }, full object name (e.g. "agent@portc")
         {
-            // complete configuration for this component
+            // configuration for this component
         }
         // "...":{ ... }  How many components show how many properties
     }
     ```
 
-    Example, enable portc and disable gtog
+    Example, enable portc
     ```shell
-    agent@heclient.adjust[{"agent@portc":{"status":"enable"},"agent@gtog":{"status":"disable"}}]
+    agent@heclient.adjust[{"agent@portc":{"status":"enable","server":"192.168.1.1","port":"20005"}}]
     ttrue
     ```
 
-    Example, enable gtog with server configuration
+    Example, enable a mesh channel
     ```shell
-    agent@heclient.adjust[{"agent@gtog":{"status":"enable","server":"192.168.1.1","port":"20000"}}]
+    agent@heclient.adjust[{"agent@net":{"status":"enable","server":"192.168.1.1","port":"20002","netid":"office-vpn"}}]
     ttrue
     ```
 
