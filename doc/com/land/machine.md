@@ -193,13 +193,14 @@ ttrue
 
 + `meminfo[]` **get memory usage information from /proc/meminfo**
     - failed return NULL
-    - succeed return [ json ], memory usage information
+    - succeed return [ json ], memory usage information (all values in kB)
     ```json
     {
-        "total": "total memory",                 // [ number ], total memory in kB
-        "free": "free memory",                   // [ number ], free memory in kB
-        "buffers": "buffer memory",              // [ number ], buffer memory in kB
-        "cached": "cached memory"                // [ number ], cached memory in kB
+        "total": "total memory",                 // [ number ], MemTotal
+        "free": "free memory",                   // [ number ], MemFree (completely unused)
+        "buffers": "buffer memory",              // [ number ], Buffers
+        "cached": "cached memory",               // [ number ], Cached (not SwapCached)
+        "available": "available memory"          // [ number ], MemAvailable if present; else free+buffers+cached for old kernels
     }
     ```
 
@@ -208,9 +209,10 @@ ttrue
     land@machine.meminfo
     {
         "total":"524288",                        # total memory 512MB
-        "free":"262144",                         # free memory 256MB
+        "free":"262144",                         # MemFree 256MB
         "buffers":"16384",                       # buffer memory 16MB
-        "cached":"131072"                        # cached memory 128MB
+        "cached":"131072",                       # cached memory 128MB
+        "available":"409600"                     # usable estimate for UI / new apps
     }
     ```
 

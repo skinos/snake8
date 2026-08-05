@@ -44,7 +44,7 @@ gOEM := default
 endif 
 # Get the date
 #gPUBLISH ?= $(shell date +%m%d%y)
-gPUBLISH ?= v8.6.0802
+gPUBLISH ?= v8.6.0803
 #gPUBLISH ?= v8.6.0402
 gVERSION ?= $(gPUBLISH)
 # Name for compiler

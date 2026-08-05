@@ -9,6 +9,11 @@ description: |
   how to customize a product, rootfs overlay, default component cfg, sdk.config,
   kernel.config, kernel source override, custom.sh, option.c, "换板子", "定制配置",
   "运行系统上的文件", or swrt5 board files.
+  Also use when the user says "更新仓库固件", "上传固件到仓库", "make ftp",
+  "固件仓库", or asks to push the built .zz into the OTA/firmware repository
+  (not a live device) — that is `make ftp` after a successful full build.
+  Also use when the user says "更新fpk仓库", "上传fpk到仓库", "make sdk_repo",
+  "fpk仓库" — that is `make sdk_repo` (uploads build/store FPKs via repo-upload).
   Do NOT use for device upload/upgrade/remote test — that is device-upgrade.
 ---
 
@@ -262,6 +267,40 @@ make                            # all: dep → kernel → app → kernel_install
 
 **Do not use `make clean`** for normal work — full rebuild is very slow.
 
+### Upload firmware to the repository (`make ftp`)
+
+When the user (or a task prompt) says to **update the firmware repository** / **upload firmware to the repo** — meaning the OTA/firmware store, **not** a live device — build first, then run:
+
+```bash
+./mkdel
+make              # produce build/*.zz for current gBOARDID
+make ftp          # → sdk_ftp: upload the current built .zz into the firmware repository
+```
+
+### Upload FPK packages to the repository (`make sdk_repo`)
+
+When the user says to **update the FPK repository** / **upload FPK to the repo** — again the package store, **not** a live device — ensure FPKs exist under `build/store/`, then run:
+
+```bash
+make obj=<name>   # or a full make that produces build/store/*.fpk
+make sdk_repo     # → sdk_repo: upload FPKs from build/store into the FPK repository
+```
+
+| Intent | Command | What gets uploaded |
+|--------|---------|-------------------|
+| Update **firmware repository** (OTA `.zz` store) | **`make ftp`** → `sdk_ftp` | Current built `build/*.zz` (via `repo-upload … <file>`) |
+| Update **FPK repository** (package store) | **`make sdk_repo`** | All FPKs under `build/store/` (via `repo-upload … fpk`) |
+| Upgrade a **running device** | Web API `.zz` / FPK | **device-upgrade** skill |
+
+Notes:
+
+- `make ftp` is a short alias in `misc.makefile` → **`make sdk_ftp`**. There is **no** short `make repo` alias — use **`make sdk_repo`** (top Makefile `sdk_%` → platform `sdk.makefile`).
+- Both are implemented with host tool **`repo-upload`** (`tools/fpktools/repo-upload.c`). Platform examples: `config/wrt5/sdk.makefile`, `config/slave/sdk.makefile`.
+- `make ftp` / `sdk_ftp` needs a successful full firmware build for the **active `gBOARDID`** first.
+- `make sdk_repo` needs `build/store/` populated (e.g. after `make obj=<name>` or a full build that stages FPKs).
+- Related: `make tftp` → local TFTP put of the `.zz` (lab/debug); do not confuse with repo upload.
+- Do **not** confuse either repo upload with pushing packages to a live gateway (**device-upgrade**).
+
 ### Single project FPK
 
 ```bash
@@ -283,6 +322,9 @@ make obj=<project>              # runs ./mkdel <project> then builds that projec
 ```bash
 make dep              # mkdel + wipe build/install staging + rootfs_prepare
 make kernel / make app
+make ftp              # upload current build/*.zz to firmware repository (sdk_ftp)
+make sdk_repo         # upload build/store/*.fpk to FPK repository
+make tftp             # put .zz to local TFTP server (sdk_tftp; not the repo)
 make clean            # AVOID unless intentional full wipe
 make clean obj=<name> # clean one project via target.makefile
 make preset           # host build deps (Ubuntu)
@@ -337,5 +379,5 @@ When building or explaining the SDK:
 4. Prefer **`./mkdel`** / **`make obj=`** over **`make clean`**
 5. sdk / rootfs / makefile.config / DTS / **`kernel/` source overlays** → **`./mkdel` && `make`** → deploy **`.zz`** (**device-upgrade**); project-only → **`make obj=`** → **FPK**
 6. For kernel USB modem IDs (`option.c`): edit winning `config/…/kernel/` for this `gBOARDID`; dial AT driver is **skinos-modem**
-7. Point deploy/upgrade to **device-upgrade** skill
+7. Point **device** deploy/upgrade to **device-upgrade**. Repo uploads (not a live device): **firmware repository** → **`make ftp`**; **FPK repository** → **`make sdk_repo`**
 8. Do not invent board IDs — use `make pidlist` or the user’s active `gBOARDID`

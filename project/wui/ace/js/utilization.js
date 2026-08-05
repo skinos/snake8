@@ -39,13 +39,20 @@ function cpumem_show( cpuinfo, meminfo )
     $("#cpu_softirq").text( cpu.softirq );
     
 
-    /* Memeory PIE */
-    var use = meminfo.total-meminfo.free;
-    var usage = (use/meminfo.total)*100;
+    /* Memory PIE: use available (MemAvailable or free+buffers+cached on old kernels) */
+    var mem_total = parseInt(meminfo.total, 10) || 0;
+    var mem_avail = parseInt(meminfo.available, 10);
+    if ( isNaN(mem_avail) ) {
+        mem_avail = (parseInt(meminfo.free, 10) || 0)
+                  + (parseInt(meminfo.buffers, 10) || 0)
+                  + (parseInt(meminfo.cached, 10) || 0);
+    }
+    var use = mem_total - mem_avail;
+    var usage = mem_total > 0 ? (use / mem_total) * 100 : 0;
     $("#mem_usage").text( usage.toFixed(0) );
     $("#mem_usage_pie").data('easyPieChart').update( usage.toFixed(0) );
     $("#mem_total").text( meminfo.total+"K" );
-    $("#mem_free").text( meminfo.free+"K" );
+    $("#mem_free").text( mem_avail+"K" );
     $("#memory_total").text( meminfo.total );
     $("#memory_free").text( meminfo.free );
     $("#memory_buffer").text( meminfo.buffers );
@@ -112,7 +119,7 @@ function cpumem_show( cpuinfo, meminfo )
 
     /* memory line */
     var mem_datas =[];
-    var mem_usage = ( ( meminfo.total-meminfo.free)/meminfo.total ) * 100;
+    var mem_usage = mem_total > 0 ? ( ( mem_total - mem_avail ) / mem_total ) * 100 : 0;
     buff["mem_data"].push( [ d_time, mem_usage ] );  
     var datas = {}; 
     datas['label'] = $.i18n('Memory');

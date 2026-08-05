@@ -30,6 +30,8 @@ Changed only project/modem/mt5710/    →  make obj=modem   →  upload .fpk →
 
 Same rule is recorded in **skinos-sdk** / **skinos-modem**. Do **not** assume FPK is enough after a kernel/`option.c` edit.
 
+**Not this skill:** updating the **firmware repository** / OTA store after a build means **`make ftp`**; updating the **FPK repository** means **`make sdk_repo`** (see **skinos-sdk**). Neither is a live-device web upload.
+
 ## Prerequisites
 
 - **Device URL (`BASE`)** — the user gives it **once per chat session** (e.g. `http://IP:PORT`). Remember it for the rest of that session; do **not** ask again unless they change it. Do **not** invent a URL or reuse an address from docs/examples or a previous chat.
