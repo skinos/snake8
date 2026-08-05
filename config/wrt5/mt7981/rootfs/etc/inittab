@@ -1,0 +1,14 @@
+# for procd
+::sysinit:/etc/init.d/rcS S boot
+::shutdown:/etc/init.d/rcS K shutdown
+::askconsole:/usr/libexec/login.sh
+#::askconsole:/usr/bin/eline
+#::respawn:/sbin/getty 57600 ttyS1
+
+# for busybox init
+#::sysinit:/etc/initland
+#::shutdown:/etc/shutland
+#ttyS0::askfirst:-/bin/ash
+#ttyS0::askfirst:/usr/bin/eline
+#::respawn:/sbin/getty 57600 ttyS0
+

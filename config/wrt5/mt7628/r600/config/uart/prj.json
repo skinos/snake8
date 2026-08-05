@@ -1,0 +1,59 @@
+{
+    "name":"uart",
+    "intro":"uart forwarding project",
+    "desc":"uart management and custom",
+    "type":"root",
+    "version":"8.0.0",
+    "author":"dimmalex@gmail.com",
+
+    "lib":
+    {
+        "skinuart":"uart library"
+    },
+
+    "com":
+    {
+        "frame":"uart frame"
+    },
+    "exe":
+    {
+        "dtu":"UART application components for DTU",
+        "tui":"UART application components for eline"
+    },
+    "obj":
+    {
+        "uartdrv@dtu":"dtu",
+        "uartdrv@tui":"tui"
+    },
+    
+    "init":
+    {
+        "general":
+        {
+            "uart@frame.setup":""
+        }
+    },
+    "uninit":
+    {
+        "general":
+        {
+            "uart@frame.shut":""
+        }
+    },
+
+    "wui":
+    {
+        "uart":
+        {
+            "en":"UART#1(RS485)",
+            "page":"uart.html",
+            "object":"uart@tty"
+        },
+        "uart2":
+        {
+            "en":"UART#2(RS232)",
+            "page":"uart.html",
+            "object":"uart@tty2"
+        }
+    }
+}

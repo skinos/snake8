@@ -1,0 +1,20 @@
+
+               EEEEEEEEE   LL           FFFFFFFFF
+               EE          LL           FF
+               EE          LL           FF
+               EEEEEEEEE   LL           FFFFFFFFF
+               EE          LL           FF
+               EE          LL           FF
+        Ashy   EEEEEEEEE   LLLLLLLLLL   FF
+
+ --------------------------------------------------------------
+ Command Help
+ --------------------------------------------------------------
+ eline ---------------------- Enter to HE terminal
+ he @ ----------------------- List all the project
+ he @? ---------------------- List all the static component
+ he @@ ---------------------- List all the dynamic component
+ he <com> ------------------- Show component configure
+ he <com>:<config> ---------- Get component configure attribute
+ he <com>:<config>=<value> -- Set component configure attribute
+ --------------------------------------------------------------

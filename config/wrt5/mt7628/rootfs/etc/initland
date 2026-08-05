@@ -1,0 +1,147 @@
+#!/bin/sh
+
+cons="  0 0 662"
+disk="  0 0 660"
+null="  0 0 666"
+urandom="  admin admin  644"
+mkdev () 
+{    # usage: mkdev name [bcu] major minor owner group mode
+    if [ "$opt_v" ]
+    then    
+        if [ "$opt_d" ]
+        then    
+            echo "sudo rm -f $1"
+        else
+            echo "$1        = $2 $3 $4 $5:$6 $7"
+        fi
+    fi
+    [ ! "$opt_n" ] && rm -f $1 &&
+    [ ! "$opt_d" ] && mknod $1 $2 $3 $4 &&
+    chown $5:$6 $1 &&
+    chmod $7 $1
+}
+
+# mount proc/sysfs/tmp filesystem
+mount -t proc /proc /proc
+mount -t sysfs /sys /sys
+mount -n -t tmpfs tmpfs /tmp
+# make /var
+mkdir /tmp/var
+chmod 0755 /tmp/var
+mkdir /var/run
+mkdir /var/lock
+mkdir /var/log
+# make /mnt
+mkdir /tmp/mnt
+chmod 0755 /tmp/mnt
+# make /dev
+mount -n -t tmpfs tmpfs /dev
+mkdir /dev/pts
+mount -t devpts devpts /dev/pts
+
+# make /etc
+mkdir /tmp/etcbk
+cp -R /etc/* /tmp/etcbk
+mount -n -t tmpfs tmpfs /etc
+chmod 0755 /etc
+mv /tmp/etcbk/* /etc
+rm -fr /tmp/etcbk
+
+# link the /lib/firmware/* to /usr/share/firmware/*
+mkdir /tmp/firmware
+if [ -d /usr/share/firmware ]; then
+    ELIST=`ls /usr/share/firmware`
+    for i in $ELIST; do
+        ln -s /usr/share/firmware/$i /lib/firmware/$i
+    done
+fi
+
+# Serial
+mkdev	dev/console c   5   1   $cons
+mkdev	dev/ttyS0   c	4   64	$cons
+mkdev	dev/ttyS1   c	4   65	$cons
+mkdev	dev/ttyS2   c	4   66	$cons
+mkdev	dev/ttyUSB0   c	188 0	$cons
+mkdev	dev/ttyUSB1   c	188 1	$cons
+mkdev	dev/ttyUSB2   c	188 2	$cons
+mkdev	dev/ttyUSB3   c	188 3	$cons
+mkdev	dev/ttyUSB4   c	188 4	$cons
+mkdev	dev/ttyUSB5   c	188 5	$cons
+mkdev	dev/ttyUSB6   c	188 6	$cons
+mkdev	dev/ttyUSB7   c	188 7	$cons
+mkdev	dev/ttyUSB8   c	188 8	$cons
+mkdev	dev/ttyUSB9   c	188 9	$cons
+mkdev	dev/ttyUSB10  c	188 10	$cons
+mkdev	dev/ttyUSB11  c	188 11	$cons
+mkdev	dev/ttyUSB12  c	188 12	$cons
+mkdev	dev/ttyUSB13  c	188 13	$cons
+mkdev	dev/ttyUSB14  c	188 14	$cons
+mkdev	dev/ptmx    c	5   2	$null
+# Memory
+mkdev	dev/mem     c	1   1	$disk
+# i2c bus
+mkdev   dev/i2c-0 c 89 0 $cons
+# fb device
+mkdev	dev/fb0 c 29 0 $cons
+mkdev	dev/fb1 c 29 1 $cons
+# Storage
+mkdev   dev/ubi_ctrl    c  10  256 $disk
+mkdev   dev/mtdblock0 b  31 0 $disk
+mkdev   dev/mtdblock1 b  31 1 $disk
+mkdev   dev/mtdblock2 b  31 2 $disk
+mkdev   dev/mtdblock3 b  31 3 $disk
+mkdev   dev/mtdblock4 b  31 4 $disk
+mkdev   dev/mtdblock5 b  31 5 $disk
+mkdev   dev/mtdblock6 b  31 6 $disk
+mkdev   dev/mtdblock7 b  31 7 $disk
+mkdev   dev/mtdblock8 b  31 8 $disk
+mkdev   dev/mtd0      c  90  0 $disk
+mkdev   dev/mtd0ro    c  90  1 $disk
+mkdev   dev/mtd1      c  90  2 $disk
+mkdev   dev/mtd1ro    c  90  3 $disk
+mkdev   dev/mtd2      c  90  4 $disk
+mkdev   dev/mtd2ro    c  90  5 $disk
+mkdev   dev/mtd3      c  90  6 $disk
+mkdev   dev/mtd3ro    c  90  7 $disk
+mkdev   dev/mtd4      c  90  8 $disk
+mkdev   dev/mtd4ro    c  90  9 $disk
+mkdev   dev/mtd5      c  90  10 $disk
+mkdev   dev/mtd5ro    c  90  11 $disk
+mkdev   dev/mtd6      c  90  12 $disk
+mkdev   dev/mtd6ro    c  90  13 $disk
+mkdev   dev/mtd7      c  90  14 $disk
+mkdev   dev/mtd7ro    c  90  15 $disk
+mkdev   dev/mtd8      c  90  16 $disk
+mkdev   dev/mtd8ro    c  90  17 $disk
+# Misc
+mkdev	dev/zero	   c 1	 5	 $cons
+mkdev	dev/ppp	       c 108 0   $cons
+mkdev	dev/null       c 1   3	 $null
+mkdev	dev/random     c 1   8	 $urandom
+mkdev	dev/urandom    c 1   9   $urandom
+mkdev	dev/watchdog   c 10  130 $cons
+mkdev	dev/watchdog0  c 252 0   $cons
+mkdev	dev/watchdog9  c 252 9   $cons
+
+# init the date for ca cert work well
+date -s "2025-01-01 00:00:00"
+
+# load the modules
+/sbin/kmodloader
+
+# sysctl
+for CONF in /etc/sysctl.d/*.conf /etc/sysctl.conf; do
+    [ -f "$CONF" ] && sysctl -e -p "$CONF" >&-
+done
+
+# Loopback interface
+ifconfig lo 127.0.0.0 up
+route add -net 127.0.0.0 netmask 255.255.255.0 dev lo
+
+# init the raw syslog
+ln -s /dev/log /var/syslogd
+syslogd -L -O /var/bootup.syslog -t
+
+# run the land
+. /etc/init.d/land;start
+

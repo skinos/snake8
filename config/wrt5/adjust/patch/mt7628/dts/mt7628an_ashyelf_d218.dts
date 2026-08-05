@@ -15,6 +15,7 @@
 
 	chosen {
 		/* No console= on ttyS0: keep UART for application (see uart/tty.cfg) */
+		/* bootargs = "console=ttyS0,57600n8"; */
 		bootargs = "rootfstype=squashfs,jffs2";
 	};
 

@@ -70,6 +70,7 @@ rm -fr ./lib/preinit
 rm -fr ./lib/netifd
 #rm -fr ./lib/functions*
 rm -fr ./usr/sbin/ntpd-hotplug
+# ubi-utils: pulled by NAND_SUPPORT/base-files; mt7621 NOR boards do not need UBI
 rm -fr ./usr/sbin/ubiattach
 rm -fr ./usr/sbin/ubiblock
 rm -fr ./usr/sbin/ubicrc32
@@ -83,6 +84,9 @@ rm -fr ./usr/sbin/ubirename
 rm -fr ./usr/sbin/ubirmvol
 rm -fr ./usr/sbin/ubirsvol
 rm -fr ./usr/sbin/ubiupdatevol
+# libstdcpp: selected by iperf DEPENDS, but iperf links -static-libstdc++
+rm -fr ./usr/lib/libstdc++.so
+rm -fr ./usr/lib/libstdc++.so.*
 rm -fr ./usr/bin/ucode
 rm -fr ./usr/bin/wireguard_watchdog
 rm -fr ./usr//bin/jshn

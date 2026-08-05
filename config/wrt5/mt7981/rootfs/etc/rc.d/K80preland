@@ -1,0 +1,44 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2011 OpenWrt.org
+
+START=20
+STOP=80
+
+start()
+{
+    # make /etc
+    mkdir /tmp/etcbk
+    cp -R /etc/* /tmp/etcbk
+    mount -n -t tmpfs tmpfs /etc
+    chmod 0755 /etc
+    mv /tmp/etcbk/* /etc
+    rm -fr /tmp/etcbk
+    # link the /lib/firmware/* to /usr/share/firmware/*
+    #mkdir /tmp/firmware
+    #if [ -d /usr/share/firmware ]; then
+    #    ELIST=`ls /usr/share/firmware`
+    #    for i in $ELIST; do
+    #        ln -s /usr/share/firmware/$i /lib/firmware/$i
+    #    done
+    #fi
+    mkdir /tmp/firmware
+    cp -R /lib/firmware/* /tmp/firmware
+    mount -n -t tmpfs tmpfs /lib/firmware
+    mv /tmp/firmware/* /lib/firmware
+    rm -fr /tmp/firmware
+    # mkdir /tmp/mnt for /mnt
+    mkdir /tmp/mnt
+    chmod 0755 /tmp/mnt
+
+    # Loopback interface
+    ifconfig lo 127.0.0.0 up
+    route add -net 127.0.0.0 netmask 255.255.255.0 dev lo
+
+    # init the raw syslog
+    ln -s /dev/log /var/syslogd
+    syslogd -L -O /var/bootup.syslog
+}
+stop()
+{
+    ifconfig lo down
+}

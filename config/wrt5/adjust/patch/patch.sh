@@ -48,9 +48,17 @@ UB_CODE=`lsb_release -s -r`
 UB_REL=${UB_CODE:0:2}
 echo "Current Ubuntu ${UB_CODE} Release: ${UB_REL}"
 
+if [ -z "${gPLATFORM}" ] || [ -z "${gSDK_DIR}" ] || [ -z "${gPLATFORM_DIR}" ]; then
+    echo "error: gPLATFORM, gSDK_DIR and gPLATFORM_DIR must be set" >&2
+    exit 1
+fi
+if [ "${gPLATFORM}" = "/" ] || [ "${gPLATFORM}" = "." ] || [ "${gPLATFORM}" = ".." ]; then
+    echo "error: invalid gPLATFORM: ${gPLATFORM}" >&2
+    exit 1
+fi
 
 # include the config/sopen to build
-rm -fr ${gSDK_DIR}/package/${gPLATFORM}
+rm -fr "${gSDK_DIR}/package/${gPLATFORM}"
 if [ ! -e ${gSDK_DIR}/package/${gPLATFORM} ]; then
     ln -s ${gPLATFORM_DIR}  ${gSDK_DIR}/package/${gPLATFORM}
 fi
@@ -120,6 +128,10 @@ fi
 
 # hostapd/wpad: no ucode (see hostapd-Makefile CORE_DEPENDS / CONFIG_UCODE)
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/hostapd-Makefile" "${gSDK_DIR}/package/network/services/hostapd/Makefile"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/linux-modules-netfilter.mk" "${gSDK_DIR}/package/kernel/linux/modules/netfilter.mk"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-600-shared-libext.patch" "${gSDK_DIR}/package/network/utils/iptables/patches/600-shared-libext.patch"
+# xtables-nft: always depend on libiptext6 (needed when IPV6 is disabled)
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-Makefile" "${gSDK_DIR}/package/network/utils/iptables/Makefile"
 
 # disable the print error when no ubusd
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/hostapd_wpa_supplicant.uc" "${gSDK_DIR}/package/network/services/hostapd/files/wpa_supplicant.uc"
@@ -129,5 +141,7 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/scripts/gen_fw_gpt.sh" "${gSDK_DIR}/
 
 # config
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/config/Config-images.in" "${gSDK_DIR}/config/Config-images.in"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/makefile/Config-build.in" "${gSDK_DIR}/config/Config-build.in"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/makefile/netfilter.mk" "${gSDK_DIR}/include/netfilter.mk"
 
 
