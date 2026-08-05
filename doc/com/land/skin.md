@@ -1240,7 +1240,7 @@ static void demo_com_all(void)
 | **`config_get` / `config_set`** | `obj_t` + **`attr_t`** attribute path. |
 | **`*gets` / `*sets` / `*sget` / `*sset`…** | `printf`-style attribute paths or **`const char *com`** instead of `obj_t`. |
 | **`*_string`** | Read/write through a caller **`buffer`** / C string without owning a new `talk_t`. |
-| **Returns** | **`config_get*`** often returns heap **`talk_t`** → **`talk_free`**; **`tpanic`** on dispatch errors per comments. **`config_set`** copies **`v`**; caller still owns original `v` unless documented otherwise. |
+| **Returns** | **`config_get*`** often returns heap **`talk_t`** → **`talk_free`**; **`tpanic`** on dispatch errors per comments. **`config_set*`** copies **`v`**; caller still owns original `v` unless documented otherwise. On **`config_set*`** success: **`errno == EEXIST`** if content unchanged (no write); **`errno == 0`** if content was written. |
 | **List / files** | **`config_list(project)`** — `NULL` project = whole system; **`config_path`** builds paths under a project. |
 
 Use **`dbs_*`** when you need **per-component persistent database files** (`fa` + key), not live config only.
@@ -1276,7 +1276,12 @@ boole config_sets(obj_t com, talk_t v, const char *attr, ...);
 boole config_sset(const char *com, talk_t v, attr_t attr);
 boole config_ssets(const char *com, talk_t v, const char *attr, ...);
 ```
-**Description:** Set configuration value
+**Description:** Set configuration value. All variants share the same success/`errno` semantics (wrappers preserve `errno` from `config_set`).
+**Returns:**
+- `true` — succeed. Check **`errno`**:
+  - **`EEXIST`** — content unchanged (no file write); safe to skip restart/`_shut`/`_setup`
+  - **`0`** — content written to config file
+- `false` — failed; **`errno`** is the real error
 
 #### config_set_string / config_sset_string / config_ssets_string
 ```c
@@ -1284,8 +1289,7 @@ boole config_set_string(obj_t com, const char *string, attr_t attr);
 boole config_sset_string(const char *com, const char *string, attr_t attr);
 boole config_ssets_string(const char *com, const char *string, const char *attr, ...);
 ```
-**Description:** Set configuration value as string
-
+**Description:** Set configuration value as string. Same return/`errno` semantics as `config_set` above.
 ### 6.3 Configuration List and Path
 
 #### config_list
@@ -1329,6 +1333,7 @@ static void demo_config_all(void)
     (void)config_sgets_string(buf, sizeof buf, "land@machine", "%s", "walk/key");
 
     (void)config_set(o, v, a);
+    /* true + errno==EEXIST: unchanged; true + errno==0: written */
     (void)config_sets(o, v, "%s", "walk/key");
     (void)config_sset("land@machine", v, a);
     (void)config_ssets("land@machine", v, "%s", "walk/key");

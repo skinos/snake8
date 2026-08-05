@@ -76,7 +76,7 @@ Each channel **`service`** uses three axes (also returned by **`list`** / **`sta
 | **`net_state`** | Whether a usable master exists | `0=unknown`, `1=no_master`, `2=has_master` |
 | **`seq`** | Last applied topology version from coordinator | matches `seq` on `endpoint`/`branch`/`leaf` and on UDP `k;netid;seq;` |
 
-Phases: **Init** (WireGuard iface) → **ServerDial** (UDP register → `u;` network JSON) → **Run** (UDP `b`/`l` until role+endpoint ready, then keeplive + **`network@frame.online`**) → **Exit**. Peers return only after **`endpoint`** / **`branch`** / **`leaf`**. Channel outbound IP / joint retry: **`agent@net*.reset`** in **`net.md`**.
+Phases: **Init** (WireGuard iface) → **ServerDial** (UDP register → `u;` network JSON) → **Run** (UDP `b`/`l` until role+endpoint ready, then keeplive + **`network@frame.online`**) → **Exit**. Peers return only after **`endpoint`** / **`branch`** / **`leaf`**. Outbound **`listen_ip`**: channel **`extern`**, else **`agent@heclient.extern`**, then gateway / iface status; WAN retry via **`agent@heclient.reset`** → **`agent@gtog.reset`**.
 
 **Keepalive (Run)**
 
@@ -113,7 +113,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
 
 + `shut[]` **tear down the gtog pool or one channel**
     - On **`agent@gtog`**: clear object→`netid` map; **`shut`** each present channel; unregister from **`network@frame`**
-    - On **`agent@net*`**: unregister network joints, offline, stop **`service`**, bring the WireGuard interface down
+    - On **`agent@net*`**: offline, stop **`service`**, bring the WireGuard interface down
     - failed return tfalse
     - succeed return ttrue
 
@@ -212,6 +212,19 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ttrue
     ```
 
++ `reset[]` **restart all mapped channel services**
+    - Only valid on **`agent@gtog`** (pool); channel objects return error
+    - **`sreset`** each slot that has an object→`netid` map entry (**`agent@net`**, **`agent@net2`**, …)
+    - Called by **`agent@heclient.reset`** when the heclient bound **`extern`** path changes
+    - failed return terror / tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    agent@gtog.reset
+    ttrue
+    ```
+
 + `endpoint[ netid, endpoint list ]` **replace the full endpoint map for a network**
     - netid ---------------- [ string ], network identifier
     - endpoint list -------- [ json ], map keyed by device macid
@@ -288,4 +301,4 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ttrue
     ```
 
-Channel **`online`** / **`offline`** / **`reset`** (and per-channel **`state`**) are documented in **`net.md`**.
+Channel **`online`** / **`offline`** (and per-channel **`state`**) are documented in **`net.md`**. Pool **`reset`** is above; WAN retry is driven by **`agent@heclient.reset`**.

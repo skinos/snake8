@@ -29,10 +29,10 @@ Each **`agent@net`**, **`agent@net2`**, … is one WireGuard mesh channel implem
     "listen_port":"local WireGuard and raw UDP listen port",    // [ number ]
                                                                    // omit → agent@gtog port_start formula (agent@net → port_start, agent@netN → port_start+N-1)
     "key":"shared key with the coordinator",                    // [ string ], default "NPORT-UDP@ashyelf.com"
-    "extern":"outbound interface before dial",                  // [ string ]: [ "disable","default","ifname@wan",... ]
-                                                                   // empty / unset / "disable" / "default": use default gateway; joint network/online
-                                                                   // "ifname@…": use that iface; joint network/onextern; WAN path → branch-capable
-                                                                   // no IP yet → service exits ttrue (done) until joint → reset → sreset
+    "extern":"outbound interface for raw UDP listen_ip",        // [ string ]: [ "disable","default","ifname@wan",... ]
+                                                                   // omit → agent@heclient.extern; empty/disable → default
+                                                                   // "default": network@frame.gateway; "ifname@…": iface status
+                                                                   // no joints (WAN retry via heclient.reset)
 
     "netid":"network identify string",                          // [ string ], unique network id
     "network":"VPN address CIDR",                               // [ string ], e.g. "10.0.1.0/24"
@@ -79,7 +79,6 @@ agent@net
     "keepintval":"10",                          # keep every 10 seconds
     "keepfailed":"3",                           # exit after 3 keep failures
     "keeptimeout":"8",                          # keep timeout (< keepintval)
-    "extern":"default",                         # wait for default gateway
     "mtu":"1420"                                # WireGuard MTU
 }
 ```
@@ -160,27 +159,13 @@ LIMIT peers are not wired to each other; traffic between leaves goes through the
     ```
 
 + `shut[]` **stop this channel**
-    - Unregister network joints, offline, stop **`service`**, bring the WireGuard interface down
+    - Offline, stop **`service`**, bring the WireGuard interface down
     - failed return tfalse
     - succeed return ttrue
 
     Example, shutdown the first network
     ```shell
     agent@net.shut
-    ttrue
-    ```
-
-+ `reset[ event, detail ]` **restart channel service on WAN/gateway change (joint)**
-    - Registered by **`service`** as **`network/online`** (default gateway) or **`network/onextern`** (named **`extern`**)
-    - When the matching event fires, **`sreset`** the channel service so **`listen_ip`** / raw source are re-resolved
-    - event ----- [ string ], e.g. `"network/online"`
-    - detail ----- [ json ], must include **`ifname`**
-    - failed return tfalse
-    - succeed return ttrue
-
-    Example, joint callback after default route is up
-    ```shell
-    agent@net.reset[ "network/online", {"ifname":"ifname@wan"} ]
     ttrue
     ```
 

@@ -3,6 +3,8 @@ Connects to the port-proxy service so remote sessions can reach local **TCP**, *
 
 Standby keeplive: client sends `k`, server echoes `k`. Via heport `adjust`: `mode`, `active_pond`, `idle_pond`, `nomate_timeout` (ping interval `(nomate_timeout-1)/3`), `connect_timeout = mating_timeout - 1`, `mate_timeout` (same as center@pport).
 
+When **`agent@heclient.reset`** fires (bound **`extern`** path change), heclient also **`sreset`**s **`agent@portc`**.
+
 **`mode`**: `pond` (default, current) or `mux` (future multiplex entry). Unset/`pond` runs as today; `mux` or unknown value → service fails and exits (not implemented). No capability negotiation — center hard-switches when ready.
 
 **UDP payload framing** (mated `hand_proto` `u`, same as `center@pport`): after the mate line / `m` ACK, datagrams on the proxy TCP use `[u16be length][payload]` (`length` 0..65535). TCP/serial hands stay raw byte streams. Must match center version.

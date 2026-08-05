@@ -238,12 +238,14 @@ The network subsystem uses a layered architecture that separates configuration, 
     "delay_divide":"delay divide line",                            // [ number ], ms
                                                                    // dbdc: 0=ignore absolute boundary (filter by delay_diff vs best only);
                                                                    //       >0 arms when means straddle this line (with delay_diff rules)
-                                                                   // hot/lazy: 0=ignore divide (online switch by delay_diff only); >0 used with delay_diff rules below
+                                                                   // hot: good-tier line (delay<=this); 0 => no good tier, always smallest online number
+                                                                   // lazy: 0=ignore divide (online switch by delay_diff only); >0 used with delay_diff rules
     "delay_diff":"delay differential",                             // [ number ], ms
                                                                    // dbdc: 0=hard cut at delay_divide when straddling; >0 allow above-divide if (mean-best)<=this
                                                                    //       when delay_divide==0: drop from balancing if (mean-best)>this
-                                                                   // hot/lazy: 0=ignore diff (online switch by delay_divide only); >0 with divide>0 needs both
-                                                                   // hot target: prefer smallest-numbered below divide, else best; lazy target: best
+                                                                   // hot: leave sticky when current>divide and (current - good-tier-smallest)>this; 0 => weaker anti-flap
+                                                                   // lazy: 0=ignore diff (online switch by delay_divide only); >0 with divide>0 needs both
+                                                                   // lazy target: best mean
     "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
     "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
 

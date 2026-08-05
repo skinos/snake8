@@ -56,6 +56,8 @@ const char *config_sgets_string( char *buffer, int buflen, const char *object, c
  * @note This sets configuration
  * @note The value v is copied internally, caller retains ownership
  * @note objp must represent project@component (obj_prj and obj_com both non-empty); otherwise EINVAL
+ * @note On success with unchanged content, returns true and sets errno to EEXIST (no file write)
+ * @note On success with content written, returns true and sets errno to 0
  * @note Difference from dbs_save: config_set writes config files, dbs_save writes the database layer
  * @note Example:
  * @code
@@ -72,11 +74,17 @@ const char *config_sgets_string( char *buffer, int buflen, const char *object, c
  * @see dbs_save for persistent storage
  */
 boole config_set( obj_t objp,                     talk_t v, attr_t attr );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_sets( obj_t objp,                    talk_t v, const char *attr, ... );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_sset( const char *object,              talk_t v, attr_t attr );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_ssets( const char *object,             talk_t v, const char *attr, ... );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_set_string( obj_t objp,              const char *string, attr_t attr );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_sset_string( const char *object,  const char *string, attr_t attr );
+/** @note Same errno semantics as config_set (EEXIST if unchanged, 0 if written). */
 boole config_ssets_string( const char *object, const char *string, const char *attr, ... );
 
 

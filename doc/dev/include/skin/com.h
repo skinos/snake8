@@ -387,7 +387,7 @@ typedef struct com_st
 	// component file type
 #define COM_FILE_LIB     1
 #define COM_FILE_EXECUTE 2
-/* obj alias placeholder → target object name; unresolved = not listed / not usable */
+/* obj alias → one real component name (not another alias); unresolved = not listed / not usable */
 #define COM_FILE_ALIAS   3
 /** Fixed fd for JSON/talk reply pipe in shell-spawned COM_FILE_EXECUTE children (dup2 from pipe write end) */
 #define SHELL_COM_PIPE   7

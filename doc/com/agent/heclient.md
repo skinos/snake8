@@ -8,7 +8,7 @@ The service uses a line-oriented Heport protocol (not MQTT). Related agent compo
 - Register the device with account **`user`** / **`vcode`** and push machine, gateway, IO, GNSS, and sensor snapshots
 - Keep the session alive with application keeplive; republish snapshots on **`update`**
 - Execute remote JSON talk commands and string HE lines from the server, then ACK results
-- Optional outbound bind via **`extern`** (default gateway or a specific interface) with joint **`reset`** when the path changes
+- Optional outbound bind via **`extern`** (default gateway or a specific interface) with joint **`reset`** when the path changes (also restarts **`agent@portc`** and **`agent@gtog`** channels)
     > Account errors (**`usererror`** / **`vcodeerror`**) stop the service without auto-restart; connect or extern-not-ready failures retry by platform policy
 
 ### Configuration reference ( agent@heclient )
@@ -136,12 +136,13 @@ ttrue
     ttrue
     ```
 
-+ `reset[ event, event data ]` **restart the heclient background service when the bound extern changes**
++ `reset[ event, event data ]` **restart heclient, portc, and all gtog channels when the bound extern changes**
     - event ----------------------- [ string ], joint event name (for example network/online)
     - event data ------------------ [ json ], event payload; must include **`ifname`**
     - Used as a joint handler registered by the service when **`extern`** is not **`disable`**
     - **`extern=default`**: acts only when event is **`network/online`**
     - **specific interface**: acts when event **`ifname`** equals configured **`extern`**
+    - On match: **`sreset agent@portc`**, **`agent@gtog.reset`**, then **`sreset agent@heclient`**
     - failed return tfalse
     - succeed return ttrue
 
@@ -264,3 +265,5 @@ When **`extern`** is not **`disable`**, the background service also registers at
 |-----------|-------------|-----------|
 | `network/online` | `agent@heclient.reset` | **`extern=default`** (or empty) |
 | `network/onextern` | `agent@heclient.reset` | **`extern`** is a specific interface name |
+
+Matched **`reset`** also restarts **`agent@portc`** and all mapped **`agent@net*`** via **`agent@gtog.reset`**.
