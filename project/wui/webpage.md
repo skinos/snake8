@@ -495,9 +495,11 @@ page.confirm({ message: $.i18n('Are you sure?') }).then(function (result) {
 he.reboot({
     title: $.i18n('Rebooting...'),
     hint: $.i18n('Make sure that the device is reconnected')
-    // optional: restartTime (seconds), href (redirect after reboot), cmds (extra commands before reboot)
+    // optional: restartTime (max wait seconds), href (redirect after reboot), cmds (extra commands before reboot)
 });
 ```
+
+After `machine.restart`, the UI shows a progress bar for up to `restartTime` / `arch@custom.restart_time` / **60** seconds. It probes `/login.html` every **2s** (ignores “alive” for the first **10s**, requires an offline sample, then **2** consecutive successes). When the web is back it shows **Reboot successfully** for about **1.2s** (overlay kept visible), then navigates to **`login.html`** (or `href`); on timeout it shows `hint` then navigates the same way. The bar pauses near **95%** while waiting.
 
 ---
 
@@ -846,7 +848,7 @@ he.cmd({
 
 | API | Description |
 |-----|-------------|
-| `he.reboot(args)` | Shows reboot progress bar, executes `machine.restart` |
+| `he.reboot(args)` | Progress + probe until web is back, then reload; runs `machine.restart` |
 | `he.upgrade_reboot(args)` | Post-upgrade reboot (longer default wait time) |
 
 Optional `args` fields: `title`, `restartTime` (seconds), `href` (redirect URL after reboot), `hint` (prompt text), `cmds` (extra command array to execute before reboot).

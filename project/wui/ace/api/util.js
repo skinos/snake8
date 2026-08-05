@@ -379,32 +379,90 @@ var page =
     },
 
     /*
-     * 显示全屏的进度条
-     * @param {any} progress 
-     * progress.title 进度条的标题
+     * Full-screen progress bar.
+     * @param {object} progress
+     * progress.title - title text
+     * progress.sec - estimated total seconds (default 50)
+     * progress.holdAt - optional percent to pause at (e.g. 95) until finish()
+     * progress.callback - called when bar reaches 100% by itself (not via finish skipCallback)
+     * @returns {{ finish: function(opts) }} controller; finish({ skipCallback:true }) jumps to 100%
      */
     progress: function( progress )
     {
-        pregress = progress || {};
-        var $title = $('#overlay-progress-title');  // 进度条的标题
-        var $progress = $('#overlay-progress .progress'); // 整条进度条
-        var $progressBar = $('#overlay-progress .progress-bar'); // 当前进度
-        var percent = 0; // 进度条的比例 0 到 100
-        var totalMs = (progress.sec || 50) * 1000; // 总时长
-        var interval = totalMs / 100; // 进度条百分比加一的间隔
-        $title.text(progress.title || ''); // 设置进度条的标题
-        $('#overlay-progress').show(); // 显示进度条
-        // 进度条开始
-        var timer = setInterval( function(){
-            if (++percent > 100) { // 进度到100
-                clearInterval(timer); // 清除定时器
-                $('#overlay-progress').hide(); // 隐藏进度条
-                progress.callback && progress.callback(); // 执行回调
+        progress = progress || {};
+        var $title = $('#overlay-progress-title');
+        var $progress = $('#overlay-progress .progress');
+        var $progressBar = $('#overlay-progress .progress-bar');
+        var percent = 0;
+        var totalMs = (progress.sec || 50) * 1000;
+        var interval = totalMs / 100;
+        var holdAt = (progress.holdAt != null) ? progress.holdAt : 100;
+        var done = false;
+        var timer;
+
+        function paint()
+        {
+            $progress.attr('data-percent', percent + '%');
+            $progressBar.css({ width: percent + '%' });
+        }
+
+        function stopBar()
+        {
+            if (timer)
+            {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        $title.text(progress.title || '');
+        $('#overlay-progress').show();
+        paint();
+
+        timer = setInterval(function () {
+            if (done)
+            {
                 return;
             }
-            $progress.attr('data-percent', percent + '%'); // 设置进度条上的百分比
-            $progressBar.css( { width: percent + '%' } ); // 设置进度
-        }, interval );
+            /* Hold near the end while waiting for an external finish() */
+            if (holdAt < 100 && percent >= holdAt)
+            {
+                return;
+            }
+            percent++;
+            if (percent > 100)
+            {
+                done = true;
+                stopBar();
+                $('#overlay-progress').hide();
+                progress.callback && progress.callback();
+                return;
+            }
+            paint();
+        }, interval);
+
+        return {
+            finish: function (opts)
+            {
+                opts = opts || {};
+                if (done)
+                {
+                    return;
+                }
+                done = true;
+                stopBar();
+                percent = 100;
+                paint();
+                if (!opts.keepVisible)
+                {
+                    $('#overlay-progress').hide();
+                }
+                if (!opts.skipCallback)
+                {
+                    progress.callback && progress.callback();
+                }
+            }
+        };
     },
     /*
      * 提示设置成功

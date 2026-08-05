@@ -258,6 +258,7 @@
     "Modifying...": "修改中...",
     "Restarting to apply...": "正在重启以应用配置...",
     "Make sure that the device is reconnected": "确定已重新连接上设备",
+    "Reboot successfully": "重启成功",
     "Can not be empty": "不能为空",
     "must be a valid MAC address": "必须为合法的MAC地址",
     "must be a valid IP address": "必须为合法的IP地址",

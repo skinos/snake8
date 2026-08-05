@@ -2,7 +2,7 @@
     "name":"wui",
     "intro":"web user interface page",
     "type":"root",
-    "version":"8.0.2",
+    "version":"8.0.3",
     "author":"dimmalex@gmail.com",
 
     "exe":

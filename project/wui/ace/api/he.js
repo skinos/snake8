@@ -341,16 +341,170 @@ var he =
 	},
 
     /*
-     * 重启路由器，屏显示进度条
-     * @param {any} args 
+     * After reboot/upgrade: wait until the device web is back, then reload.
+     * restart_time / upgrade wait is the max wait (progress estimate).
+     * @param {object} arg - title/hint/href from reboot callers
+     * @param {number} timeoutSec - max wait seconds
+     * @param {string} titleDefault - progress title when arg.title missing
+     */
+    _waitDeviceReload: function ( arg, timeoutSec, titleDefault )
+    {
+        var pollMs = 2000;       /* probe interval */
+        var probeTimeout = 1500;
+        var needOk = 2;          /* consecutive successes after offline */
+        /* Keep enough time after grace for offline + two live probes when T is short */
+        var graceMs = Math.min(10000, Math.max(3000, (timeoutSec - 20) * 1000));
+        var start = Date.now();
+        var offlineSeen = false;
+        var okStreak = 0;
+        var finished = false;
+        var probeTimer = null;
+        var maxTimer = null;
+        var bar;
+
+        function goReload()
+        {
+            window.rebooting = false;
+            /* Prefer replace so history does not return to the pre-reboot page */
+            if ( arg.href )
+            {
+                window.location.replace(arg.href);
+            }
+            else
+            {
+                /* Session is gone after reboot; go login directly to avoid flashing the old page */
+                window.location.replace('login.html');
+            }
+        }
+
+        function stopWait()
+        {
+            if (probeTimer)
+            {
+                clearInterval(probeTimer);
+                probeTimer = null;
+            }
+            if (maxTimer)
+            {
+                clearTimeout(maxTimer);
+                maxTimer = null;
+            }
+        }
+
+        function finishEarly()
+        {
+            if (finished)
+            {
+                return;
+            }
+            finished = true;
+            stopWait();
+            if (bar)
+            {
+                /* Keep overlay until navigation completes — hide would flash the old page */
+                bar.finish({ skipCallback: true, keepVisible: true });
+            }
+            $('#overlay-progress-title').text($.i18n('Reboot successfully'));
+            page.hint2succeed($.i18n('Reboot successfully'));
+            setTimeout(goReload, 1200);
+        }
+
+        function finishTimeout()
+        {
+            if (finished)
+            {
+                return;
+            }
+            finished = true;
+            stopWait();
+            if (bar)
+            {
+                /* Must hide overlay or bootbox alert underneath cannot be clicked */
+                bar.finish({ skipCallback: true });
+            }
+            page.alert({
+                message: arg.hint || $.i18n('Make sure that the device is reconnected')
+            }).then(function () {
+                goReload();
+            });
+        }
+
+        function probeOnce()
+        {
+            if (finished)
+            {
+                return;
+            }
+            $.ajax({
+                url: '/login.html?_=' + Date.now(),
+                type: 'GET',
+                timeout: probeTimeout,
+                cache: false,
+                complete: function (x, s)
+                {
+                    var elapsed;
+                    var alive;
+
+                    if (finished)
+                    {
+                        return;
+                    }
+                    elapsed = Date.now() - start;
+                    alive = (s === 'success' && x.status >= 200 && x.status < 400);
+                    if (elapsed < graceMs)
+                    {
+                        /* Grace: only remember offline, never treat as ready */
+                        if (!alive)
+                        {
+                            offlineSeen = true;
+                            okStreak = 0;
+                        }
+                        return;
+                    }
+                    if (!alive)
+                    {
+                        offlineSeen = true;
+                        okStreak = 0;
+                        return;
+                    }
+                    /* Alive after grace: require prior offline to avoid old process */
+                    if (!offlineSeen)
+                    {
+                        return;
+                    }
+                    okStreak++;
+                    if (okStreak >= needOk)
+                    {
+                        finishEarly();
+                    }
+                }
+            });
+        }
+
+        bar = page.progress({
+            title: arg.title || titleDefault,
+            sec: timeoutSec,
+            holdAt: 95
+        });
+        probeTimer = setInterval(probeOnce, pollMs);
+        probeOnce();
+        maxTimer = setTimeout(finishTimeout, timeoutSec * 1000);
+    },
+
+    /*
+     * Reboot the device and show a progress bar until web is reachable again.
+     * @param {any} args
      * args.title
-     * args.restartTime
+     * args.restartTime - max wait seconds (also progress estimate)
      * args.href
+     * args.hint
+     * args.cmds - extra HE commands before machine.restart
      */
     reboot: function( args )
     {
         var timeout;
         var arg = args || {};
+        var cmds;
 
         if ( arg.restartTime )
         {
@@ -364,44 +518,30 @@ var he =
         {
             timeout = 60;
         }
-        // 显示进度条
-        page.progress({
-            title: arg.title || $.i18n('Rebooting...'),
-            sec: timeout,
-            callback: function ()
-            {
-                page.alert( {message:arg.hint||$.i18n('Make sure that the device is reconnected')} ).then(function () {
-                    if ( arg.href )
-                    {
-                        window.location.href = arg.href;
-                    }
-                    else
-                    {
-                        // 进度条读完之后, 刷新页面
-                        window.location.reload(true);
-                    }
-                })
-            }
-        });
-        // 执行cmds中的命令
-        var cmds = arg.cmds || [];
-        cmds.push('machine.restart[0,wui]');
-        // 设置正在重启的标志位
+
         window.rebooting = true;
+        he._waitDeviceReload(arg, timeout, $.i18n('Rebooting...'));
+
+        cmds = arg.cmds || [];
+        cmds.push('machine.restart[0,wui]');
         he.cmd(cmds, null, function () {});
     },
  
     /*
-     * 升级后重启路由器，屏显示进度条
-     * @param {any} args 
+     * Progress UX after firmware upgrade (optional restart).
+     * @param {any} args
      * args.title
-     * args.restartTime
+     * args.restartTime - max wait seconds
      * args.href
+     * args.hint
+     * args.norestart - only wait/reload UX, do not send restart
+     * args.cmds
      */
     upgrade_reboot: function( args )
     {
         var timeout;
         var arg = args || {};
+        var cmds;
 
         if ( arg.restartTime )
         {
@@ -415,30 +555,13 @@ var he =
         {
             timeout = 150;
         }
-        // 显示进度条
-        page.progress({
-            title: arg.title || $.i18n('Restarting...'),
-            sec: timeout,
-            callback: function ()
-            {
-                page.alert( {message:arg.hint||$.i18n('Make sure that the device is reconnected')} ).then(function () {
-                    if ( arg.href )
-                    {
-                        window.location.href = arg.href;
-                    }
-                    else
-                    {
-                        // 进度条读完之后, 刷新页面
-                        window.location.reload(true);
-                    }
-                })
-            }
-        });
-        // 执行cmds中的命令（norestart 时只显示进度条，不发重启指令）
+
         window.rebooting = true;
+        he._waitDeviceReload(arg, timeout, $.i18n('Restarting...'));
+
         if ( !arg.norestart )
         {
-            var cmds = arg.cmds || [];
+            cmds = arg.cmds || [];
             cmds.push('machine.restart[0,wui]');
             he.cmd(cmds, null, function () {});
         }
