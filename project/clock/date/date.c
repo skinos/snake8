@@ -96,7 +96,7 @@ static boole time_setting( const char *tt, const char *zone, const char *src )
 				wr = wreg_attach( NULL, 0, 0 );
 				if ( wr != NULL )
 				{
-					(void)reg_put_str( wr, "date_src", src );
+					reg_put_str( wr, "date_src", src );
 					wreg_detach( wr );
 				}
                 /* cast joint event */
@@ -133,7 +133,7 @@ static boole ntpclient_sync( const char* server, const char* zone )
 			wr = wreg_attach( NULL, 0, 0 );
 			if ( wr != NULL )
 			{
-				(void)reg_put_str( wr, "date_src", "ntp" );
+				reg_put_str( wr, "date_src", "ntp" );
 				wreg_detach( wr );
 			}
 		}
