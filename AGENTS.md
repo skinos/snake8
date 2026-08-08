@@ -33,13 +33,14 @@ make clangd       # Generate compile_commands.json for IDE
 ```
 
 **Build workflow (IMPORTANT — do NOT use `make clean`)**:
-- **修改单个项目代码** (如 ipsec): `./mkdel` → `make obj=ipsec` → 生成 `build/store/<name>-<ver>.fpk`
-- **修改 sdk.config**: `./mkdel` → `make` → 生成完整固件 `build/*.zz`
+- **修改单个普通项目代码** (如 ipsec、modem、uart): `./mkdel` → `make obj=<name>` → 生成 `build/store/<name>-<ver>.fpk` → 可用 FPK 热部署测
+- **修改 `project/land/` 或 `config/*/arch/`（含 `config/swrt5/arch/`）**: 二者是**基础固件**，**不能**靠上传 land/arch 的 FPK 在设备上更新/验证 → 必须 `./mkdel` → `make` → 升级完整固件 **`.zz`** 后再测（详见 **device-upgrade** skill）
+- **修改 sdk.config / kernel / rootfs 等**: `./mkdel` → `make` → 生成完整固件 `build/*.zz`
 - **禁止使用 `make clean`** — 会导致全量重编，耗时极长。`./mkdel` 足够清理增量状态
 
-**FPK 热部署**: FPK 文件可通过 web API 安装到运行中的设备，无需重启
+**FPK 热部署**: 非 land/arch 的 FPK 可通过 web API 安装到运行中的设备，无需重启
 ```bash
-# 上传 FPK（与固件升级相同的接口，api=fpk）
+# 上传 FPK（与固件升级相同的接口，api=fpk）— 不要用于 land/arch 验证
 curl -X POST "http://<device>/upload?username=admin&key=<key>&object=arch@firmware&api=fpk&p=[]" -F "filename=@build/store/<name>.fpk"
 ```
 
@@ -51,11 +52,11 @@ curl -X POST "http://<device>/upload?username=admin&key=<key>&object=arch@firmwa
 - `build/store/` — FPK packages (per-project `.fpk` files)
 - `build/*.zz` — full firmware images
 
-**FPK package build** (single project, hot-deployable):
+**FPK package build** (single **non-core** project, hot-deployable):
 ```bash
 make obj=<name>              # Build project → build/store/<name>-<ver>-<hw>.fpk
 ```
-FPK files can be uploaded to a running device without restart. Use `arch@firmware.fpk` API.
+FPK files can be uploaded to a running device without restart (**except land/arch — those require `.zz`**). Use `arch@firmware.fpk` API for eligible packages.
 
 ## Device upgrade & remote testing
 
@@ -65,8 +66,9 @@ Quick summary:
 1. **Build firmware (.zz)**: `./mkdel` → `make` → `build/*.zz`
 2. **Authenticate**: `POST /public` → get `rand` → compute `MD5(pass:user:rand)` → base64 → `POST /auth` → get `key`
 3. **Upgrade (.zz)**: `POST /upload?...&api=zz&p2=restart` → if response has `"status":"success"` wait **30s**, if upload never returns wait **90s**, then confirm `land@machine.status` (`version` ~ `^v[0-9]`); if bad version → `land@machine.restart` ×≤3 (wait 90s each); still fail → ask user to manual reboot
-4. **FPK package**: `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
-5. **Test**: web `POST /he` first; shell via SSH/telnet if needed (`ashy`). IPsec: read hub `ipsec.conf` if user gave server SSH; poll `ipsec@client.status` until `established` (early `down` is normal). Details: `.claude/skills/device-upgrade/SKILL.md`
+4. **FPK package** (not land/arch): `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
+5. **land / arch 修改上设备**: 只能走步骤 1–3（完整 `.zz`），禁止用步骤 4 的 FPK 热部署来测
+6. **Test**: web `POST /he` first; shell via SSH/telnet if needed (`ashy`). IPsec: read hub `ipsec.conf` if user gave server SSH; poll `ipsec@client.status` until `established` (early `down` is normal). Details: `.claude/skills/device-upgrade/SKILL.md`
 
 ## Certificate handling convention
 

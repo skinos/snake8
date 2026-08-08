@@ -73,7 +73,7 @@ Constraints:
 
 - Comments in new C code: **English** (repo convention)
 - Do not invent APIs; follow `_setup` / `_shut` / `_get` / `_set` / `_service` patterns from templates
-- Deploy: **device-upgrade** skill (`make obj=` → upload FPK)
+- Deploy: **device-upgrade** skill — most apps: `make obj=` → upload FPK; **`land` / `arch` are core base firmware → full `.zz` only** (never FPK-hot-test those two)
 
 ## Create a component (`com`)
 

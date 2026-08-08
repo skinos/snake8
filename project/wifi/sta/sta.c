@@ -261,14 +261,14 @@ static talk_t station_dev_aplist( const char *netdev, const char *ssid, const ch
 
 	// mark scan
 	times = 1;
-	reg_sset_int( netdev, "scan", times );
+	reg_sput_int( netdev, "scan", times );
 	// start scan
     station_dev_apscan( netdev );
 	// get the scan result
     result = station_dev_apresult( netdev );
 	// unmark scan
 	times = 0;
-	reg_sset_int( netdev, "scan", times );
+	reg_sput_int( netdev, "scan", times );
 	// pick the peer
 	if ( ssid != NULL || bssid != NULL || ssid2 != NULL || ssid3 != NULL )
 	{
@@ -331,7 +331,7 @@ boole_t _setup( obj_t this, param_t param )
 	const char *netdev;
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_debug( "%s(%s) add to network frame", object, netdev );
@@ -347,7 +347,7 @@ boole_t _shut( obj_t this, param_t param )
 	const char *netdev;
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_debug( "%s delete from network frame", object );
@@ -375,7 +375,7 @@ talk_t _netdev( obj_t this, param_t param )
 {
 	const char *netdev;
 
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -388,7 +388,7 @@ boole_t _up( obj_t this, param_t param )
 	talk_t v;
 	talk_t cfg;
 	talk_t opt;
-	char *netdev;
+	const char *netdev;
 	const char *radio;
 	const char *object;
 	const char *ifname;
@@ -396,6 +396,7 @@ boole_t _up( obj_t this, param_t param )
 	const char *peer;
 	const char *peermac;
 	const char *nossid;
+	const char *s;
 	char kmac[48];
 	char kpeer[48];
 	char ksecure[48];
@@ -405,12 +406,12 @@ boole_t _up( obj_t this, param_t param )
 
 	/* get the configure */
 	object = obj_name( this );
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return terror;
 	}
-	netdev = register_pointer( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL )
 	{
 		return terror;
@@ -425,9 +426,9 @@ boole_t _up( obj_t this, param_t param )
 		return terror;
 	}
 	/* wait if another process is in up/down; then run this up */
-	if ( register_lockw( this, netdev ) != true )
+	if ( reg_olock( this, "netdev" ) == NULL )
 	{
-		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
+		wifi_faulting( "%s(%s) reg_olock failed", object, netdev );
 		talk_free( cfg );
 		return tfalse;
 	}
@@ -483,7 +484,7 @@ boole_t _up( obj_t this, param_t param )
 		if ( status != NULL && 0 == strcmp( status, "disable" ) )
 		{
 			talk_free( cfg );
-			register_unlock( this, netdev );
+			reg_ounlock( this, "netdev" );
 			return terror;
 		}
 		for ( i=0; i<STA_PEER_MAX; i++ )
@@ -517,7 +518,7 @@ boole_t _up( obj_t this, param_t param )
 		{
 			wifi_warn( "%s(%s) no peer settings", object, netdev );
 			talk_free( cfg );
-			register_unlock( this, netdev );
+			reg_ounlock( this, "netdev" );
 			return terror;
 		}
 	}
@@ -545,22 +546,28 @@ boole_t _up( obj_t this, param_t param )
 			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
 			snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
 		}
-		reg_set_string( this, kpeer, json_string( v, kpeer ) );
-		reg_set_string( this, kmac, json_string( v, kmac ) );
-		reg_set_string( this, ksecure, json_string( v, ksecure ) );
-		reg_set_string( this, kwenc, json_string( v, kwenc ) );
-		reg_set_string( this, kwkey, json_string( v, kwkey ) );
-		reg_set_string( this, kpmode, json_string( v, kpmode ) );
+		s = json_string( v, kpeer );
+		reg_oput_str( this, kpeer, s );
+		s = json_string( v, kmac );
+		reg_oput_str( this, kmac, s );
+		s = json_string( v, ksecure );
+		reg_oput_str( this, ksecure, s );
+		s = json_string( v, kwenc );
+		reg_oput_str( this, kwenc, s );
+		s = json_string( v, kwkey );
+		reg_oput_str( this, kwkey, s );
+		s = json_string( v, kpmode );
+		reg_oput_str( this, kpmode, s );
 	}
-	reg_set_string( this, "ifname", ifname );
-	reg_set_string( this, "nossid", nossid );
+	reg_oput_str( this, "ifname", ifname );
+	reg_oput_str( this, "nossid", nossid );
 
 	/* up the device */
 	cstart( this, "wpa", NULL, "%s-wpa", netdev );
 	sleep( 1 );
 	cstart( this, "keeplive", NULL, "%s-keeplive", netdev );
 
-	register_unlock( this, netdev );
+	reg_ounlock( this, "netdev" );
 
 	talk_free( cfg );
 	return ttrue;
@@ -575,7 +582,7 @@ boole_t _connected( obj_t this, param_t param )
 	const char *netdev;
 
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
@@ -593,11 +600,11 @@ boole_t _connected( obj_t this, param_t param )
 boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
-	char *netdev;
+	const char *netdev;
 
 	object = obj_name( this );
 	/* get the netdev */
-	netdev = register_pointer( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL )
 	{
 		return terror;
@@ -608,9 +615,9 @@ boole_t _down( obj_t this, param_t param )
 	}
 
 	/* wait if another process is in up/down; then run this down */
-	if ( register_lockw( this, netdev ) != true )
+	if ( reg_olock( this, "netdev" ) == NULL )
 	{
-		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
+		wifi_faulting( "%s(%s) reg_olock failed", object, netdev );
 		return tfalse;
 	}
 
@@ -627,7 +634,7 @@ boole_t _down( obj_t this, param_t param )
 		ifconfig( "%s down", netdev );
 	}
 
-	register_unlock( this, netdev );
+	reg_ounlock( this, "netdev" );
 
 	return ttrue;
 }
@@ -638,11 +645,11 @@ boole_t _reset( obj_t this, param_t param )
 {
 	int reset_times;
 	const char *object;
-	char *netdev;
+	const char *netdev;
 
 	object = obj_name( this );
 	/* get the netdev */
-	netdev = register_pointer( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL )
 	{
 		return terror;
@@ -653,17 +660,17 @@ boole_t _reset( obj_t this, param_t param )
 	}
 
 	/* wait if another process is in up/down; then run this down */
-	if ( register_lockw( this, netdev ) != true )
+	if ( reg_olock( this, "netdev" ) == NULL )
 	{
-		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
+		wifi_faulting( "%s(%s) reg_olock failed", object, netdev );
 		return tfalse;
 	}
 
 	/* record the count */
-	reset_times = reg_int( this, "reset_times" );
+	reset_times = reg_oget_int( this, "reset_times", 0 );
 	wifi_fault( "%s reset %d times", object, reset_times+1 );
 	reset_times++;
-	reg_set_int( this, "reset_times", reset_times );
+	reg_oput_int( this, "reset_times", reset_times );
 	/* delete the keeplive */
 	sdelete( "%s-keeplive", netdev );
 	/* delete the relayd */
@@ -671,7 +678,7 @@ boole_t _reset( obj_t this, param_t param )
 	/* delete wpa_supplicant */
 	sdelete( "%s-wpa", netdev );
 
-	register_unlock( this, netdev );
+	reg_ounlock( this, "netdev" );
 
 	return ttrue;
 }
@@ -686,7 +693,7 @@ talk_t _status( obj_t this, param_t param )
     char path[PATH_MAX];
 
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -905,9 +912,9 @@ boole_t _online( obj_t this, param_t param )
 	object = obj_name( this );
 	/* clear the count */
 	reset_times = 0;
-	reg_set_int( this, "reset_times", reset_times );
+	reg_oput_int( this, "reset_times", reset_times );
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
@@ -927,7 +934,7 @@ boole_t _offline( obj_t this, param_t param )
 	const char *ifname;
 
 	/* get the netdev */
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
@@ -953,12 +960,12 @@ talk_t _aplist( obj_t this, param_t param )
 	const char *peer3;
 	const char *peermac;
 
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return NULL;
 	}
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -985,7 +992,7 @@ talk_t _chlist( obj_t this, param_t param )
 {
 	const char *radio;
 
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return NULL;
@@ -996,7 +1003,7 @@ talk_t _securelist( obj_t this, param_t param )
 {
 	const char *radio;
 
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return NULL;
@@ -1028,14 +1035,14 @@ boole_t _wpa( obj_t this, param_t param )
 	const char *wpa_key;
 	const char *pairwise;
 	const char *hostapdctl = NULL;
-	char *wap_dir = "/var/run/wpa_supplicant";
+	const char *wap_dir = "/var/run/wpa_supplicant";
 
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return terror;
 	}
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
@@ -1055,7 +1062,7 @@ boole_t _wpa( obj_t this, param_t param )
 
 	/* stop the hostapd to update the channel */
 	scall( radio, "stop_hostapd", NULL );
-	//hostapdctl = reg_sstring( radio, "ctl" );
+	//hostapdctl = reg_sget_str( radio, "ctl" );
 
 	/* make the configure for mutil-peer */
 	for ( i = 0; i < STA_PEER_MAX; i++ )
@@ -1078,8 +1085,8 @@ boole_t _wpa( obj_t this, param_t param )
 			snprintf( kwenc, sizeof(kwenc), "wpa_encrypt%d", i+1 );
 			snprintf( kpmode, sizeof(kpmode), "peermode%d", i+1 );
 		}
-		peer = reg_string( this, kpeer );
-		peermac = reg_string( this, kmac );
+		peer = reg_oget_str( this, kpeer );
+		peermac = reg_oget_str( this, kmac );
 		if ( (peer == NULL || *peer == '\0') && (peermac == NULL || *peermac == '\0') )
 		{
 			continue;
@@ -1093,7 +1100,7 @@ boole_t _wpa( obj_t this, param_t param )
 		{
 			fprintf( fp, "\t\t bssid=%s\n", peermac );
 		}
-		peermode = reg_string( this, kpmode );
+		peermode = reg_oget_str( this, kpmode );
 		if ( peermode != NULL && 0 == strcmp( peermode, "hidden" ) )
 		{
 			fprintf( fp, "\t\t scan_ssid=1\n" );
@@ -1102,9 +1109,9 @@ boole_t _wpa( obj_t this, param_t param )
 		{
 			fprintf( fp, "\t\t scan_ssid=1\n" );
 		}
-		secure = reg_string( this, ksecure );
-		wpa_key = reg_string( this, kwkey );
-		wpa_encrypt = reg_string( this, kwenc );
+		secure = reg_oget_str( this, ksecure );
+		wpa_key = reg_oget_str( this, kwkey );
+		wpa_encrypt = reg_oget_str( this, kwenc );
 		if ( secure != NULL && 0 == strcmp( secure, "wpapsk" ) )
 		{
 			fprintf( fp, "\t\t key_mgmt=WPA-PSK\n" );
@@ -1203,7 +1210,7 @@ boole_t _relayd( obj_t this, param_t param )
 	char bridge_netdev[NAME_MAX];
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
@@ -1227,7 +1234,7 @@ boole_t _relayd( obj_t this, param_t param )
 		return ttrue;
 	}
 	/* get the gateway when have */
-	gateway = reg_sstring( ifname, "gateway" );
+	gateway = reg_sget_str( ifname, "gateway" );
 	/* bridge status */
 	ip[0] = '\0';
 	netdev_info( bridge_netdev, ip, sizeof(ip), NULL, 0, NULL, 0, NULL, 0 );
@@ -1272,21 +1279,21 @@ boole_t _keeplive( obj_t this, param_t param )
 	const char *bandwidth;
 
 	object = obj_name( this );
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return terror;
 	}
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return terror;
 	}
 
 	/* get the ifname */
-	ifname = reg_string( this, "ifname" );
+	ifname = reg_oget_str( this, "ifname" );
 	/* get the ssid_disable */
-	nossid = reg_string( this, "nossid" );
+	nossid = reg_oget_str( this, "nossid" );
 
     /* first check */
     wifi_debug( "check %s(%s) connect state", object, netdev );
@@ -1315,17 +1322,17 @@ boole_t _keeplive( obj_t this, param_t param )
 		bandwidth = json_string( v, "bandwidth" );
 		if ( bandwidth != NULL )
 		{
-			reg_sset_string( radio, "bandwidth", bandwidth );
+			reg_sput_str( radio, "bandwidth", bandwidth );
 		}
 		channel = json_string( v, "channel" );
 		if ( channel != NULL )
 		{
-			reg_sset_string( radio, "channel", channel );
+			reg_sput_str( radio, "channel", channel );
 		}
 		beacon = json_string( v, "beacon" );
 		if ( beacon != NULL )
 		{
-			reg_sset_string( radio, "beacon", beacon );
+			reg_sput_str( radio, "beacon", beacon );
 		}
 		talk_free( v );
 	}

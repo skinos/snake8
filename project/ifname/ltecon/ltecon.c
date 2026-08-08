@@ -1327,7 +1327,7 @@ talk_t _state( obj_t this, param_t param )
 		{
 			json_set_string( ret, "ifdev", ifdev );
 			/* get the netdev */
-			netdev = register_svalue( ifdev, "netdev" );
+			netdev = reg_sstring( ifdev, "netdev" );
 			if ( netdev != NULL && *netdev != '\0' )
 			{
 				json_set_string( ret, "netdev", netdev );
@@ -1463,7 +1463,7 @@ talk_t _state( obj_t this, param_t param )
 		if ( 0 == strcmp( mac, "00:00:00:00:00:00" ) || 0 == strcasecmp( mac, "ff:ff:ff:ff:ff:ff" ) ) // ppp interface mac
 		{
 			/* get the netdev */
-			netdev = register_svalue( ifdev, "netdev" );
+			netdev = reg_sstring( ifdev, "netdev" );
 			if ( netdev != NULL && *netdev != '\0' )
 			{
 				netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) );

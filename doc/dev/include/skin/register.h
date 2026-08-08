@@ -3,447 +3,219 @@
 
 /**
  * @file register.h
- * @author dimmalex@gmail.com
- * @version 7.0
- * @date 20220219
- * @brief global register variable implementation
- * @details Functions similar to environment variables are different from environment variables as follows:
- 			1. register variable have only one COPY of information in the system, as opposed to environment variables having a COPY per process
- 			2. Can store binary information
- 			3. Can be used for inter-process communication, cross-process small data interaction
+ * @brief Shared register variables (mmap hash store)
  */
 
-
-
-/// register file handler structure: this structure is a handler of register file
-typedef struct register_file_st
+/*
+ * Internal mmap layout (implementation details; not for external callers).
+ */
+#define REG_MAGIC            0x53475602u
+#define REG_VERSION          2u
+#define REG_NIL              0xFFFFFFFFu
+#define REG_SLOT_USED        1u
+#define REG_SLOT_FREE        2u
+#define REG_CHUNK_USED       1u
+#define REG_CHUNK_FREE       2u
+#define REG_NAME_MAX         32
+#define REG_DEFAULT_BUCKETS  32u
+#define REG_DEFAULT_SYS_SLOTS 1024u   /* no '@' (machine/com/…) */
+#define REG_DEFAULT_OBJ_SLOTS 128u    /* name contains '@' */
+#define REG_DEFAULT_HEAP     (16u * 1024u)  /* initial heap at create */
+#define REG_DEFAULT_HEAP_PER_SLOT 512u      /* max_heap≤0 → slots * this */
+#define REG_DEFAULT_VAR_SIZE 64       /* put capacity≤0 default slack; path buffers */
+#define REG_NS_CACHE_BUCKETS 64
+#define REG_ALIGN8(n)        (((n) + 7u) & ~7u)
+typedef struct reg_hdr_st
 {
-	// link node for add to linker
-	link_struct link;
-	// reference count
+	uint32_t magic;
+	uint32_t version;
+	uint32_t file_size;   /* committed bytes (heap_off + heap_size) */
+	uint32_t bucket_num;
+	uint32_t bucket_off;
+	uint32_t slot_num;    /* usable slots (= slot cap in v2) */
+	uint32_t slot_off;
+	uint32_t slot_free;
+	uint32_t slot_bump;
+	uint32_t heap_off;
+	uint32_t heap_size;   /* current committed heap */
+	uint32_t heap_free;
+	uint32_t heap_bump;
+	uint32_t gen;
+	uint32_t map_size;    /* mmap window (slot table + heap_cap) */
+	uint32_t heap_cap;    /* max heap (grow ceiling) */
+} reg_hdr_t;
+typedef struct reg_slot_st
+{
+	uint32_t hash;
+	uint32_t next;
+	uint32_t flags;
+	uint32_t val_off;
+	uint32_t val_size;
+	uint32_t val_cap;
+	char     name[REG_NAME_MAX];
+} reg_slot_t;
+typedef struct reg_chunk_st
+{
+	uint32_t size;
+	uint32_t flags;
+	uint32_t next_free;
+	uint32_t reserved;
+} reg_chunk_t;
+#define REG_CHUNK_HDR_SIZE   ((uint32_t)REG_ALIGN8(sizeof(reg_chunk_t)))
+#define REG_MIN_CHUNK        REG_CHUNK_HDR_SIZE
+typedef struct reg_ns_st
+{
+	struct reg_ns_st *cache_next;
 	int ref;
-	// file handler
 	int fd;
-	int flags;
-	// mmap to the memory
+	int cached;    /* 1: in process cache (permanent); detach is no-op */
+	int writable;  /* 1: PROT_WRITE map; put/del/lock allowed */
 	char *mem;
-	// mmap size
-	int size;
-	// register object
+	uint32_t size; /* mmap length (= hdr->map_size) */
 	char object[NAME_MAX];
-	// register file pathname
 	char path[PATH_MAX];
-} register_file_struct;
-typedef register_file_struct* register_file_t;
-/* default number register at one register file */
-#define REGISTER_VAR_NUM          (50)
-/* register value default size */
-#define REGISTER_VAR_SIZE         (NAME_MAX)
-/* register default object */
-#define REGISTER_DEFAULT_OBJECT   MACHINE_COM
-/// register index structure: the structure store at the head of register file to describe file layout
-typedef struct register_index_st
-{
-	int magic;				   // magic head
-	int var_numb;			   // variable number
-	int var_offset; 		   // variable offset at the file
-	int var_inuse;			   // how many variable in use
-	int value_size; 		   // variable value size
-	int value_offset;		   // variable value offset at the file
-	int value_inuse;		   // how many variable value in use
-} register_index_struct;
-typedef register_index_struct* register_index_t;
-/// register variable structure: this structure is a handler of register variable
-typedef struct register_var_st
-{
-	char identify[NAME_MAX];	 // variable name
-	int value_start;			 // variable value offset at file
-	int value_size; 			 // register value size
-} register_var_struct;
-typedef register_var_struct* register_var_t;
+} *reg_t;
+#define reg_hdr(mem)              ((reg_hdr_t *)(mem))
+#define reg_buckets(mem, h)       ((uint32_t *)((char *)(mem) + (h)->bucket_off))
+#define reg_slots(mem, h)         ((reg_slot_t *)((char *)(mem) + (h)->slot_off))
+#define reg_chunk_at(mem, h, off) ((reg_chunk_t *)((char *)(mem) + (h)->heap_off + (off)))
 
-/**
- * @brief open a register file and map it into memory
- * @param[in] object register object name (e.g., MACHINE_COM)
- * @param[in] flags open flags (O_RDONLY, O_RDWR, O_CREAT, etc.)
- * @param[in] mode file permissions mode when creating (e.g., 0644)
- * @param[in] value_number maximum number of register variables in the file
- * @param[in] total_value_size total bytes reserved for all variable values in the file (value heap)
- * @return register file handler
- * 		@retval register_file_t for succeed
- *  	@retval NULL for failed, errno will be set
- * @note Must call register_close() to release the handler when done
- * @see register_close
- */
-register_file_t register_open( const char *object, int flags, int mode, int value_number, int total_value_size );
-/**
- * @brief search for a register variable by name or by mapped value address
- * @param[in] h register file handler returned by register_open()
- * @param[in] name variable name to match (used when value_start is NULL); must be a valid string for name lookup
- * @param[in] value_start if non-NULL, find the slot whose value storage starts at this pointer inside h->mem; name is ignored in that mode
- * @return pointer to the in-map register_var_struct for the match
- * 		@retval non-NULL for found
- *  	@retval NULL for not found or invalid arguments, errno will be set (e.g. EINVAL)
- * @note Exactly one of the two search modes applies: by value_start, or by name when value_start is NULL
- */
-register_var_t  register_search( register_file_t h, const char *name, void *value_start );
-/**
- * @brief close a register file handler and unmap memory
- * @param[in] h register file handler to close
- * @return none
- * @note Directly closes the file descriptor, unmaps memory, and frees the handler
- * @see register_open
- */
-void            register_close( register_file_t h );
 
-/**
- * @brief get the value storage size of a register variable
- * @param[in] h register file handler (must be non-NULL)
- * @param[in] name register variable name (must not be NULL) (must be non-NULL)
- * @return size in bytes
- * 		@retval positive for succeed
- *  	@retval negative for not found or error, errno will be set
- */
-int 			register_value_size( register_file_t h, const char *name );
-/**
- * @brief get a read-write pointer to a register variable's value storage
- * @param[in] h register file handler (must be non-NULL)
- * @param[in] name register variable name (must not be NULL) (must be non-NULL)
- * @return pointer to value storage area
- * 		@retval pointer for succeed (directly mapped memory)
- *  	@retval NULL for not found, errno will be set
- * @note The returned pointer points to mmap'd memory, writes are immediately visible
- * @warning Do not write beyond register_value_size() bytes
- */
-void           *register_value_pointer( register_file_t h, const char *name );
-/**
- * @brief set a register variable's value in the register file
- * @param[in] h register file handler
- * @param[in] name register variable name (must not be NULL) (must be non-NULL; created if not exists)
- * @param[in] v pointer to value data to store
- * @param[in] size size of value data in bytes
- * @param[in] capacity minimum storage capacity to allocate (if larger than size, extra space is reserved for future growth)
- * @return pointer to the stored value in register file
- * 		@retval pointer for succeed
- *  	@retval NULL for failed, errno will be set
- * @note If capacity > size, the variable gets a larger storage area for future in-place updates
- */
-void           *register_value_set( register_file_t h, const char *name, const void *v, int size, int capacity );
+/* Cache attach: stays in process cache forever (reg_detach is no-op).
+ * Name with '@' → RDWR map; without '@' → read-only map (put/del/ptr/lock → EROFS).
+ * NULL/empty object → MACHINE_REGFILE.
+ * max_slots ≤0 → REG_DEFAULT_OBJ_SLOTS if name has '@', else REG_DEFAULT_SYS_SLOTS.
+ * max_heap ≤0 → max_slots * REG_DEFAULT_HEAP_PER_SLOT (create only; ignored if file exists).
+ * Create: slot table sized to max_slots; heap starts at REG_DEFAULT_HEAP and may grow to max_heap. */
+reg_t       reg_attach( const char *object, int max_slots, int max_heap );
+void        reg_detach( reg_t r );
+/* Write attach: any namespace, always RDWR, never cached. NULL/empty →
+ * MACHINE_REGFILE. Handle works with reg_put/reg_ptr/...; must wreg_detach. */
+reg_t       wreg_attach( const char *object, int max_slots, int max_heap );
+void        wreg_detach( reg_t r );
 
-/**
- * @brief set a register variable value using object pointer
- * @param[in] this object pointer (must not be NULL)
- * @param[in] name register variable name (must not be NULL)
- * @param[in] v pointer to value data to store
- * @param[in] size size of value data in bytes
- * @param[in] capacity minimum storage capacity (if larger than size, reserves extra space)
- * @return pointer to the stored value in register
- * 		@retval pointer for succeed
- *  	@retval NULL for failed, errno will be set
- * @see register_sset for string-based object specification
- */
+
+
+/* capacity<=0: default slack (REG_DEFAULT_VAR_SIZE or size↑32).
+ * Success → value pointer in r's map (invalid after detach); fail → NULL.
+ * Wait (default) if another process holds reg_lock on this name;
+ * noblock fails with NULL/EBUSY instead. RO handle → EROFS.
+ * Key length must be < REG_NAME_MAX. */
+void       *reg_put( reg_t r, const char *name, const void *data, int size, int capacity );
+void       *reg_put_noblock( reg_t r, const char *name, const void *data, int size, int capacity );
+/* Mutable pointer into mmap (RO handle → EROFS). Caller must not use after detach. */
+void       *reg_ptr( reg_t r, const char *name, int *size_out );
+/* Read-only pointer into mmap (RO or RW handle). Zero-copy; caller copies if needed. */
+const void *reg_val( reg_t r, const char *name, int *size_out );
+int         reg_len( reg_t r, const char *name );
+int         reg_cap( reg_t r, const char *name );
+boole       reg_del( reg_t r, const char *name );
+boole       reg_del_noblock( reg_t r, const char *name );
+/* Cooperative per-variable write lock via fcntl byte-range on the slot
+ * (name entry). Stable across value relocate. Kill/exit releases it.
+ * Success → mmap value pointer (like reg_ptr; valid while lock held / map live);
+ * fail → NULL + errno. reg_lock waits; reg_lock_noblock → EBUSY if held.
+ * RO handles → EROFS. */
+void       *reg_lock( reg_t r, const char *name );
+void       *reg_lock_noblock( reg_t r, const char *name );
+boole       reg_unlock( reg_t r, const char *name );
+/* Typed put/get helpers.
+ * put_int/put_boole capacity = sizeof(type); put_str uses reg_put default slack.
+ * put_* return void* (caller casts); get_str is zero-copy const char*. */
+void       *reg_put_int( reg_t r, const char *name, int v );
+void       *reg_put_str( reg_t r, const char *name, const char *s );
+#define     reg_put_string                   reg_put_str
+void       *reg_put_boole( reg_t r, const char *name, boole v );
+int         reg_get_int( reg_t r, const char *name, int def );
+const char *reg_get_str( reg_t r, const char *name );
+boole       reg_get_boole( reg_t r, const char *name, boole def );
+/* List used keys as JSON name→size map; caller must talk_free(). */
+talk_t      reg_keys( reg_t r );
+
+
+
+/* object-string convenience.
+ * sput uses reg_attach+put: sys (no '@') attaches RO → put EROFS; use wreg+put to write sys.
+ * capacity<=0 → same default slack as reg_put; sput_int/sput_boole use sizeof(type). */
+void       *reg_sput( const char *object, const char *name, const void *data, int size, int capacity );
+void       *reg_sput_int( const char *object, const char *name, int v );
+void       *reg_sput_str( const char *object, const char *name, const char *s );
+#define     reg_sput_string                  reg_sput_str
+void       *reg_sput_boole( const char *object, const char *name, boole v );
+const void *reg_sget( const char *object, const char *name, int *size_out );
+int         reg_sget_int( const char *object, const char *name, int def );
+const char *reg_sget_str( const char *object, const char *name );
+boole       reg_sget_boole( const char *object, const char *name, boole def );
+/* obj_t convenience (NULL obj → default object) */
+void       *reg_oput( obj_t this, const char *name, const void *data, int size, int capacity );
+void       *reg_oput_int( obj_t this, const char *name, int v );
+void       *reg_oput_str( obj_t this, const char *name, const char *s );
+#define     reg_oput_string                  reg_oput_str
+void       *reg_oput_boole( obj_t this, const char *name, boole v );
+const void *reg_oget( obj_t this, const char *name, int *size_out );
+int         reg_oget_int( obj_t this, const char *name, int def );
+const char *reg_oget_str( obj_t this, const char *name );
+boole       reg_oget_boole( obj_t this, const char *name, boole def );
+/* s/o lock convenience: leave an attach ref so fd (and fcntl lock) stays alive;
+ * pair with matching unlock. Success → value pointer; fail → NULL. */
+void       *reg_slock( const char *object, const char *name );
+void       *reg_slock_noblock( const char *object, const char *name );
+boole       reg_sunlock( const char *object, const char *name );
+void       *reg_olock( obj_t this, const char *name );
+void       *reg_olock_noblock( obj_t this, const char *name );
+boole       reg_ounlock( obj_t this, const char *name );
+/* s/o keys convenience (attach → reg_keys → detach; talk_free result). */
+talk_t      reg_skeys( const char *object );
+talk_t      reg_okeys( obj_t this );
+
+
+
+
+
+
+/* Legacy wrappers (prefer reg_oput/reg_sput/reg_oget/… above).
+ * register_set/sset → reg_put (capacity honored); sys (no '@') → EROFS. */
 void           *register_set( obj_t this, const char *name, const void *v, int size, int capacity );
-/**
- * @brief set a register variable value using string object name
- * @param[in] object object name string (e.g., "land@machine"; must not be NULL, not REGISTER_DEFAULT_OBJECT)
- * @param[in] name register variable name (must not be NULL)
- * @param[in] v pointer to value data to store
- * @param[in] size size of value data in bytes
- * @param[in] capacity minimum storage capacity (if larger than size, reserves extra space)
- * @return pointer to the stored value in register
- * 		@retval pointer for succeed
- *  	@retval NULL for failed, errno will be set
- * @see register_set for obj_t-based object specification
- */
 void           *register_sset( const char *object, const char *name, const void *v, int size, int capacity );
-
-/**
- * @brief get a read-write pointer to a register variable's value using object pointer
- * @param[in] this object pointer (must not be NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return read-write pointer to value storage
- * 		@retval pointer for succeed (directly mapped memory, writable)
- *  	@retval NULL for not found, errno will be set
- * @warning Writes through this pointer are immediately effective; do not exceed register_size() bytes
- * @see register_spointer for string-based object specification
- */
+/* Writable mmap ptr (→ reg_ptr); RO handle → EROFS. */
 void           *register_pointer( obj_t this, const char *name );
-/**
- * @brief get a read-write pointer to a register variable's value using string object name
- * @param[in] object object name string (e.g., "land@machine")
- * @param[in] name register variable name (must not be NULL)
- * @return read-write pointer to value storage
- * 		@retval pointer for succeed (directly mapped memory, writable)
- *  	@retval NULL for not found, errno will be set
- * @see register_pointer for obj_t-based object specification
- */
 void           *register_spointer( const char *object, const char *name );
-
-/**
- * @brief get a read-only pointer to a register variable's value using object pointer
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return read-only pointer to value data
- * 		@retval pointer for succeed
- *  	@retval NULL for not found, errno will be set
- * @note The returned pointer is valid as long as the register file is open
- * @see register_svalue for string-based object specification
- */
-const void	   *register_value(     obj_t this, const char *name );
-/**
- * @brief get a read-only pointer to a register variable's value using string object name
- * @param[in] object object name string (e.g., "land@machine"; must not be NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return read-only pointer to value data
- * 		@retval pointer for succeed
- *  	@retval NULL for not found, errno will be set
- * @see register_value for obj_t-based object specification
- */
-const void	   *register_svalue( const char *object, const char *name );
-
-/**
- * @brief get the value storage size of a register variable using object pointer
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return size in bytes
- * 		@retval positive for succeed
- *  	@retval negative for not found or error, errno will be set
- * @see register_ssize for string-based object specification
- */
-int 	        register_size(     obj_t this, const char *name );
-/**
- * @brief get the value storage size of a register variable using string object name
- * @param[in] object object name string (e.g., "land@machine"; must not be NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return size in bytes
- * 		@retval positive for succeed
- *  	@retval negative for not found or error, errno will be set
- * @see register_size for obj_t-based object specification
- */
-int 	        register_ssize( const char *object, const char *name );
-
-/**
- * @brief synchronize register file changes to disk using object pointer
- * @param[in] this object pointer (use default object when NULL)
- * @return none
- * @note Calls msync() on the mmap'd region to flush changes to disk
- * @see register_ssync for string-based object specification
- */
-void            register_sync(      obj_t this );
-/**
- * @brief synchronize register file changes to disk using string object name
- * @param[in] object object name string (e.g., "land@machine"; must not be NULL)
- * @return none
- * @note Calls msync() on the mmap'd region to flush changes to disk
- * @see register_sync for obj_t-based object specification
- */
-void            register_ssync( const char *object );
-
-/**
- * @brief acquire advisory fcntl record lock on one byte at address point (non-blocking)
- * @param[in] this object pointer (must not be NULL)
- * @param[in] point address inside this->wreg or this->rreg mmap (e.g. from register_pointer() or register_value()); must not be NULL
- * @return operation result
- * 		@retval true for succeed
- *  	@retval false for failed, errno will be set
- * @note Uses fcntl(F_SETLK). If point lies in wreg the lock type is F_WRLCK; if in rreg, F_RDLCK. Does not call register_open().
- * @see register_lockw register_unlock
- */
-boole           register_lock( obj_t this, const void *point );
-/**
- * @brief acquire advisory fcntl record lock on one byte at address point (blocking)
- * @param[in] this object pointer (must not be NULL)
- * @param[in] point address inside this->wreg or this->rreg mmap (e.g. from register_pointer() or register_value()); must not be NULL
- * @return operation result
- * 		@retval true for succeed
- *  	@retval false for failed, errno will be set
- * @note Uses fcntl(F_SETLKW). If point lies in wreg the lock type is F_WRLCK; if in rreg, F_RDLCK. Does not call register_open().
- * @see register_lock register_unlock
- */
-boole           register_lockw( obj_t this, const void *point );
-/**
- * @brief release advisory fcntl record lock on one byte at address point
- * @param[in] this object pointer (must not be NULL)
- * @param[in] point same address passed to register_lock() or register_lockw(); must not be NULL
- * @return operation result
- * 		@retval true for succeed
- *  	@retval false for failed, errno will be set
- * @note Uses fcntl(F_SETLK) with F_UNLCK. wreg vs rreg resolution must match the lock call.
- * @see register_lock register_lockw
- */
-boole			register_unlock( obj_t this, const void *point );
+/* Read-only mmap ptr (→ reg_val / reg_oget / reg_sget). */
+const void     *register_value( obj_t this, const char *name );
+const void     *register_svalue( const char *object, const char *name );
 
 
 
-/**
- * @brief list all register variables using object pointer
- * @param[in] this object pointer (use default object when NULL)
- * @return talk_t json list of register variable names and values
- * 		@retval talk_t json for succeed - caller must free with talk_free()
- * 		@retval NULL for failed and errno will be set
- * @see reg_slist for string-based object specification
- */
-talk_t          reg_list( obj_t this );
-/**
- * @brief list all register variables using string object name
- * @param[in] object object name string (e.g., "land@machine"; must not be NULL)
- * @return talk_t json list of register variable names and values
- * 		@retval talk_t json for succeed - caller must free with talk_free()
- * 		@retval NULL for failed and errno will be set
- * @see reg_list for obj_t-based object specification
- */
-talk_t          reg_slist( const char *object );
-
-
-
-/**
- * @brief get integer value from register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return integer
- * 		@retval integer value for succeed (including 0)
- * 		@retval 0 for failed, errno will be set (check errno to distinguish)
- * @note IMPORTANT: Cannot distinguish between value 0 and error by return value alone!
- * @note Always check errno to determine if an error occurred:
- * @code
- * errno = 0;
- * int value = reg_int(obj, "counter");
- * if (errno != 0) {
- *     // Error occurred
- *     perror("reg_int failed");
- * } else {
- *     // Success - value is valid (may be 0)
- *     printf("Counter: %d\n", value);
- * }
- * @endcode
- * @note For reliable error detection, use register_value() and check return pointer
- * @see register_value for pointer-based access with better error detection
- * @see reg_set_int for setting integer values
- */
+/* int: get → reg_oget_int/reg_sget_int(…, 0); set macros → register_set/sset;
+ * v = const value ptr; p = mutable ptr. */
 int             reg_int( obj_t this, const char *name );
 int             reg_sint( const char *object, const char *name );
-/**
- * @brief set a integer value to register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @param[in] v register value
- * @return a pointer for integer or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_set_int( this, name, v )                register_set( this, name, &v, sizeof(int), sizeof(int) )
-#define         reg_sset_int( this, name, v )               register_sset( this, name, &v, sizeof(int), sizeof(int) )
-/**
- * @brief get a readonly pointer of integer data in register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return a pointer for integer or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_intv( this, name )          (const int*)register_value( this, name )
-#define         reg_sintv( this, name )         (const int*)register_svalue( this, name )
-/**
- * @brief get a read and write pointer of integer data in register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return a pointer for integer or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_intp( this, name )                (int*)register_pointer( this, name )
-#define         reg_sintp( this, name )               (int*)register_spointer( this, name )
-
-
-
-/**
- * @brief get value of boole data in register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return boole
- * 		@retval true for succeed
- * 		@retval false for succeed
- * 		@retval false for failed and errno will be set
- */
+#define         reg_set_int( this, name, v )     register_set( this, name, &v, sizeof(int), sizeof(int) )
+#define         reg_sset_int( this, name, v )    register_sset( this, name, &v, sizeof(int), sizeof(int) )
+#define         reg_intv( this, name )           (const int*)register_value( this, name )
+#define         reg_sintv( this, name )          (const int*)register_svalue( this, name )
+#define         reg_intp( this, name )           (int*)register_pointer( this, name )
+#define         reg_sintp( this, name )          (int*)register_spointer( this, name )
+/* boole: get → reg_oget_boole/reg_sget_boole(…, false); set/v/p as int family. */
 boole           reg_boole( obj_t this, const char *name );
 boole           reg_sboole( const char *object, const char *name );
-/**
- * @brief set a boole value to register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @param[in] v register value
- * @return a pointer for boole or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_set_boole( this, name, v )                register_set( this, name, &v, sizeof(boole), sizeof(boole) )
-#define         reg_sset_boole( this, name, v )               register_sset( this, name, &v, sizeof(boole), sizeof(boole) )
-/**
- * @brief get a readonly pointer of boole data in register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return a pointer for boole or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_boolev( this, name )        (const boole*)register_value( this, name )
-#define         reg_sboolev( this, name )       (const boole*)register_svalue( this, name )
-/**
- * @brief get a read and write pointer of boole data in register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return a pointer for boole or NULL
- * 		@retval a pointer for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_boolep( this, name )              (boole*)register_pointer( this, name )
-#define         reg_sboolep( this, name )             (boole*)register_spointer( this, name )
-
-
-
-/**
- * @brief get string from register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return string or NULL
- * 		@retval string for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
+#define         reg_set_boole( this, name, v )   register_set( this, name, &v, sizeof(boole), sizeof(boole) )
+#define         reg_sset_boole( this, name, v )  register_sset( this, name, &v, sizeof(boole), sizeof(boole) )
+#define         reg_boolev( this, name )         (const boole*)register_value( this, name )
+#define         reg_sboolev( this, name )        (const boole*)register_svalue( this, name )
+#define         reg_boolep( this, name )         (boole*)register_pointer( this, name )
+#define         reg_sboolep( this, name )        (boole*)register_spointer( this, name )
+/* string: get → reg_oget_str/reg_sget_str; set → reg_oput_str/reg_sput_str
+ * (same path/capacity as *_str; NULL v → ""). v/p as above. */
 const char     *reg_string( obj_t this, const char *name );
 const char     *reg_sstring( const char *object, const char *name );
-/**
- * @brief set a string value to register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @param[in] v register value
- * @return string or NULL
- * 		@retval string for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-char	         *reg_set_string( obj_t this, const char *name, const char *v );
-char	         *reg_sset_string( const char *object, const char *name, const char *v );
-/**
- * @brief get a readonly string register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return string or NULL
- * 		@retval string for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
+char           *reg_set_string( obj_t this, const char *name, const char *v );
+char           *reg_sset_string( const char *object, const char *name, const char *v );
 #define         reg_stringv( this, name )        (const char*)register_value( this, name )
 #define         reg_sstringv( this, name )       (const char*)register_svalue( this, name )
-/**
- * @brief get a read and write string register
- * @param[in] this object pointer (use default object when NULL)
- * @param[in] name register variable name (must not be NULL)
- * @return string or NULL
- * 		@retval string for succeed, 
- * 		@retval NULL for failed and errno will be set
- */
-#define         reg_stringp( this, name )              (char*)register_pointer( this, name )
-#define         reg_sstringp( this, name )             (char*)register_spointer( this, name )
+#define         reg_stringp( this, name )        (char*)register_pointer( this, name )
+#define         reg_sstringp( this, name )       (char*)register_spointer( this, name )
 
 
 
-#endif   /* ----- #ifndef H_LAND_REGISTER_H  ----- */
-
+#endif

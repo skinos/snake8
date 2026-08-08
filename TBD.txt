@@ -53,3 +53,149 @@
 
 状态: 计划中
 范围: project/agent/mqtt（主要 mqtt_service.c）
+
+--------------------------------------------------------------------------------
+3. land@daemon / land@service — service_t 与监督面重设计（暂不大改）
+--------------------------------------------------------------------------------
+背景:
+  2026-08 讨论/部分测试后决定：暂不大改 daemon 数据结构与控制面；把完整设计
+  与约束落档，下次专门开任务落地。相关 Cursor plan:
+  ~/.cursor/plans/daemon_pid_hash_17823787.plan.md（可作对照，以本条为准）。
+
+  现状瓶颈/缺口:
+  - service_list 单向/双向链表线性按 name 查找（service_order 内复制多段）
+  - service_wait 每次 waitpid 后线性扫表比 pid
+  - respawn/停服阶梯为魔法数（fast_exited>=3、等 5s；kill 0/3/5/8）
+  - 无 ready / 启停 joint / start ack|wait 显式语义
+  - list 全量 JSON 大数据时 UDP 控制面不适合（见下方「查询交互」备忘）
+
+已确认语义（改代码时勿再弄错）:
+  - off: 不杀进程；进程以后退出则不重启；登记保留（status=off）
+  - offdel: 同 off 不杀/不重启；退出后删掉 daemon 登记
+  - reset[name] 允许只带 name（com/op 可选）；勿强制三参数
+  - delay 单位：毫秒（service.md）；实现侧曾对齐 usleep(delay*1000)，若回滚需核对
+  - service_renew 里 obj_free→obj_create：作者认为 create 失败即进程退出，勿再「先建后换」防御
+
+设计目标（保持单 daemon + Unix JSON，不改成 s6 一服务一进程）:
+  1. name + pid 双哈希 O(1) 查找 + 全量 list 链表遍历
+  2. 可配置 respawn（窗口/次数/推迟）替代 fast_exited 魔法数
+  3. flags：READY / READY_WAIT / JOINT_START|EXIT / START_ACK_ONLY / IN_*_HASH
+  4. 一份 service 实例多索引，不另分配 hash node
+  5. HE/serv_* 命令兼容；info/dump 可增广字段
+
+建议核心结构（daemon 私有，勿导出到 skin/serv.h）:
+
+  SERVICE_ORDER_* 数值保持现有兼容。
+
+  flags 位:
+    SERVICE_F_READY, READY_WAIT, JOINT_START, JOINT_EXIT,
+    START_ACK_ONLY, IN_NAME_HASH, IN_PID_HASH
+
+  SERVICE_HASH_BUCKETS 64 (2^n)
+
+  typedef struct service_st {
+    link_struct link;              /* 全量链表 */
+    struct service_st *name_next;  /* name 哈希链 */
+    struct service_st *pid_next;   /* pid 哈希链，仅 pid>0 */
+    uint32_t name_hash;
+
+    char name[NAME_MAX];
+    obj_t obj;
+    char op[NAME_MAX];
+    param_t param;
+    int delay_ms;                  /* 原 delay，毫秒 */
+
+    int status;
+    unsigned flags;
+    pid_t pid;
+
+    time_t last_start, last_ready, last_exit, last_kill;
+
+    /* respawn = 自动再拉起；默认建议 timeout=5, threshold=3, retry=5 */
+    int respawn_timeout_s;
+    int respawn_threshold;
+    int respawn_retry;             /* -1=超限后不再拉起→ERROR */
+    int exits_in_window;           /* 原 fast_exited 升级 */
+
+    int force_killed;
+    int kill_term_after;           /* 默认 0 */
+    int kill_int_after;            /* 默认 3 */
+    int kill_kill_after;           /* 默认 5 */
+    int kill_reboot_after;         /* 默认 8；0=不因杀不死 reboot */
+
+    int exit_code, exit_signal;
+  } service_struct;
+  typedef service_struct *service_t;
+
+  typedef struct service_table_st {
+    link_t list;
+    service_t name_buckets[SERVICE_HASH_BUCKETS];
+    service_t pid_buckets[SERVICE_HASH_BUCKETS];
+    int count;
+  } service_table_t;
+  /* 建议全局 g_services 替代裸 service_list */
+
+索引不变式:
+  - pid>0 ⇔ 在 pid 桶（IN_PID_HASH）；统一 service_set_pid / service_clear_pid
+  - create→free 在 name 桶 + list；name 创建后不可改
+  - free 前必须摘两桶 + link_delete
+
+内部 API（仅 daemon_service.c / daemon.h，不进 libskin）:
+  - service_name_hash / service_find_by_name / service_find_by_pid
+  - service_table_add / service_table_del
+  - service_order 内全部线性查找改为 find_by_name
+  - service_state/dump 合并填充逻辑并输出新字段
+
+分阶段接线建议:
+  必须先做: 双哈希 + find；respawn/kill 用字段替代魔法数；state/dump 增广
+  字段先留、协议后接:
+    - READY_WAIT 子进程 notify
+    - JOINT_START/EXIT（见硬约束）
+    - START_ACK_ONLY + 客户端 wait 轮询 pid/info
+
+启停 joint 硬约束（防 daemon 卡死）:
+  land@joint.call / init._call 对每个 handler fork 后父进程 waitpid 等待。
+  daemon 内若同步 scall joint.call，handler 卡死 → daemon event loop 一起挂。
+  正确: daemon 再 fork 短命发布子进程只负责 joint_callt；父进程不阻塞 wait；
+  僵尸由 service_wait 的 waitpid(-1,WNOHANG) 顺带收（不在 service 表则忽略）。
+  建议事件名: service/start, service/exit（可选 service/off）；全局开关+闪退节流。
+
+start 返回语义（ack vs wait）:
+  - ack: 受理入队即返回；可选本请求不 service_sync，交给 service_check 定时拉起
+  - wait: 等到 pid>0（或以后 ready）再返回；优先在 libskin/land@service 客户端
+    带超时轮询，勿在 service_unix 回调里 sleep 堵控制面
+  现状含糊: syncit 时常在回包前 fork；fast_exited 窗口可能未 fork 仍 ttrue；
+  delay 在子进程 usleep，父进程可能已带 pid 回包。
+
+大数据查询交互备忘（进程内结构、外部要查）:
+  小操作继续短 RPC（Unix DGRAM JSON）OK。
+  全量/高频大数据: 流式或分页、shm/mmap 只读快照+世代号、list 瘦字段+按名详情、
+  变化用小事件推送（joint），勿把整表塞进一次 DGRAM。
+  对标: systemd D-Bus、procd ubus、register 类 mmap。
+
+可借鉴开源（勿照搬模型）:
+  - s6/runit: 监督语义、notify/ready、可靠收尸
+  - procd: respawn 三元组、实例配置
+  - 不建议: 一服务一 runsv、用 ubus 换现有 HE/Unix 口、目录即配置
+
+落地文件:
+  - project/land/daemon/daemon.h
+  - project/land/daemon/daemon_service.c
+  - 文档: doc/com/land/service.md（info 增广）、doc/com/land/daemon.md（全局默认）
+  - 测试: rice/test/land/serv.c、service.c（test@land）；设备测需 .zz（land 为核心固件）
+
+验证清单:
+  - make obj=land
+  - start/stop/reset/off/offdel/list/info 回归；off 不杀、offdel 退出后删登记
+  - 快速退出 scratch：respawn 默认 5/3/5
+  - test@land.service / test@land.serv lifecycle
+
+备注:
+  改动大，单独任务；勿与无关小修复混做。
+  2026-08 会话中已改且保留的小项（若仍在树里）: delay 毫秒对齐、serv.c 参数 key
+  缓冲、service start/reset 边界、test 套件增强、off 文档澄清；重设计本身未做。
+  Cursor plan 路径可删可留，以本 TBD 为下次入口。
+
+状态: 推迟 / 计划中（暂不大改）
+范围: project/land/daemon + project/land/service + project/land/skin/serv.c（客户端若做 wait）
+       + rice/test/land（回归） + doc/com/land/service.md|daemon.md

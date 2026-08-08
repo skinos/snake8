@@ -34,6 +34,21 @@ void low2upp( char *str );
  */
 void upp2low( char *str );
 
+/** Default PBKDF2 iteration count for center/cloud login and passwd proof */
+#define AUTH_PBKDF2_ITER    10000
+/** Default derived-key length (bytes) for AUTH_PBKDF2_ITER proofs */
+#define AUTH_PBKDF2_DKLEN   32
+/**
+ * @brief PBKDF2-HMAC-SHA256 then Base64 the derived key
+ * @param[in] password passphrase (non-NULL)
+ * @param[in] salt salt string (non-NULL), e.g. "user:rand"
+ * @param[in] iterations PBKDF2 iteration count (>=1); use AUTH_PBKDF2_ITER for login/passwd
+ * @param[in] dklen derived key length in bytes (>=1); use AUTH_PBKDF2_DKLEN for login/passwd
+ * @return Base64 of raw DK, caller must free
+ *   @retval string for succeed
+ *   @retval NULL for failed
+ */
+char *pbkdf2_sha256_b64( const char *password, const char *salt, int iterations, int dklen );
 /**
  * @brief MD5 hash encoding
  * @param[in] s input string
@@ -43,6 +58,7 @@ void upp2low( char *str );
  *   @retval NULL for failed (EINVAL if s is NULL; ENOMEM if OpenSSL MD context allocation fails)
  */
 char *md5_encode( const char *s, int len );
+
 /**
  * @brief Base64 encoding
  * @param[in] s input string
@@ -415,9 +431,9 @@ const char   *uptime_desc( char *buffer, int buflen );
 const char   *livetime_desc( unsigned int ontime, char *buffer, int buflen );
 /**
  * @brief get the current date description
- * @param[out] buffer buffer to store date description
+ * @param[out] buffer buffer to store date description (NULL uses internal static buffer)
  * @param[in] buflen buffer length
- * @return string
+ * @return string formatted as HH:MM:SS:mm:dd:YYYY via localtime/strftime
  *		@retval string for succeed
  *		@retval NULL for failed, the errno code will be sets
  */

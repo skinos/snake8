@@ -13,7 +13,6 @@ static boole time_setting( const char *tt, const char *zone, const char *src )
 {
     int i;
 	boole ret;
-	register_file_t h;
     const char *ozone;
     const char *nzone;
     struct tm tm_current;
@@ -92,12 +91,14 @@ static boole time_setting( const char *tt, const char *zone, const char *src )
 			/* record time source */
             if ( src != NULL && *src != '\0' )
             {
-                h = register_open( NULL, O_RDWR, 0644, 0, 0 );
-                if ( h != NULL )
-                {
-                    register_value_set( h, "date_src", src, strlen(src), 40 );
-                    register_close( h );
-                }
+				reg_t wr;
+
+				wr = wreg_attach( NULL, 0, 0 );
+				if ( wr != NULL )
+				{
+					(void)reg_put_str( wr, "date_src", src );
+					wreg_detach( wr );
+				}
                 /* cast joint event */
                 joint_calls( "date/modify", "set" );
             }
@@ -112,7 +113,6 @@ static boole ntpclient_sync( const char* server, const char* zone )
 {
     boole ret;
     char path[PATH_MAX];
-	register_file_t h;
 
     if ( server == NULL || *server == '\0' )
     {
@@ -127,11 +127,15 @@ static boole ntpclient_sync( const char* server, const char* zone )
         default_info( COM_IDPATH" sync the system time from %s succeed", server );
         shell( "hwclock -w" );
 		/* record time source */
-		h = register_open( REGISTER_DEFAULT_OBJECT, O_RDWR, 0644, 0, 0 );
-		if ( h != NULL )
 		{
-			register_value_set( h, "date_src", "ntp", strlen("ntp"), 40 );
-			register_close( h );
+			reg_t wr;
+
+			wr = wreg_attach( NULL, 0, 0 );
+			if ( wr != NULL )
+			{
+				(void)reg_put_str( wr, "date_src", "ntp" );
+				wreg_detach( wr );
+			}
 		}
 		/* cast joint event */
         joint_calls( "date/modify", "ntp" );

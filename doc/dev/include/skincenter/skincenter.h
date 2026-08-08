@@ -107,5 +107,20 @@ talk_t nport_call( const char *cmd, talk_t v, int timeout );
 
 
 
+/**
+ * @brief snprintf then reject unsafe path strings
+ * @param buf output buffer
+ * @param buflen size of buf
+ * @param fmt printf format (same as snprintf)
+ * @return like snprintf (>=0), or -1 with errno=EINVAL if format fails or result is unsafe
+ * @details Drop-in for path snprintf. Rejects ".." and shell/control metacharacters
+ *          (space ; & | ` $ ( ) < > " ' \\ * ? [ ] { } ! # ~ and controls) in the
+ *          finished string. Does not ban '/' — nested names like user "a/b" still need
+ *          a separate username whitelist if that must be forbidden.
+ */
+int safe_snprintf( char *buf, size_t buflen, const char *fmt, ... );
+
+
+
 #endif   /* ----- #ifndef H_CENTER_SKINCTR_H  ----- */
 

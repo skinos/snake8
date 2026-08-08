@@ -380,8 +380,11 @@ int         execute_pipe( void );
 /// com structure: this structure is a handler of components
 typedef struct com_st
 {
-	// link node for add to link
+	/* link kept for ABI; process cache uses cache_next hash chain */
     link_struct link;
+	struct com_st *cache_next;
+	/* 1: permanent process cache (com_close is no-op), like reg_attach */
+	int cached;
 	// reference count
 	int ref;
 	// component file type
@@ -404,7 +407,9 @@ typedef struct com_st
 typedef com_struct *com_t;
 
 /// Max component number
-#define COMPONENT_MAX 200
+#define COMPONENT_MAX 512
+/** Process-local com_open hash buckets (power of two) */
+#define COM_CACHE_BUCKETS 64
 
 /**
  * @brief register a component (maps object name to origin component or path)
@@ -432,9 +437,11 @@ boole  com_unregister( const char *object );
  * @return component file type
  * 	@retval COM_FILE_LIB (1) for shared library
  * 	@retval COM_FILE_EXECUTE (2) for executable
- * 	@retval 0 for component not found
- * 	@retval negative for error (invalid arguments), errno will be set
+ * 	@retval negative for not found or error, errno will be set
+ * 	        (EINVAL when path probe finds no file / bad args / corrupt nested
+ * 	         alias; ENOENT when alias target is missing; ENAMETOOLONG on overflow)
  * @note The actual path is stored in buffer, not returned as string pointer
+ * @note There is no dedicated 0 return; callers use type<=0 or not LIB/EXECUTE
  */
 char   com_path( const char *object, char *buffer, int buflen );
 /**
@@ -463,8 +470,10 @@ talk_t com_alias( void );
  * @return component handler
  * 	@retval com_t for succeed
  *  @retval NULL for failed (component not found or load error), errno will be set
- * @note Must call com_close() to release the handler when done
- * @see com_close to release the component handler
+ * @note Stays in a process-local path hash cache (like reg_attach). Repeat opens
+ *       of the same path return the same com_t. LIB is dlopen'd once; com_close
+ *       does not unload cached handlers.
+ * @see com_close
  */
 com_t  com_open( const char *object );
 /**
@@ -473,15 +482,17 @@ com_t  com_open( const char *object );
  * @param[in] name symbol name to search for (e.g., "_status", "_setup")
  * @return pointer to the symbol
  * 	@retval function pointer for succeed
- *  @retval NULL for symbol not found, errno will be set
+ *  @retval NULL for symbol not found or invalid args, errno will be set
  * @note Symbol names are prefixed with COM_API_PREFIX ("_") by convention
+ * @note com==NULL or name==NULL/empty → NULL with errno=EINVAL (does not crash)
+ * @note Non-LIB component → NULL with errno=ENOSYS
  */
 void  *com_symbol( com_t com, const char *name );
 /**
- * @brief close a component handler and release its resources
+ * @brief release a component handler reference
  * @param[in] com component handler to close
  * @return none
- * @note Decrements reference count; actual unload occurs when count reaches 0
+ * @note For cached handlers from com_open this is a no-op (permanent process cache).
  * @see com_open
  */
 void   com_close( com_t com );

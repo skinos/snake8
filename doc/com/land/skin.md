@@ -1480,263 +1480,120 @@ static void demo_dbs_all(void)
 
 ### 8.0 Summary
 
-`register.h` exposes a **mmap-backed, file-based key/value store** shared by object name (e.g. **`land@machine`**): binary-safe, distinct from environment variables.
+`register.h` exposes a **mmap-backed key/value store** per object name (e.g. **`land@syslog`**, system files **`MACHINE_REGFILE`** / **`COM_REGFILE`** in `skinhead.h`): hash index, variable-length heap with freelist, binary-safe, shared across processes.
 
-| Layer | Role |
-|-------|------|
-| **Low-level** | **`register_open` / `register_search` / `register_close`** on a backing file; variable layout via **`register_var_t`**. |
-| **Object API** | **`register_set` / `register_pointer` / `register_value`** and **`register_sync` / `register_ssync`** (flush mmap). |
-| **Locks** | **`register_lock` / `register_lockw` / `register_unlock`** — record locks + `flock`; see §8.2 and `register.h` notes. |
-| **Typed macros** | **`reg_int`**, **`reg_string`**, **`reg_set_*`**, **`reg_*v` / `reg_*p`**, etc., for common C types. |
-| **Listing** | **`reg_list` / `reg_slist`** → JSON of variables (**`talk_free`**). |
+| API | Role |
+|-----|------|
+| **`reg_attach` / `reg_detach`** | Cached open (`reg_t`); stays in process cache forever (`reg_detach` no-op). Name **with `@`** → RDWR; **without `@`** → read-only (`put`/`del`/`lock` → `EROFS`) |
+| **`wreg_attach` / `wreg_detach`** | Write open: any namespace, always RDWR, **not** cached; must `wreg_detach` to close. Handle works with `reg_put`/`reg_get`/… |
+| **`reg_put` / `reg_put_noblock` / `reg_get` / `reg_len` / `reg_cap` / `reg_del` / `reg_del_noblock`** | Blob set/get/delete (`put`/`del` wait on `reg_lock`; `*_noblock` → EBUSY) |
+| **`reg_ptr` / `reg_val`** | Zero-copy mmap pointers (`ptr` writable / `val` const). Fixed mmap window — heap auto-grow does not invalidate. RO `ptr` → `EROFS`; use `wreg_attach` + `reg_put` |
+| **`reg_lock` / `reg_lock_noblock` / `reg_unlock`** / **`reg_slock` / `reg_olock` / …** | Cooperative fcntl slot lock; lock APIs return value ptr (`NULL`+errno on fail); `s*`/`o*` leave attach ref until matching unlock |
+| **`reg_put_int` / `reg_get_int` / `reg_put_str` / …** | Typed helpers |
+| **`reg_keys` / `reg_skeys` / `reg_okeys`** | JSON name→size map (**`talk_free`**) |
+| **`reg_sput` / `reg_sget` / `reg_sput_int` / …** | Object-string convenience (`reg_attach`+put; sys / no `@` → RO → `EROFS`; write sys via `wreg`) |
+| **`reg_oput` / `reg_oget` / `reg_oput_int` / …** | `obj_t` convenience (`obj_name`; NULL → default object) |
+
+Defaults (create only, when args ≤0): **`REG_DEFAULT_SYS_SLOTS` (1024)** if name has no `@`, else **`REG_DEFAULT_OBJ_SLOTS` (128)**; **`max_heap`** defaults to `max_slots * REG_DEFAULT_HEAP_PER_SLOT` (512). Heap starts at **`REG_DEFAULT_HEAP` (16KiB)** and may auto-grow (under flock, no remap) up to `max_heap`. Key names must be shorter than **`REG_NAME_MAX` (32)**. Layout is internal (`register.h`: `REG_VERSION` 2, sparse create).
+
+Legacy `register_*` / old `reg_*` wrappers are declared at the bottom of **`register.h`** and implemented in **`register_compat.c`**; prefer `reg_oput` / `reg_sput` / `reg_oget` / ….
 
 (Unrelated but often used with the same codebase: **`utility.h`** declares **`directory_subsize` / `directory_sum`** without implementations — see §14.5.)
 
 ---
 
-### 8.1 Low-level Operations
+### 8.1 Namespace
 
-#### register_open / register_search / register_close
 ```c
-register_file_t register_open(const char *object, int flags, int mode, int value_number, int total_size);
-register_var_t register_search(register_file_t h, void *point, const char *name);
-void register_close(register_file_t h);
-```
-**Description:** Open/Search/Close registry file
-
-### 8.2 General Operations
-
-#### register_set / register_sset
-```c
-void *register_set(obj_t this, const char *name, const void *v, int size, int capacity);
-void *register_sset(const char *object, const char *name, const void *v, int size, int capacity);
-```
-**Description:** Set registry value
-
-#### register_pointer / register_spointer
-```c
-void *register_pointer(obj_t this, const char *name);
-void *register_spointer(const char *object, const char *name);
-```
-**Description:** Get registry value pointer (read-write)
-
-#### register_value / register_svalue
-```c
-const void *register_value(obj_t this, const char *name);
-const void *register_svalue(const char *object, const char *name);
-```
-**Description:** Get registry value (read-only)
-
-#### register_size / register_ssize
-```c
-int register_size(obj_t this, const char *name);
-int register_ssize(const char *object, const char *name);
-```
-**Description:** Get registry value size
-
-#### register_sync / register_ssync
-```c
-void register_sync(obj_t this);
-void register_ssync(const char *object);
-```
-**Description:** Sync registry to disk
-
-#### register_lock / register_lockw / register_unlock
-```c
-boole register_lock(obj_t this, const void *point);
-boole register_lockw(obj_t this, const void *point);
-boole register_unlock(obj_t this, const void *point);
-```
-**Description:** Advisory `fcntl` record lock on **one byte** at `point`. `point` must lie inside **`this->wreg` or `this->rreg` mmap** (e.g. `register_pointer` or `register_value`). The lock type is chosen automatically: **`F_WRLCK`** when `point` is in **`wreg`**, **`F_RDLCK`** when in **`rreg`**. **`register_lock`** uses `fcntl(F_SETLK)`; **`register_lockw`** uses `fcntl(F_SETLKW)` (waits). Does not use `flock` or `register_open`; does not replace whole-file locking inside `register_set` / `register_value_set`.
-
-### 8.3 Integer Operations
-
-#### reg_int / reg_sint
-```c
-int reg_int(obj_t this, const char *name);
-int reg_sint(const char *object, const char *name);
-```
-**Description:** Get integer registry value
-
-#### reg_set_int / reg_sset_int
-```c
-#define reg_set_int(this, name, v) register_set(this, name, &v, sizeof(int), sizeof(int))
-#define reg_sset_int(this, name, v) register_sset(this, name, &v, sizeof(int), sizeof(int))
-```
-**Description:** Set integer registry value
-
-#### reg_intv / reg_sintv / reg_intp / reg_sintp
-```c
-#define reg_intv(this, name) (const int*)register_value(this, name)
-#define reg_sintv(this, name) (const int*)register_svalue(this, name)
-#define reg_intp(this, name) (int*)register_pointer(this, name)
-#define reg_sintp(this, name) (int*)register_spointer(this, name)
-```
-**Description:** Get integer pointer (read-only/read-write)
-
-### 8.4 Boolean Operations
-
-#### reg_boole / reg_sboole
-```c
-boole reg_boole(obj_t this, const char *name);
-boole reg_sboole(const char *object, const char *name);
-```
-**Description:** Get boolean registry value
-
-#### reg_set_boole / reg_sset_boole
-```c
-#define reg_set_boole(this, name, v) register_set(this, name, &v, sizeof(boole), sizeof(boole))
-#define reg_sset_boole(this, name, v) register_sset(this, name, &v, sizeof(boole), sizeof(boole))
+reg_t reg_attach(const char *object, int max_slots, int max_heap);
+void  reg_detach(reg_t r);   /* no-op for cached attaches */
+reg_t wreg_attach(const char *object, int max_slots, int max_heap);
+void  wreg_detach(reg_t r);  /* closes uncached write handle */
 ```
 
-#### reg_boolev / reg_sboolev / reg_boolep / reg_sboolep
+**Description:** `reg_attach` / `wreg_attach` open register file for `object` (`NULL`/empty → **`MACHINE_REGFILE`** / `"machine"`). `reg_attach` is process-cached and permanent; names containing `@` are writable, names without `@` (including **`MACHINE_REGFILE`**, **`COM_REGFILE`**) are read-only mmap (`PROT_READ`). Writers use `wreg_attach` … `reg_put` … `wreg_detach` (no cache). `max_slots` / `max_heap` ≤0 use the defaults above when creating; ignored if a valid v2 image already exists.
+
+---
+
+### 8.2 Blob and pointer
+
 ```c
-#define reg_boolev(this, name) (const boole*)register_value(this, name)
-#define reg_sboolev(this, name) (const boole*)register_svalue(this, name)
-#define reg_boolep(this, name) (boole*)register_pointer(this, name)
-#define reg_sboolep(this, name) (boole*)register_spointer(this, name)
+void       *reg_put(reg_t r, const char *name, const void *data, int size, int capacity); /* wait if locked; capacity<=0 → default slack; success → value ptr */
+void       *reg_put_noblock(reg_t r, const char *name, const void *data, int size, int capacity); /* EBUSY if locked */
+int         reg_get(reg_t r, const char *name, void *buf, int buflen);
+int         reg_len(reg_t r, const char *name);
+int         reg_cap(reg_t r, const char *name);
+boole       reg_del(reg_t r, const char *name);
+boole       reg_del_noblock(reg_t r, const char *name); /* EBUSY if locked */
+void       *reg_ptr(reg_t r, const char *name, int *size_out); /* writable ptr; RO → EROFS */
+const void *reg_val(reg_t r, const char *name, int *size_out); /* RO zero-copy */
+void       *reg_lock(reg_t r, const char *name);
+void       *reg_lock_noblock(reg_t r, const char *name);
+boole       reg_unlock(reg_t r, const char *name);
+void       *reg_slock(const char *object, const char *name);
+void       *reg_slock_noblock(const char *object, const char *name);
+boole       reg_sunlock(const char *object, const char *name);
+void       *reg_olock(obj_t this, const char *name);
+void       *reg_olock_noblock(obj_t this, const char *name);
+boole       reg_ounlock(obj_t this, const char *name);
 ```
 
-### 8.5 String Operations
-
-#### reg_string / reg_sstring
-```c
-const char *reg_string(obj_t this, const char *name);
-const char *reg_sstring(const char *object, const char *name);
-```
-**Description:** Get string registry value
-
-#### reg_set_string / reg_sset_string
-```c
-char *reg_set_string(obj_t this, const char *name, const char *v);
-char *reg_sset_string(const char *object, const char *name, const char *v);
-```
-**Description:** Set string registry value
-
-#### reg_stringv / reg_sstringv / reg_stringp / reg_sstringp
-```c
-#define reg_stringv(this, name)       ((const char *)register_value(this, name))
-#define reg_sstringv(this, name)      ((const char *)register_svalue(this, name))
-#define reg_stringp(this, name)       ((char *)register_pointer(this, name))
-#define reg_sstringp(this, name)      ((char *)register_spointer(this, name))
-```
-**Description:** Shorthand to treat register storage as C string. **`reg_stringv` / `reg_sstringv`** return read-only views; **`reg_stringp` / `reg_sstringp`** return writable mmap-backed storage (same lifetime and bounds rules as `register_pointer`). Macro parameter names match `register.h` (`this` is `obj_t` for `reg_*`, or the **object name string** for `reg_s*` variants).
-
-### 8.6 List Operations
-
-#### reg_list / reg_slist
-```c
-talk_t reg_list(obj_t this);
-talk_t reg_slist(const char *object);
-```
-**Description:** Get registry list
-
+**Description:** Put/get by value; `reg_put*` return the mmap value pointer on success (`NULL` + errno on fail). `reg_lock*` / `reg_slock*` / `reg_olock*` likewise return the mmap value pointer on success (`NULL` + errno on fail; pointer valid while the lock is held / map lives). `reg_get` returns stored size. Pointers stay valid for the process while the map lives (fixed mmap window; heap may grow in-file up to `heap_cap` without remap). Key length ≥ `REG_NAME_MAX` → `EINVAL`. On read-only attaches (no `@`), mutations return `EROFS`; use `wreg_attach` + `reg_put`. `put`/`get`/`del`/`attach` take an internal whole-file `flock` for multi-process mutual exclusion. Mutations use publish-last ordering (no freelist split/coalesce) so a kill mid-op must not break hash/slot/freelist — at worst the in-flight op is lost or a chunk/slot leaks. `reg_put` / `reg_del` / `reg_lock` wait if another process holds the cooperative slot lock; `reg_put_noblock` / `reg_del_noblock` / `reg_lock_noblock` return `EBUSY` instead.
 **Example:**
 ```c
-// Set integer
-int val = 42;
-reg_sset_int("land@machine", "counter", val);
+reg_t r = reg_attach("land@machine", 0, 0);
+reg_put_int(r, "counter", 42);
+{
+    int n = 0;
+    const char *host = (const char *)reg_val(r, "hostname", &n);
+    (void)host;
+}
+/* reg_detach not required for cached attach */
 
-// Get integer
-int cnt = reg_sint("land@machine", "counter");
-
-// Set string
-reg_sset_string("land@machine", "hostname", "router1");
-
-// Get string
-const char *host = reg_sstring("land@machine", "hostname");
-
-// Use pointer to modify
-int *p = reg_sintp("land@machine", "counter");
-*p = 100;
-register_ssync("land@machine");
+/* System / no-'@' namespace write: */
+reg_t w = wreg_attach("machine", 0, 0);
+reg_put_str(w, "hostname", "router1");
+wreg_detach(w);
 ```
 
-### 8.7 Sample program (every `register.h` API)
+---
 
-Touches **every function and typed macro** in `register.h`. **`register_open` / mmap paths** need a working register backend; **`register_lock*`** uses **`fcntl`** record locks (type `F_WRLCK` vs `F_RDLCK` is chosen from wreg vs rreg inside the implementation).
+### 8.3 Typed helpers and list
 
 ```c
-#ifndef PROJECT_ID
-#define PROJECT_ID "land"
-#endif
-#include "skin.h"
-#include <fcntl.h>
+void       *reg_put_int(reg_t r, const char *name, int v);          /* capacity = sizeof(int) */
+int         reg_get_int(reg_t r, const char *name, int def);
+void       *reg_put_str(reg_t r, const char *name, const char *s);   /* capacity<=0 default slack; NULL s → "" */
+#define     reg_put_string  reg_put_str
+const char *reg_get_str(reg_t r, const char *name);                  /* zero-copy */
+void       *reg_put_boole(reg_t r, const char *name, boole v);       /* capacity = sizeof(boole) */
+boole       reg_get_boole(reg_t r, const char *name, boole def);
+talk_t      reg_keys(reg_t r);
+talk_t      reg_skeys(const char *object);
+talk_t      reg_okeys(obj_t this);
 
-static void demo_register_all(void)
-{
-    int i = 7;
-    boole b = true;
-    register_file_t h;
-    register_var_t rv;
-    obj_t o = obj_create("land@machine");
-    talk_t tl;
+void       *reg_sput(const char *object, const char *name, const void *data, int size, int capacity);
+const void *reg_sget(const char *object, const char *name, int *size_out);
+void       *reg_sput_int(const char *object, const char *name, int v);
+int         reg_sget_int(const char *object, const char *name, int def);
+void       *reg_sput_str(const char *object, const char *name, const char *s);
+#define     reg_sput_string reg_sput_str
+const char *reg_sget_str(const char *object, const char *name);
+void       *reg_sput_boole(const char *object, const char *name, boole v);
+boole       reg_sget_boole(const char *object, const char *name, boole def);
 
-    h = register_open("land@machine", O_RDWR, 0644, REGISTER_VAR_NUM, REGISTER_VAR_SIZE);
-    if (h) {
-        rv = register_search(h, NULL, "demo_var");
-        (void)rv;
-        (void)register_value_size(h, "demo_var");
-        (void)register_value_pointer(h, "demo_var");
-        (void)register_value_set(h, "demo_var", &i, sizeof i, sizeof i);
-        register_close(h);
-    }
-
-    (void)register_set(o, "rw_i", &i, sizeof i, sizeof i);
-    (void)register_sset("land@machine", "rw_i", &i, sizeof i, sizeof i);
-    (void)register_pointer(o, "rw_i");
-    (void)register_spointer("land@machine", "rw_i");
-    (void)register_value(o, "rw_i");
-    (void)register_svalue("land@machine", "rw_i");
-    (void)register_size(o, "rw_i");
-    (void)register_ssize("land@machine", "rw_i");
-    register_sync(o);
-    register_ssync("land@machine");
-
-    void *p = register_pointer(o, "rw_i");
-    if (p != NULL) {
-    (void)register_lock(o, p);
-    (void)register_lockw(o, p);
-    (void)register_unlock(o, p);
-    }
-
-    tl = reg_list(o);
-    if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
-    tl = reg_slist("land@machine");
-    if (tl > (void *)tpanic && tl && json_check(tl)) talk_free(tl);
-
-    errno = 0;
-    (void)reg_int(o, "rw_i");
-    (void)reg_sint("land@machine", "rw_i");
-    reg_set_int(o, "rw_i", i);
-    reg_sset_int("land@machine", "rw_i", i);
-    (void)reg_intv(o, "rw_i");
-    (void)reg_sintv("land@machine", "rw_i");
-    (void)reg_intp(o, "rw_i");
-    (void)reg_sintp("land@machine", "rw_i");
-
-    (void)reg_boole(o, "rw_b");
-    (void)reg_sboole("land@machine", "rw_b");
-    reg_set_boole(o, "rw_b", b);
-    reg_sset_boole("land@machine", "rw_b", b);
-    (void)reg_boolev(o, "rw_b");
-    (void)reg_sboolev("land@machine", "rw_b");
-    (void)reg_boolep(o, "rw_b");
-    (void)reg_sboolep("land@machine", "rw_b");
-
-    (void)reg_string(o, "rw_s");
-    (void)reg_sstring("land@machine", "rw_s");
-    (void)reg_set_string(o, "rw_s", "txt");
-    (void)reg_sset_string("land@machine", "rw_s", "txt");
-    (void)reg_stringv(o, "rw_s");
-    (void)reg_sstringv("land@machine", "rw_s");
-    (void)reg_stringp(o, "rw_s");
-    (void)reg_sstringp("land@machine", "rw_s");
-
-    obj_free(o);
-}
+void       *reg_oput(obj_t this, const char *name, const void *data, int size, int capacity);
+const void *reg_oget(obj_t this, const char *name, int *size_out);
+void       *reg_oput_int(obj_t this, const char *name, int v);
+int         reg_oget_int(obj_t this, const char *name, int def);
+void       *reg_oput_str(obj_t this, const char *name, const char *s);
+#define     reg_oput_string reg_oput_str
+const char *reg_oget_str(obj_t this, const char *name);
+void       *reg_oput_boole(obj_t this, const char *name, boole v);
+boole       reg_oget_boole(obj_t this, const char *name, boole def);
 ```
 
+**Description:** `reg_s*` attach by object string; `reg_o*` use `obj_name(this)` (`NULL` → default object). `reg_sput` / `reg_oput` take `capacity` like `reg_put` (`<=0` → default slack). Typed `*_int` / `*_boole` use `sizeof(type)`; `*_str` uses default slack. Sys (no `@`) attach is RO — `sput`/`oput` → `EROFS`; write with `wreg_attach` + `reg_put*`.
 ---
 
 ## 9. Logging API (log.h)
@@ -3008,10 +2865,9 @@ int main() {
     const char *name = reg_sstring("land@machine", "device_name");
     printf("Device name: %s\n", name);
     
-    // Use pointer to modify
+    // Use pointer to modify (mmap shared; no explicit sync)
     int *p = reg_sintp("land@machine", "boot_count");
     (*p)++;
-    register_ssync("land@machine");
     
     return 0;
 }
@@ -3308,7 +3164,7 @@ gcc -o myapp myapp.c \
 
 1. **Memory management:** Use `talk_free()` for `talk_t` values allocated by the talk/JSON APIs; use `free()` for `json2string()` and typical `utility.h` allocators unless the API says otherwise.
 2. **Error handling:** Check return values and `errno` after failures; for `scall*` / `ccall*`, handle `tpanic`, `terror`, `tfalse`, and JSON results (see §1.1 and `com.h`).
-3. **Thread safety:** There is **no blanket guarantee** across libskin. Assume **non-thread-safe** unless stated; use `register_lock` / process-level locking for mmap’d register files and shared resources; `utility.h` shell/network helpers often invoke subprocesses or global state.
+3. **Thread safety:** There is **no blanket guarantee** across libskin. Assume **non-thread-safe** unless stated; `utility.h` shell/network helpers often invoke subprocesses or global state.
 4. **Path format:** Component paths use `project@component`; configuration / attribute paths commonly use `level1/level2` (see `path.h`, `OBJECT_CONFIG_GAPS`).
 5. **Log levels:** Tune level and output options for production; avoid verbose/debug spam (see §9.3.1 for composing `flags`).
 

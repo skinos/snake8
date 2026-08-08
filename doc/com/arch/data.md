@@ -9,7 +9,8 @@ Mounts **factory / OEM / config / userdata** partitions, seeds default configura
     "language":"system language",               // [ string ], e.g. "en", "cn"
     "model":"product model string",             // [ string ], OEM model identifier
     "macid":"factory MAC address (no colon)",   // [ string ], e.g. "00037F1238FE"
-    "mac":"factory MAC address (with colon)"    // [ string ], e.g. "00:03:7F:12:38:FE"
+    "mac":"factory MAC address (with colon)",   // [ string ], e.g. "00:03:7F:12:38:FE"
+    "config":"global config write lock"         // [ "disable", "enable" ] — "disable" locks all config_set; set via config_lock / config_unlock
 }
 ```
 
@@ -37,7 +38,11 @@ ttrue
 ```
 
 ### Component API
-+ `default[]` **mark configuration for erase on next default path** (honours **`land@…` lock `default`** when enabled).
++ `config_lock[]` **lock configuration writes** — persists **`arch@data` file config `"config":"disable"`** first, then sets machine reg **`config_lock=1`**.
+
++ `config_unlock[]` **unlock configuration writes** — sets machine reg **`config_lock=0`** first, then persists **`"config":"enable"`**.
+
++ `default[]` **mark configuration for erase on next default path** (honours **`arch@lock` `default`** when enabled).
 
 + `backup[ [timestamp_label] ]` **archive configuration** to the backup area; optional label argument.
 
@@ -51,6 +56,7 @@ ttrue
 
 ### Lifecycle API
 + `setup[]` **create directory tree, mount MMC partitions, merge OEM/factory/custom defaults** — heavy platform bring-up (see [`data/data.c`](data/data.c)).
+    - Near the end of setup (after OEM/reset may rewrite config, just before writing machine reg **`reset`**), reads file config **`arch@data:config`**; if **`disable`**, sets machine reg **`config_lock=1`** on the open system wreg.
     - **Not** listed in stock **`odm/rk3568/prj.json`**; invoked from **land** / product **`init`** chains on real images.
 
 + `shut[]` **sync and unmount config + interval partitions**.
