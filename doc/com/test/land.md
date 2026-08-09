@@ -88,6 +88,7 @@ Each accepts `[ workers, rounds, scenario ]` where scenario is `all` or one of `
 + `param[...]` — `param_create` / `free` / `import` / `add*` / `string` / `talk` / size; NULL/bounds
 + `path[...]` — `obj_*` / `attr_*`; single-layer alias; illegal paths
 + `talk[...]` — json create/set/get/free; file R/W under temp path
++ `mtalk[...]` — `mxtalk.h` / `m2talk.c` full surface: edge/contract/stress/perf/leak/concurrent (1W+NR mmap)
 + `json[...]` — parse / `tree_to_string` / escape; bad JSON; large-string edges
 + `link[...]` — init/insert/delete/push/pop; light concurrency
 + `config[...]` — get/set family on scratch keys under `test@land` (not production machine)

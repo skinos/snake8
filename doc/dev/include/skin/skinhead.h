@@ -438,6 +438,8 @@ typedef int boole;
 #include "project.h"
 #include "com.h"
 #include "register.h"
+#include "mxtalk.h"
+#include "munix.h"
 /// include important header file second level
 #include "log.h"
 #include "he2com.h"

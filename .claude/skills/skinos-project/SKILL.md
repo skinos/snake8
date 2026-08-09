@@ -1,14 +1,20 @@
 ---
 name: skinos-project
 description: |
-  Create and extend skinos projects under project/: new project from tmptools,
-  components (com), executables (exe/cmd), libraries, Web UI pages, cn/en.json
-  i18n, prj.json init/uninit/joint/wui registration, and libskin (land/skin) APIs
+  Create and extend skinos projects under project/, rice/, or config/<platform>/
+  (incl. per-platform arch): new project from tmptools, components (com),
+  executables (exe/cmd), libraries, Web UI pages, cn/en.json i18n, prj.json
+  init/uninit/joint/wui registration, and libskin (land/skin) APIs
   (config_get, scall, cstart, MAIN2API, talk_t, …).
-  Use when the user says "新建项目", "创建组件", "加一个exe", "加网页", "语言包",
-  "开机启动", "关机", "注册joint", "prj.json", "照着 tmptools", "skin API",
-  "libskin", "config_get", "scall", "comexe", "单实例", "MAIN2API", "_service",
-  "unix_listen", or asks how to call land APIs without land source.
+  Use when the user says "新建项目", "建一个项目", "在rice下建", "xxx项目",
+  "在项目X下建组件", "给smtk2下的arch建组件", "创建组件", "加一个exe",
+  "加网页", "语言包", "开机启动", "关机", "注册joint", "prj.json",
+  "照着 tmptools", "skin API", "libskin", "config_get", "scall", "comexe",
+  "单实例", "MAIN2API", "_service", "unix_listen", or asks how to call land
+  APIs without land source.
+  Resolve user speech with Rule 0 (project homes + arch-per-platform) before
+  scaffolding — default bare "建项目" → project/; "rice下" → rice/; platform
+  + arch → config/<platform>/arch/.
   For HTML page JS / he.load / he.exec / prj.json wui details, also apply
   **skinos-wui** (mandatory before inventing he.* helpers).
   After any new/changed com/exe API surface, also apply **skinos-component-doc**
@@ -19,18 +25,74 @@ description: |
 
 # Skinos Project Authoring
 
-Scaffold and register features under **`project/<name>/`**. Template tree: **`project/tmptools/`**.  
+Scaffold and register features in a **project home** (see Rule 0). Template tree: **`project/tmptools/`**.  
 Deeper field semantics: `project.md`, `doc/com/land/prj.json.md`, `project/AGENTS.md`.
 
 **libskin (from `land` FPK):** when implementing com/exe/cmd, follow  
 [reference-skin-api.md](reference-skin-api.md) and the full book **`doc/com/land/skin.md`**.  
 Include `#include "skin/skin.h"`, link `-lskin`. Headers live under `doc/dev/include/skin/` / `build/install/include/skin/` after build — **do not require `project/land` C sources**.
 
+## Rule 0 — User speech → project path (mandatory)
+
+When the user says **「项目」** / **「xxx 项目」**, they mean a Skinos package tree that
+lives in **one** of these homes (not only `project/`):
+
+| Home | Path | Typical contents |
+|------|------|------------------|
+| **project** | `~/snake8/project/<name>/` | Main product domains (`land`, `modem`, `uart`, …) |
+| **rice** | `~/snake8/rice/<name>/` | Customer / overlay packages (`test`, OEM trees, …) |
+| **config platform** | `~/snake8/config/<platform>/<name>/` | Platform-bound packages (`arch`, `pdriver`, `center`, …) |
+
+`<platform>` is an SDK platform dir under `config/` (`slave`, `smtk2`, `smtk3`, `swrt5`, `srock`, …).
+
+### `arch` is special
+
+**`arch` is not a single tree.** Each platform has its own:
+
+```text
+config/slave/arch/
+config/smtk2/arch/
+config/smtk3/arch/
+config/swrt5/arch/
+config/srock/arch/
+…
+```
+
+- 「**smtk2 下的 arch**」/「**给 smtk2 的 arch 建组件**」→ `config/smtk2/arch/`
+- 「**arch 项目**」without a platform → use **active** `gPLATFORM` from `gBOARDID` / `make pidinfo`; if unclear, **ask** — do not pick a random platform’s `arch`
+
+`arch` (and `land`) are **core base firmware**: device verify needs full **`.zz`**, not FPK hot-deploy (**device-upgrade**).
+
+### Phrase → action map
+
+| User says (examples) | Resolve to | Action |
+|----------------------|------------|--------|
+| 「**建一个项目 b**」/「新建项目 b」（无前缀） | `project/b/` | Create under **`project/`** (default) |
+| 「**在 rice 下建一个 a**」/「rice 里加项目 a」 | `rice/a/` | Create under **`rice/`** |
+| 「**在 smtk2 下建项目 x**」/「config/smtk2 下…」 | `config/smtk2/x/` | Create under that **platform** |
+| 「**xxx 项目**」（指已有包） | search homes below | Locate existing `<name>`; do not invent path |
+| 「**在项目 test 下建一个组件**」 | find project named `test` | Create **com** (or exe) **inside** that project |
+| 「**给 smtk2 下的 arch 建组件**」 | `config/smtk2/arch/` | Create component under that **arch** |
+
+### Locate an existing named project
+
+When the user names a project **without** a home prefix (e.g. 「项目 test」「在 test 下…」):
+
+1. Search for a directory named `<name>` that is a project (has `prj.json` / is a known package root) under, in order:
+   - `project/<name>/`
+   - `rice/<name>/`
+   - `config/<platform>/<name>/` for **each** platform (especially **`arch`**)
+2. **One hit** → use it.
+3. **Several hits** (e.g. both `project/test` and `rice/test`) → **ask which home**; do not silently pick.
+4. **Explicit prefix** in the sentence (`rice` / `project` / `smtk2` / `swrt5` …) → search **only** that home; do not wander.
+
+Scaffolding steps below still apply; only the **target root** changes (`project/<n>`, `rice/<n>`, or `config/<platform>/<n>`). Template copy source remains **`project/tmptools/`**. Build with `make obj=<name>` (same package name). On **slave** host builds, `config/slave/dir.makefile` resolves `COMPILE_PROJECT`/`OBJ` under `project/`, then **`rice/`**, then platform. For host-only compile while the tree stays on another board, pass `gBOARDID=slave-…` on the make line (**skinos-board** Rule 0) — do not rewrite the `gBOARDID` file for a quick test.
+
 ## Naming rules
 
 | Item | Rule |
 |------|------|
-| Project dir | `project/<name>/` |
+| Project dir | `project/<name>/`, `rice/<name>/`, or `config/<platform>/<name>/` |
 | `prj.json` → `name` | **Must equal** directory name |
 | Component / exe / cmd / lib key | **Must equal** subdirectory name |
 | Runtime object | `PROJECT_ID@KEY` (e.g. `ipsec@list`, `tmptools@testcom`) |
@@ -56,12 +118,16 @@ Include `#include "skin/skin.h"`, link `-lskin`. Headers live under `doc/dev/inc
 
 ## Create a new project
 
+Resolve the target home with **Rule 0** first (`project/` default; `rice/` or `config/<platform>/` when named).
+
 ```bash
 # 1) Copy template (or minimal empty dir + Makefile from tmptools)
-cp -a project/tmptools project/myproj
+cp -a project/tmptools project/myproj          # default: 「建一个项目 myproj」
+# cp -a project/tmptools rice/myproj           # 「在 rice 下建 myproj」
+# mkdir -p config/smtk2/myproj && cp -a …     # 「在 smtk2 下建…」— rare; usually extend arch/pdriver
 
 # 2) Rename: keep only what you need; delete unused template dirs
-# 3) Edit project/myproj/Makefile → PROJECT_ID:=myproj
+# 3) Edit <home>/myproj/Makefile → PROJECT_ID:=myproj
 # 4) Edit prj.json → "name":"myproj", intro/desc/version/author
 # 5) Ensure every com/exe/cmd/lib key has a matching subdirectory
 # 6) Build
@@ -77,10 +143,11 @@ Constraints:
 
 ## Create a component (`com`)
 
-1. Copy `project/tmptools/component/` → `project/<proj>/<com_id>/`  
+1. Resolve the parent project with **Rule 0** (e.g. 「项目 test」→ find `test`; 「smtk2 下的 arch」→ `config/smtk2/arch/`).
+2. Copy `project/tmptools/component/` → `<project_root>/<com_id>/`  
    (or `testcom/` if you need service + richer example)
-2. Rename files/dirs to `<com_id>`; keep `mconfig` if needed
-3. In `prj.json`:
+3. Rename files/dirs to `<com_id>`; keep `mconfig` if needed
+4. In that project’s `prj.json`:
 
 ```json
 "com": {
@@ -88,7 +155,7 @@ Constraints:
 }
 ```
 
-4. Implement callbacks (`#include "skin/skin.h"`):
+5. Implement callbacks (`#include "skin/skin.h"`):
 
 | C symbol | HE | Typical role |
 |----------|-----|--------------|
@@ -97,12 +164,12 @@ Constraints:
 | `_get` / `_set` | `proj@mycom` / `\|{…}` | Config |
 | `_service` | via `cstart(..., "service", ...)` | Long-running (exiting process = exit OK for supervised service) |
 
-5. Optional factory default: `project/<proj>/mycom.cfg` (JSON)
-6. Register **init** / **uninit** / **joint** / **wui** as needed (below)
-7. **Mandatory — interface doc:** follow **skinos-component-doc** skill; write/update
+6. Optional factory default: `<project_root>/mycom.cfg` (JSON)
+7. Register **init** / **uninit** / **joint** / **wui** as needed (below)
+8. **Mandatory — interface doc:** follow **skinos-component-doc** skill; write/update
    English `<component-id>.md` matching `doc/com/land/auth.md` layout (APIs, config, joints).
    Do not finish the component task without this Markdown.
-8. `make obj=<proj>`
+9. `make obj=<proj>`
 
 ## Create an executable (`exe` / comexe)
 
@@ -116,7 +183,7 @@ daemon patterns (libevent, Unix control socket, `cstart`/`flush`):
 | Entry | `_api` symbols | `MAIN2API(eapi_table)` → `main()` |
 | Fit | light config/query | long-running `_service` |
 
-1. Copy `project/tmptools/comexe/` → `project/<proj>/<exe_id>/`  
+1. Resolve parent project (**Rule 0**); copy `project/tmptools/comexe/` → `<project_root>/<exe_id>/`  
    (for a production-style daemon, also study `project/network/connect/`)
 2. Register under **`exe`** (not `com`):
 

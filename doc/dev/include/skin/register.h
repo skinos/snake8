@@ -10,10 +10,11 @@
  * Internal mmap layout (implementation details; not for external callers).
  */
 #define REG_MAGIC            0x53475602u
-#define REG_VERSION          2u
+#define REG_VERSION          3u
 #define REG_NIL              0xFFFFFFFFu
 #define REG_SLOT_USED        1u
 #define REG_SLOT_FREE        2u
+#define REG_SLOT_LOCKED      4u   /* or'd with USED; cooperative reg_lock */
 #define REG_CHUNK_USED       1u
 #define REG_CHUNK_FREE       2u
 #define REG_NAME_MAX         32
@@ -43,15 +44,17 @@ typedef struct reg_hdr_st
 	uint32_t gen;
 	uint32_t map_size;    /* mmap window (slot table + heap_cap) */
 	uint32_t heap_cap;    /* max heap (grow ceiling) */
+	uint32_t seq;         /* seqlock: odd = write in progress */
 } reg_hdr_t;
 typedef struct reg_slot_st
 {
 	uint32_t hash;
 	uint32_t next;
-	uint32_t flags;
+	uint32_t flags;       /* USED/FREE; USED may or REG_SLOT_LOCKED */
 	uint32_t val_off;
 	uint32_t val_size;
 	uint32_t val_cap;
+	uint32_t lock_owner;  /* pid while LOCKED; else 0 */
 	char     name[REG_NAME_MAX];
 } reg_slot_t;
 typedef struct reg_chunk_st
@@ -111,8 +114,9 @@ int         reg_len( reg_t r, const char *name );
 int         reg_cap( reg_t r, const char *name );
 boole       reg_del( reg_t r, const char *name );
 boole       reg_del_noblock( reg_t r, const char *name );
-/* Cooperative per-variable write lock via fcntl byte-range on the slot
- * (name entry). Stable across value relocate. Kill/exit releases it.
+/* Cooperative per-variable write lock: slot LOCKED flag + lock_owner pid
+ * (under brief flock EX). Stable across value relocate. Kill/exit does not
+ * auto-clear; waiters reclaim if owner pid is dead (ESRCH).
  * Success → mmap value pointer (like reg_ptr; valid while lock held / map live);
  * fail → NULL + errno. reg_lock waits; reg_lock_noblock → EBUSY if held.
  * RO handles → EROFS. */
