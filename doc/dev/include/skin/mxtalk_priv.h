@@ -15,6 +15,14 @@ extern "C" {
 mxtalk_t mx_create_map( const char *path, int depth, int max_l1, int max_l2,
 	int max_l2_pool, int name_max, int max_heap );
 
+/* bytes needed after caps normalize; 0 on error (errno set) */
+uint32_t mx_map_need( int depth, int max_l1, int max_l2, int max_l2_pool,
+	int name_max, int max_heap );
+
+/* init map in caller buffer (MX_OWN_WRAP); size must be >= mx_map_need */
+mxtalk_t mx_create_map_mem( void *mem, uint32_t size, int depth,
+	int max_l1, int max_l2, int max_l2_pool, int name_max, int max_heap );
+
 #ifdef __cplusplus
 }
 #endif

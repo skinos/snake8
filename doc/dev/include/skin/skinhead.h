@@ -440,6 +440,7 @@ typedef int boole;
 #include "register.h"
 #include "mxtalk.h"
 #include "munix.h"
+#include "mcontrol.h"
 /// include important header file second level
 #include "log.h"
 #include "he2com.h"

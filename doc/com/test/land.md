@@ -88,7 +88,9 @@ Each accepts `[ workers, rounds, scenario ]` where scenario is `all` or one of `
 + `param[...]` — `param_create` / `free` / `import` / `add*` / `string` / `talk` / size; NULL/bounds
 + `path[...]` — `obj_*` / `attr_*`; single-layer alias; illegal paths
 + `talk[...]` — json create/set/get/free; file R/W under temp path
-+ `mtalk[...]` — `mxtalk.h` / `m2talk.c` full surface: edge/contract/stress/perf/leak/concurrent (1W+NR mmap)
++ `mtalk[...]` — `mxtalk.h` / m1+m2: edge/contract/stress/perf/leak/concurrent/limit
++ `munix[...]` — munix IPC: edge/stress/stability/perf/busy/pool/load/keep_crash
++ `mcontrol[...]` — mcontrol RPC over munix+libevent: basic/edge/crash/storm/soak/defaults/pool
 + `json[...]` — parse / `tree_to_string` / escape; bad JSON; large-string edges
 + `link[...]` — init/insert/delete/push/pop; light concurrency
 + `config[...]` — get/set family on scratch keys under `test@land` (not production machine)
@@ -113,6 +115,19 @@ Each accepts `[ workers, rounds, scenario ]` where scenario is `all` or one of `
 + `util_shell[...]` — safe `execute`/`shell` (`true`/`echo`); SKIP iptables/ifconfig/insmod/rmmod
 + `util_uart[...]` — NULL/illegal path only; SKIP real serial open
 + `serv[...]` — skin `serv_*` / sstart/sstop/… full lifecycle on scratch `test@land.com_sleep`; scenarios: `edge|contract|lifecycle|concurrent|cross|stress|perf|stability`
++ `mcontrol[ workers, rounds, scenario ]` — `mcontrol.h` RPC (munix+libevent)
+    - workers -------- [ number ], optional, storm/crash process count (omit → 16/32)
+    - rounds ---------- [ number ], optional, soak seconds / storm calls (omit → 30 / 40)
+    - scenario -------- [ string ], optional: `all` (default) or `basic`|`edge`|`crash`|`storm`|`soak`|`defaults`|`pool`
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    test@land.mcontrol[ 1, 5, basic ]
+    test@land.mcontrol[ 16, 30, all ]
+    test@land.mcontrol[ 8, 20, crash ]
+    ```
 
 #### Land component HE suites (edge / contract / stress / perf)
 
@@ -134,6 +149,7 @@ test@land.param[ 2, 5 ]
 test@land.machine[ 1, 5 ]
 test@land.auth[ 1, 5 ]
 test@land.serv[ 2, 5 ]
+test@land.mcontrol[ 1, 5, basic ]
 test@land.service[ 2, 4 ]
 test@land.all[ 1, 3, coms ]
     test@land.all[ 1, 30, leak ]

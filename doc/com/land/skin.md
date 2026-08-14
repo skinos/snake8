@@ -8,7 +8,7 @@
 
 ## Overview
 
-**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, and related facilities. It is built from `project/land` as shared library **`libskin.so`** (`prj.json` → `"lib": { "skin": ... }`) and linked by other skinos packages (`-lskin`).
+**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, structured mmap talk (`mxtalk` / m1·m2), unix mmap IPC (`munix`), control RPC over munix+libevent (`mcontrol`), and related facilities. It is built from `project/land` as shared library **`libskin.so`** (`prj.json` → `"lib": { "skin": ... }`) and linked by other skinos packages (`-lskin`).
 
 **Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to the umbrella header. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
 
@@ -39,25 +39,41 @@
 8. [Registry of Component API (register.h)](#8-registry-api-registerh)  
    - [8.0 Summary](#80-summary)
    - [8.7 Sample program (every `register.h` API)](#87-sample-program-every-registerh-api)
-9. [Logging API (log.h)](#9-logging-api-logh)  
+9. [Structured mmap talk API (mxtalk.h)](#9-structured-mmap-talk-api-mxtalkh)  
    - [9.0 Summary](#90-summary)
-10. [Service Management API (serv.h)](#10-service-management-api-servh)  
+   - [9.8 Sample program (every `mxtalk.h` API)](#98-sample-program-every-mxtalkh-api)
+10. [Unix mmap IPC API (munix.h)](#10-unix-mmap-ipc-api-munixh)  
    - [10.0 Summary](#100-summary)
-   - [10.6 Sample program (every `serv.h` function)](#106-sample-program-every-servh-function)
-11. [Project Information API (project.h)](#11-project-information-api-projecth)  
+   - [10.1 Endpoint](#101-endpoint)
+   - [10.2 Slots](#102-slots)
+   - [10.3 Client post / take](#103-client-post--take)
+   - [10.4 Server take / post](#104-server-take--post)
+   - [10.5 Server example (echo)](#105-server-example-echo)
+   - [10.6 Client — synchronous call](#106-client--synchronous-call)
+   - [10.7 Client — `select` asynchronous](#107-client--select-asynchronous)
+   - [10.8 Client — libevent asynchronous](#108-client--libevent-asynchronous)
+   - [10.9 KEEP vs non-KEEP](#109-keep-vs-non-keep)
+   - [10.10 `MUNIX_MMAP_ONLY` vs default alloc](#1010-munix_mmap_only-vs-default-alloc)
+   - [10.11 Control RPC (`mcontrol.h`)](#1011-control-rpc-mcontrolh)
+11. [Logging API (log.h)](#11-logging-api-logh)  
    - [11.0 Summary](#110-summary)
-   - [11.5 Sample program (every `project.h` API)](#115-sample-program-every-projecth-api)
-12. [HE Command API (he2com.h)](#12-he-command-api-he2comh)  
+12. [Service Management API (serv.h)](#12-service-management-api-servh)  
    - [12.0 Summary](#120-summary)
-   - [12.4 Sample program (every `he2com.h` function)](#124-sample-program-every-he2comh-function)
-13. [Linked List API (link.h)](#13-linked-list-api-linkh)
-14. [Utility Functions API (utility.h)](#14-utility-functions-api-utilityh)
-15. [Skin API Macros (skinapi.h)](#15-skin-api-macros-skinapih)
-16. [Predefined Component Constants (skinhead.h)](#16-predefined-component-constants-skinheadh)
-17. [Complete Usage Examples](#17-complete-usage-examples)
-18. [Compilation and Usage](#18-compilation-and-usage)
-19. [Important Notes](#19-important-notes)
-20. [Related Documents](#20-related-documents)
+   - [12.6 Sample program (every `serv.h` function)](#126-sample-program-every-servh-function)
+13. [Project Information API (project.h)](#13-project-information-api-projecth)  
+   - [13.0 Summary](#130-summary)
+   - [13.5 Sample program (every `project.h` API)](#135-sample-program-every-projecth-api)
+14. [HE Command API (he2com.h)](#14-he-command-api-he2comh)  
+   - [14.0 Summary](#140-summary)
+   - [14.4 Sample program (every `he2com.h` function)](#144-sample-program-every-he2comh-function)
+15. [Linked List API (link.h)](#15-linked-list-api-linkh)
+16. [Utility Functions API (utility.h)](#16-utility-functions-api-utilityh)
+17. [Skin API Macros (skinapi.h)](#17-skin-api-macros-skinapih)
+18. [Predefined Component Constants (skinhead.h)](#18-predefined-component-constants-skinheadh)
+19. [Complete Usage Examples](#19-complete-usage-examples)
+20. [Compilation and Usage](#20-compilation-and-usage)
+21. [Important Notes](#21-important-notes)
+22. [Related Documents](#22-related-documents)
 
 ---
 
@@ -1498,7 +1514,7 @@ Defaults (create only, when args ≤0): **`REG_DEFAULT_SYS_SLOTS` (1024)** if na
 
 Legacy `register_*` / old `reg_*` wrappers are declared at the bottom of **`register.h`** and implemented in **`register_compat.c`**; prefer `reg_oput` / `reg_sput` / `reg_oget` / ….
 
-(Unrelated but often used with the same codebase: **`utility.h`** declares **`directory_subsize` / `directory_sum`** without implementations — see §14.5.)
+(Unrelated but often used with the same codebase: **`utility.h`** declares **`directory_subsize` / `directory_sum`** without implementations — see §16.5.)
 
 ---
 
@@ -1596,9 +1612,1414 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 **Description:** `reg_s*` attach by object string; `reg_o*` use `obj_name(this)` (`NULL` → default object). `reg_sput` / `reg_oput` take `capacity` like `reg_put` (`<=0` → default slack). Typed `*_int` / `*_boole` use `sizeof(type)`; `*_str` uses default slack. Sys (no `@`) attach is RO — `sput`/`oput` → `EROFS`; write with `wreg_attach` + `reg_put*`.
 ---
 
-## 9. Logging API (log.h)
+## 9. Structured mmap talk API (mxtalk.h)
 
 ### 9.0 Summary
+
+`mxtalk.h` is a **mmap-backed structured key/value store** with talk-like setters/getters. Create with **`m1talk_create*`** (depth 1, flat) or **`m2talk_create*`** (depth 2, root + one OBJECT layer). All ops share the same **`mxtalk_*`** surface. Handles are nullable pointers: **root = map base**; children point at L1/L2 slots. Offsets in the map are relative to the map base except **`MX_VOID`** (writer-local absolute pointers).
+
+| API | Role |
+|-----|------|
+| **`m1talk_create` / `m1talk_create_file` / `m1talk_map_size` / `m1talk_create_mem`** | Depth **1**: L1 STRING\|INT\|VOID only; no L2 / OBJECT; mem init for munix/mcontrol slots |
+| **`m2talk_create` / `m2talk_create_file` / `m2talk_map_size` / `m2talk_create_mem`** | Depth **2**: L1 + shared L2 pool; `mxtalk_json_create` creates OBJECT children; mem init for munix/mcontrol slots |
+| **`mxtalk_attach` / `mxtalk_wrap` / `mxtalk_detach`** | Open existing file / wrap memory; release owner |
+| **`mxtalk_data` / `mxtalk_size`** | Raw map pointer and byte size |
+| **`mxtalk_begin` / `mxtalk_end`** | Seqlock writer fence (nested `set_*` is also nest-safe) |
+| **`mxtalk_json_create` / `mxtalk_json`** | Create/lookup OBJECT (depth 2 only; m1 → `EPERM`) |
+| **`mxtalk_set_string` / `_cap` / `mxtalk_string` / `stringp`** | STRING cells (heap) |
+| **`mxtalk_set_int` / `mxtalk_int` / `mxtalk_intp`** | INT64 cells (in-slot) |
+| **`mxtalk_set_pointer` / `mxtalk_pointer`** | VOID cells (absolute ptr, writer-local) |
+| **`mxtalk_name` / `type` / `exist` / `string_len` / `string_cap`** | Introspect |
+| **`mxtalk_next` / `mxtalk_each`** | Walk children of root or OBJECT |
+| **`mxtalk_delete` / `mxtalk_remove`** | Delete node / remove by name |
+| **`mxtalk_to_talk` / `talk_to_mxtalk`** | Optional bridge to heap `talk_t` (skips VOID) |
+
+**Defaults** when create args `<=0`: `max_l1=64`, `max_l2=32`, `max_l2_pool=max_l1×4` (min `max_l2`), `name_max=MX_DEFAULT_NAME_MAX` (32), `max_heap=MX_DEFAULT_HEAP` (64 KiB). Heap is **fully reserved** in `map_size` at create (no grow). STRING `cap<=0` follows register-style sizing (`REG_DEFAULT_VAR_SIZE` / round up). Full slot/heap → `NULL` + **`ENOSPC`**.
+
+**Concurrency:** single writer + multi reader (one map-wide `hdr.seq` seqlock). The writer process may call the same getters under `begin`/`end` (reentrant; no self-deadlock). **All** structure/lookup readers wait out an in-progress write (odd `seq`) then re-check: `mxtalk_string` / `stringp` / `json` / `int` / `exist` / `string_len` / `string_cap` / `name` / `type` / `next` / `intp` / `pointer` / `to_talk` (no `EAGAIN` for that reason). `mxtalk_each` is **step-consistent** (each `next` is quiet), not a frozen full-walk snapshot — a completed write between steps may prepend keys you will not see until a later walk. `*_create_file` / `mxtalk_attach(path,1)` take exclusive non-blocking **`flock`**; second writer → **`EBUSY`** (create locks before resizing so a failed second create does not wipe an in-use map). File **create always rebuilds** the map after the lock; to open an existing map for write use **`mxtalk_attach(path,1)`**. `mxtalk_attach(path,0)` is shared RO (no writer flock). `mxtalk_wrap(..., writable)` does **not** take `flock` — caller must ensure single-writer if the memory is shared.
+
+**Naming notes:** cell type **`MX_VOID`** is accessed via **`mxtalk_set_pointer` / `mxtalk_pointer`** (talk-like “pointer”; process-local, skipped by `mxtalk_to_talk`). In-place buffers use **`mxtalk_stringp`** vs **`mxtalk_intp`** (same idea, different suffix). **`mxtalk_type(root)`** is always **`MX_OBJECT`** (including depth-1 roots, which have no L2). Illegal names (empty / `>= name_max`): writers → **`EINVAL`**; readers that only look up often → **`ENOENT`** / “missing”. **`mxtalk_begin` / `mxtalk_end`** on a read-only map are silent no-ops (no `EROFS`).
+
+**Lifetime (caller-owned, like `malloc`/`free`):** Child `mxtalk_t` handles and pointers from `mxtalk_string` / `stringp` / `intp` / `mxtalk_pointer` are **interior pointers** into the map. After `mxtalk_detach`, or after the writer `remove`/`delete`/type-change/STRING grow that recycles that slot or heap block, those pointers are **dangling** — the same class of bug as keeping a pointer after `free`. The library does not stamp generations on handles. Do not cache OBJECT handles across deletes; re-lookup with `mxtalk_json` when needed. Copy string bytes out if they must outlive the next mutating publish or detach. In-place edits via `stringp` / `intp` belong inside `mxtalk_begin` / `mxtalk_end`. Prefer not to `delete`/`remove` the current node inside `mxtalk_each` without saving `mxtalk_next` first (same-process); freed slots keep `next_in_*` so a racing reader can often still step forward.
+
+**Layouts:**
+
+```text
+depth 1: [hdr][L1 hash buckets][L1 slots][heap]
+depth 2: [hdr][L1 buckets][L1 slots][L2 buckets][L2 pool][heap]
+```
+
+Same magic/`MX_VERSION`; `hdr.depth` distinguishes m1 vs m2 maps.
+
+---
+
+### 9.1 Type and constant macros
+
+```c
+#define MX_MAGIC            0x4d32544bu  /* 'M2TK' */
+#define MX_VERSION          2u
+#define MX_NIL              0xFFFFFFFFu
+#define MX_DEFAULT_NAME_MAX 32
+#define MX_DEFAULT_HEAP     (64u * 1024u)
+
+#define MX_FREE    0
+#define MX_STRING  1
+#define MX_INT     2
+#define MX_OBJECT  3
+#define MX_VOID    4
+
+typedef struct mxtalk_st *mxtalk_t;
+
+#define mxtalk_each(var, parent) \
+    for ( (var) = mxtalk_next( (parent), NULL ); \
+          (var) != NULL; \
+          (var) = mxtalk_next( (parent), (var) ) )
+```
+
+**Description:** `mxtalk_type()` returns one of `MX_*`. Use `mxtalk_each` to walk all attributes under a parent (root or OBJECT).
+
+---
+
+### 9.2 Create
+
+```c
+mxtalk_t m1talk_create(int max_l1, int name_max, int max_heap);
+mxtalk_t m1talk_create_file(const char *path, int max_l1, int name_max, int max_heap);
+uint32_t m1talk_map_size(int max_l1, int name_max, int max_heap);
+mxtalk_t m1talk_create_mem(void *mem, uint32_t size, int max_l1, int name_max, int max_heap);
+
+mxtalk_t m2talk_create(int max_l1, int max_l2, int max_l2_pool,
+    int name_max, int max_heap);
+mxtalk_t m2talk_create_file(const char *path, int max_l1, int max_l2,
+    int max_l2_pool, int name_max, int max_heap);
+uint32_t m2talk_map_size(int max_l1, int max_l2, int max_l2_pool,
+    int name_max, int max_heap);
+mxtalk_t m2talk_create_mem(void *mem, uint32_t size, int max_l1, int max_l2,
+    int max_l2_pool, int name_max, int max_heap);
+```
+
+**Description:** Anonymous create uses `MAP_ANONYMOUS`. File create takes the writer flock then `ftruncate`s to `map_size` and **reinitializes** the map (always rebuild; use `mxtalk_attach` to open an existing file). `max_l2` caps attributes **per OBJECT**; `max_l2_pool` is the **global** L2 slot pool. **`map_size`** returns bytes needed after cap normalize (`0` + errno on error). **`create_mem`** initializes a caller buffer (`MX_OWN_WRAP`; `size` must be `>= map_size`) — used by `mcontrol_salloc_m*talk` / `alloc_m*talk` inside munix slots; `mxtalk_detach` drops the wrap owner only (does not free the buffer). Failures: `EINVAL` (caps), `EBUSY` (second writer on file), `ENOMEM`, etc. Returns root handle or `NULL`.
+
+**Example:**
+```c
+mxtalk_t flat;
+mxtalk_t nested;
+mxtalk_t file_root;
+
+flat = m1talk_create(64, 32, 64 * 1024);
+nested = m2talk_create(64, 32, 256, 32, 64 * 1024);
+file_root = m2talk_create_file("/tmp/demo.m2.map", 128, 32, 512, 32, 128 * 1024);
+if (flat == NULL || nested == NULL || file_root == NULL) {
+    /* check errno: EINVAL / EBUSY / … */
+}
+```
+
+---
+
+### 9.3 Lifecycle
+
+```c
+mxtalk_t mxtalk_attach(const char *path, int writable);
+mxtalk_t mxtalk_wrap(void *mem, uint32_t size, int writable);
+void     mxtalk_detach(mxtalk_t t);
+void    *mxtalk_data(mxtalk_t t);
+uint32_t mxtalk_size(mxtalk_t t);
+```
+
+**Description:** `attach` opens an existing map file (`writable!=0` → RDWR + writer flock; `0` → RO). `wrap` adopts caller memory (must already be a valid map; magic/version checked; **no `flock`** — shared writable wrap is caller’s mutex). `detach` closes fd / unmaps owned maps. `data` / `size` return map base and `hdr.map_size` (root only meaningful for size of whole map).
+
+**Example:**
+```c
+mxtalk_t w;
+mxtalk_t r;
+void *base;
+uint32_t sz;
+
+w = m1talk_create_file("/tmp/demo.m1.map", 32, 24, 8192);
+mxtalk_set_string(w, "host", "gw1");
+base = mxtalk_data(w);
+sz = mxtalk_size(w);
+mxtalk_detach(w);
+
+r = mxtalk_attach("/tmp/demo.m1.map", 0);
+if (r != NULL) {
+    const char *s;
+
+    s = mxtalk_string(r, "host");
+    (void)s;
+    mxtalk_detach(r);
+}
+```
+
+---
+
+### 9.4 Writer coherency
+
+```c
+void mxtalk_begin(mxtalk_t t);
+void mxtalk_end(mxtalk_t t);
+```
+
+**Description:** Seqlock fence for multi-field updates. Public `set_*` already nest `begin`/`end` internally; use explicit `begin`/`end` when writing several related keys as one publish unit, or when patching string buffers returned by `mxtalk_stringp` / `mxtalk_intp`. On a read-only map, `begin`/`end` are **silent no-ops** (they do not set `EROFS`).
+
+**Example:**
+```c
+mxtalk_begin(root);
+mxtalk_set_int(root, "tick", 7);
+mxtalk_set_string(root, "tick_s", "s7");
+mxtalk_end(root);
+```
+
+---
+
+### 9.5 Set / get
+
+```c
+mxtalk_t     mxtalk_json_create(mxtalk_t t, const char *name);
+mxtalk_t     mxtalk_json(mxtalk_t t, const char *name);
+
+char        *mxtalk_set_string(mxtalk_t t, const char *name, const char *val);
+char        *mxtalk_set_string_cap(mxtalk_t t, const char *name, const char *val, int cap);
+const char  *mxtalk_string(mxtalk_t t, const char *name);
+char        *mxtalk_stringp(mxtalk_t t, const char *name);
+
+int64_t     *mxtalk_set_int(mxtalk_t t, const char *name, int64_t v);
+int64_t      mxtalk_int(mxtalk_t t, const char *name, int64_t def);
+int64_t     *mxtalk_intp(mxtalk_t t, const char *name);
+
+boole        mxtalk_set_pointer(mxtalk_t t, const char *name, void *ptr);
+void        *mxtalk_pointer(mxtalk_t t, const char *name);
+```
+
+**Description:** Parent `t` is root or (on m2) an OBJECT. Setting a new type replaces the previous cell. `mxtalk_json_create` fails on depth-1 maps and under an existing OBJECT (`EPERM`). `set_string` / `set_int` / `set_pointer` return pointers into the map (`NULL` + errno on fail: `EROFS`, `ENOSPC`, `EINVAL`, …). `mxtalk_int` returns `def` if missing/wrong type (does not require errno). Pointer getters (`mxtalk_string` / `mxtalk_json` / `mxtalk_pointer` / `mxtalk_stringp` / `mxtalk_intp`) return `NULL` with **`ENOENT`** (missing key), **`EINVAL`** (bad arg, wrong parent, or wrong cell type), or **`EROFS`** (writable-only on RO map); they **wait** if a writer holds the seqlock. Success does not modify errno. `stringp` / `intp` are for in-place mutation inside `begin`/`end`.
+
+**Example:**
+```c
+mxtalk_t obj;
+char *sp;
+int64_t *ip;
+void *marker;
+
+sp = mxtalk_set_string(root, "s1", "hello");
+ip = mxtalk_set_int(root, "n1", -42);
+marker = (void *)(uintptr_t)0xabcdu;
+(void)mxtalk_set_pointer(root, "p1", marker);
+
+obj = mxtalk_json_create(root, "child");   /* m2 only */
+if (obj != NULL) {
+    mxtalk_set_string(obj, "inner", "x");
+    mxtalk_set_int(obj, "inum", 3);
+}
+```
+
+---
+
+### 9.6 Walk / introspect / delete
+
+```c
+const char  *mxtalk_name(mxtalk_t t);
+int          mxtalk_type(mxtalk_t t);
+boole        mxtalk_exist(mxtalk_t t, const char *name);
+int          mxtalk_string_len(mxtalk_t t, const char *name);
+int          mxtalk_string_cap(mxtalk_t t, const char *name);
+
+mxtalk_t     mxtalk_next(mxtalk_t parent, mxtalk_t cur);
+boole        mxtalk_delete(mxtalk_t node);
+boole        mxtalk_remove(mxtalk_t parent, const char *name);
+```
+
+**Description:** `name` / `type` on a child handle (also wait on `seq`). `mxtalk_type(root)` is always `MX_OBJECT`. `string_len` is stored size including NUL; `string_cap` is heap capacity. `next(parent,NULL)` starts iteration; `delete` frees a node handle’s slot by index under the writer fence (no name re-lookup); `remove` looks up by name under parent. Deleting an OBJECT clears its L2 attrs. Avoid deleting the current `each` cursor without saving the next handle first.
+
+**Example:**
+```c
+mxtalk_t cur;
+
+mxtalk_each(cur, root) {
+    printf("%s type=%d\n", mxtalk_name(cur), mxtalk_type(cur));
+}
+(void)mxtalk_remove(root, "s1");
+```
+
+---
+
+### 9.7 talk_t bridge
+
+```c
+talk_t mxtalk_to_talk(mxtalk_t t);
+boole  talk_to_mxtalk(mxtalk_t t, const char *name, talk_t src);
+```
+
+**Description:** `mxtalk_to_talk` builds a heap `talk_t` from root or OBJECT (skips `MX_VOID`; caller `talk_free`). `talk_to_mxtalk` runs the import under one writer `begin`/`end` (nested `set_*` stay inside that publish). If `name` is NULL/empty, import leaves into root (`t` must be root); if `name` is set, create/lookup OBJECT then import (depth 2 only — on m1 → `EPERM`). Nested objects under an OBJECT are rejected. Mid-import failure can leave a partial map (not transactional). Skin `json_set_number` stores decimal text and uses `int`; mxtalk `MX_INT` is `int64_t` — round-trips are lossy / may land as `MX_STRING`.
+
+**Example:**
+```c
+talk_t jt;
+talk_t src;
+
+jt = mxtalk_to_talk(root);
+if (jt != NULL) {
+    talk_free(jt);
+}
+src = json_create(NULL);
+json_set_string(src, "from", "talk");
+(void)talk_to_mxtalk(root, "imp", src);  /* m2: creates OBJECT "imp" */
+talk_free(src);
+/* m1 flat import into root: talk_to_mxtalk(root, NULL, flat_src); */
+```
+
+---
+
+### 9.8 Sample program (every `mxtalk.h` API)
+
+```c
+#include "skin/skin.h"
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+
+int main(void)
+{
+    mxtalk_t root;
+    mxtalk_t obj;
+    mxtalk_t cur;
+    mxtalk_t ro;
+    char *sp;
+    const char *cs;
+    int64_t *ip;
+    int64_t iv;
+    void *vp;
+    void *marker;
+    talk_t jt;
+    talk_t src;
+    void *base;
+    uint32_t map_sz;
+    const char *path = "/tmp/mxtalk_doc_demo.map";
+
+    /* —— m1 create / flat ops —— */
+    root = m1talk_create(32, 24, 16384);
+    if (root == NULL) {
+        return 1;
+    }
+    if (mxtalk_json_create(root, "nope") != NULL) {
+        /* depth 1: must fail with EPERM */
+        mxtalk_detach(root);
+        return 1;
+    }
+    sp = mxtalk_set_string(root, "s1", "hello");
+    sp = mxtalk_set_string_cap(root, "s2", "ab", 16);
+    ip = mxtalk_set_int(root, "n1", 99);
+    marker = (void *)(uintptr_t)0x1111u;
+    (void)mxtalk_set_pointer(root, "p1", marker);
+    cs = mxtalk_string(root, "s1");
+    sp = mxtalk_stringp(root, "s1");
+    iv = mxtalk_int(root, "n1", 0);
+    ip = mxtalk_intp(root, "n1");
+    vp = mxtalk_pointer(root, "p1");
+    (void)mxtalk_exist(root, "s1");
+    (void)mxtalk_string_len(root, "s1");
+    (void)mxtalk_string_cap(root, "s2");
+    mxtalk_each(cur, root) {
+        (void)mxtalk_name(cur);
+        (void)mxtalk_type(cur);
+    }
+    jt = mxtalk_to_talk(root);
+    if (jt != NULL) {
+        talk_free(jt);
+    }
+    src = json_create(NULL);
+    json_set_string(src, "a", "b");
+    (void)talk_to_mxtalk(root, NULL, src);   /* flat import OK on m1 */
+    talk_free(src);
+    (void)mxtalk_remove(root, "s2");
+    mxtalk_detach(root);
+
+    /* —— m2 create_file / OBJECT / attach / wrap / begin-end —— */
+    unlink(path);
+    root = m2talk_create_file(path, 64, 16, 128, 32, 32768);
+    if (root == NULL) {
+        return 1;
+    }
+    base = mxtalk_data(root);
+    map_sz = mxtalk_size(root);
+    mxtalk_begin(root);
+    mxtalk_set_string(root, "tick_s", "s0");
+    mxtalk_set_int(root, "tick", 0);
+    mxtalk_end(root);
+    obj = mxtalk_json_create(root, "box");
+    if (obj != NULL) {
+        mxtalk_set_string(obj, "a", "x");
+        mxtalk_set_int(obj, "b", 1);
+        (void)mxtalk_json(root, "box");
+        mxtalk_each(cur, obj) {
+            (void)mxtalk_name(cur);
+        }
+        (void)mxtalk_delete(obj);   /* or mxtalk_remove(root, "box") */
+    }
+    src = json_create(NULL);
+    json_set_string(src, "from", "talk");
+    (void)talk_to_mxtalk(root, "imp", src);
+    talk_free(src);
+    mxtalk_detach(root);
+
+    ro = mxtalk_attach(path, 0);
+    if (ro != NULL) {
+        (void)mxtalk_string(ro, "tick_s");
+        /* RO write fails with EROFS */
+        mxtalk_detach(ro);
+    }
+    /* optional: mxtalk_wrap(base, map_sz, 1) when owning raw memory */
+    (void)base;
+    (void)map_sz;
+    (void)sp;
+    (void)cs;
+    (void)ip;
+    (void)iv;
+    (void)vp;
+    unlink(path);
+    return 0;
+}
+```
+
+---
+
+## 10. Unix mmap IPC API (munix.h)
+
+### 10.0 Summary
+
+`munix.h` combines **AF_UNIX SOCK_DGRAM signaling** with **shared mmap slot pools** for payloads. The server owns two maps (`in` = client→server requests, `out` = server→client replies). Paths come from `project_var_path`: unix `…/<name>.unix`, maps `…/<name>.mmap.in` / `…/<name>.mmap.out`.
+
+**Handle is the unix socket `fd`** (`listen`/`connect` return it; **must** close with `munix_close`). **One fd = one serialized request/reply channel.** Parallel in-flight RPCs need multiple endpoints.
+
+**Opaque handle:** `munix_slot_t` is a pointer to a private struct — free with `munix_slot_free`.
+
+**Peer:** `munix_client_st` is caller storage (like `recvfrom`); `munix_client_t` is `munix_client_st *`. `sunix_take` writes **`addr`/`addrlen`/`corr`** (preserves **`data`**); `sunix_post` echoes `corr` on the reply; pass `&peer` to take/post; no alloc/free.
+
+**fd / slot lifetime:** use only `munix_close(fd)`. Do **not** `close(fd)` or `dup()` the fd into munix APIs — `close` alone leaves the internal fd→ctx table and maps/paths unclean; a later open that reuses the number can hit the wrong endpoint. **`munix_slot_free` all owned slots before `munix_close`** — a slot handle keeps a pointer into the endpoint; free-after-close is use-after-free.
+
+| API | Role |
+|-----|------|
+| **`munix_listen` / `munix_connect` / `munix_close`** | Endpoint; returned `fd` for `poll` / `select` / libevent |
+| **`munix_set_data` / `munix_get_data`** | Caller cookie on endpoint (`void*`; munix never frees) |
+| **`munix_slot_alloc` / `sunix_slot_alloc`** | Client request slot / server reply slot |
+| **`munix_slot_data` / `munix_slot_cap` / `munix_slot_free`** | Payload pointer / usable size / return to pool |
+| **`munix_slot_set_data` / `munix_slot_get_data`** | Caller cookie on slot handle (`void*`; munix never frees) |
+| **`munix_client_set_data` / `munix_client_get_data`** | Caller cookie on peer (`munix_client_t`; `sunix_take` preserves) |
+| **`munix_post` / `munix_take`** | Client send / receive |
+| **`sunix_take` / `sunix_post`** | Server receive / send |
+| **`MUNIX_POST_KEEP`** | Keep slot handle after post (peer must not pool-free) |
+| **`MUNIX_MMAP_ONLY`** | Alloc from mmap only (no unix `GRANT_REQ` / wait) |
+
+**Conventions:**
+
+- **key**: required NUL-terminated string (may be `""`); soft max **1024** bytes in the implementation. Pointer from take is valid until the **next successful** take on that endpoint (failed take / alloc drain / discarded mismatch do not overwrite it). Short control/meta can go in **key only** (`slot=NULL`) without a payload slot.
+- **slot**: may be `NULL` on **post** for **key-only** traffic (`MUNIX_POST_KEEP` + `NULL` → `EINVAL`). On **take**, the out-pointer is required (`NULL` → `EINVAL`); `*slot` may be `NULL` (key-only reply). Wire length is always `munix_slot_cap` (full allocated/usable buffer), not a separate app length — frame inside the buffer yourself (`\0`, m1talk, …), or use key-only when the payload would be tiny. **`munix_slot_alloc` / `sunix_slot_alloc` require `len > 0`** (`len==0` → `NULL`/`EINVAL`); do not use `alloc(0)` for key-only.
+- **`timeout_ms`**: `0` = non-block (`EAGAIN`), `>0` = wait ms (`ETIMEDOUT`), `<0` = forever. Ignored when `MUNIX_MMAP_ONLY`. Client `munix_take` may wait; **`sunix_take` is always non-blocking** (server is 1:N — do not block the listen loop; `poll`/`select` first). **After `POLLIN`, drain like non-blocking `recvfrom`**: loop take until `NULL`/`EAGAIN`. One successful take is one `POST`; `GRANT_REQ` / `HELLO` / junk are consumed inside take and do not return to the caller. GRANT waiters are woken when take hits `EAGAIN` (socket empty) or when an in-map slot is freed.
+- **Client order**: one in-flight RPC per connect fd — `alloc → post → take` (then free as needed). Wire **`corr`** (monotonic `uint64`) tags each request `POST`; the reply must echo it. While a reply is pending, `munix_take` delivers only that corr (mismatched POSTs are discarded and **out** slots returned). Idle take (`reply_pending` clear) delivers any valid POST. Starting a new **`alloc` abandons** any prior unread reply by clearing `reply_pending` (one-shot; unread = failed/dropped). mmap-hit does **not** drain the fd — leftover datagrams stay until a later `take` / drain / `munix_close`. `post` while a reply is still pending → `EBUSY` (take it, or alloc to abandon). Parallel RPCs → multiple `connect` fds. `GRANT_REQ`/`GRANT` use the same corr field for alloc-wait matching. **`munix_slot_alloc` tries the mmap freelist first**, except a same-len pending GRANT skips mmap and only drains/claims; on miss it may `GRANT_REQ` + drain (claim GRANT into a slot, or discard leftover POSTs). Event loop: while waiting for GRANT, POLLIN must retry **`munix_slot_alloc`**, not `munix_take` (take returns unused GRANTs to the pool; matching `corr` clears `grant_pending_req`).
+- **Server restart**: client `take`/`alloc`/`post` → `ESTALE` once the session is marked stale; `munix_close` + `munix_connect` and retry the whole RPC.
+- **Caller contracts (not enforced by the API)**: only `munix_close` (never bare `close`/`dup` into munix); free owned **slots** **before** `munix_close`; KEEP needs cooperative peers (see §10.1 / §10.9); **one fd is not thread-safe**; **multi-fd × one thread per fd is OK** (process×map `plock->gate` serializes map lock/unlock); parallel RPCs use multiple `connect` fds; do not use across `fork` without reconnect.
+- **mmap pool lock (v6):** header `lock` is `MU_LOCK_PACK(pid, epoch)` on a word matching the ABI (`uint64` on LP64: pid32|epoch32; `uint32` on 32-bit: pid16|epoch16, native CAS; keep `pid_max` ≤ 65536 on 32-bit). (`0` = free; legacy TAS `pid==1` still stealable). A separate **`dirty`** bit is set while a holder may be mid-update and cleared only on unlock. **Steal** (dead/legacy owner — `kill(0)` only after 65535 contended `sched_yield`s so live holders are not probed every spin; **pid reuse** where this process does not hold, or **held+epoch mismatch** across threads) or **`dirty`** forces dead-owner reclaim + freelist rebuild. Process-local hold state (`gate`+`held`+`epoch`) is keyed by map file identity (`dev`+`ino`) and shared by all fds on that map — `gate` allows one-thread-per-connect-fd; `held`+`epoch` detect pid reuse. Slot ownership is **`(owner_pid, owner_birth)`** (starttime; self cached once); pressure reclaim treats mismatched birth as dead. Steal/dirty repair under the map lock uses **`kill`-only** liveness (no `/proc`); full `(pid, birth)` checks run on **pressure** `mu_reclaim_dead` **outside** the lock (snapshot → classify → re-lock), and only for slots whose reserved stamp is at least ~2s old. **Hybrid concurrency:** the map lock covers **freelist + heap** (`alloc` / `free` / reclaim rebuild). Per-slot **`state`** for `post` (`ALLOC|HELD→POSTED`) and take claim (`POSTED→HELD`) is **lock-free CAS** (no map lock on that hot path); freelist return always **CAS → `FREE`** then `gen++` so it cannot race a concurrent post/take.
+- **fd close**: only `munix_close(fd)` — never bare `close(fd)` / `dup()` into munix APIs (see §10.1).
+- **slot vs close**: `munix_slot_free` owned handles **before** `munix_close`; free-after-close is UAF (see §10.1 / §10.2).
+- **`munix_slot_t`**: opaque pointer. **`munix_client_st`**: caller-owned peer storage (`addr`/`addrlen`/`corr`/`data`); **`munix_client_t`**: pointer to it. `sunix_take` fills `addr`/`addrlen`/`corr` (preserves `data`); `sunix_post` echoes `corr`; pass `&peer` to take/post.
+- **`munix_set_data` / `munix_get_data`**: optional caller cookie on the endpoint (`void*`). Useful when an event loop only has `fd`. Munix never frees the pointer; clear or replace before `munix_close` if you own the object.
+- **`munix_slot_set_data` / `munix_slot_get_data`**: optional caller cookie on a **slot handle** (not the mmap payload from `munix_slot_data`). Default `NULL` at handle create; `munix_slot_free` does not free the cookie.
+- **`munix_client_set_data` / `munix_client_get_data`**: optional caller cookie on peer storage; `sunix_take` does not clear it.
+- **Safe point for KEEP reuse**: after you `munix_take` the reply, the peer has finished with the previous request slot.
+- **Roles**: use client APIs only on `connect` fds and server APIs only on `listen` fds (wrong role → fail / `EINVAL`).
+
+**Roles:**
+
+```text
+Client: connect → alloc → fill → post → take → (slot_free if needed)
+Server: listen  → poll(fd) → sunix_take until EAGAIN → (optional sunix_slot_alloc) → sunix_post
+```
+
+---
+
+### 10.1 Endpoint
+
+```c
+int  munix_listen(const char *name,
+    int in_slots, size_t in_heap,
+    int out_slots, size_t out_heap);
+int  munix_connect(const char *name);
+void munix_close(int fd);
+void munix_set_data(int fd, void *data); /* caller cookie; never freed by munix */
+void *munix_get_data(int fd);
+```
+
+**Description:** `listen` creates the unix socket and both mmap files (new `map_gen` each listen). **Pool args:** `in_slots` / `out_slots` must be in **`1 … 65536`**; `in_heap` / `out_heap` must be **`≥ 64`** and fit in `uint32_t`; the resulting map size (`header + slot table + heap`) must also fit in `uint32_t` or `listen` fails with `EINVAL` (rejects combinations that would wrap). `connect` attaches maps, reads `map_gen`, binds a **per-endpoint** client datagram path (`…/<name>.unix-<pid>-<fd>` so same-process multi-connect does not collide), then connects to the server unix (**does not** send HELLO). Both return the unix socket `fd` (`>=0`) or `-1` on failure. The fd is non-blocking and suitable for event loops; pass the same fd into the other munix APIs.
+
+**Cookie (`munix_set_data` / `munix_get_data`):** attach a private pointer for wrappers / libevent callbacks that only see `fd`. Default is `NULL`. Munix never frees it; `munix_close` drops the endpoint only.
+
+```c
+munix_set_data(cli, my_session);
+/* in poll callback: */
+sess = munix_get_data(fd);
+```
+
+**`munix_close` vs `close`:**
+
+| Do | Do not |
+|----|--------|
+| `munix_close(fd)` to destroy the endpoint | `close(fd)` on a munix fd |
+| `poll` / `select` / libevent on the same `fd` | `dup(fd)` then pass the copy into munix APIs |
+| `munix_slot_free` owned slots, then `munix_close` | `munix_slot_free` after / across `munix_close` |
+
+Why:
+
+- Bare `close(fd)`: munix keeps an internal **fd → endpoint** table plus mmap/path state. `close` only drops the kernel socket; the table entry and maps remain. When that fd number is reused later, munix APIs can hit the **wrong** endpoint (`EBUSY` on register, or silent mis-routing). No kernel hook can fix this — callers must use `munix_close`.
+- Free-after-close: each `munix_slot_t` points back at the endpoint. `munix_close` frees that endpoint; a later `munix_slot_free` / `munix_slot_data` is **use-after-free**. Munix does not track live slot handles, so this is a caller ordering rule (same class of contract as `close` vs `munix_close`).
+
+**Example:**
+
+```c
+int srv;
+int cli;
+
+srv = munix_listen("echo_demo", 16, 64 * 1024, 16, 64 * 1024);
+cli = munix_connect("echo_demo");
+if (srv < 0 || cli < 0) {
+    /* path / map / bind failure */
+}
+```
+
+---
+
+### 10.2 Slots
+
+```c
+#define MUNIX_MMAP_ONLY  0x2
+
+typedef struct munix_slot_st *munix_slot_t; /* opaque */
+
+void        *munix_slot_data(munix_slot_t slot);
+size_t       munix_slot_cap(munix_slot_t slot);
+void         munix_slot_free(munix_slot_t slot);
+void         munix_slot_set_data(munix_slot_t slot, void *data);
+void        *munix_slot_get_data(munix_slot_t slot);
+
+munix_slot_t munix_slot_alloc(int fd, size_t len, int timeout_ms, int flags);
+munix_slot_t sunix_slot_alloc(int fd, size_t len);
+```
+
+**Description:**
+
+- **`munix_slot_data`**: mmap payload pointer. **`munix_slot_set_data` / `get_data`**: separate caller cookie on the handle (default `NULL`; munix never frees it; not cleared by `munix_slot_free` beyond destroying the handle).
+- Client `munix_slot_alloc` takes from the **in** map. **`len` must be `> 0`** (`len==0` → `NULL`/`EINVAL`); sizes that would overflow internal `uint32` chunk math are also rejected (`EINVAL`). No-payload traffic uses `slot=NULL` on post, not `alloc(0)`. Default alloc **tries mmap freelist first**; mmap-hit returns a slot and **clears** any pending GRANT wait (does not drain the fd). Only on miss may it send `GRANT_REQ` and wait per `timeout_ms` (fd drain claims a matching GRANT into a slot immediately, or discards leftover POSTs). Non-block (`timeout_ms=0`): after `GRANT_REQ`, `EAGAIN` until readable — next `alloc` with the same `len` **skips mmap** (does not race the freelist), does **not** resend, and only drains/claims. No GRANT → keep `EAGAIN` (like `recvfrom`); the caller times out or `munix_close` + reconnects. Block wait uses `timeout_ms` (`ETIMEDOUT` clears pending so a later alloc may send a fresh REQ). **`MUNIX_MMAP_ONLY`**: only local mmap (never `GRANT_REQ` / drain / wait on the fd, even if a GRANT_REQ is already pending); mmap-hit still returns a slot and clears that pending; full → immediate `EAGAIN` (pending unchanged) — preferred in `select`/libevent hot paths. Event loop: POLLIN while a GRANT is pending must retry **`munix_slot_alloc`** (same `len`), not `munix_take`.
+- **`GRANT_REQ` retry:** after `ETIMEDOUT`, the next `munix_slot_alloc` sends a fresh `GRANT_REQ`. If `len` changes while a request is still pending, munix resends with the new size. Non-blocking (`timeout_ms=0`) may keep a pending flag so a tight poll loop does not spam the server until success or a timed wait expires. Server queues `GRANT_REQ` FIFO (O(1) tail append, grant head) during take and wakes waiters when take returns `EAGAIN` (drain the fd in the same poll round) or when an in-map slot is freed. Take `EAGAIN` with waiters: one in-map `mu_reclaim_dead` (age ≥ ~2s, then UNCLAIMED without `/proc` or dead owner via `/proc`) then GRANT already-free slots. In-map `munix_slot_free` only wakes (take just scanned). Wake peeks free slots and remaining heap against the **head waiter's `need_len`**: if either cannot satisfy that size, stop (do not walk waiters). If the head cannot fit while a **smaller** waiter is behind, the head is rotated to the tail (true HOL); same-or-larger needs behind the head are not rotated. Send-buffer full (`EAGAIN`) stops the wake until a later free; dead-peer send errors drop that waiter and continue. AF_UNIX SOCK_DGRAM `ECONNREFUSED` / `ECONNRESET` from a dead peer are skipped inside take/alloc drain (same as junk frames) so they do not starve `POLLIN`; client waits also `poll` `POLLERR`.
+- Server `sunix_slot_alloc` takes from the **out** map (**`len > 0`** same as client); never waits (`NULL`/`EAGAIN` when full). Under out-pool pressure it may reclaim dead owners and aged **non-KEEP `POSTED`** replies (see §10.9).
+- `munix_slot_cap` is the usable size for this handle (after alloc: write budget; after take: valid payload size to read).
+- Free when you own the handle: after take; after failed post; after successful post **without** KEEP; KEEP owner frees when done with the channel. Always free owned slots **before** `munix_close` — free-after-close is use-after-free.
+
+**Example (default alloc vs `MUNIX_MMAP_ONLY`):**
+
+```c
+munix_slot_t a;
+munix_slot_t b;
+
+/* may wait / GRANT when pool busy */
+a = munix_slot_alloc(cli, 64, 1000, 0);
+
+/* event-loop style: never block on GRANT */
+b = munix_slot_alloc(cli, 64, 0, MUNIX_MMAP_ONLY);
+if (b == NULL && errno == EAGAIN) {
+    /* try later or fail this RPC */
+}
+```
+
+---
+
+### 10.3 Client post / take
+
+```c
+#define MUNIX_POST_KEEP  0x1
+
+int         munix_post(int fd, const char *key, munix_slot_t slot, int flags);
+const char *munix_take(int fd, munix_slot_t *slot, int timeout_ms);
+```
+
+**`munix_post`:** `key` is required (not NULL; may be `""`). `slot` may be NULL (key-only). **`MUNIX_POST_KEEP` + `slot==NULL` → `EINVAL`**. `flags=0`: success **consumes** the handle (do not free/use again). **`MUNIX_POST_KEEP`**: handle stays valid; peer must not pool-free; reuse after you have taken the reply. One in-flight RPC per fd: `post` assigns a wire **`corr`**. **Send is non-blocking (`sendto`-style)**: socket send buffer full → `-1`/`EAGAIN` and the slot handle is **not** consumed (state rolled back) — wait for writable (`poll`/`EV_WRITE`) and retry the same post. Session already stale → `-1`/`ESTALE`. Wrong endpoint / wrong send-side map for `slot` → `-1`/`EINVAL`. Reply still pending → `-1`/`EBUSY` (take the reply, or `alloc` to abandon that round).
+
+**`munix_take`:** out-pointer `slot` is required (`NULL` → `EINVAL`); `*slot` may be `NULL` (key-only). `timeout_ms` `< 0` block, `0` `EAGAIN`, `> 0` `ETIMEDOUT`. While a reply is pending, delivers only the last post’s matching `corr`; mismatched POSTs are discarded (**out** slots returned). Idle take (`reply_pending` clear) delivers any valid POST. Fail → `NULL` + errno (`EAGAIN` / `ETIMEDOUT` / `ESTALE` / `EPROTO` / `ENOMEM` / …). **Corrupt / truncated datagrams are skipped**; `EPROTO` is reserved for slot/state protocol breaks after a valid matching `POST` frame (e.g. gen mismatch, late aged reclaim). If building the slot handle fails with **`ENOMEM`**, or wire `payload_len` exceeds the slot **`payload_cap`** (`EPROTO`): non-KEEP reply is freelisted (message dropped); **KEEP** leaves the slot `POSTED` so the **sender’s** handle stays valid — the datagram is already consumed, so **this take cannot be retried** (further takes wait for a new reply). Timeout does **not** clear `reply_pending`. GRANT datagrams on take are always returned to the pool (not claimed). Matching `corr` **clears** `grant_pending_req` so a later alloc may send a fresh `GRANT_REQ`; wrong/late GRANT keeps the wait. Claim is only in `munix_slot_alloc`.
+
+---
+
+### 10.4 Server take / post
+
+```c
+typedef struct munix_client_struct {
+    struct sockaddr_un addr;
+    socklen_t addrlen;
+    void *data; /* caller cookie; sunix_take does not clear; munix never frees */
+    uint64_t corr; /* request corr from last sunix_take; sunix_post echoes it */
+} munix_client_st;
+typedef munix_client_st *munix_client_t;
+
+const char *sunix_take(int fd, munix_slot_t *slot, munix_client_t client);
+int         sunix_post(int fd, const char *key, munix_slot_t slot,
+                munix_client_t client, int flags);
+
+void  munix_client_set_data(munix_client_t client, void *data);
+void *munix_client_get_data(munix_client_t client);
+```
+
+**Description:** `sunix_take` is **always non-blocking** (`NULL`/`EAGAIN` if idle) by design: one server fd serves many clients, so the listen loop must not block inside take — use `poll`/`select`/libevent, then **drain like non-blocking `recvfrom`** (loop take until `EAGAIN`). One success is one `POST`; `GRANT_REQ` is queued inside take and waiters are woken on that `EAGAIN` (and on in-map `slot_free`). Out-pointer `slot` and `client` are required (`NULL` → `EINVAL`); `*slot` may be NULL (key-only). **Corrupt / truncated datagrams are skipped** (same as client take). On success: key (may be `""`), `*slot` may be NULL, and `client` gets peer **`addr`/`addrlen`/`corr`** (**recvfrom style** — **`data` is preserved**; caller owns the `munix_client_st`; safe to keep/copy across later takes). On failure, the caller's storage is **unchanged** — only trust `addr`/`addrlen`/`corr` after success. `sunix_post` requires a `munix_client_t` (pointer to that storage or any saved copy) and **echoes `client->corr`** on the reply wire; `slot` may be NULL; `flags` same KEEP rules as client post (`KEEP` + `NULL` → `EINVAL`). Slot must belong to this listen fd’s **out** map (`EINVAL` otherwise). **`sunix_post` is non-blocking (`sendto`-style)** — full send buffer → `-1`/`EAGAIN`, handle kept for retry when writable (do not block the listen loop waiting inside post). Optional: drain take first, copy `key` + `munix_client_st`, free the in slot, queue the reply, `sunix_post` on `POLLOUT` (§10.5.1). The listen fd is never marked `session_stale` (that flag is client-only), so `sunix_post` does not return `ESTALE` in practice. Library take paths write only `addr`/`addrlen`/`corr` (never wipe `data`); callers may zero-init or `munix_client_set_data` before first use if they rely on the cookie.
+
+---
+
+### 10.5 Server example (echo)
+
+```c
+#include "skin/skin.h"
+#include <poll.h>
+#include <string.h>
+
+static int run_server(const char *name)
+{
+    int mx;
+    struct pollfd pfd;
+    munix_slot_t in_slot;
+    munix_slot_t out_slot;
+    munix_client_st client;
+    const char *key;
+    void *src;
+    void *dst;
+    size_t n;
+
+    mx = munix_listen(name, 16, 64 * 1024, 16, 64 * 1024);
+    if (mx < 0) {
+        return 1;
+    }
+    pfd.fd = mx;
+    pfd.events = POLLIN;
+    for (;;) {
+        if (poll(&pfd, 1, 1000) <= 0) {
+            continue;
+        }
+        for (;;) {
+            key = sunix_take(mx, &in_slot, &client);
+            if (key == NULL) {
+                break;
+            }
+            out_slot = NULL;
+            if (in_slot != NULL) {
+                n = munix_slot_cap(in_slot);
+                out_slot = sunix_slot_alloc(mx, n);
+                if (out_slot != NULL) {
+                    src = munix_slot_data(in_slot);
+                    dst = munix_slot_data(out_slot);
+                    memcpy(dst, src, n);
+                }
+                munix_slot_free(in_slot);
+            }
+            /* out full → key-only reply still OK; failed post keeps ownership */
+            if (sunix_post(mx, key, out_slot, &client, 0) != 0) {
+                if (out_slot != NULL) {
+                    munix_slot_free(out_slot);
+                }
+            }
+        }
+    }
+    /* munix_close(mx); */
+}
+```
+
+§10.5 posts in the take loop (enough when replies are cheap). To drain receive first and send when the fd is writable — same as non-blocking `recvfrom` then `sendto` on `POLLOUT` — copy `key` and `munix_client_st` (the next successful take overwrites them), move payload to an out slot, **free the in slot before queueing**, then `sunix_post` until `EAGAIN` and wait `POLLOUT`. Do not keep in slots on the send queue (that pins the in map and delays GRANT).
+
+### 10.5.1 Server example (drain take, send queue on POLLOUT)
+
+```c
+#include "skin/skin.h"
+#include <errno.h>
+#include <poll.h>
+#include <string.h>
+
+#define MU_EX_Q 32
+#define MU_EX_KEY 1025
+
+static int run_server_queued(const char *name)
+{
+    int mx;
+    struct pollfd pfd;
+    struct {
+        munix_client_st client;
+        munix_slot_t slot;
+        char key[MU_EX_KEY];
+    } q[MU_EX_Q];
+    int qhead;
+    int qn;
+    int qi;
+    int err;
+    munix_slot_t in_slot;
+    munix_slot_t out_slot;
+    munix_client_st client;
+    const char *key;
+    void *src;
+    void *dst;
+    size_t n;
+    size_t klen;
+
+    mx = munix_listen(name, 16, 64 * 1024, 16, 64 * 1024);
+    if (mx < 0) {
+        return 1;
+    }
+    qhead = 0;
+    qn = 0;
+    pfd.fd = mx;
+    for (;;) {
+        pfd.events = POLLIN;
+        if (qn > 0) {
+            pfd.events = POLLIN | POLLOUT;
+        }
+        if (poll(&pfd, 1, 1000) <= 0) {
+            continue;
+        }
+
+        if ((pfd.revents & POLLIN) != 0) {
+            for (;;) {
+                key = sunix_take(mx, &in_slot, &client);
+                if (key == NULL) {
+                    break;
+                }
+                out_slot = NULL;
+                if (in_slot != NULL) {
+                    n = munix_slot_cap(in_slot);
+                    out_slot = sunix_slot_alloc(mx, n);
+                    if (out_slot != NULL) {
+                        src = munix_slot_data(in_slot);
+                        dst = munix_slot_data(out_slot);
+                        memcpy(dst, src, n);
+                    }
+                    munix_slot_free(in_slot);
+                }
+                if (qn >= MU_EX_Q) {
+                    if (out_slot != NULL) {
+                        munix_slot_free(out_slot);
+                    }
+                    continue;
+                }
+                qi = qhead + qn;
+                if (qi >= MU_EX_Q) {
+                    qi -= MU_EX_Q;
+                }
+                q[qi].client = client;
+                q[qi].slot = out_slot;
+                klen = strlen(key);
+                if (klen > sizeof(q[qi].key) - 1) {
+                    klen = sizeof(q[qi].key) - 1;
+                }
+                memcpy(q[qi].key, key, klen);
+                q[qi].key[klen] = '\0';
+                qn++;
+            }
+        }
+
+        while (qn > 0) {
+            qi = qhead;
+            if (sunix_post(mx, q[qi].key, q[qi].slot, &q[qi].client, 0) != 0) {
+                err = errno;
+                if (err == EAGAIN || err == EWOULDBLOCK) {
+                    break;
+                }
+                if (q[qi].slot != NULL) {
+                    munix_slot_free(q[qi].slot);
+                }
+            }
+            qhead++;
+            if (qhead >= MU_EX_Q) {
+                qhead = 0;
+            }
+            qn--;
+        }
+    }
+    /* munix_close(mx); */
+}
+```
+
+---
+
+### 10.6 Client — synchronous call
+
+```c
+static int rpc_sync(int mx, const char *api, const void *req, size_t req_len)
+{
+    munix_slot_t slot;
+    munix_slot_t reply;
+    const char *key;
+    void *p;
+    size_t cap;
+
+    slot = munix_slot_alloc(mx, req_len, 2000, 0);
+    if (slot == NULL) {
+        return -1;
+    }
+    p = munix_slot_data(slot);
+    cap = munix_slot_cap(slot);
+    if (req_len > cap) {
+        munix_slot_free(slot);
+        return -1;
+    }
+    memcpy(p, req, req_len);
+    if (munix_post(mx, api, slot, 0) != 0) {
+        munix_slot_free(slot);
+        return -1;
+    }
+    /* non-KEEP: slot handle already consumed */
+    key = munix_take(mx, &reply, 5000);
+    if (key == NULL) {
+        return -1; /* ETIMEDOUT / ESTALE / … */
+    }
+    if (reply != NULL) {
+        /* use munix_slot_data(reply), munix_slot_cap(reply) */
+        munix_slot_free(reply);
+    }
+    return 0;
+}
+```
+
+---
+
+### 10.7 Client — `select` asynchronous
+
+Pre-loan a KEEP slot (or use `MUNIX_MMAP_ONLY` and fail-fast). Loop only waits for replies.
+
+```c
+#include <sys/select.h>
+#include <errno.h>
+
+enum { ST_IDLE = 0, ST_WAIT_REPLY };
+
+struct rpc_sel {
+    int mx;
+    munix_slot_t req; /* KEEP */
+    int state;
+};
+
+static int rpc_sel_open(struct rpc_sel *r, const char *name, size_t need)
+{
+    r->mx = munix_connect(name);
+    if (r->mx < 0) {
+        return -1;
+    }
+    r->req = munix_slot_alloc(r->mx, need, -1, 0);
+    if (r->req == NULL) {
+        munix_close(r->mx);
+        r->mx = -1;
+        return -1;
+    }
+    r->state = ST_IDLE;
+    return 0;
+}
+
+static int rpc_sel_begin(struct rpc_sel *r, const char *api)
+{
+    void *p;
+    size_t n;
+
+    if (r->state != ST_IDLE) {
+        errno = EBUSY;
+        return -1;
+    }
+    p = munix_slot_data(r->req);
+    n = munix_slot_cap(r->req);
+    /* fill p[0..n) */
+    (void)p;
+    (void)n;
+    if (munix_post(r->mx, api, r->req, MUNIX_POST_KEEP) != 0) {
+        return -1;
+    }
+    r->state = ST_WAIT_REPLY;
+    return 0;
+}
+
+static int rpc_sel_on_readable(struct rpc_sel *r)
+{
+    munix_slot_t reply;
+    const char *key;
+
+    if (r->state != ST_WAIT_REPLY) {
+        return 0;
+    }
+    key = munix_take(r->mx, &reply, 0);
+    if (key == NULL) {
+        if (errno == EAGAIN) {
+            return 0;
+        }
+        return -1; /* ESTALE → close + reopen */
+    }
+    if (reply != NULL) {
+        munix_slot_free(reply);
+    }
+    r->state = ST_IDLE;
+    return 0;
+}
+
+/* main loop sketch */
+static void rpc_sel_loop(struct rpc_sel *r)
+{
+    fd_set rfds;
+    int fd;
+    int n;
+
+    fd = r->mx;
+    (void)rpc_sel_begin(r, "api");
+    for (;;) {
+        if (r->state == ST_IDLE) {
+            break; /* or begin next call */
+        }
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        n = select(fd + 1, &rfds, NULL, NULL, NULL);
+        if (n < 0 && errno == EINTR) {
+            continue;
+        }
+        if (n > 0 && FD_ISSET(fd, &rfds)) {
+            if (rpc_sel_on_readable(r) != 0) {
+                break;
+            }
+        }
+    }
+}
+```
+
+Without KEEP, each shot uses `munix_slot_alloc(mx, n, 0, MUNIX_MMAP_ONLY)` in `begin`; on `EAGAIN` skip/ defer — no GRANT-wait state. If default alloc (`flags=0`, `timeout_ms=0`) is used instead, POLLIN must retry **`munix_slot_alloc`**, not `munix_take`.
+
+---
+
+### 10.8 Client — libevent asynchronous
+
+```c
+#include <event2/event.h>
+#include <errno.h>
+
+struct rpc_ev {
+    int mx;
+    munix_slot_t req;
+    struct event *ev;
+    int waiting;
+};
+
+static void rpc_ev_readable(evutil_socket_t fd, short what, void *arg)
+{
+    struct rpc_ev *r;
+    munix_slot_t reply;
+    const char *key;
+
+    (void)fd;
+    (void)what;
+    r = (struct rpc_ev *)arg;
+    if (!r->waiting) {
+        return;
+    }
+    key = munix_take(r->mx, &reply, 0);
+    if (key == NULL) {
+        if (errno == EAGAIN) {
+            return;
+        }
+        /* ESTALE: munix_close, reconnect, re-arm event */
+        return;
+    }
+    if (reply != NULL) {
+        munix_slot_free(reply);
+    }
+    r->waiting = 0;
+}
+
+static int rpc_ev_open(struct rpc_ev *r, struct event_base *base, const char *name, size_t need)
+{
+    int fd;
+
+    r->mx = munix_connect(name);
+    if (r->mx < 0) {
+        return -1;
+    }
+    r->req = munix_slot_alloc(r->mx, need, -1, 0);
+    if (r->req == NULL) {
+        munix_close(r->mx);
+        return -1;
+    }
+    fd = r->mx;
+    r->ev = event_new(base, fd, EV_READ | EV_PERSIST, rpc_ev_readable, r);
+    event_add(r->ev, NULL);
+    r->waiting = 0;
+    return 0;
+}
+
+static int rpc_ev_call(struct rpc_ev *r, const char *api)
+{
+    void *p;
+
+    if (r->waiting) {
+        errno = EBUSY;
+        return -1;
+    }
+    p = munix_slot_data(r->req);
+    (void)p; /* fill */
+    if (munix_post(r->mx, api, r->req, MUNIX_POST_KEEP) != 0) {
+        return -1;
+    }
+    r->waiting = 1;
+    return 0;
+}
+```
+
+---
+
+### 10.9 KEEP vs non-KEEP
+
+**Non-KEEP (typical one-shot RPC):**
+
+```c
+slot = munix_slot_alloc(mx, 64, 1000, 0);
+/* fill */
+munix_post(mx, "echo", slot, 0);   /* handle consumed on success */
+key = munix_take(mx, &reply, 5000);
+if (reply != NULL) {
+    munix_slot_free(reply);
+}
+```
+
+**KEEP (reuse one request buffer; safe after take):**
+
+```c
+slot = munix_slot_alloc(mx, 64, -1, 0);
+for (;;) {
+    /* fill slot */
+    munix_post(mx, "echo", slot, MUNIX_POST_KEEP);
+    key = munix_take(mx, &reply, -1);
+    if (reply != NULL) {
+        munix_slot_free(reply); /* peer side of KEEP request: drop handle only */
+    }
+    /* now safe to rewrite slot and post again */
+}
+munix_slot_free(slot); /* owner returns request slot to pool */
+```
+
+Server KEEP for reply slots is the same idea via `sunix_post(..., MUNIX_POST_KEEP)`.
+
+**KEEP + process death / reclaim:**
+
+- Shared slot marks `KEEP`; peer drop still sets `peer_done` (for cooperative live paths).
+- `owner_pid` + `owner_birth` (starttime) for KEEP stays the **sender**; non-KEEP take still hands ownership to the receiver.
+- Under **pool pressure**, any slot whose **owner is dead or whose pid was reused** (live pid, mismatched birth) is reclaimed — **including KEEP**, without requiring `peer_done`. Pressure reclaim snapshots owners then classifies **outside** the map lock (avoids holding the lock across `/proc`); slots with no reserved stamp or younger than ~2s are skipped (no `/proc`); steal/dirty repair under the lock uses **`kill`-only**.
+- While the KEEP **owner is alive**, peers must not pool-free; reuse remains safe after take.
+- If the peer drops and the owner is already dead, the peer freelists immediately.
+- Take-path handle **`ENOMEM`** / bad wire length (`payload_len` > slot `payload_cap` → `EPROTO`): non-KEEP freelists the `POSTED` slot; **KEEP** leaves `POSTED` (sender handle remains valid). The unix datagram is already gone — **receiver take cannot retry that message**; KEEP only protects sender ownership / reclaim.
+- **Orphan GRANT:** after a successful GRANT send the slot is `UNCLAIMED` until the client claims it in mmap. The same aged `mu_reclaim_dead` pass freelists `ALLOC`+`UNCLAIMED` older than ~2s (no `/proc`; 29-bit modular second stamp in `reserved`). Server in-map scan is on take `EAGAIN` when waiters remain, not on each in-map free. Late claim after reclaim is ignored (`slot_gen` / state check).
+- **Orphan out POSTED (non-KEEP):** reply posted but never taken — under out-pool pressure, `POSTED` older than ~2s is freelisted (same stamp encoding). **KEEP replies** are not aged while the owner lives; **dead** KEEP owners are reclaimed by dead-owner pressure reclaim (not by POSTED age alone).
+- Server death + new `listen` still uses `map_gen` / `ESTALE` (reconnect). KEEP is not a substitute for that.
+- Map allocator (v6): slot-first + chunk `owner_slot`/`owner_gen`; freelist is rebuildable from the bump layout; age stamps use 29-bit seconds; map lock is `(pid, epoch)` in an ABI-sized word + **`dirty`** with mandatory reclaim+rebuild on steal/dirty; slot **state** for post/take is CAS (see §10.0 hybrid); slot owner is `(pid, starttime)`.
+
+---
+
+### 10.10 `MUNIX_MMAP_ONLY` vs default alloc
+
+| | `flags = 0` | `MUNIX_MMAP_ONLY` |
+|---|---|---|
+| mmap freelist empty | may `GRANT_REQ` + wait (`timeout_ms`) | immediate `EAGAIN` (no fd) |
+| sync client / startup loan | good default | optional |
+| `select` / libevent hot path | avoid (POLLIN must retry **alloc**, not take) | preferred |
+
+```c
+/* sync / startup: allow GRANT wait */
+slot = munix_slot_alloc(mx, 128, 3000, 0);
+
+/* async hot path: never wait on unix for a slot */
+slot = munix_slot_alloc(mx, 128, 0, MUNIX_MMAP_ONLY);
+if (slot == NULL) {
+    /* EAGAIN: pool busy — retry later or drop */
+}
+```
+
+---
+
+### 10.11 Control RPC (`mcontrol.h`)
+
+Thin **RPC/control** over **munix + libevent + optional mxtalk**.
+
+| Side | Flow |
+|------|------|
+| Server | `mcontrol_listen` → `mcontrol_fn` → sync post or `bind` + later `mcontrol_reply` |
+| Client | `mcontrol_connect` → `alloc*` → fill → `mcontrol_call` → `mcontrol_free(rep)` → `mcontrol_close` |
+
+Pool args `0` → default **8 × 64 KiB**. Munix rules in §10 still apply. This layer does **not** add a second corr or a second in-flight RPC on the same connect fd.
+
+#### API
+
+```c
+typedef const char *(*mcontrol_fn)(int fd,
+    const char *key, void *in, size_t in_len,
+    munix_client_t client, void **out);
+
+int mcontrol_listen(struct event_base *base, const char *object, mcontrol_fn control,
+    int in_slots, size_t in_heap, int out_slots, size_t out_heap);
+
+/* server out-slot alloc (non-blocking sunix) */
+void        *mcontrol_salloc(int fd, size_t len);
+mxtalk_t     mcontrol_salloc_m1talk(int fd, int max_l1, int name_max, int max_heap);
+mxtalk_t     mcontrol_salloc_m2talk(int fd,
+    int max_l1, int max_l2, int max_l2_pool, int name_max, int max_heap);
+
+munix_client_t mcontrol_bind(void *p, munix_client_t client); /* heap copy; re-bind replaces */
+munix_client_t mcontrol_getbind(void *p); /* bound peer, or NULL — probe only */
+int            mcontrol_reply(const char *key, void *p);
+void           mcontrol_free(void *p);   /* always safe; no-op if unknown / already consumed */
+void           mcontrol_close(int fd);   /* sweep registry then munix_close */
+
+/* client */
+int          mcontrol_connect(const char *object);
+void        *mcontrol_alloc(int fd, size_t len, int timeout_ms);
+mxtalk_t     mcontrol_alloc_m1talk(int fd, int timeout_ms,
+    int max_l1, int name_max, int max_heap);
+mxtalk_t     mcontrol_alloc_m2talk(int fd, int timeout_ms,
+    int max_l1, int max_l2, int max_l2_pool, int name_max, int max_heap);
+const char  *mcontrol_call(int fd, const char *key, void *req, void **rep, int timeout_ms);
+
+/* deprecated for sync *out — use *out = p; rare escape hatch to munix_slot_t */
+munix_slot_t mcontrol_slot(void *p);
+```
+
+**Parameter order (`alloc*`):**
+
+| API | Arguments |
+|-----|-----------|
+| `mcontrol_alloc` | `(fd, len, timeout_ms)` — bare buffer needs `len` |
+| `mcontrol_alloc_m1talk` / `_m2talk` | `(fd, timeout_ms, geometry…)` — map size from geometry; **no** `len`, so `timeout` is 2nd |
+| `mcontrol_salloc*` (server) | no timeout (non-blocking `sunix_slot_alloc`) |
+
+#### Errors (`errno`)
+
+Fail → `NULL` / `-1` with **`errno`**. Munix details remain in §10.3–10.5; this table is the **mcontrol** surface. **Business failure** on a completed RPC is the reply **key** (and/or body fields), **not** `errno`.
+
+**`mcontrol_salloc` / `salloc_m1talk` / `salloc_m2talk`** (server; always non-blocking):
+
+| errno | When |
+|-------|------|
+| `EINVAL` | `fd` is not this process’s listen/`mcontrol` ctx; bad `len` / geometry at munix or mxtalk; slot payload unusable |
+| `EAGAIN` | out pool cannot satisfy now (no free slot **or** heap cannot fit `len` — munix often uses the same code for both) |
+| `ENOMEM` | slot obtained but local handle / registry add failed |
+
+No **`ETIMEDOUT`** on `salloc*` (no wait). On `slot == NULL`, mcontrol usually **preserves** munix `errno`. `salloc_m*talk`: `m*talk_map_size` / `create_mem` / `reg_add` failure may leave the helper’s `errno` (`EINVAL`, `ENOMEM`, …); not every branch rewrites it.
+
+**`mcontrol_alloc` / `alloc_m1talk` / `alloc_m2talk`** (client; `timeout_ms` like `munix_slot_alloc`):
+
+| errno | When |
+|-------|------|
+| `EINVAL` | not a connect/`mcontrol` ctx; `len==0` / overflow / bad geometry (munix or mxtalk) |
+| `EAGAIN` | non-block (`timeout_ms==0`) or mmap-only: freelist/GRANT not ready; slot-empty vs heap-too-small often both `EAGAIN` |
+| `ETIMEDOUT` | `timeout_ms > 0` and wait expired (clears pending GRANT wait per §10) |
+| `ENOMEM` | slot obtained but register / create_mem path failed |
+
+`alloc` after a timed-out `call` also **abandons** `reply_pending` (§10.3 / recovery below). Same note as `salloc*` for `alloc_m*talk` create/reg errno.
+
+**`mcontrol_call`** (`post` then `take`; most codes are munix passthrough):
+
+| Stage | errno | When / ownership |
+|-------|-------|------------------|
+| mcontrol | `EINVAL` | `key==NULL`; bad connect ctx; `req` not a registered `alloc*` pointer for this `fd` |
+| post | `EBUSY` | previous reply still pending (often prior take timeout) — **this post did not run**; `req` still valid |
+| post | `EAGAIN` | send buffer full — slot **not** consumed; retry same `req` when writable |
+| post | `ESTALE` | session stale |
+| post | `EINVAL` | bad key/slot/endpoint for munix |
+| take | `ETIMEDOUT` | `timeout_ms > 0`, no matching reply in time — **does not** clear `reply_pending`; `req` already consumed if post succeeded |
+| take | `EAGAIN` | `timeout_ms == 0` and no reply yet; same pending rule |
+| take | `ESTALE` / `EPROTO` / `ENOMEM` | stale session / protocol slot break after a matching frame / reply slot register failed (§10.5) |
+
+`timeout_ms` on `call` applies to **take only** (`<0` block). Successful `call` with a non-success **business** key still returns that key string — check the key/body, not `errno`.
+
+**Other mcontrol surfaces (short):** `mcontrol_connect` / `listen` fail → munix or `ENOMEM`/`EINVAL`. Sync/`reply` send path: queue full → drop with **`ENOBUFS`**. See ownership table and recovery below for `EBUSY` / `ETIMEDOUT` / `EAGAIN`.
+
+#### Payload model
+
+- Same pointer kind everywhere: `in`, `*out`, client `req` / `*rep`, `salloc*` / `alloc*` → bare buffer **or** mxtalk map root.
+- No body → `in == NULL`, `in_len == 0`.
+- **`in_len` is munix slot cap** (usable size), **not** “bytes the peer wrote”. Frame inside the buffer yourself (`\0`, length prefix, m1/m2, …).
+- Inbound m1/m2: `(mxtalk_t)in` for read, or `mxtalk_wrap(in, (uint32_t)in_len, 0)` then `mxtalk_detach` before return.
+- Do **not** keep `in` after `control` returns (inbound slot is freed).
+- Sync body: `*out = p` where `p` came from `mcontrol_salloc*` / `salloc_m1talk` / `salloc_m2talk`. **Do not** `*out = mcontrol_slot(p)`.
+
+#### Munix mapping (corr, one-flight, EBUSY, drain / send)
+
+- **`corr`:** client `mcontrol_call` = one `post` then `take` on that connect fd. Server sync post reuses the `peer` from `sunix_take`. Async: `mcontrol_bind` copies the whole `munix_client_st` (incl. `corr`); `mcontrol_reply` echoes it. Do not hand-build a peer and omit `corr`.
+- **One in-flight RPC per connect fd.** Parallel RPCs → more `mcontrol_connect` fds. Listen fd is 1:N clients.
+- **`EBUSY`:** post while a reply is still pending (typical: previous take timed out; §10.3). Clear with `mcontrol_alloc` (abandon) or `mcontrol_close` + reconnect. `errno==EBUSY` ⇒ **this** post did not run; `req` still valid until `mcontrol_free`.
+- **`timeout_ms` on `mcontrol_call`:** take wait only (`<0` block, `0` → `EAGAIN`, `>0` → `ETIMEDOUT`). Post `EAGAIN` fails immediately. Timeout on take does **not** clear `reply_pending`.
+- **Server drain:** `EV_READ|EV_PERSIST`; `on_read` loops `sunix_take` until `EAGAIN` (§10.5).
+- **Send-when-writable:** sync/`reply` `sunix_post`; `EAGAIN` → queue → `EV_WRITE`. Queue full → drop reply (`ENOBUFS`).
+
+#### Client recovery convention (EBUSY / ETIMEDOUT)
+
+Business callers should **not** busy-loop `mcontrol_call` after a failed take or a busy post. Recommended wrapper policy:
+
+1. **`mcontrol_call` returns `NULL`** and `errno` is **`EBUSY`**, **`ETIMEDOUT`**, or **`EAGAIN`** (when `timeout_ms == 0`): treat as recoverable transport state for **this** connect fd.
+2. **Always** `mcontrol_free(req)` if you still hold a request pointer (safe no-op if post already consumed it).
+3. **Abandon or reconnect** before retrying:
+   - **Abandon (keep fd):** `tmp = mcontrol_alloc(fd, small_len, short_timeout);` then `mcontrol_free(tmp);` — alloc clears `reply_pending` (§10.3). If alloc fails, fall through to reconnect.
+   - **Reconnect:** `mcontrol_close(fd);` `fd = mcontrol_connect(object);`
+4. **Retry** the original RPC with **backoff** (e.g. sleep / exponential delay, capped). Bound the retry count; then surface the error to the caller.
+5. Parallel work → **separate** `mcontrol_connect` fds (still one in-flight per fd), sized against server `in_slots` / `out_slots`.
+
+Sketch (app glue — not a libskin API):
+
+```c
+/* after: rkey = mcontrol_call(fd, key, req, &rep, ms); mcontrol_free(req); */
+if (rkey == NULL) {
+    err = errno;
+    if (err == EBUSY || err == ETIMEDOUT || err == EAGAIN) {
+        tmp = mcontrol_alloc(fd, 32, 100);
+        if (tmp != NULL) {
+            mcontrol_free(tmp);          /* abandon pending round */
+        } else {
+            mcontrol_close(fd);
+            fd = mcontrol_connect(object); /* or fail out */
+        }
+        /* backoff, then retry alloc+call once/N times */
+    }
+}
+```
+
+#### Server contract
+
+| Intent | Pattern |
+|--------|---------|
+| Sync, key only | `return "ttrue"` (or any key); leave `*out` NULL |
+| Sync, with body | `p = mcontrol_salloc*(…)`, fill, `*out = p`, `return ""` (or key) |
+| Async | `p = salloc*`, `mcontrol_bind(p, client)`, **do not** set `*out`, `return NULL`; later `mcontrol_reply(key, p)` |
+| Drop | `return NULL` **without** `bind` (usually no `salloc` either) |
+
+**`return NULL` — async vs drop:**
+
+`NULL` only means “`on_read` will **not** sync-post this turn”. Whether a reply comes later depends **only** on `bind`:
+
+- **Async:** `bind` first, then `return NULL`. Optional probe: `mcontrol_getbind(p) != NULL`. Later `mcontrol_reply`.
+- **Drop:** never `bind`. Typical: no alloc, just `return NULL`. Client take times out.
+- Forgetting `bind` on an intended async path **silently becomes drop**.
+- `getbind` is a **probe**, not the definition of drop (drop often has no `p` at all).
+
+**Illegal `*out`:**
+
+`*out` must be a **registered** `salloc*` payload for **this** listen fd. If `*out != NULL` but `reg_find` fails (malloc, stack, foreign pointer, already freed), the library **drops the body** and still posts **key only**. Prefer leaving `*out` NULL over guessing.
+
+Other notes: mis-bind + sync `*out` → on_read strips heap peer and still sync-posts. Reply `key` / `rkey` must **not** point into `in` (inbound slot freed before post). Optional cookie: `munix_client_set_data(peer, biz)` — free `biz` yourself before `reply`/`free` (munix never frees cookies).
+
+#### Client `req` / `rep` ownership
+
+`mcontrol_call` = post then take.
+
+| Event | Dereference `req`? | `mcontrol_free(req)`? |
+|-------|--------------------|------------------------|
+| post **failed** (`EBUSY` / `EAGAIN` / `EINVAL` / …) | yes, until free | **yes** (still registered) |
+| post **succeeded** (even if take fails: `ETIMEDOUT` / `EAGAIN` / `ESTALE`) | **no** (dangling; mmap may be reused) | **yes, always safe** — no-op if already consumed |
+| success with `*rep` | n/a | `mcontrol_free(rep)` when done |
+
+Recommended pattern: **always** `mcontrol_free(req)` after `mcontrol_call` returns (success or failure); never read/write `req` after a successful post. `rkey` is munix-internal until the next successful take on that fd — copy it if you need it later. `rep == NULL` in the call discards any reply body immediately.
+
+#### Server example (sync + async, key / void* / m1 / m2)
+
+```c
+#include "skin/skin.h"
+
+/* queue_or_timer / later() are app glue — not part of mcontrol */
+
+static const char *station_control(int fd, const char *key,
+    void *in, size_t in_len, munix_client_t client, void **out)
+{
+    void *p;
+    mxtalk_t tin;
+    mxtalk_t tout;
+    munix_client_t peer;
+    const char *s;
+    size_t n;
+
+    if (key == NULL) {
+        return terror_string;
+    }
+
+    /* ---- sync: key only ---- */
+    if (strcmp(key, "ping") == 0) {
+        (void)fd; (void)in; (void)in_len; (void)client; (void)out;
+        return "ttrue";
+    }
+
+    /* ---- drop: NULL, no bind (no alloc) ---- */
+    if (strcmp(key, "drop") == 0) {
+        (void)fd; (void)in; (void)in_len; (void)client; (void)out;
+        return NULL;
+    }
+
+    /* ---- sync: bare void* echo ---- */
+    if (strcmp(key, "echo") == 0) {
+        (void)client;
+        n = 64;
+        if (in != NULL && in_len > 0) {
+            n = in_len;
+            if (n > 256) {
+                n = 256;
+            }
+        }
+        p = mcontrol_salloc(fd, n);
+        if (p == NULL) {
+            return terror_string;
+        }
+        if (in != NULL && in_len > 0) {
+            memcpy(p, in, n); /* in_len is cap — frame if you need exact length */
+        }
+        *out = p; /* must be salloc pointer; not mcontrol_slot(p) */
+        return "";
+    }
+
+    /* ---- sync: m1talk in / m1talk out ---- */
+    if (strcmp(key, "m1") == 0) {
+        (void)client;
+        if (in != NULL && in_len > 0) {
+            tin = (mxtalk_t)in; /* or mxtalk_wrap(in, (uint32_t)in_len, 0) */
+            s = mxtalk_string(tin, "ifname");
+            (void)s;
+        }
+        tout = mcontrol_salloc_m1talk(fd, 32, 32, 4 * 1024);
+        if (tout == NULL) {
+            return terror_string;
+        }
+        mxtalk_set_string(tout, "ifname", "br0");
+        *out = tout;
+        return "";
+    }
+
+    /* ---- sync: m2talk in / m2talk out ---- */
+    if (strcmp(key, "m2") == 0) {
+        (void)client;
+        if (in != NULL && in_len > 0) {
+            tin = (mxtalk_t)in;
+            s = mxtalk_string(tin, "name");
+            (void)s;
+        }
+        tout = mcontrol_salloc_m2talk(fd, 16, 32, 32, 32, 8 * 1024);
+        if (tout == NULL) {
+            return terror_string;
+        }
+        mxtalk_set_string(tout, "name", "wan");
+        *out = tout;
+        return "";
+    }
+
+    /* ---- async: bind + return NULL; reply later ---- */
+    if (strcmp(key, "async") == 0) {
+        (void)in; (void)in_len; (void)out;
+        p = mcontrol_salloc(fd, 64);
+        if (p == NULL) {
+            return terror_string;
+        }
+        peer = mcontrol_bind(p, client);
+        if (peer == NULL) {
+            mcontrol_free(p);
+            return terror_string;
+        }
+        /* optional: munix_client_set_data(peer, biz); free biz before reply/free */
+        (void)peer;
+        queue_or_timer(p); /* app schedules later(p) */
+        return NULL; /* bound → async; forgetting bind → silent drop */
+    }
+
+    return terror_string;
+}
+
+static void later(void *p)
+{
+    /* key-only async reply; or fill p then mcontrol_reply("", p) */
+    mcontrol_reply("ttrue", p);
+}
+
+/* in _service: */
+fd = mcontrol_listen(base, "client@station", station_control,
+    8, 64 * 1024, 8, 64 * 1024);
+```
+
+#### Client examples (key / void* / m1 / m2)
+
+```c
+#include "skin/skin.h"
+
+/* ---- key only ---- */
+fd = mcontrol_connect("client@station");
+rkey = mcontrol_call(fd, "ping", NULL, NULL, 3000);
+if (rkey == NULL || strcmp(rkey, "ttrue") != 0) {
+    /* handle error */
+}
+mcontrol_close(fd);
+
+/* ---- bare void* ---- */
+fd = mcontrol_connect("client@station");
+req = mcontrol_alloc(fd, 64, 1000);          /* (fd, len, timeout) */
+if (req == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+snprintf((char *)req, 64, "hello");
+rep = NULL;
+rkey = mcontrol_call(fd, "echo", req, &rep, 3000);
+mcontrol_free(req); /* always safe: real free or no-op if post consumed */
+if (rkey == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+/* do not dereference req here if post succeeded */
+if (rep != NULL) {
+    /* use (char *)rep … */
+    mcontrol_free(rep);
+}
+mcontrol_close(fd);
+
+/* ---- m1talk ---- */
+fd = mcontrol_connect("client@station");
+req = mcontrol_alloc_m1talk(fd, 1000, 32, 32, 4 * 1024); /* (fd, timeout, geometry) */
+if (req == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+mxtalk_set_string((mxtalk_t)req, "ifname", "eth0");
+rep = NULL;
+rkey = mcontrol_call(fd, "m1", req, &rep, 3000);
+mcontrol_free(req);
+if (rkey == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+if (rep != NULL) {
+    s = mxtalk_string((mxtalk_t)rep, "ifname");
+    (void)s;
+    mcontrol_free(rep);
+}
+mcontrol_close(fd);
+
+/* ---- m2talk ---- */
+fd = mcontrol_connect("client@station");
+req = mcontrol_alloc_m2talk(fd, 1000, 16, 32, 32, 32, 8 * 1024);
+if (req == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+mxtalk_set_string((mxtalk_t)req, "name", "lan");
+rep = NULL;
+rkey = mcontrol_call(fd, "m2", req, &rep, 3000);
+mcontrol_free(req);
+if (rkey == NULL) {
+    mcontrol_close(fd);
+    return -1;
+}
+if (rep != NULL) {
+    s = mxtalk_string((mxtalk_t)rep, "name");
+    (void)s;
+    mcontrol_free(rep);
+}
+mcontrol_close(fd);
+```
+
+---
+
+## 11. Logging API (log.h)
+
+### 11.0 Summary
 
 `log.h` defines **severity levels**, **output options**, and **subsystem type/subtype** constants that are packed into a single **`unsigned int flags`** passed to **`landlog()`**. The runtime splits `flags` into level, options, type, and subtype, then filters against **`register`** keys such as **`log_mask`** / **`log_options`** before formatting and writing (TUI, syslog, file, etc.).
 
@@ -1607,11 +3028,11 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 | **`landlog(flags, file, line, fmt, …)`** | Low-level logger; usually invoked via **`journal(flags, …)`** or the predefined macros (`default_info`, `network_debug`, `shell_fault`, …). |
 | **Macros** | Families include **default_***, **shell_***, **land_***, **auth_***, **network_***, … — each expands to a fully composed `flags` word plus `__FILE__` / `__LINE__`. |
 
-**Composing custom `flags`:** OR **level** + **options** + **(type shifted by `LANDLOG_TYPE_OFFSET`)** + **(subtype shifted by `LANDLOG_SUBTYPE_OFFSET`)** — see **§9.3.1** and the `LANDLOG_*_OFFSET` / `*_MASK` macros in `log.h`. **`LANDLOG_ERRNO`** appends `strerror(errno)` when set.
+**Composing custom `flags`:** OR **level** + **options** + **(type shifted by `LANDLOG_TYPE_OFFSET`)** + **(subtype shifted by `LANDLOG_SUBTYPE_OFFSET`)** — see **§11.3.1** and the `LANDLOG_*_OFFSET` / `*_MASK` macros in `log.h`. **`LANDLOG_ERRNO`** appends `strerror(errno)` when set.
 
 ---
 
-### 9.1 Log Levels
+### 11.1 Log Levels
 
 ```c
 #define LANDLOG_FAULT     (1)    // Fault
@@ -1621,7 +3042,7 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 #define LANDLOG_VERBOSE   (16)   // Verbose
 ```
 
-### 9.2 Log Options
+### 11.2 Log Options
 
 ```c
 #define LANDLOG_TUI       (1<<8)   // Output to TUI
@@ -1631,7 +3052,7 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 #define LANDLOG_ERRNO     (16<<8)  // Include errno
 ```
 
-### 9.3 Log Types
+### 11.3 Log Types
 
 | Type | Description |
 |------|-------------|
@@ -1650,7 +3071,7 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 
 Names in this table are **type / subsystem identifiers** (`LANDLOG_LAND`, `LANDLOG_NETWORK`, …). In real `flags` values they occupy the **type** bit field (see below), not the low byte alone.
 
-### 9.3.1 Composing `flags` for `landlog()`
+### 11.3.1 Composing `flags` for `landlog()`
 
 `landlog()` treats `flags` as a bit layout in the implementation:
 
@@ -1665,7 +3086,7 @@ The predefined macros such as `default_info(...)` expand to a full combination, 
 `(LANDLOG_DEFAULT << LANDLOG_TYPE_OFFSET) | (LANDLOG_DEFAULT_NONE << LANDLOG_SUBTYPE_OFFSET) | LANDLOG_INFO`.  
 When building custom flags, OR **shifted** type/subtype constants with level and options instead of using raw `LANDLOG_LAND` alone as the entire `flags` word.
 
-### 9.4 Log Functions
+### 11.4 Log Functions
 
 #### landlog
 ```c
@@ -1685,7 +3106,7 @@ void critical_warn(const char *format, ...);
 ```
 **Description:** Dedicated critical-path warning (not the `*_warn` macros). Use for rare, high-severity operational alerts; see `log.h`.
 
-### 9.5 Predefined Log Macros
+### 11.5 Predefined Log Macros
 
 **Default Logs:**
 - default_verbose / default_debug / default_info / default_warn / default_warning / default_fault / default_faulting
@@ -1720,9 +3141,9 @@ journal((LANDLOG_NETWORK<<16)|(LANDLOG_NETWORK_DEFAULT<<24)|LANDLOG_INFO,
 
 ---
 
-## 10. Service Management API (serv.h)
+## 12. Service Management API (serv.h)
 
-### 10.0 Summary
+### 12.0 Summary
 
 Service APIs delegate to the **service management component** (see `SERVICE_COM` / `land@service` in `skinhead.h`). They schedule or control **named** background workers that invoke a component API (`com` + `api` + parameters). On **`srun` / `crun` / …**, the **`delay`** argument is a **seconds** count before the service is actually started (see `serv.h`).
 
@@ -1742,7 +3163,7 @@ Service APIs delegate to the **service management component** (see `SERVICE_COM`
 
 ---
 
-### 10.1 Service Register and Run
+### 12.1 Service Register and Run
 
 #### srun / crun / srunt / crunt / srun2t / crun2t / sruns / cruns
 ```c
@@ -1763,7 +3184,7 @@ boole cruns(int delay, const char *name, obj_t com, const char *api, const char 
 - param/json - Parameters
 - nameformat - Service name format
 
-### 10.2 Service Reset
+### 12.2 Service Reset
 
 #### sreset / creset / sresett / cresett / sreset2t / creset2t / sresets / cresets
 ```c
@@ -1772,7 +3193,7 @@ boole creset(obj_t com, const char *api, param_t param, const char *nameformat, 
 ```
 **Description:** Reset or start service (registers if not exists)
 
-### 10.3 Service Start
+### 12.3 Service Start
 
 #### sstart / cstart / sstartt / cstartt / sstart2t / cstart2t / sstarts / cstarts
 ```c
@@ -1781,7 +3202,7 @@ boole cstart(obj_t com, const char *api, param_t param, const char *nameformat, 
 ```
 **Description:** Start service
 
-### 10.4 Service Control
+### 12.4 Service Control
 
 #### sdelete / sstop / soff / soffdel
 ```c
@@ -1792,7 +3213,7 @@ boole soffdel(const char *nameformat, ...);
 ```
 **Description:** Delete/Stop/Off/Off and delete service
 
-### 10.5 Service Query
+### 12.5 Service Query
 
 #### spid / sinfo / sdump / slist
 ```c
@@ -1822,7 +3243,7 @@ talk_t list = slist();
 talk_free(list);
 ```
 
-### 10.6 Sample program (every `serv.h` function)
+### 12.6 Sample program (every `serv.h` function)
 
 **`serv_call`'s `v` argument is ownership-transferred** (freed inside the implementation). **`slist()`** passes **`NULL`**. All other calls need a **running service daemon** to succeed.
 
@@ -1893,9 +3314,9 @@ static void demo_serv_all(void)
 
 ---
 
-## 11. Project Information API (project.h)
+## 13. Project Information API (project.h)
 
-### 11.0 Summary
+### 13.0 Summary
 
 `project.h` manages the **multi-project filesystem layout** (`PROJECT_INFOFILE` / **`prj.json`**, default version **`PROJECT_DEFAULT_VERSION`**).
 
@@ -1910,7 +3331,7 @@ Most functions return paths into **`buffer`** or heap **`talk_t`** lists — **`
 
 ---
 
-### 11.1 Project Scan and List
+### 13.1 Project Scan and List
 
 #### project_scan / project_list / project_dirty
 ```c
@@ -1926,7 +3347,7 @@ boole project_check(const char *name, const char *prjpath);
 ```
 **Description:** Check project JSON format
 
-### 11.2 Project Paths
+### 13.2 Project Paths
 
 #### project_path / project2path
 ```c
@@ -1953,7 +3374,7 @@ const char *project_internal_path(char *buffer, int buflen, const char *name, co
 ```
 **Description:** Get executable/variable/internal file paths
 
-### 11.3 Project Configuration
+### 13.3 Project Configuration
 
 #### project_add_init / project_add_uninit / project_add_joint / project_add_object
 ```c
@@ -1964,7 +3385,7 @@ boole project_add_object(const char *name, const char *prjpath, const char *obje
 ```
 **Description:** Add init/uninit/event/object operations
 
-### 11.4 Internationalization
+### 13.4 Internationalization
 
 #### project_i18n / project_i18n_get
 ```c
@@ -1987,7 +3408,7 @@ project2path(path, sizeof(path));
 exe2path(path, sizeof(path), "myapp");
 ```
 
-### 11.5 Sample program (every `project.h` API)
+### 13.5 Sample program (every `project.h` API)
 
 Uses **`PROJECT_ID`** for the **`project2path` / `exe2path` / …** macros — define it before **`#include "skin.h"`** if your build does not already (for example **`-DPROJECT_ID=land`**).
 
@@ -2038,9 +3459,9 @@ static void demo_project_all(void)
 
 ---
 
-## 12. HE Command API (he2com.h)
+## 14. HE Command API (he2com.h)
 
-### 12.0 Summary
+### 14.0 Summary
 
 `he2com.h` parses and executes **HE** strings — the CLI/config language mapping to **get/set/call** on components (similar to shell `project@component:attr=value` or `project@component.method[param]`).
 
@@ -2055,7 +3476,7 @@ Results are usually **`talk_t`** JSON (**`talk_free`** if not a sentinel) or **`
 
 ---
 
-### 12.1 HE Command Types
+### 14.1 HE Command Types
 
 ```c
 #define HE_GET       0      // Get configuration value
@@ -2068,7 +3489,7 @@ Results are usually **`talk_t`** JSON (**`talk_free`** if not a sentinel) or **`
 #define HE_DBS_CALL  7      // Database API call
 ```
 
-### 12.2 HE Structure Operations
+### 14.2 HE Structure Operations
 
 #### argv2he / string2he / json2he
 ```c
@@ -2090,7 +3511,7 @@ void he_free(he_t h);
 ```
 **Description:** Free HE structure
 
-### 12.3 HE Command Execution
+### 14.3 HE Command Execution
 
 #### he_execute / string_he_execute / line_he_command / json_he_execute / talk_he_command
 ```c
@@ -2117,7 +3538,7 @@ result = string_he_execute("network@frame.set{\"ip\":\"192.168.1.1\"}");
 int rc = line_he_command("land@machine.version");
 ```
 
-### 12.4 Sample program (every `he2com.h` function)
+### 14.4 Sample program (every `he2com.h` function)
 
 The **`HE_*`** symbols are **integer constants** (see §12.1); the first line forces them to appear in the snippet. **`json2he()`** expects at least **`"obj"`**; for a call shape, add **`"op"`** with the method name (see **`he2com.h`** / HE JSON shape).
 
@@ -2177,9 +3598,9 @@ static void demo_he2com_all(void)
 
 ---
 
-## 13. Linked List API (link.h)
+## 15. Linked List API (link.h)
 
-### 13.1 Macro Definitions
+### 15.1 Macro Definitions
 
 #### link_entry
 ```c
@@ -2193,7 +3614,7 @@ static void demo_he2com_all(void)
 ```
 **Description:** Iterate through linked list
 
-### 13.2 Linked List Operations
+### 15.2 Linked List Operations
 
 #### link_init
 ```c
@@ -2263,7 +3684,7 @@ link_each(pos, &head) {
 
 ---
 
-## 14. Utility Functions API (utility.h)
+## 16. Utility Functions API (utility.h)
 
 This chapter lists the most common entry points. **`utility.h` declares many more helpers** (network, shell, sockets, UART, time, etc.); refer to the header for full prototypes.
 
@@ -2273,7 +3694,7 @@ This chapter lists the most common entry points. **`utility.h` declares many mor
 - Allocating helpers (`md5_encode`, `b64_encode`, `url_encode`, …) usually return **heap-allocated** buffers; **caller frees** unless the header states otherwise.
 - **Thread safety:** utilities are not uniformly re-entrant; treat global process state, static buffers (if any), and subprocess/shell helpers as **non-thread-safe** unless documented.
 
-### 14.1 String Processing
+### 16.1 String Processing
 
 #### char2char / low2upp / upp2low
 ```c
@@ -2283,7 +3704,7 @@ void upp2low(char *str);
 ```
 **Description:** **`char2char`** replaces every **`a`** with **`b`** in-place in **`src`** (NUL-terminated). **`low2upp`** / **`upp2low`** convert the **entire** string in place using **`toupper` / `tolower`** on **`(unsigned char)`** bytes. **`NULL` `src` / `str`** → **`EINVAL`** and no-op (as documented for the encoding helpers).
 
-### 14.2 Encoding/Decoding
+### 16.2 Encoding/Decoding
 
 #### md5_encode / b64_encode / b64_decode
 ```c
@@ -2315,7 +3736,7 @@ void hex2printf(const char *src, char *dest, int len);
 ```
 **Description:** String and hex conversion
 
-### 14.3 MAC Address Processing
+### 16.3 MAC Address Processing
 
 #### string2mac / mac2string / mac2int / mac2serial / mac2add / macrang
 ```c
@@ -2328,7 +3749,7 @@ boole macrang(hp_mac_t mac, hp_mac_t start, hp_mac_t end, int mod);
 ```
 **Description:** MAC address conversions
 
-### 14.4 Signal Handling
+### 16.4 Signal Handling
 
 #### signal_noprocess / signal_register
 ```c
@@ -2337,7 +3758,7 @@ sighandler_t signal_register(int signo, sighandler_t func, int sa_flags);
 ```
 **Description:** No-op signal handler/Register signal handler
 
-### 14.5 Directory Operations
+### 16.5 Directory Operations
 
 #### directory_size / directory_subsize / directory_sum / directory_subsum
 ```c
@@ -2348,7 +3769,7 @@ int directory_subsum(const char *dir);
 ```
 **Description:** Get directory size or entry count. **`directory_subsize` and `directory_sum` are declared in the header but not implemented in this tree** (linking a call will fail); use `directory_size` / `directory_subsum` or add implementations if you need them.
 
-### 14.6 File Locking
+### 16.6 File Locking
 
 #### fd_lock / fd_unlock / fd_lock_pid
 ```c
@@ -2372,7 +3793,7 @@ int lock_close(int fd);
 ```
 **Description:** Open/Close file with lock
 
-### 14.7 File Read/Write
+### 16.7 File Read/Write
 
 #### string2file / string3file / file2string
 ```c
@@ -2389,7 +3810,7 @@ int file2number(const char *filename);
 ```
 **Description:** Write/Read number to/from file
 
-### 14.8 Time Functions
+### 16.8 Time Functions
 
 #### time_stamp / uptime_int / uptime_string / uptime_desc / livetime_desc / date_desc / date_set / date_adjust
 ```c
@@ -2404,7 +3825,7 @@ time_t date_adjust(time_t seconds, const char* zone);
 ```
 **Description:** Timestamp/Uptime/Date operations
 
-### 14.9 System Commands
+### 16.9 System Commands
 
 #### shell / execute / silent_execute / shell_injection_check
 ```c
@@ -2438,7 +3859,7 @@ boole lsmod(const char *module);
 ```
 **Description:** **`insmod`** uses **`modprobe`** via **`shell`** when the module name is **not** already listed in **`/proc/modules`**; if already loaded returns **`-1`** with **`EEXIST`**. **`rmmod`** runs **`rmmod`** only when the module **appears** in **`/proc/modules`**; if not loaded returns **`-1`** with **`EINVAL`**. Return values otherwise follow **`shell`**. **`lsmod`** checks presence in **`/proc/modules`**.
 
-### 14.10 Network Tools
+### 16.10 Network Tools
 
 #### ip2subnet / netmask2cidr / netmask2num
 ```c
@@ -2480,7 +3901,7 @@ const char *domain2ip(const char *addr, char *ipbuf, int ipbuflen, int timeout);
 ```
 **Description:** Domain name resolution
 
-### 14.11 Socket Tools
+### 16.11 Socket Tools
 
 #### socket_reuse / socket_nocheck / socket_block / socket_nonblock
 ```c
@@ -2511,7 +3932,7 @@ int unix_listen(const char *local, int type);
 ```
 **Description:** Unix domain socket connect/listen
 
-### 14.12 Talk Transmission
+### 16.12 Talk Transmission
 
 #### talk2fd / talk2tcp / talk2udp / talk2socket
 ```c
@@ -2531,7 +3952,7 @@ talk_t socket2talk(int fd, struct sockaddr *addr, socklen_t *addrlen, int timeou
 ```
 **Description:** Receive talk data
 
-### 14.13 System Tools
+### 16.13 System Tools
 
 #### random_long
 ```c
@@ -2553,7 +3974,7 @@ int   fileline_compare(const char *filea, const char *fileb);
 ```
 **Description:** Merge file lines; **`fileline_compare`** returns whether two files’ line sets match (see `utility.h` for return codes).
 
-### 14.14 UART
+### 16.14 UART
 
 #### uart_open
 ```c
@@ -2571,16 +3992,16 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 
 ---
 
-## 15. Skin API Macros (skinapi.h)
+## 17. Skin API Macros (skinapi.h)
 
-### 15.1 Memory and Format Error Handling
+### 17.1 Memory and Format Error Handling
 
 ```c
 #define memory_exit(i) do { default_fault("memory oops"); exit(i); } while(0)
 #define format_error(string) do { default_fault("format oops: %s", string); } while(0)
 ```
 
-### 15.2 FPK API
+### 17.2 FPK API
 
 ```c
 #define fpk_list(...) scalls(FPK_COM, "list", __VA_ARGS__)
@@ -2588,14 +4009,14 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define fpk_unregister(...) scalls(FPK_COM, "unregister", __VA_ARGS__)
 ```
 
-### 15.3 Init API
+### 17.3 Init API
 
 ```c
 #define init_list(...) scalls(INIT_COM, "list", __VA_ARGS__)
 #define init_register(item, call) scall2s(INIT_COM, "register", item, call)
 ```
 
-### 15.4 Uninit API
+### 17.4 Uninit API
 
 ```c
 #define uninit_list(...) scalls(UNINIT_COM, "list", __VA_ARGS__)
@@ -2604,7 +4025,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 
 **Note:** Matches `skinapi.h`: **`uninit_list`** routes **`"list"`** to **`UNINIT_COM`** (not **`INIT_COM`**).
 
-### 15.5 Joint API
+### 17.5 Joint API
 
 ```c
 #define joint_list(...) scalls(JOINT_COM, "list", __VA_ARGS__)
@@ -2614,7 +4035,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define joint_callt(joint, json) scallst(JOINT_COM, "call", joint, json)
 ```
 
-### 15.6 Machine API
+### 17.6 Machine API
 
 ```c
 #define machine_config(...) sgets(MACHINE_COM, __VA_ARGS__)
@@ -2628,9 +4049,9 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 
 ---
 
-## 16. Predefined Component Constants (skinhead.h)
+## 18. Predefined Component Constants (skinhead.h)
 
-### 16.0 Limits and platform caps (`skinhead.h`)
+### 18.0 Limits and platform caps (`skinhead.h`)
 
 | Macro | Typical role |
 |-------|----------------|
@@ -2639,7 +4060,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 | **`LINE_MAX`** | **1024** if not defined — e.g. **`shell`** / **`execute`** command buffers. |
 | **`JSON_LINE_MAX`** | **65535** — upper bound for a single JSON line / string chunk in parsers that enforce it. |
 
-### 16.1 Hardware Project Components
+### 18.1 Hardware Project Components
 
 ```c
 #define GPIO_COM        "arch@gpio"
@@ -2656,7 +4077,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define LOCK_COM        "arch@lock"
 ```
 
-### 16.2 Core Project Components
+### 18.2 Core Project Components
 
 ```c
 #define HEART_COM       "land@heart"
@@ -2670,7 +4091,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define REG_COM         "land@register"
 ```
 
-### 16.3 Network Project Components
+### 18.3 Network Project Components
 
 ```c
 #define NETWORK_COM     "network@frame"
@@ -2681,7 +4102,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define HOSTS_COM       "network@hosts"
 ```
 
-### 16.4 Interface Name Components
+### 18.4 Interface Name Components
 
 ```c
 #define LAN_COM         "ifname@lan"
@@ -2695,7 +4116,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define WISP_COM        "ifname@wisp"
 ```
 
-### 16.5 Forward Project Components
+### 18.5 Forward Project Components
 
 ```c
 #define NAT_COM         "forward@nat"
@@ -2706,7 +4127,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define ROUTES_COM      "forward@routes"
 ```
 
-### 16.6 Wireless Project Components
+### 18.6 Wireless Project Components
 
 ```c
 #define WIFI_AP_COM     "wifi@ap"
@@ -2716,7 +4137,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define NSTA_COM        "wifi@nsta"
 ```
 
-### 16.7 Modem Components
+### 18.7 Modem Components
 
 ```c
 #define OPERATOR_COM    "modem@operator"
@@ -2727,7 +4148,7 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 #define ATPROXY_COM     "modem@atproxy"
 ```
 
-### 16.8 UART Project Components
+### 18.8 UART Project Components
 
 ```c
 #define UART_COM        "uart@frame"
@@ -2737,9 +4158,9 @@ int uart_open(const char *path, int speed, int parity, int databit, int stopbit,
 
 ---
 
-## 17. Complete Usage Examples
+## 19. Complete Usage Examples
 
-### 17.1 Basic JSON Operations
+### 19.1 Basic JSON Operations
 
 ```c
 #include "skin.h"ƒ
@@ -2778,7 +4199,7 @@ int main() {
 }
 ```
 
-### 17.2 Component Communication
+### 19.2 Component Communication
 
 ```c
 #include "skin.h"
@@ -2810,7 +4231,7 @@ int main() {
 }
 ```
 
-### 17.3 Configuration Management
+### 19.3 Configuration Management
 
 ```c
 #include "skin.h"
@@ -2844,7 +4265,7 @@ int main() {
 }
 ```
 
-### 17.4 Registry Operations
+### 19.4 Registry Operations
 
 ```c
 #include "skin.h"
@@ -2873,7 +4294,7 @@ int main() {
 }
 ```
 
-### 17.5 Service Management
+### 19.5 Service Management
 
 ```c
 #include "skin.h"
@@ -2915,7 +4336,7 @@ int main() {
 }
 ```
 
-### 17.6 HE Command Execution
+### 19.6 HE Command Execution
 
 ```c
 #include "skin.h"
@@ -2949,7 +4370,7 @@ int main() {
 }
 ```
 
-### 17.7 Network Tools
+### 19.7 Network Tools
 
 ```c
 #include "skin.h"
@@ -2986,7 +4407,7 @@ int main() {
 }
 ```
 
-### 17.8 File Operations
+### 19.8 File Operations
 
 ```c
 #include "skin.h"
@@ -3021,7 +4442,7 @@ int main() {
 }
 ```
 
-### 17.9 Logging
+### 19.9 Logging
 
 ```c
 #include "skin.h"
@@ -3048,7 +4469,7 @@ int main() {
 }
 ```
 
-### 17.10 Comprehensive Example: Configuration Management Tool
+### 19.10 Comprehensive Example: Configuration Management Tool
 
 ```c
 #include "skin.h"
@@ -3121,7 +4542,7 @@ int main(int argc, char *argv[]) {
 
 ---
 
-## 18. Compilation and Usage
+## 20. Compilation and Usage
 
 ### 18.1 Include headers
 
@@ -3135,7 +4556,7 @@ int main(int argc, char *argv[]) {
 
 - `skinhead.h` — lengths, `boole`, `PROJECT_OBJECT_GAPS`, `MACHINE_COM`, …
 - `skinapi.h` — **does not include other headers**; it only expands macros such as `scalls()` / `machine_config()`. You must include **`com.h`** (for `scalls`, `obj_t`, …) and **`skinhead.h`** (for `MACHINE_COM`, `INIT_COM`, …) *before* `skinapi.h`, unless you already use `skin.h`.
-- Individual modules: `talk.h`, `com.h`, `register.h`, `config.h`, `utility.h`, … (include what you use; add `skinhead.h` / `stdhead.h` if typedefs or limits are missing)
+- Individual modules: `talk.h`, `com.h`, `register.h`, `mxtalk.h`, `munix.h`, `config.h`, `utility.h`, … (include what you use; add `skinhead.h` / `stdhead.h` if typedefs or limits are missing)
 
 ### 18.2 Compilation options
 
@@ -3160,7 +4581,7 @@ gcc -o myapp myapp.c \
 
 ---
 
-## 19. Important Notes
+## 21. Important Notes
 
 1. **Memory management:** Use `talk_free()` for `talk_t` values allocated by the talk/JSON APIs; use `free()` for `json2string()` and typical `utility.h` allocators unless the API says otherwise.
 2. **Error handling:** Check return values and `errno` after failures; for `scall*` / `ccall*`, handle `tpanic`, `terror`, `tfalse`, and JSON results (see §1.1 and `com.h`).
@@ -3170,7 +4591,7 @@ gcc -o myapp myapp.c \
 
 ---
 
-## 20. Related Documents
+## 22. Related Documents
 
 - Public headers under the Skin library — source of truth for prototypes and Doxygen-style comments
 - `skin.h` — umbrella include
