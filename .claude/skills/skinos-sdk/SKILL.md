@@ -221,7 +221,8 @@ Do not leave anonymous kernel diffs. Existing examples: `/* add by dimmalex for 
 | `/etc` files, init | `.../rootfs/` | full `make` |
 | Default wifi/uart/lte cfg | `.../config/<proj>/*.cfg` | full `make` (arch) |
 | Image bin / flags | `makefile.config` | full `make` |
-| One app only | `project/<name>/` | `make obj=<name>` |
+| One **non-core** app only (modem/uart/ipsec/…) | `project/<name>/` | `make obj=<name>` → FPK on device |
+| **`project/land/` or `config/*/arch/`** | land / arch sources | **`./mkdel` + `make` → `.zz` only** — never FPK-hot-test on device (see **device-upgrade**) |
 
 **Always read the active board’s `makefile.config` and existing `rootfs/`/`config/` before changing another product’s files.**
 
@@ -310,6 +311,8 @@ make obj=<project>              # runs ./mkdel <project> then builds that projec
 
 `make obj=ipsec` cleans only `skinos_ipsec*` under platform `build_dir` (via `mkdel`), **not** `root*`.
 
+**Device deploy caveat:** `make obj=land` / `make obj=arch` may still produce a `.fpk` for packaging/repo, but **live-device testing of land/arch changes must use full `.zz` upgrade** — FPK hot-install is not a valid update path for those two core projects (**device-upgrade** HARD RULE).
+
 ### `mkdel` behavior
 
 | Invocation | Effect |
@@ -377,7 +380,7 @@ When building or explaining the SDK:
 2. Resolve `config/${gPLATFORM}/...` layers; open that board’s **`makefile.config`**
 3. For on-device file questions: distinguish **`rootfs/` → `/`** vs **`config/*.cfg` → `/usr/share/skinos/`** (see [reference-swrt5.md](reference-swrt5.md))
 4. Prefer **`./mkdel`** / **`make obj=`** over **`make clean`**
-5. sdk / rootfs / makefile.config / DTS / **`kernel/` source overlays** → **`./mkdel` && `make`** → deploy **`.zz`** (**device-upgrade**); project-only → **`make obj=`** → **FPK**
+5. sdk / rootfs / makefile.config / DTS / **`kernel/` source overlays** → **`./mkdel` && `make`** → deploy **`.zz`** (**device-upgrade**); **land / arch** changes → same **`.zz` only** (never FPK hot-deploy to test); other project-only → **`make obj=`** → **FPK**
 6. For kernel USB modem IDs (`option.c`): edit winning `config/…/kernel/` for this `gBOARDID`; dial AT driver is **skinos-modem**
 7. Point **device** deploy/upgrade to **device-upgrade**. Repo uploads (not a live device): **firmware repository** → **`make ftp`**; **FPK repository** → **`make sdk_repo`**
 8. Do not invent board IDs — use `make pidlist` or the user’s active `gBOARDID`

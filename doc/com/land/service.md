@@ -90,10 +90,11 @@ Manage service processes through the daemon supervisor. Services are component m
     ttrue
     ```
 
-+ `off[ name ]` **disable a service (stop and do not restart)**
++ `off[ name ]` **mark a service off (do not kill; do not restart after exit; keep record)**
     - name ------------ [ string ], the service name to disable
     - failed return tfalse, service not found
     - succeed return ttrue
+    - note: the running process is not signaled; if it later exits, daemon will not restart it and keeps the registration with status `off`
 
     Example, disable the service named mywan
     ```shell
@@ -101,10 +102,11 @@ Manage service processes through the daemon supervisor. Services are component m
     ttrue
     ```
 
-+ `offdel[ name ]` **disable and delete a service after it exits**
++ `offdel[ name ]` **mark a service offdel (do not kill; do not restart; delete record after exit)**
     - name ------------ [ string ], the service name
     - failed return tfalse, service not found
     - succeed return ttrue
+    - note: same as `off` regarding the live process; when the process exits, daemon removes the registration
 
     Example, disable and delete the service named mywan
     ```shell

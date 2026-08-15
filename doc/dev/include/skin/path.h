@@ -36,11 +36,6 @@ typedef struct obj_st
     // corresponding pointer of component structure
     struct com_st *com;                                                // need free
 
-    // corresponding pointer of register structure for write
-    void          *wreg;
-    // corresponding pointer of register structure for read
-    void          *rreg;
-
     // buffer where the string actual store
     char *buffer;                                                      // need free
     // readable compiled string for this object

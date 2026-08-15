@@ -28,7 +28,7 @@ talk_t serv_call( const char *cmd, talk_t v, int timeout );
 
 /**
  * @brief register and start a service (stops and deletes existing service with same name first)
- * @param[in] delay delay in seconds before running
+ * @param[in] delay delay in milliseconds before running
  * @param[in] com object pointer or string (e.g., "land@machine")
  * @param[in] api API method name
  * @param[in] param parameter structure
@@ -41,7 +41,7 @@ boole srun( int delay, const char *com, const char *api, param_t param, const ch
 boole crun( int delay, obj_t com, const char *api, param_t param, const char *nameformat, ... );
 /**
  * @brief register and start a service (stops and deletes existing service with same name first)
- * @param[in] delay delay in seconds before running
+ * @param[in] delay delay in milliseconds before running
  * @param[in] com object pointer or string (e.g., "land@machine")
  * @param[in] api API method name
  * @param[in] json talk_t parameter
@@ -57,7 +57,7 @@ boole srun2t( int delay, const char *com, const char *api, talk_t json, talk_t j
 boole crun2t( int delay, obj_t com, const char *api, talk_t json, talk_t json2, const char *nameformat, ... );
 /**
  * @brief register and start a service (stops and deletes existing service with same name first)
- * @param[in] delay delay in seconds before running
+ * @param[in] delay delay in milliseconds before running
  * @param[in] name service name
  * @param[in] com object pointer or string (e.g., "land@machine")
  * @param[in] api API method name
@@ -174,7 +174,7 @@ boole sdelete( const char *nameformat, ... );
 */
 boole sstop( const char *nameformat, ... );
 /**
-* @brief pause a service (keeps registered but stops execution)
+* @brief mark a service off (do not kill; do not restart after exit; keep registration)
 * @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed
@@ -182,7 +182,7 @@ boole sstop( const char *nameformat, ... );
 */
 boole soff( const char *nameformat, ... );
 /**
-* @brief pause and delete a service (stops execution and removes registration)
+* @brief mark a service offdel (do not kill; do not restart; delete registration after exit)
 * @param[in] nameformat service name format string
 * @return succeed or failed
 *	   @retval true for succeed

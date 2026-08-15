@@ -11,6 +11,9 @@
 
 
 
+/// Max config path cache entries in CONFIG_REGFILE
+#define CONFIG_MAX 512
+
 /**
  * @brief get the configure of the object
  * @param[in] objp object pointer (e.g., obj_create("land@machine"))

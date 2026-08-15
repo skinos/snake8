@@ -104,6 +104,9 @@ The JSON document tree node, which is a basic JSON type
 		struct json_value *parent;	/*!< The pointer pointing to the parent node in the document tree */
 		struct json_value *child;	/*!< The pointer pointing to the first child node in the document tree */
 		struct json_value *child_end;	/*!< The pointer pointing to the last child node in the document tree */
+
+		/* talk.c: lazy name→axp index for JSON_OBJECT (NULL otherwise) */
+		void *axp_map;
 	} json_t;
 
 

@@ -70,6 +70,29 @@ setup()
     $LANDDIR/bin/he land@register.set_string[cmodel,$MODEL]
     MAC=`$LANDDIR/bin/he arch@data:mac`
     $LANDDIR/bin/he land@register.set_string[mac,$MAC]
+    MACID=`$LANDDIR/bin/he arch@data:macid`
+    if [ "X${MACID}" != "X" ]; then
+        $LANDDIR/bin/he land@register.set_string[macid,$MACID]
+    fi
+    FEATURES=`$LANDDIR/bin/he arch@data:features`
+    if [ "X${FEATURES}" != "X" ]; then
+        $LANDDIR/bin/he land@register.set_string[features,$FEATURES]
+    fi
+    MAGIC=`$LANDDIR/bin/he arch@data:magic`
+    if [ "X${MAGIC}" != "X" ]; then
+        $LANDDIR/bin/he land@register.set_string[magic,$MAGIC]
+    fi
+    DATECODE=`$LANDDIR/bin/he arch@data:datecode`
+    if [ "X${DATECODE}" = "X" ]; then
+        DATECODE=`$LANDDIR/bin/he arch@data:datacode`
+    fi
+    if [ "X${DATECODE}" != "X" ]; then
+        $LANDDIR/bin/he land@register.set_string[datecode,$DATECODE]
+    fi
+    OEM=`$LANDDIR/bin/he arch@data:oem`
+    if [ "X${OEM}" != "X" ]; then
+        $LANDDIR/bin/he land@register.set_string[oem,$OEM]
+    fi
     # default the configure if order
     if [ -e $PROJECT_CFG_DIR/.customv8 ]; then
     	echo "mount the configure"
@@ -89,6 +112,32 @@ setup()
     NAME=`hostname`
     $LANDDIR/bin/he land@machine:name=$NAME
 
+    # After config dir is ready: restore config write lock from file config
+    CFGLOCK=`$LANDDIR/bin/he arch@data:config`
+    if [ "X${CFGLOCK}" = "Xdisable" ]; then
+        $LANDDIR/bin/he land@register.set_int[config_lock,1]
+    else
+        $LANDDIR/bin/he land@register.set_int[config_lock,0]
+    fi
+
+    creturn ttrue
+}
+
+config_lock()
+{
+    LANDDIR=/usr/share/skinos/land
+    # Persist while unlocked, then set runtime lock
+    $LANDDIR/bin/he 'arch@data:config=disable'
+    $LANDDIR/bin/he land@register.set_int[config_lock,1]
+    creturn ttrue
+}
+
+config_unlock()
+{
+    LANDDIR=/usr/share/skinos/land
+    # Clear runtime lock first, then persist
+    $LANDDIR/bin/he land@register.set_int[config_lock,0]
+    $LANDDIR/bin/he 'arch@data:config=enable'
     creturn ttrue
 }
 

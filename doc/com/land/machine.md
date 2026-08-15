@@ -42,8 +42,8 @@ Manage machine hardware information, system configuration, and power operations.
     "magic":"magic number",                        // [ string ], read-only, from EEPROM
     "datecode":"manufacture date code",            // [ string ], read-only, from EEPROM
     "language":"system language",                  // [ string ], stored in EEPROM, writable
-    "gpversion":"general purpose version",         // [ string ], stored in EEPROM, writable
-    "cfgversion":"configuration version"           // [ string ], stored in EEPROM, writable
+    "gpversion":"general purpose version",         // [ string ], config dir file PROJECT_CFG_DIR/gpversion, writable via land@machine
+    "cfgversion":"configuration version"           // [ string ], config dir file PROJECT_CFG_DIR/version, writable via land@machine
 }
 ```
 
@@ -114,16 +114,16 @@ ttrue
         "rand": "random number",                 // [ number ], from register rand
         "livetime": "system uptime",             // [ string ], uptime description
         "current": "current time",               // [ string ], current date and time description
-        "mac": "MAC address",                    // [ string ], from arch@data EEPROM
-        "macid": "MAC ID",                       // [ string ], from arch@data EEPROM
-        "model": "product model",                // [ string ], from arch@data EEPROM
-        "features": "product features",          // [ string ], from arch@data EEPROM
-        "cmodel": "custom model",                // [ string ], from arch@data EEPROM
-        "oem": "OEM information",                // [ string ], from arch@data EEPROM
-        "magic": "magic number",                 // [ string ], from arch@data EEPROM
-        "datecode": "manufacture date code",     // [ string ], from arch@data EEPROM
-        "gpversion": "general purpose version",  // [ string ], from arch@data EEPROM
-        "cfgversion": "configuration version",   // [ string ], from arch@data EEPROM
+        "mac": "MAC address",                    // [ string ], from register (cached by arch@data.setup)
+        "macid": "MAC ID",                       // [ string ], from register (cached by arch@data.setup)
+        "model": "product model",                // [ string ], from register (cached by arch@data.setup)
+        "features": "product features",          // [ string ], from register (cached by arch@data.setup)
+        "cmodel": "custom model",                // [ string ], from register (cached by arch@data.setup)
+        "oem": "OEM information",                // [ string ], from register (cached by arch@data.setup)
+        "magic": "magic number",                 // [ string ], from register (cached by arch@data.setup)
+        "datecode": "manufacture date code",     // [ string ], from register (cached by arch@data.setup)
+        "gpversion": "general purpose version",  // [ string ], from PROJECT_CFG_DIR/gpversion (land@machine)
+        "cfgversion": "configuration version",   // [ string ], from PROJECT_CFG_DIR/version (land@machine)
         "wui_port": "web UI port",               // [ string ], from register wui_port
         "telnet_port": "telnet port",            // [ string ], from register telnet_port
         "ssh_port": "SSH port",                  // [ string ], from register ssh_port

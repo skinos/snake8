@@ -14,7 +14,7 @@ boole_t _setup( obj_t this, param_t param )
 	const char *netdev;
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_debug( "%s(%s) add to network frame", object, netdev );
@@ -29,7 +29,7 @@ boole_t _shut( obj_t this, param_t param )
 	const char *netdev;
 
 	object = obj_name( this );
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev != NULL && *netdev != '\0' )
 	{
 		wifi_debug( "%s delete from network frame", object );
@@ -57,7 +57,7 @@ talk_t _netdev( obj_t this, param_t param )
 {
 	const char *netdev;
 
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -68,19 +68,19 @@ boole_t _up( obj_t this, param_t param )
 {
 	talk_t ret;
 	talk_t cfg;
-	char *netdev;
+	const char *netdev;
 	const char *ptr;
 	const char *radio;
 	const char *object;
 
 	/* get the configure */
 	object = obj_name( this );
-	radio = reg_string( this, "radio" );
+	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
 		return tfalse;
 	}
-	netdev = register_pointer( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL )
 	{
 		return terror;
@@ -95,9 +95,9 @@ boole_t _up( obj_t this, param_t param )
 		return tfalse;
 	}
 
-	if ( register_lockw( this, netdev ) != true )
+	if ( reg_olock( this, "netdev" ) == NULL )
 	{
-		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
+		wifi_faulting( "%s(%s) reg_olock failed", object, netdev );
 		talk_free( cfg );
 		return tfalse;
 	}
@@ -125,7 +125,7 @@ boole_t _up( obj_t this, param_t param )
 	/* start the hostapd */
 	sreset( radio, "hostapd", NULL, "%s-hostapd", radio );
 
-	register_unlock( this, netdev );
+	reg_ounlock( this, "netdev" );
 
 	talk_free( cfg );
 	return ret;
@@ -158,10 +158,10 @@ boole_t _connected( obj_t this, param_t param )
 boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
-	char *netdev;
+	const char *netdev;
 
 	object = obj_name( this );
-	netdev = register_pointer( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL )
 	{
 		return terror;
@@ -171,9 +171,9 @@ boole_t _down( obj_t this, param_t param )
 		return terror;
 	}
 
-	if ( register_lockw( this, netdev ) != true )
+	if ( reg_olock( this, "netdev" ) == NULL )
 	{
-		wifi_faulting( "%s(%s) register_lockw failed", object, netdev );
+		wifi_faulting( "%s(%s) reg_olock failed", object, netdev );
 		return tfalse;
 	}
 
@@ -187,7 +187,7 @@ boole_t _down( obj_t this, param_t param )
 		}
 	}
 
-	register_unlock( this, netdev );
+	reg_ounlock( this, "netdev" );
 
 	return ttrue;
 }
@@ -205,7 +205,7 @@ talk_t _status( obj_t this, param_t param )
 	unsigned long long rt_bytes, rt_packets, rt_errs, rt_drops, tt_bytes, tt_packets, tt_errs, tt_drops;
 
 	/* get the configure */
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -338,7 +338,7 @@ talk_t _stalist( obj_t this, param_t param )
     unsigned long long ei;
     unsigned int day, hour, minute, second;
 
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return NULL;
@@ -406,7 +406,7 @@ boole_t _stabeat( obj_t this, param_t param )
 	const char *landev;
 	const char *netdev;
 
-	netdev = reg_string( this, "netdev" );
+	netdev = reg_oget_str( this, "netdev" );
 	if ( netdev == NULL || *netdev == '\0' )
 	{
 		return tfalse;
@@ -421,7 +421,7 @@ boole_t _stabeat( obj_t this, param_t param )
 	/* beat it */
 	shell( "iw dev %s station del %s", netdev, mac );
 	/* clear the arp table */
-	landev = reg_string( NULL, "local_netdev" );
+	landev = reg_oget_str( NULL, "local_netdev" );
 	if ( landev != NULL && *landev != '\0' )
 	{
 		shell( "ip neigh flush dev %s", landev );

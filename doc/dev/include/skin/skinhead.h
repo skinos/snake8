@@ -153,6 +153,9 @@ typedef int boole;
 #define AUTH_COM        LAND_PROJECT""PROJECT_OBJECT_GAPS"auth"
 /** register management component */
 #define REG_COM         LAND_PROJECT""PROJECT_OBJECT_GAPS"register"
+#define MACHINE_REGFILE "machine"
+#define COM_REGFILE     "com"
+#define CONFIG_REGFILE  "config"
 
 /// clock/date project
 #define CLOCK_PROJECT   "clock"
@@ -395,6 +398,9 @@ typedef int boole;
 #define PROJECT_DBS_DIR 		     PROJECT_MNT_DIR"/dbs"
 #define PROJECT_INT_DIR              PROJECT_MNT_DIR"/internal"
 #define PROJECT_APP_DIR              PROJECT_MNT_DIR"/internal/skinos"
+/* land@machine cfgversion / gpversion files (also bumped by config_set) */
+#define MACHINE_CFGVERSION_PATH      PROJECT_CFG_DIR"/version"
+#define MACHINE_GPVERSION_PATH       PROJECT_CFG_DIR"/gpversion"
 #define SHELL_API_HEADER             PROJECT_DIR"/land/api.sh"
 #define SHELL_SERVICE_HEADER         PROJECT_DIR"/land/serv.sh"
 #define CONFIG_FILE_POSTFIX          ".cfg"
@@ -432,6 +438,9 @@ typedef int boole;
 #include "project.h"
 #include "com.h"
 #include "register.h"
+#include "mxtalk.h"
+#include "munix.h"
+#include "mcontrol.h"
 /// include important header file second level
 #include "log.h"
 #include "he2com.h"

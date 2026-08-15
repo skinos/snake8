@@ -2,7 +2,9 @@
 
 ### Overview
 
-Manage system register variables. Register variables are a system-wide key-value store shared across all components, used for runtime state, configuration snapshots, and inter-component data exchange.
+Manage system register variables. Register variables are a system-wide key-value store shared across all components (mmap file per object under `PROJECT_REG_DIR`), used for runtime state and inter-component data exchange.
+
+C library (preferred): `reg_attach` / `wreg_attach` / `reg_put` / `reg_val` / `reg_ptr` in `skin/register.h` (`max_heap` is the heap ceiling; create defaults and v2 layout in `skin.md` §8). Legacy `reg_*` / `register_*` remain for recompiled callers.
 - list all register variables for a component or globally
 - read register values as integer, boolean, or string
 - write register values as integer, boolean, or string

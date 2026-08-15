@@ -96,10 +96,12 @@ Useful extras: `make update`, `make rebuild`, `make menuconfig`, `make tftp` / `
 
 ## Develop
 
+Tutorial: **[`doc/dev/project.md`](doc/dev/project.md)** — create a project with `prj`, then add executable components, commands, Web pages, and boot / joint hooks.
+
 A directory under `project/` with **`prj.json`** is a Skinos project (`name` must match the folder).
 
-1. Read [`project.md`](project.md) (parts) and [`project/land/prj.json.md`](project/land/prj.json.md) (fields).
-2. Copy [`project/tmptools/`](project/tmptools/) as a template; rename and edit `prj.json`.
+1. Follow [`doc/dev/project.md`](doc/dev/project.md); field/parts reference: [`project.md`](project.md), [`project/land/prj.json.md`](project/land/prj.json.md).
+2. Scaffold with `prj` from `tools/fpktools` (templates in [`project/tmptools/`](project/tmptools/)).
 3. Build: `./mkdel` → `make obj=<name>`.
 4. C APIs: `#include "skin/skin.h"` — [`doc/com/land/skin.md`](doc/com/land/skin.md).
 5. Authoring checklist: [`.claude/skills/skinos-project/SKILL.md`](.claude/skills/skinos-project/SKILL.md), [`project/AGENTS.md`](project/AGENTS.md).

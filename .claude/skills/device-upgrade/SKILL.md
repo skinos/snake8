@@ -5,7 +5,8 @@ description: |
   Use when the user says "帮我升级固件", "upgrade firmware", "上传fpk", "deploy to device",
   "测试一下设备", "remote test", "把编译的包传上去", or asks to push code changes to a running device.
   Also use when the user provides a device URL (e.g. http://x.x.x.x:port) and asks to upgrade or test.
-  Choose .zz vs FPK by what changed: config/kernel → full .zz; project-only → FPK.
+  Choose .zz vs FPK by what changed: land/arch (core) or config/kernel → full .zz ONLY;
+  other project-only packages → FPK. Never test land or arch changes via FPK upload.
   After FPK upload success: do not restart — start debugging immediately.
   Do NOT use for local builds only (no device URL given).
 ---
@@ -19,16 +20,28 @@ Supports full firmware (`.zz`) upgrade (`p2=restart` auto-reboot) and FPK packag
 
 | What you changed | Deploy with | Why |
 |------------------|-------------|-----|
+| **`project/land/`** (libskin, land@* components, …) | **Full firmware `.zz` only** | **Core base firmware** — cannot be updated/tested via FPK hot-install |
+| **`config/<platform>/arch/`** (platform HAL: ethernet, gpio, firmware, wifi chip drivers, odm overlays, …) | **Full firmware `.zz` only** | **Core base firmware** — cannot be updated/tested via FPK hot-install |
 | **`config/…`** (kernel overlays e.g. `option.c`, `kernel.config`, `sdk.config`, `rootfs/`, board `*.cfg`, DTS, …) | **Full firmware `.zz`** | Baked into image / kernel; FPK cannot replace the running kernel |
-| **`project/<name>/` only** (C / `prj.json` / WUI assets for one package) | **`make obj=<name>` → FPK** | Hot-install; **no reboot**; install success → debug immediately |
-| Both `config/` **and** `project/` | **`.zz` first** (includes rebuilt apps), or `.zz` then extra FPK if you iterate on the app | Kernel/config always need `.zz` |
+| **Other `project/<name>/` only** (modem, uart, ipsec, wui assets, … — **not** land/arch) | **`make obj=<name>` → FPK** | Hot-install; **no reboot**; install success → debug immediately |
+| Both `config/` **and** `project/` | **`.zz` first** (includes rebuilt apps), or `.zz` then extra FPK if you iterate on a **non-core** app | Kernel/config/land/arch always need `.zz` |
+
+### HARD RULE — `land` and `arch` are core (never FPK for device test)
+
+`land` and `arch` ship as **foundation firmware**. On a live device they **cannot** be replaced by uploading `land-*.fpk` / `arch-*.fpk` for verification.
+
+- **Any** change under `project/land/` or `config/*/arch/` (including `config/swrt5/arch/`) that must run on a device → **`./mkdel` → `make` → upload `.zz`** (`api=zz`, `p2=restart`), then test.
+- **Do not** use `make obj=land` / `make obj=arch` + `api=fpk` to “hot-deploy and test” those two projects on device — that path is **invalid** for land/arch.
+- Host/`slave-x86` local `he 'test@land…'` (from `rice/test`, `make obj=test`) is fine for libskin unit tests; **device** validation of **land/arch themselves** still requires a **firmware** upgrade to that board’s image.
 
 ```text
-Changed config/swrt5/kernel/option.c  →  ./mkdel && make  →  upload .zz (restart)
+Changed project/land/skin/*.c           →  ./mkdel && make  →  upload .zz (restart) → then test
+Changed config/swrt5/arch/ethernet/…  →  ./mkdel && make  →  upload .zz (restart) → then test
 Changed only project/modem/mt5710/    →  make obj=modem   →  upload .fpk → debug now (no restart)
+Changed config/swrt5/kernel/option.c  →  ./mkdel && make  →  upload .zz (restart)
 ```
 
-Same rule is recorded in **skinos-sdk** / **skinos-modem**. Do **not** assume FPK is enough after a kernel/`option.c` edit.
+Same rule is recorded in **skinos-sdk** / **AGENTS.md** / **skinos-modem**. Do **not** assume FPK is enough after a kernel/`option.c` edit, and **never** after a land/arch edit for device testing.
 
 **Not this skill:** updating the **firmware repository** / OTA store after a build means **`make ftp`**; updating the **FPK repository** means **`make sdk_repo`** (see **skinos-sdk**). Neither is a live-device web upload.
 
@@ -178,7 +191,11 @@ sleep 90
 
 ## Step 4: FPK Package Build & Deploy (No Restart)
 
-FPK packages are **hot-swappable**.
+FPK packages are **hot-swappable** for **non-core** projects only.
+
+**Forbidden for device test:** do **not** upload `land-*.fpk` or `arch-*.fpk` to validate changes to `project/land/` or `config/*/arch/`. Those are **core base firmware** — use **Step 3 (`.zz`)** instead. See **HARD RULE — land and arch** above.
+
+FPK packages (modem, uart, ipsec, …) are **hot-swappable**.
 
 **After upload returns `"status":"success"`:**
 - **Do not restart** the device (`land@machine.restart`, reboot, power cycle, etc.)
