@@ -47,7 +47,8 @@
  * (same as non-blocking recvfrom). GRANT waiters wake on that EAGAIN.
  * One fd is not thread-safe. Multi-fd × one thread per fd is OK (map lock
  * gated per process×map). Parallel RPCs → multiple connect fds.
- * listen pool: slots 1..65536; heap >= 64 and map size must fit uint32_t.
+ * listen pool: slots 1..512 (larger requests clamped to 512); heap >= 64
+ * and map size must fit uint32_t.
  */
 
 #include <stddef.h>
