@@ -292,6 +292,16 @@ define Device/ashy_d228r
 endef
 TARGET_DEVICES += ashy_d228r
 
+define Device/ashy_d228r_oled
+  $(Device/dsa-migration)
+  IMAGE_SIZE := 14528k
+  DEVICE_VENDOR := ASHY
+  DEVICE_MODEL := D228R_OLED
+  DEVICE_PACKAGES := kmod-usb3 
+  SUPPORTED_DEVICES += d228r_oled
+endef
+TARGET_DEVICES += ashy_d228r_oled
+
 define Device/hxwlink_h721
   $(Device/dsa-migration)
   IMAGE_SIZE := 16064k
