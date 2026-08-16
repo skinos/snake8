@@ -7,7 +7,7 @@ Manage machine hardware information, system configuration, and power operations.
 - manage machine configuration such as name, mode, and network ports
 - restart, reboot, and restore factory defaults
 - block and unblock restart and default restore operations
-- query CPU, memory, process, and filesystem information
+- query CPU, memory, process, filesystem, and temperature information
 
 
 
@@ -152,6 +152,27 @@ ttrue
         "telnet_port":"23",                      # telnet port
         "ssh_port":"22",                         # SSH port
         "local_ip":"192.168.1.1"                 # LAN IP address
+    }
+    ```
+
++ `temp[]` **get CPU / WiFi radio temperatures in Celsius**
+    - failed return NULL
+    - succeed return [ json ], only keys that are available are present
+    ```json
+    {
+        "cpu": "CPU temperature",                // [ string ], Celsius; omitted if no cpu/soc thermal zone
+        "wifi@n": "2.4G radio temperature",      // [ string ], Celsius from wifi@n.temp; omitted if unavailable
+        "wifi@a": "5G radio temperature"         // [ string ], Celsius from wifi@a.temp; omitted if unavailable
+    }
+    ```
+
+    Example, get temperatures
+    ```shell
+    land@machine.temp
+    {
+        "cpu":"48",                              # CPU thermal zone
+        "wifi@n":"52",                           # 2.4G radio
+        "wifi@a":"49"                            # 5G radio
     }
     ```
 

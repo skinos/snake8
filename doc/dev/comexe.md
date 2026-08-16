@@ -88,13 +88,118 @@ LIBSO_ADDIN :=
 
 Add what you need, for example `LDFLAGS += -levent -lskinnet`. The SDK already links libskin for exe targets.
 
+### Default configuration (`sensor.cfg`)
+
+Factory JSON lives in the **project directory** (same folder as `prj.json`), named like the component. For `exe` key `sensor`:
+
+```text
+project/myproj/sensor.cfg
+```
+
+```json
+{
+    "status": "enable",
+    "name": "hello"
+}
+```
+
+The pack step copies root `*.cfg` into the FPK. `config_get` for `myproj@sensor` starts from this file when the runtime store is still empty. Later HE / WUI writes go to the persistent store — do not edit that store by hand.
+
+Do **not** put the file only under `sensor/`; a subdirectory `.cfg` is not collected as a project-root resource.
+
 ---
 
-## Implement common work
+## Hello world
 
-The generated `sensor.c` already has `_setup`, `_shut`, `_service`, `_online`, `_get`, `_set`, an `eapi_table_t`, and `MAIN2COM`. Keep the callbacks you need; stub or delete the rest. Method names in the table are the HE suffixes. **Do not** put `"get"` / `"set"` in the table — `MAIN2COM` wires those.
+Build and install the FPK, then log in to **eline** (prompt `$ `). Type HE **directly** — no `he` prefix. After `ashy`, wrap the same line: `he 'myproj@sensor'`. Grammar: [`../com/land/he.md`](../com/land/he.md), [`../com/land/eline.md`](../com/land/eline.md).
+
+### Call `setup`
+
+The generated `_setup` already logs the object name. In eline:
+
+```shell
+$ myproj@sensor.setup
+ttrue
+```
+
+To greet using the default `name` from `sensor.cfg`, edit **`sensor.c` as a whole file**. Keep the include, every API the table lists, `_get` / `_set`, and `MAIN2COM` — that is the file layout. Only `_setup` needs the hello-world body; the other functions can stay as short stubs.
 
 ```c
+#include "skin/skin.h"
+
+boole_t _setup( obj_t this, param_t param )
+{
+    talk_t cfg;
+    const char *name;
+    const char *object;
+    const char *shown;
+
+    (void)param;
+    object = obj_name( this );
+    name = NULL;
+    shown = "(no name)";
+    cfg = config_get( this, NULL );
+    if ( cfg != NULL )
+    {
+        name = json_string( cfg, "name" );
+    }
+    if ( name != NULL )
+    {
+        shown = name;
+    }
+    app_info( "%s: hello, %s", object, shown );
+    printf( "%s: hello, %s\n", object, shown );
+    if ( cfg != NULL )
+    {
+        talk_free( cfg );
+    }
+    return ttrue;
+}
+
+boole_t _shut( obj_t this, param_t param )
+{
+    const char *object;
+
+    (void)param;
+    object = obj_name( this );
+    app_info( "%s: _shut", object );
+    return ttrue;
+}
+
+boole_t _service( obj_t this, param_t param )
+{
+    const char *object;
+
+    (void)param;
+    object = obj_name( this );
+    app_info( "%s: _service", object );
+    pause();
+    return tfalse;
+}
+
+boole_t _online( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    return ttrue;
+}
+
+talk_t _get( obj_t this, attr_t path )
+{
+    talk_t cfg;
+
+    cfg = config_get( this, path );
+    return cfg;
+}
+
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+
+    ret = config_set( this, v, path );
+    return ret;
+}
+
 static const eapi_table_t exe_api_table[] = {
     { "setup",   (comapi_t)_setup },
     { "shut",    (comapi_t)_shut },
@@ -105,31 +210,140 @@ static const eapi_table_t exe_api_table[] = {
 MAIN2COM( exe_api_table, _get, _set );
 ```
 
-To add a method: implement `_myapi(obj_t this, param_t param)` and add one table row `{ "myapi", (comapi_t)_myapi }`.
+Call `setup` again; the log / console line should contain `hello, hello` (the `name` from `sensor.cfg`).
 
-### Configuration (`_get` / `_set`)
+`MAIN2COM` supplies `main()`. Method names in the table are the HE suffixes. **Do not** put `"get"` / `"set"` in the table — they are the last two arguments of `MAIN2COM`. To add a method later: implement `_myapi` and add one table row.
 
-HE without a method reads and writes JSON through `_get` / `_set`:
+### Query configuration
 
-```text
-he 'myproj@sensor'
-he 'myproj@sensor:status'
-he 'myproj@sensor:status=enable'
-he 'myproj@sensor|{"status":"enable","name":"s1"}'
+```shell
+$ myproj@sensor
+{
+    "status": "enable",
+    "name": "hello"
+}
+
+$ myproj@sensor:name
+hello
+
+$ myproj@sensor:status
+enable
 ```
 
-The template saves with `config_set`, then restarts:
+Empty return means there is no store yet and no packed `sensor.cfg` — add the `.cfg` and reinstall the FPK.
 
-```c
-ret = config_set( this, v, path );
-if ( ret == true )
+### Modify configuration
+
+One attribute:
+
+```shell
+$ myproj@sensor:name=world
+ttrue
+
+$ myproj@sensor:name
+world
+```
+
+Merge several fields (other keys stay):
+
+```shell
+$ myproj@sensor|{"name":"sensor1","status":"enable"}
+ttrue
+
+$ myproj@sensor
 {
-    _shut( this, NULL );
-    _setup( this, NULL );
+    "status": "enable",
+    "name": "sensor1"
 }
 ```
 
-Drop the `_shut` / `_setup` pair if a save should not restart the service. Optional factory default: `project/myproj/sensor.cfg` at the project root.
+Replace the whole object:
+
+```shell
+$ myproj@sensor={"status":"disable","name":"off"}
+ttrue
+```
+
+The template `_set` saves with `config_set` and then calls `_shut` / `_setup`. After a set, `setup` runs again with the new JSON — that is the hello-world round trip: **eline changes config, `_setup` reads it**.
+
+---
+
+## Implement common work
+
+The hello-world `sensor.c` above is the file you keep editing. Change the body of one API at a time; leave the include, table, and `MAIN2COM` in place.
+
+### Configuration (`_get` / `_set`)
+
+HE without a method goes through `_get` / `_set`. To save and then restart the service, fill `_set` like this (rest of the file unchanged):
+
+```c
+#include "skin/skin.h"
+
+boole_t _setup( obj_t this, param_t param )
+{
+    /* hello-world body, or start a service — see below */
+    (void)this;
+    (void)param;
+    return ttrue;
+}
+
+boole_t _shut( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    return ttrue;
+}
+
+boole_t _service( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    pause();
+    return tfalse;
+}
+
+boole_t _online( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    return ttrue;
+}
+
+talk_t _get( obj_t this, attr_t path )
+{
+    talk_t cfg;
+
+    cfg = config_get( this, path );
+    return cfg;
+}
+
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+    const char *object;
+
+    object = obj_name( this );
+    ret = config_set( this, v, path );
+    if ( ret == true )
+    {
+        app_info( "%s: _set saved, restarting", object );
+        _shut( this, NULL );
+        _setup( this, NULL );
+    }
+    return ret;
+}
+
+static const eapi_table_t exe_api_table[] = {
+    { "setup",   (comapi_t)_setup },
+    { "shut",    (comapi_t)_shut },
+    { "online",  (comapi_t)_online },
+    { "service", (comapi_t)_service },
+};
+
+MAIN2COM( exe_api_table, _get, _set );
+```
+
+Drop the `_shut` / `_setup` pair inside `_set` if a save should not restart the service. Factory JSON is `sensor.cfg` next to `prj.json` (see above).
 
 ### Bring-up and shutdown (`_setup` / `_shut`)
 
@@ -140,12 +354,82 @@ prj add_init myproj app myproj@sensor.setup
 prj add_uninit myproj app myproj@sensor.shut
 ```
 
-A usual `_setup`: read config; if `status` is `"enable"`, start a supervised service. `_shut` stops it.
+A usual `_setup`: read config; if `status` is `"enable"`, start a supervised service. `_shut` stops it. Same file layout; only those two bodies change:
 
 ```c
-cstart( this, "service", NULL, object );
-/* ... */
-sdelete( object );
+#include "skin/skin.h"
+
+boole_t _setup( obj_t this, param_t param )
+{
+    talk_t cfg;
+    const char *object;
+    const char *status;
+
+    (void)param;
+    object = obj_name( this );
+    cfg = config_get( this, NULL );
+    if ( cfg == NULL )
+    {
+        return tfalse;
+    }
+    status = json_string( cfg, "status" );
+    if ( status != NULL && strcmp( status, "enable" ) == 0 )
+    {
+        cstart( this, "service", NULL, object );
+    }
+    talk_free( cfg );
+    return ttrue;
+}
+
+boole_t _shut( obj_t this, param_t param )
+{
+    const char *object;
+
+    (void)param;
+    object = obj_name( this );
+    sdelete( object );
+    return ttrue;
+}
+
+boole_t _service( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    pause();
+    return tfalse;
+}
+
+boole_t _online( obj_t this, param_t param )
+{
+    (void)this;
+    (void)param;
+    return ttrue;
+}
+
+talk_t _get( obj_t this, attr_t path )
+{
+    talk_t cfg;
+
+    cfg = config_get( this, path );
+    return cfg;
+}
+
+boole _set( obj_t this, talk_t v, attr_t path )
+{
+    boole ret;
+
+    ret = config_set( this, v, path );
+    return ret;
+}
+
+static const eapi_table_t exe_api_table[] = {
+    { "setup",   (comapi_t)_setup },
+    { "shut",    (comapi_t)_shut },
+    { "online",  (comapi_t)_online },
+    { "service", (comapi_t)_service },
+};
+
+MAIN2COM( exe_api_table, _get, _set );
 ```
 
 `cstart` runs the `"service"` method (your `_service`) under `land@service`. If that process exits, the supervisor starts it again. `_service` should loop (or `pause()`) until killed; returning from `_service` is treated as process exit. That is expected for a supervised service — do not treat “cleanup after return” as a leak when the process is gone.
@@ -185,8 +469,13 @@ After the public HE surface exists, write English `<component>.md` next to the c
 ```bash
 ./mkdel
 make obj=myproj
-he 'myproj@sensor'
-he 'myproj@sensor.setup'
 ```
 
-On-device project path: `he 'land@fpk.path[ myproj ]'`.
+On the device (eline):
+
+```shell
+$ myproj@sensor
+$ myproj@sensor.setup
+```
+
+On-device project path: `land@fpk.path[ myproj ]`.

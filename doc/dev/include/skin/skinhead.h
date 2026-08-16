@@ -135,6 +135,7 @@ typedef int boole;
 /// core project
 #define LAND_PROJECT    "land"
 #define DAEMON_EXE      LAND_PROJECT""PROJECT_OBJECT_GAPS"daemon"
+#define DAEMON_COM      DAEMON_EXE
 #define HEART_COM       LAND_PROJECT""PROJECT_OBJECT_GAPS"heart"
 /** component management component */
 #define COM_COM         LAND_PROJECT""PROJECT_OBJECT_GAPS"com"

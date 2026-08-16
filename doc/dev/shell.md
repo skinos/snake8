@@ -50,24 +50,137 @@ clean distclean:
 Tree:
 
 ```text
-project/myproj/glue/
+project/myproj/
+├── glue.cfg          # factory config (see below)
 ├── Makefile
-└── glue          # the script (copy of comshell)
+├── prj.json
+└── glue/
+    ├── Makefile
+    └── glue          # the script (copy of comshell)
 ```
+
+### Default configuration (`glue.cfg`)
+
+Same rule as a comexe: in the **project directory** (next to `prj.json`), create JSON named like the component.
+
+```text
+project/myproj/glue.cfg
+```
+
+```json
+{
+    "status": "enable",
+    "name": "hello"
+}
+```
+
+Root `*.cfg` is packed into the FPK. `myproj@glue` then has a config object you can query and set from eline, WUI, or from the script with `he`.
+
+---
+
+## Hello world
+
+Install the FPK and open **eline** (`$ `). Type HE without `he`. After `ashy`, use `he 'myproj@glue.setup'`.
+
+### Call `setup`
+
+The template `setup` already echoes and logs. In eline:
+
+```shell
+$ myproj@glue.setup
+ttrue
+```
+
+To greet from `glue.cfg`, edit the **whole script**. Keep `#!/bin/bash`, `. $cheader`, every method, and `cend`. Only `setup` needs the hello-world body.
+
+```bash
+#!/bin/bash
+. $cheader
+
+setup()
+{
+    name=$( he ${PROJECT}@${COM}:name )
+    echo "hello, ${name}"
+    he log.info[ "hello, ${name}" ]
+    creturn ttrue
+}
+
+shut()
+{
+    echo "the ${PROJECT}@${COM} shut has be called"
+    he log.info[ "the ${PROJECT}@${COM} shut has be called" ]
+    creturn ttrue
+}
+
+service()
+{
+    number=1
+    while :
+    do
+        number=$[number+1]
+        he log.info[ "hello world ( $number ) times" ]
+        sleep 1
+    done
+    creturn tfalse
+}
+
+list()
+{
+    ret='{"'$PARAM1'":"'$PARAM2'"}'
+    creturn $ret
+}
+
+cend
+```
+
+Call `setup` again; you should see `hello, hello`.
+
+### Query configuration
+
+```shell
+$ myproj@glue
+{
+    "status": "enable",
+    "name": "hello"
+}
+
+$ myproj@glue:name
+hello
+
+$ myproj@glue:status
+enable
+```
+
+If the query is empty, the FPK has no `glue.cfg` yet and nothing has been saved at runtime.
+
+### Modify configuration
+
+```shell
+$ myproj@glue:name=world
+ttrue
+
+$ myproj@glue:name
+world
+
+$ myproj@glue|{"name":"glue1","status":"enable"}
+ttrue
+
+$ myproj@glue
+{
+    "status": "enable",
+    "name": "glue1"
+}
+```
+
+Then `myproj@glue.setup` should print `hello, glue1` if `setup` reads `:name` as above. The Web page for this object ([wui.md](wui.md)) uses the same JSON.
 
 ---
 
 ## What the template does
 
-`comshell` is a bash script. It must keep these two lines:
+`comshell` is a bash script. The file always has this shape: shebang, `. $cheader`, one function per HE method, then `cend`. Do not remove `. $cheader` or `cend`.
 
-```bash
-. $cheader
-# ... function definitions ...
-cend
-```
-
-`$cheader` loads the HE shell helpers (`creturn`, parameter variables, logging through `he`). `cend` dispatches the requested method. Do not remove them.
+The hello-world listing above is that full file. `$cheader` loads the HE shell helpers (`creturn`, parameter variables, logging through `he`). `cend` dispatches the requested method.
 
 Environment (set by the framework):
 
@@ -77,8 +190,6 @@ Environment (set by the framework):
 | `COM` | Component directory name |
 | `PARAM1`, `PARAM2`, … | HE method arguments |
 
-### Methods in the template
-
 | Function | HE | Role |
 |----------|-----|------|
 | `setup` | `myproj@glue.setup` | Bring-up |
@@ -86,28 +197,7 @@ Environment (set by the framework):
 | `service` | `myproj@glue.service` | Long-running loop (supervisor restarts on exit) |
 | `list` | `myproj@glue.list` | Example that returns JSON |
 
-Each function ends with `creturn` and a status or payload:
-
-```bash
-setup()
-{
-    echo "the ${PROJECT}@${COM} setup has be called"
-    he log.info[ "the ${PROJECT}@${COM} setup has be called" ]
-    creturn ttrue
-}
-```
-
-`creturn ttrue` / `tfalse` match HE sentinels. For JSON, pass a string:
-
-```bash
-list()
-{
-    ret='{"'$PARAM1'":"'$PARAM2'"}'
-    creturn $ret
-}
-```
-
-Call other HE lines with `he` the same way as in `ashy` (quote when the shell would eat `|`, `{`, `[`).
+`creturn ttrue` / `tfalse` match HE sentinels. `list` already returns a JSON string from `PARAM1` / `PARAM2`. Call other HE lines with `he` the same way as in `ashy` (quote when the shell would eat `|`, `{`, `[`).
 
 ---
 
@@ -144,9 +234,7 @@ prj add_joint myproj network/online myproj@glue.online
 
 Read `PARAM1` (event) and keep the function short. Joint dispatch is synchronous.
 
-### Configuration
-
-Shell components can still have JSON config as `myproj@glue` if the object is registered. From the script, query with `he`:
+From the script, other HE lines work the same as in `ashy` (quote when the shell would eat `|`, `{`, `[`):
 
 ```bash
 he ${PROJECT}@${COM}:status
@@ -161,7 +249,13 @@ Prefer a comexe when you need `config_get` / `_set` restart logic in-process ([c
 ```bash
 ./mkdel
 make obj=myproj
-he 'myproj@glue.setup'
+```
+
+On the device (eline):
+
+```shell
+$ myproj@glue
+$ myproj@glue.setup
 ```
 
 Pack details: [`../../project2fpk.md`](../../project2fpk.md). HE: [`../com/land/he.md`](../com/land/he.md).

@@ -133,6 +133,57 @@ Poll without a loading overlay: `he.bkload` / `he.bkexec`.
 
 ---
 
+## Apply in the Web UI, confirm in eline
+
+The page does not use a private store. `he.load` / `he.exec` are the same HE lines as eline. After Apply, the component JSON on the device **is** what eline shows.
+
+1. Ship a comexe (or shell) with factory JSON, for example `project/myproj/sensor.cfg` ([comexe.md](comexe.md)):
+
+```json
+{
+    "status": "enable",
+    "name": "hello"
+}
+```
+
+   The generated `page.html` uses a text field `property`. Rename that input `id` to `name` and in JS use `comcfg.name` so the form matches the `.cfg` keys (or keep `property` and put that key in the `.cfg` instead).
+
+2. Install the FPK. In **eline** (`$ `), read the object before opening the page:
+
+```shell
+$ myproj@sensor
+{
+    "status": "enable",
+    "name": "hello"
+}
+
+$ myproj@sensor:name
+hello
+```
+
+3. Open the Web menu **Sensor**. The switch should be on, and the text box should show `hello` — the same values as eline.
+
+4. Change the text to `fromweb`, click **Apply**. The page calls `he.exec( [ "myproj@sensor="+JSON.stringify(comcfg) ] )`, which is HE replace-set.
+
+5. Without rebooting, go back to eline and query again:
+
+```shell
+$ myproj@sensor:name
+fromweb
+
+$ myproj@sensor
+{
+    "status": "enable",
+    "name": "fromweb"
+}
+```
+
+eline must match the form you just saved. That is the proof that WUI writes **component configuration**, not a separate web-only file.
+
+The other direction works too: in eline set `myproj@sensor:name=fromeline`, then click **Refresh** on the page — the text box shows `fromeline`.
+
+---
+
 ## Language files
 
 Keys are the **English** strings used in `data-i18n="…"` and `$.i18n('…')`.
@@ -180,4 +231,4 @@ Full list: [`../com/land/prj.json.md`](../com/land/prj.json.md) §9. Control coo
 make obj=myproj
 ```
 
-Confirm the menu from the device with `land@fpk.wui_menu`. Page and language paths are under `land@fpk.path[ myproj ]` — never assume a fixed `/usr/share/skinos/…` URL after a hot FPK.
+Confirm the menu from the device with `land@fpk.wui_menu`. After Apply, confirm the JSON in eline with `myproj@sensor` as in the section above. Page and language paths are under `land@fpk.path[ myproj ]` — never assume a fixed `/usr/share/skinos/…` URL after a hot FPK.

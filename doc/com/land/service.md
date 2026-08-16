@@ -20,7 +20,7 @@ Manage service processes through the daemon supervisor. Services are component m
 #### Control APIs
 
 + `run[ delay, name, com, op, ... ]` **register and start a service with optional delay**
-    - delay ----------- [ string ], optional, delay in milliseconds before starting the service
+    - delay ----------- [ string ], optional, delay in milliseconds before starting the service; omit with a leading empty slot (`run[,name,com,op]`)
     - name ------------ [ string ], the service name for identification
     - com ------------- [ string ], the component object name (e.g. ifname@wan3)
     - op -------------- [ string ], the method name to call on the component
@@ -28,15 +28,15 @@ Manage service processes through the daemon supervisor. Services are component m
     - failed return tfalse
     - succeed return ttrue
 
-    Example, run a service named mywan calling ifname@wan3.setup
+    Example, run a service named mywan calling ifname@wan3.setup (no delay)
     ```shell
-    land@service.run[ mywan, ifname@wan3, setup ]
+    land@service.run[,mywan,ifname@wan3,setup]
     ttrue
     ```
 
     Example, run a service with 5 second delay
     ```shell
-    land@service.run[ 5000, mywan, ifname@wan3, setup ]
+    land@service.run[5000,mywan,ifname@wan3,setup]
     ttrue
     ```
 
@@ -129,30 +129,31 @@ Manage service processes through the daemon supervisor. Services are component m
 
 + `info[ name ]` **get the status info of a service**
     - name ------------ [ string ], the service name
-    - failed return NULL, service not found
-    - succeed return [ json ], service status information
+    - not found return NULL
+    - map attach / path failure return terror
+    - succeed return [ json ], RO `*.service` map node as-is, except `status` converted to a readable string
+    - note: there is no top-level `name` field (the queried name is the argument); zero-valued map fields such as `"pid":0` may still appear. For a filtered view with `"name"` and params, use `dump`
     ```json
     {
-        "name": "service name",                // [ string ], the service name
-        "pid": "process ID",                   // [ number ], present only when running
-        "status": "service status",            // [ string ], current status
-                                                   // "start": waiting to start
+        "pid": 0,                              // [ number ], map value (0 when not running)
+        "status": "service status",            // [ string ], converted from SERVICE_ORDER_* int
+                                                   // "start": under run supervision (pending start or already running)
                                                    // "reset": waiting to restart
                                                    // "stop": waiting to stop
                                                    // "delete": waiting to be deleted
-                                                   // "off": disabled
-                                                   // "offdel": disabled, delete after exit
-                                                   // "done": finished successfully
-                                                   // "error": exited with error
-        "delay": "startup delay in ms",        // [ number ], present only when delay is set
-        "obj": "component object name",        // [ string ], the component object
-        "op": "method name",                   // [ string ], present only when op is set
-        "last_start": "last start timestamp",  // [ number ], present only when started before
-        "fast_exited": "fast exit count",      // [ number ], present only when fast-exited before
-        "last_kill": "last kill timestamp",    // [ number ], present only when killed before
-        "force_killed": "force kill count",    // [ number ], present only when force-killed before
-        "exit_code": "exit code",              // [ number or string ], present only when exited
-        "exit_signal": "exit signal"           // [ number ], present only when killed by signal
+                                                   // "off": disabled (keep registration)
+                                                   // "offdel": disabled, delete registration after exit
+                                                   // "done": finished successfully (do not restart)
+                                                   // "error": exited with error (do not restart)
+        "delay": 0,                            // [ number ], ms; may be 0
+        "obj": "component object name",        // [ string ]
+        "op": "method name",                   // [ string ], may be empty
+        "last_start": 0,                       // [ number ], uptime; may be 0
+        "fast_exited": 0,                      // [ number ], may be 0
+        "last_kill": 0,                        // [ number ], may be 0
+        "force_killed": 0,                     // [ number ], may be 0
+        "exit_code": 0,                        // [ number ], raw map value (not dump's string form)
+        "exit_signal": 0                       // [ number ], may be 0
     }
     ```
 
@@ -160,19 +161,26 @@ Manage service processes through the daemon supervisor. Services are component m
     ```shell
     land@service.info[ mywan ]
     {
-        "name":"mywan",
         "pid":1234,
         "status":"start",
+        "delay":0,
         "obj":"ifname@wan3",
         "op":"setup",
-        "last_start":1705000000
+        "last_start":1705000000,
+        "fast_exited":0,
+        "last_kill":0,
+        "force_killed":0,
+        "exit_code":0,
+        "exit_signal":0
     }
     ```
 
 + `dump[ name ]` **get detailed dump of a service including parameters**
     - name ------------ [ string ], the service name
-    - failed return NULL, service not found
-    - succeed return [ json ], detailed service information including all parameters
+    - not found / empty dump return NULL
+    - daemon IPC failure return terror (or tpanic if daemon replies tpanic)
+    - succeed return [ json ], filtered detail: includes `"name"`, omits zero/empty noise fields when unused, expands param slots `"1"`/`"2"`/…
+    - note: dump keeps map `status` as int (`SERVICE_ORDER_*`); use `info`/`list` for readable status names
 
     Example, dump service mywan
     ```shell
@@ -180,7 +188,7 @@ Manage service processes through the daemon supervisor. Services are component m
     {
         "name":"mywan",
         "pid":1234,
-        "status":"start",
+        "status":1,
         "obj":"ifname@wan3",
         "op":"setup",
         "1":"param1",
@@ -190,19 +198,24 @@ Manage service processes through the daemon supervisor. Services are component m
     ```
 
 + `list[]` **list all registered services and their states**
-    - failed return NULL
-    - succeed return [ json ], a map of service name to service state
+    - map attach / path failure return terror
+    - succeed return [ json ], map of **service name (object key)** → same value shape as `info` (no inner `"name"` field)
     ```json
     {
-        "service name":                        // [ string ]: { json }, service name
-        {                                          // same structure as info return
-            "name": "service name",            // [ string ]
-            "pid": "process ID",               // [ number ], present only when running
-            "status": "service status",        // [ string ]
-            "obj": "component object name",    // [ string ]
-            "op": "method name"                // [ string ], present only when op is set
+        "mywan":
+        {
+            "pid":1234,
+            "status":"start",
+            "obj":"ifname@wan3",
+            "op":"setup"
+        },
+        "myvpn":
+        {
+            "pid":5678,
+            "status":"start",
+            "obj":"ifname@vpn",
+            "op":"setup"
         }
-        // "...":{...}  How many services show how many properties
     }
     ```
 
@@ -212,19 +225,17 @@ Manage service processes through the daemon supervisor. Services are component m
     {
         "mywan":
         {
-            "name":"mywan",
             "pid":1234,
             "status":"start",
+            "delay":0,
             "obj":"ifname@wan3",
-            "op":"setup"
-        },
-        "myvpn":
-        {
-            "name":"myvpn",
-            "pid":5678,
-            "status":"start",
-            "obj":"ifname@vpn",
-            "op":"setup"
+            "op":"setup",
+            "last_start":1705000000,
+            "fast_exited":0,
+            "last_kill":0,
+            "force_killed":0,
+            "exit_code":0,
+            "exit_signal":0
         }
     }
     ```

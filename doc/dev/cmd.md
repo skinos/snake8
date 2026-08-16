@@ -83,29 +83,155 @@ The generated `main()` only logs and returns 0. Replace the body; keep `#include
 
 ---
 
+## Hello world
+
+A `cmd` is not an HE object. After install, run the binary (often on `PATH` as `mycli`). From eline:
+
+```shell
+$ ashy
+~ # mycli
+myproj@mycli: running
+```
+
+If `mycli` is not on `PATH`, query the project root first, then run `bin/mycli`:
+
+```shell
+$ land@fpk.path[ myproj ]
+```
+
+Change `main()` to print a fixed greeting. The whole `mycli.c` looks like this (`#include` plus `main()` — a cmd has no API table):
+
+```c
+#include "skin/skin.h"
+
+int main( int argc, const char **argv )
+{
+    (void)argc;
+    (void)argv;
+
+    app_info( "%s: hello world", EXE_IDPATH );
+    printf( "%s: hello world\n", EXE_IDPATH );
+    return 0;
+}
+```
+
+Rebuild, reinstall the FPK, run `mycli` again — you should see `hello world`.
+
+---
+
+## Query and modify component configuration
+
+`cmd` / `osc` have no `myproj@mycli` config of their own. They read and write **another** object's JSON (a comexe or shell component) through libskin. Pair this with [comexe.md](comexe.md) (`myproj@sensor` + `sensor.cfg`).
+
+### Query (`config_get`)
+
+Whole `mycli.c` that reads `myproj@sensor` and prints `name`:
+
+```c
+#include "skin/skin.h"
+
+int main( int argc, const char **argv )
+{
+    obj_t objst;
+    talk_t cfg;
+    const char *ptr;
+
+    (void)argc;
+    (void)argv;
+
+    objst = obj_create( "myproj@sensor" );
+    cfg = config_get( objst, NULL );
+    if ( cfg == NULL )
+    {
+        app_fault( "%s: no config for myproj@sensor", EXE_IDPATH );
+        obj_free( objst );
+        return -1;
+    }
+    ptr = json_string( cfg, "name" );
+    if ( ptr == NULL )
+    {
+        ptr = "";
+    }
+    app_info( "%s: sensor name is %s", EXE_IDPATH, ptr );
+    printf( "sensor name is %s\n", ptr );
+    talk_free( cfg );
+    obj_free( objst );
+    return 0;
+}
+```
+
+Check the same value in **eline** (no `he` prefix):
+
+```shell
+$ myproj@sensor
+{
+    "status": "enable",
+    "name": "hello"
+}
+
+$ myproj@sensor:name
+hello
+```
+
+`mycli` and eline must show the same `name`.
+
+### Modify (`config_set`)
+
+Whole `mycli.c` that writes `name` / `status`, then you confirm in eline:
+
+```c
+#include "skin/skin.h"
+
+int main( int argc, const char **argv )
+{
+    obj_t objst;
+    talk_t v;
+    boole ret;
+
+    (void)argc;
+    (void)argv;
+
+    objst = obj_create( "myproj@sensor" );
+    v = json_create( NULL );
+    json_set_string( v, "name", "fromcli" );
+    json_set_string( v, "status", "enable" );
+    ret = config_set( objst, v, NULL );
+    talk_free( v );
+    if ( ret != true )
+    {
+        app_fault( "%s: config_set failed", EXE_IDPATH );
+        obj_free( objst );
+        return -1;
+    }
+    obj_free( objst );
+    return 0;
+}
+```
+
+```shell
+$ myproj@sensor:name
+fromcli
+
+$ myproj@sensor
+{
+    "status": "enable",
+    "name": "fromcli"
+}
+```
+
+You can also change config only in eline (`myproj@sensor:name=world`) and have `mycli` print the new value on the next run.
+
+Compute `obj_create` / `config_get` / `config_set` into locals (do not nest them in one call). Free `talk_t` and `obj_t` you own before return.
+
+---
+
 ## Implement common work
 
 ### A small CLI (`cmd`)
 
-After FPK install, `fpk-install` links `cmd` keys into the global command directory. Discover the project root first (`he 'land@fpk.path[ myproj ]'`); the binary also lives in that tree’s `bin/`.
+After FPK install, `fpk-install` links `cmd` keys into the global command directory. Discover the project root first (`land@fpk.path[ myproj ]` in eline); the binary also lives in that tree’s `bin/`.
 
-Use `argc` / `argv` as a normal Linux program. Call into components when you need device state:
-
-```c
-objst = obj_create( "myproj@sensor" );
-cfg = config_get( objst, NULL );
-if ( cfg == NULL )
-{
-    app_fault( "%s: no config for myproj@sensor", EXE_IDPATH );
-    obj_free( objst );
-    return -1;
-}
-ptr = json_string( cfg, "name" );
-talk_free( cfg );
-obj_free( objst );
-```
-
-Compute `obj_create` / `config_get` into locals (do not nest them in one call). Free `talk_t` and `obj_t` you own before return.
+Use `argc` / `argv` as a normal Linux program. Query and set another component as in the section above.
 
 ### Talk to a running service (testcmd pattern)
 
@@ -119,19 +245,29 @@ That is the usual split: **comexe** owns HE and `_service`; **cmd** is a helper 
 
 ### Find another binary in this FPK (`osc2path`)
 
-From a component or from `main()`:
+From a component or from `main()`. Whole `mycli.c` that locates `mycli` in this FPK and replaces itself with it:
 
 ```c
-char path[PATH_MAX];
-const char *ptr;
+#include "skin/skin.h"
 
-ptr = osc2path( path, sizeof(path), "mycli" );
-if ( ptr == NULL )
+int main( int argc, const char **argv )
 {
-    app_fault( "%s: cannot find mycli", EXE_IDPATH );
+    char path[PATH_MAX];
+    const char *ptr;
+
+    (void)argc;
+    (void)argv;
+
+    ptr = osc2path( path, sizeof(path), "mycli" );
+    if ( ptr == NULL )
+    {
+        app_fault( "%s: cannot find mycli", EXE_IDPATH );
+        return -1;
+    }
+    execl( path, "mycli", NULL );
+    app_fault( "%s: execl failed", EXE_IDPATH );
     return -1;
 }
-execl( path, "mycli", NULL );
 ```
 
 `osc2path` resolves a file inside the current project install (cmd, osc, or other packed name). Do not hardcode `/usr/share/skinos/…`.
@@ -153,9 +289,10 @@ make obj=myproj
 
 On the device, after install:
 
-```bash
-he 'land@fpk.path[ myproj ]'
-# then run bin/mycli or the root helper from that directory
+```shell
+$ land@fpk.path[ myproj ]
+$ ashy
+~ # mycli
 ```
 
 HE from a cmd is optional; you can always invoke `he '…'` as a subprocess. Library details: [`../com/land/skin.md`](../com/land/skin.md).
