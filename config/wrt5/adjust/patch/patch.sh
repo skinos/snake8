@@ -105,6 +105,15 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/mt7621/target/image_mt7621.mk" "${gS
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/mt7628/target/image_mt76x8.mk" "${gSDK_DIR}/target/linux/ramips/image/mt76x8.mk"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/rk3568/target/image_armv8.mk" "${gSDK_DIR}/target/linux/rockchip/image/armv8.mk"
 
+# one board.d script for all ashyelf / custom boards (mt7628 swconfig + DSA)
+for dest in \
+    "${gSDK_DIR}/target/linux/ramips/mt76x8/base-files/etc/board.d/02_network_ashyelf" \
+    "${gSDK_DIR}/target/linux/ramips/mt7621/base-files/etc/board.d/02_network_ashyelf" \
+    "${gSDK_DIR}/target/linux/mediatek/filogic/base-files/etc/board.d/02_network_ashyelf"
+do
+    copy_if_diff "${gPLATFORM_DIR}/adjust/patch/board.d/02_network_ashyelf" "${dest}"
+done
+
 # package
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/base-files-Makefile" "${gSDK_DIR}/package/base-files/Makefile"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/wifi-scripts-Makefile" "${gSDK_DIR}/package/network/config/wifi-scripts/Makefile"
@@ -112,6 +121,8 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/perl-111-glibc-GNU_SOURCE-cl
 
 # patch to busybox for udhcpc support ifnameid and exit when renewip failed
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/udhcpc-defconfig-ifnameid-renewexit.patch" "${gSDK_DIR}/package/utils/busybox/patches/900-udhcpc-defconfig-ifnameid-renewexit.patch"
+# do not syslog "password for 'user' changed" from chpasswd
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/chpasswd-no-changed-syslog.patch" "${gSDK_DIR}/package/utils/busybox/patches/901-chpasswd-no-changed-syslog.patch"
 
 # patch to mt7613 cannot connect to 160M AP
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/010-mt7663-disable-vht160-sta-compat.patch" "${gSDK_DIR}/package/kernel/mt76/patches/010-mt7663-disable-vht160-sta-compat.patch"

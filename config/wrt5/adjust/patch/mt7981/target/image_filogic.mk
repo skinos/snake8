@@ -839,11 +839,11 @@ TARGET_DEVICES += cetron_ct3003
 define Device/ashyelf_r607
   DEVICE_VENDOR := ASHYELF
   DEVICE_MODEL := R607
-  DEVICE_DTS := mt7981b-ashyelf-r607
+  DEVICE_DTS := mt7981b_ashyelf_r607
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTC_FLAGS := --pad 4096
   DEVICE_DTS_LOADADDR := 0x43f00000
-  DEVICE_PACKAGES := kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 \
 	e2fsprogs f2fsck mkf2fs
   UBINIZE_OPTS := -E 5
   BLOCKSIZE := 128k
@@ -852,6 +852,10 @@ define Device/ashyelf_r607
   KERNEL_IN_UBI := 1
   IMAGES := sysupgrade.itb factory.bin sysupgrade.bin
   IMAGE_SIZE := $$(shell expr 64 + $$(CONFIG_TARGET_ROOTFS_PARTSIZE))m
+  KERNEL := kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
+  KERNEL_INITRAMFS := kernel-bin | lzma | \
+	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd
   IMAGE/sysupgrade.itb := append-kernel | \
 	 fit gzip $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb external-static-with-rootfs | \
 	 pad-rootfs | append-metadata

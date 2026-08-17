@@ -14,7 +14,8 @@ rootfs_prepare:
 	if [ -f ${gSCOPE_DIR}/mkrootfs.sh ]; then \
 		${gSCOPE_DIR}/mkrootfs.sh ${gosROOT_DIR}; \
 	fi
-	# copy a fpk to build
+	# copy a fpk to build (skip prebuilt packages when scope is wrt)
+ifneq ($(gSCOPE),wrt)
 	tmpls=`find ${gPLATFORM_DIR}/dl/ -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
 		cp ${gPLATFORM_DIR}/dl/*.fpk $(gBUILD_DIR); \
@@ -31,6 +32,7 @@ rootfs_prepare:
 	if [ "X$${tmpls}" != "X" ]; then \
 		cp ${gSCOPE_DIR}/*.fpk $(gBUILD_DIR); \
 	fi
+endif
 	# clear the exsit project fpk
 	for d in ${gPROJECT_DIR} ${gRICE_DIR} ${gPLATFORM_DIR}/cdriver; do \
 	if [ -d $${d} ]; then \
@@ -49,7 +51,8 @@ rootfs_prepare:
 			rm -fr $(gBUILD_DIR)/$$i-*.fpk; \
 		fi; \
 	done
-	# install the fpk to rootfs
+	# install the fpk to rootfs (skip prebuilt packages when scope is wrt)
+ifneq ($(gSCOPE),wrt)
 	@tmpls=`find $(gBUILD_DIR) -maxdepth 1 -name "*.fpk"`; \
 	if [ "X$${tmpls}" != "X" ]; then \
 		for c in $(gBUILD_DIR)/*.fpk; do \
@@ -58,6 +61,7 @@ rootfs_prepare:
 			fi; \
 		done; \
 	fi
+endif
 
 rootfs_install:
 	if [ -d ${gPLATFORM_DIR}/rootfs ]; then \

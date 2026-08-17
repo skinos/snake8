@@ -272,35 +272,49 @@ TARGET_DEVICES += afoundry_ew1200
 
 
 
-define Device/ashy_d228
+define Device/ashyelf_d228
   $(Device/dsa-migration)
   IMAGE_SIZE := 14528k
-  DEVICE_VENDOR := ASHY
+  DEVICE_VENDOR := ASHYELF
   DEVICE_MODEL := D228
-  DEVICE_PACKAGES := kmod-usb3 
-  SUPPORTED_DEVICES += d228
+  DEVICE_PACKAGES := kmod-usb3
 endef
-TARGET_DEVICES += ashy_d228
+TARGET_DEVICES += ashyelf_d228
 
-define Device/ashy_d228r
+define Device/ashyelf_d228_wrt
+  $(Device/ashyelf_d228)
+  DEVICE_VARIANT := WRT
+  DEVICE_DTS := mt7621_ashyelf_d228_wrt
+  SUPPORTED_DEVICES := ashyelf,d228
+endef
+TARGET_DEVICES += ashyelf_d228_wrt
+
+define Device/ashyelf_d228r
   $(Device/dsa-migration)
   IMAGE_SIZE := 14528k
-  DEVICE_VENDOR := ASHY
+  DEVICE_VENDOR := ASHYELF
   DEVICE_MODEL := D228R
-  DEVICE_PACKAGES := kmod-usb3 
-  SUPPORTED_DEVICES += d228r
+  DEVICE_PACKAGES := kmod-usb3
 endef
-TARGET_DEVICES += ashy_d228r
+TARGET_DEVICES += ashyelf_d228r
 
-define Device/ashy_d228r_oled
-  $(Device/dsa-migration)
-  IMAGE_SIZE := 14528k
-  DEVICE_VENDOR := ASHY
-  DEVICE_MODEL := D228R_OLED
-  DEVICE_PACKAGES := kmod-usb3 
-  SUPPORTED_DEVICES += d228r_oled
+define Device/ashyelf_d228r_wrt
+  $(Device/ashyelf_d228r)
+  DEVICE_VARIANT := WRT
+  DEVICE_DTS := mt7621_ashyelf_d228r_wrt
+  SUPPORTED_DEVICES := ashyelf,d228r
 endef
-TARGET_DEVICES += ashy_d228r_oled
+TARGET_DEVICES += ashyelf_d228r_wrt
+
+define Device/ashyelf_d228r_oled
+  $(Device/ashyelf_d228r)
+  DEVICE_VARIANT := OLED
+  DEVICE_DTS := mt7621_ashyelf_d228r_oled
+  SUPPORTED_DEVICES := ashyelf,d228r
+endef
+TARGET_DEVICES += ashyelf_d228r_oled
+
+
 
 define Device/hxwlink_h721
   $(Device/dsa-migration)

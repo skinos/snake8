@@ -1,0 +1,33 @@
+#!/bin/sh
+
+if [ -e /dev/watchdog9 ]; then
+	echo "V" > /dev/watchdog9
+fi
+
+# gpio-setup.sh / v520 gpio.cfg:
+# modem@lte_reset=24, modem@lte2_reset=23 → high (no lte_sim / lte2_sim)
+# mt7621: DTS pin N → sysfs = chip[N/32].base + (N%32)
+for pin in 23 24; do
+	gpio_sysfs=
+	bank=$((pin / 32))
+	off=$((pin % 32))
+	i=0
+	for base in $(cat /sys/class/gpio/gpiochip*/base 2>/dev/null | sort -n); do
+		if [ "$i" -eq "$bank" ]; then
+			gpio_sysfs=$((base + off))
+			break
+		fi
+		i=$((i + 1))
+	done
+
+	if [ -z "$gpio_sysfs" ]; then
+		continue
+	fi
+	if [ ! -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo ${gpio_sysfs} > /sys/class/gpio/export
+	fi
+	if [ -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo out > /sys/class/gpio/gpio${gpio_sysfs}/direction
+		echo 1 > /sys/class/gpio/gpio${gpio_sysfs}/value
+	fi
+done

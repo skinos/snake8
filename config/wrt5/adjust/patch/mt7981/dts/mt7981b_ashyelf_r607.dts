@@ -11,8 +11,8 @@
 #include "mt7981b.dtsi"
 
 / {
-	model = "ASHYELF R607";
 	compatible = "ashyelf,r607", "mediatek,mt7981";
+	model = "R607";
 
 	aliases {
 		watchdog0 = &watchdog;
@@ -95,7 +95,7 @@
 		phy-mode = "2500base-x";
 
 		nvmem-cell-names = "mac-address";
-		nvmem-cells = <&macaddr_factory_24 0>;
+		nvmem-cells = <&macaddr_factory_4 0>;
 		fixed-link {
 			speed = <2500>;
 			full-duplex;
@@ -115,7 +115,7 @@
 		phy-handle = <&int_gbe_phy>;
 
 		nvmem-cell-names = "mac-address";
-		nvmem-cells = <&macaddr_factory_2a 0>;
+		nvmem-cells = <&macaddr_factory_2e 0>;
 	};
 };
 
@@ -172,15 +172,21 @@
 					#address-cells = <1>;
 					#size-cells = <1>;
 
-					macaddr_factory_24: macaddr@24 {
+					macaddr_factory_4: macaddr@4 {
 						compatible = "mac-base";
-						reg = <0x24 0x6>;
+						reg = <0x4 0x6>;
 						#nvmem-cell-cells = <1>;
 					};
 
-					macaddr_factory_2a: macaddr@2a {
+					macaddr_factory_28: macaddr@28 {
 						compatible = "mac-base";
-						reg = <0x2a 0x6>;
+						reg = <0x28 0x6>;
+						#nvmem-cell-cells = <1>;
+					};
+
+					macaddr_factory_2e: macaddr@2e {
+						compatible = "mac-base";
+						reg = <0x2e 0x6>;
 						#nvmem-cell-cells = <1>;
 					};
 				};
@@ -243,6 +249,8 @@
 		port@3 {
 			reg = <3>;
 			label = "wan";
+			nvmem-cells = <&macaddr_factory_28 0>;
+			nvmem-cell-names = "mac-address";
 		};
 
 		port@6 {

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+if [ -e /dev/watchdog9 ]; then
+	echo "V" > /dev/watchdog9
+fi
+
+# gpio-setup.sh / r607 gpio.cfg: modem@lte_sim=5, modem@lte_reset=6 → high
+# mt7981: DTS pin N → sysfs = (largest gpiochip base) + N
+best_base=
+best_ngpio=0
+for chip in /sys/class/gpio/gpiochip*; do
+	base=$(cat "${chip}/base" 2>/dev/null)
+	ngpio=$(cat "${chip}/ngpio" 2>/dev/null)
+	if [ -n "$base" ] && [ -n "$ngpio" ] && [ "$ngpio" -gt "$best_ngpio" ]; then
+		best_ngpio=$ngpio
+		best_base=$base
+	fi
+done
+
+if [ -z "$best_base" ]; then
+	exit 0
+fi
+
+for pin in 5 6; do
+	gpio_sysfs=$((best_base + pin))
+	if [ ! -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo ${gpio_sysfs} > /sys/class/gpio/export
+	fi
+	if [ -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo out > /sys/class/gpio/gpio${gpio_sysfs}/direction
+		echo 1 > /sys/class/gpio/gpio${gpio_sysfs}/value
+	fi
+done

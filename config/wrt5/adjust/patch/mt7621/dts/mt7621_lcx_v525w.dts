@@ -96,7 +96,7 @@
 };
 
 &gmac0 {
-	nvmem-cells = <&macaddr_factory_e000>;
+	nvmem-cells = <&macaddr_factory_4>;
 	nvmem-cell-names = "mac-address";
 	label = "dsa";
 };
@@ -106,9 +106,8 @@
 	label = "eth1";
 	phy-handle = <&ethphy6>;
 
-	nvmem-cells = <&macaddr_factory_e000>;
+	nvmem-cells = <&macaddr_factory_2e>;
 	nvmem-cell-names = "mac-address";
-	mac-address-increment = <1>;
 
 	fixed-link {
 		speed = <1000>;
@@ -156,9 +155,8 @@
 		port@4 {
 			status = "okay";
 			label = "wan";
-			nvmem-cells = <&macaddr_factory_e000>;
+			nvmem-cells = <&macaddr_factory_28>;
 			nvmem-cell-names = "mac-address";
-			mac-address-increment = <1>;
 		};
 /*
 		port@5 {
@@ -166,9 +164,8 @@
 			label = "eth1";
 			phy-handle = <&ethphy6>;
 			phy-mode = "rgmii";
-			nvmem-cells = <&macaddr_factory_e000>;
+			nvmem-cells = <&macaddr_factory_2e>;
 			nvmem-cell-names = "mac-address";
-			mac-address-increment = <1>;
 		};
 */
 
@@ -187,8 +184,16 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 
-	macaddr_factory_e000: macaddr@e000 {
-		reg = <0xe000 0x6>;
+	macaddr_factory_4: macaddr@4 {
+		reg = <0x4 0x6>;
+	};
+
+	macaddr_factory_28: macaddr@28 {
+		reg = <0x28 0x6>;
+	};
+
+	macaddr_factory_2e: macaddr@2e {
+		reg = <0x2e 0x6>;
 	};
 };
 

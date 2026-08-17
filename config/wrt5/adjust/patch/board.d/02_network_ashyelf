@@ -1,0 +1,89 @@
+
+. /lib/functions.sh
+. /lib/functions/uci-defaults.sh
+. /lib/functions/system.sh
+
+board_config_update
+
+# Keep the layout from OpenWrt 02_network when that board is already known.
+json_is_a network object && exit 0
+
+board=$(board_name)
+lan_ports=""
+wan_port=""
+lan_mac=""
+wan_mac=""
+name=""
+eeprom="factory"
+part=""
+
+case $board in
+ashyelf,d218wrt|\
+ashyelf,d218)
+	# MT7628 swconfig: LAN port 1, WAN port 0, CPU port 6 @ eth0
+	ucidef_add_switch "switch0" \
+		"1:lan" "0:wan" "6@eth0"
+	;;
+*)
+	# DSA boards (mt7621 / mt7981 / ...): use kernel netdev names from DTS.
+	for name in lan lan1 lan2 lan3 lan4 lan5 lan6 lan7 lan8 eth1; do
+		if [ -d "/sys/class/net/${name}" ]; then
+			if [ -z "$lan_ports" ]; then
+				lan_ports="${name}"
+			else
+				lan_ports="${lan_ports} ${name}"
+			fi
+		fi
+	done
+	if [ -d /sys/class/net/wan ]; then
+		wan_port="wan"
+	fi
+	if [ -n "$lan_ports" ]; then
+		if [ -n "$wan_port" ]; then
+			ucidef_set_interfaces_lan_wan "$lan_ports" "$wan_port"
+		else
+			ucidef_set_interface_lan "$lan_ports"
+		fi
+	fi
+	;;
+esac
+
+# Same offsets as arch data.c: lan 0x2e, wan 0x28, mac 0x4
+# mt7628/mt7621 label "factory"; mt7981 label "Factory"
+part=$(find_mtd_part factory)
+if [ -z "$part" ]; then
+	eeprom="Factory"
+fi
+lan_mac=$(mtd_get_mac_binary "$eeprom" 0x2e)
+if [ "$lan_mac" = "ff:ff:ff:ff:ff:ff" ]; then
+	lan_mac=""
+fi
+if [ "$lan_mac" = "00:00:00:00:00:00" ]; then
+	lan_mac=""
+fi
+if [ -z "$lan_mac" ]; then
+	lan_mac=$(mtd_get_mac_binary "$eeprom" 0x4)
+	if [ "$lan_mac" = "ff:ff:ff:ff:ff:ff" ]; then
+		lan_mac=""
+	fi
+	if [ "$lan_mac" = "00:00:00:00:00:00" ]; then
+		lan_mac=""
+	fi
+fi
+wan_mac=$(mtd_get_mac_binary "$eeprom" 0x28)
+if [ "$wan_mac" = "ff:ff:ff:ff:ff:ff" ]; then
+	wan_mac=""
+fi
+if [ "$wan_mac" = "00:00:00:00:00:00" ]; then
+	wan_mac=""
+fi
+if [ -n "$lan_mac" ]; then
+	ucidef_set_interface_macaddr "lan" $lan_mac
+fi
+if [ -n "$wan_mac" ]; then
+	ucidef_set_interface_macaddr "wan" $wan_mac
+fi
+
+board_config_flush
+
+exit 0

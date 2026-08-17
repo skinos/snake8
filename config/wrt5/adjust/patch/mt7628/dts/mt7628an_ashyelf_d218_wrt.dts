@@ -15,8 +15,7 @@
 
 	chosen {
 		/* No console= on ttyS0: keep UART for application (see uart/tty.cfg) */
-		/* bootargs = "console=ttyS0,57600n8"; */
-		bootargs = "rootfstype=squashfs,jffs2";
+		bootargs = "console=ttyS0,57600n8";
 	};
 
 	leds {
@@ -152,9 +151,33 @@
 	nvmem-cell-names = "mac-address";
 };
 
+&gpio {
+	/*
+	 * Shared initials: d218 first, then r600 (same level → hog here).
+	 * Conflicts (GPIO 44: d218 low / r600 high) → each board S05watchdog9.
+	 */
+	lte_reset_or_g1 {
+		gpio-hog;
+		gpios = <1 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "gpio1-init";
+	};
+
+	lte_reset_or_sim {
+		gpio-hog;
+		gpios = <3 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "gpio3-init";
+	};
+};
+
 &state_default {
 	gpio {
-		groups = "i2c", "refclk", "wdt";
+		/*
+		 * i2s = GPIO 0-3 (1/3 hogged high)
+		 * wled_an = GPIO 44 (S05: d218 low, r600 high)
+		 */
+		groups = "i2c", "i2s", "refclk", "wdt", "wled_an";
 		function = "gpio";
 	};
 

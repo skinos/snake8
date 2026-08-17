@@ -50,6 +50,8 @@ define Build/ravpower-wd009-factory
 	@mv $@.new $@
 endef
 
+
+
 define Device/ashyelf_d218
   IMAGE_SIZE := 14528k
   DEVICE_VENDOR := ASHYELF
@@ -61,6 +63,16 @@ define Device/ashyelf_d218
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ohci
 endef
 TARGET_DEVICES += ashyelf_d218
+
+define Device/ashyelf_d218_wrt
+  $(Device/ashyelf_d218)
+  DEVICE_VARIANT := WRT
+  DEVICE_DTS := mt7628an_ashyelf_d218_wrt
+  SUPPORTED_DEVICES := ashyelf,d218
+endef
+TARGET_DEVICES += ashyelf_d218_wrt
+
+
 
 define Device/7links_wlr-12xx
   IMAGE_SIZE := 7872k
