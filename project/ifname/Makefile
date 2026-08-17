@@ -27,7 +27,7 @@ define Package/$(PKG_NAME)/description
   $(INTRO_STR):$(DESC_STR)
 endef
 define Package/$(PKG_NAME)/extra_provides
-    echo libskin.so; echo libskinnet.so;
+    echo libskin.so; echo libskinnet.so; echo libskinuart.so;
 endef
 
 # 安装到系统运行目录中( 注意必须要有这个函数才会执行Build/Compile )

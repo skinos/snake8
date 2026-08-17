@@ -21,11 +21,13 @@ define Package/$(PKG_NAME)
   CATEGORY:=Skin Application
   TITLE:=$(INTRO_STR)
   DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_uart:skinos_uart +libevent2 +libmodbus +libopenssl
- 
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
   $(INTRO_STR):$(DESC_STR)
+endef
+define Package/$(PKG_NAME)/extra_provides
+    echo libskin.so; echo libskinnet.so; echo libskinuart.so;
 endef
 
 # 安装到系统运行目录中( 注意必须要有这个函数才会执行Build/Compile )
