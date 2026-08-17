@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ -e /dev/watchdog9 ]; then
+	echo "V" > /dev/watchdog9
+fi
+
+# DTS gpio N → sysfs (gpiochip base + N%32); banks are 32 lines each
+gpio_sysfs=
+bank=$((44 / 32))
+off=$((44 % 32))
+i=0
+for base in $(cat /sys/class/gpio/gpiochip*/base 2>/dev/null | sort -n); do
+	if [ "$i" -eq "$bank" ]; then
+		gpio_sysfs=$((base + off))
+		break
+	fi
+	i=$((i + 1))
+done
+
+# Conflict: uart@tty_convert → low (r600 wants high)
+if [ -n "$gpio_sysfs" ]; then
+	if [ ! -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo ${gpio_sysfs} > /sys/class/gpio/export
+	fi
+	if [ -d /sys/class/gpio/gpio${gpio_sysfs} ]; then
+		echo out > /sys/class/gpio/gpio${gpio_sysfs}/direction
+		echo 0 > /sys/class/gpio/gpio${gpio_sysfs}/value
+	fi
+fi
