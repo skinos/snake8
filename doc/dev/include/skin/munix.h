@@ -37,6 +37,11 @@
  * Event loops: poll/select/libevent on the same fd; use timeout_ms=0.
  *
  * Lifetime: always munix_close(fd) — never close(fd)/dup() into these APIs.
+ * After fork: do not keep using inherited endpoints; munix_clear() (and
+ * mcontrol_clear if used) then plain-close fds — never munix_close a listen
+ * the parent still owns. connect/listen also run a pid guard that clears when
+ * getpid() differs from the creating process. Do not use across fork without
+ * clear + reconnect.
  * Cookie: munix_set_data / get_data (fd), munix_slot_set_data / get_data,
  * munix_client_set_data / get_data. Munix never frees cookies.
  * Free slots before munix_close (slot free-after-close is UAF).
@@ -82,6 +87,17 @@ int          munix_listen( const char *name,
 int          munix_connect( const char *name );
 /** tear down endpoint; never use close(fd)/dup(fd) instead */
 void         munix_close( int fd );
+/**
+ * @brief drop all process-local munix endpoints without close/unlink
+ *
+ * For fork children that already (or will) plain-close inherited fds and must
+ * not munix_close() a listen path the parent still owns. Clears g_by_fd,
+ * munmaps local mappings, frees endpoint memory. Does not close fd numbers
+ * and does not unlink *.unix. Updates g_munix_pid to getpid(). Call before or
+ * after the fd sweep; pair with mcontrol_clear() when mcontrol was used.
+ * connect/listen also auto-clear via pid guard when getpid() changes.
+ */
+void         munix_clear( void );
 
 /**
  * @brief attach / fetch caller cookie on endpoint (by fd)

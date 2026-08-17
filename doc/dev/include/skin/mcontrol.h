@@ -64,6 +64,16 @@ munix_client_t mcontrol_getbind( void *p ); /* bound peer copy, or NULL */
 int            mcontrol_reply( const char *key, void *p );
 void           mcontrol_free( void *p ); /* always safe; no-op if unknown/consumed */
 void           mcontrol_close( int fd );
+/**
+ * @brief drop all mcontrol contexts without event_del / munix_close / slot_free
+ *
+ * For fork children: inherited libevent registrations share the parent's
+ * epoll interest list — event_del/event_base_free would deafen the parent.
+ * Shared munix mmap must not be munix_slot_free'd here either. Frees only
+ * process-local ctx/reg lists; leak event* and slot handles. Call before
+ * munix_clear(), then plain-close fds.
+ */
+void           mcontrol_clear( void );
 
 int          mcontrol_connect( const char *object );
 void        *mcontrol_alloc( int fd, size_t len, int timeout_ms );

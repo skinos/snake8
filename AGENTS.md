@@ -13,7 +13,8 @@ Embedded Linux gateway SDK with a **component model**. Each feature is a named c
 
 See **`.claude/skills/skinos-sdk/SKILL.md`** for SDK layout, `gBOARDID`, and Makefile details. 
 **Switch product / firmware model** (`make pid`, resolve `r600` → platform): **`.claude/skills/skinos-board/SKILL.md`**. 
-Per-board overlays (`config/swrt5/` `makefile.config` / `rootfs` / `config/*.cfg`): **`.claude/skills/skinos-sdk/reference-swrt5.md`**.
+Per-board overlays (`config/swrt5/` `makefile.config` / `rootfs` / `config/*.cfg`): **`.claude/skills/skinos-sdk/reference-swrt5.md`**. 
+**OpenWrt/SDK package patches** (busybox / hostapd / feeds under generated `swrt5/` `wrt5/` `smtk2/` …): **`.claude/skills/skinos-adjust/SKILL.md`** — never keep edits only in those trees.
 
 **Platform selection** via `gBOARDID` file (format: `platform-chip-board[scope][oem]`):
 - Default: `slave-x86-ubuntu2004` (debug/host build)

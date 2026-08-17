@@ -9,6 +9,8 @@ description: |
   how to customize a product, rootfs overlay, default component cfg, sdk.config,
   kernel.config, kernel source override, custom.sh, option.c, "换板子", "定制配置",
   "运行系统上的文件", or swrt5 board files.
+  OpenWrt package / busybox / feeds patches inside generated swrt5/ wrt5/ smtk2/
+  trees: that is **skinos-adjust** (config/<platform>/adjust + patch.sh), not this skill.
   Also use when the user says "更新仓库固件", "上传固件到仓库", "make ftp",
   "固件仓库", or asks to push the built .zz into the OTA/firmware repository
   (not a live device) — that is `make ftp` after a successful full build.
@@ -384,3 +386,4 @@ When building or explaining the SDK:
 6. For kernel USB modem IDs (`option.c`): edit winning `config/…/kernel/` for this `gBOARDID`; dial AT driver is **skinos-modem**
 7. Point **device** deploy/upgrade to **device-upgrade**. Repo uploads (not a live device): **firmware repository** → **`make ftp`**; **FPK repository** → **`make sdk_repo`**
 8. Do not invent board IDs — use `make pidlist` or the user’s active `gBOARDID`
+9. OpenWrt/BusyBox/package edits in `swrt5/` `wrt5/` `smtk2/` … → **skinos-adjust** (`config/<platform>/adjust` + `patch.sh`); those SDK trees are generated and not git-managed
