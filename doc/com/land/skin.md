@@ -1616,14 +1616,23 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 
 ### 9.0 Summary
 
-`mxtalk.h` is a **mmap-backed structured key/value store** with talk-like setters/getters. Create with **`m1talk_create*`** (depth 1, flat) or **`m2talk_create*`** (depth 2, root + one OBJECT layer). All ops share the same **`mxtalk_*`** surface. Handles are nullable pointers: **root = map base**; children point at L1/L2 slots. Offsets in the map are relative to the map base except **`MX_VOID`** (writer-local absolute pointers).
+`mxtalk.h` is a **mmap-backed structured key/value store** with talk-like setters/getters. Create with **`m1talk_create*`** (depth 1, flat) or **`m2talk_create*`** (depth 2, root + one OBJECT layer). All ops share the same **`mxtalk_*`** surface.
+
+**Two handle kinds:**
+
+| Type | Role |
+|------|------|
+| **`mxtalk_t`** | Process-local **map owner** (fd / flock lifetime, mmap or wrap). From create / `attach` / `wrap` / `create_mem`. Release with **`mxtalk_detach`**. |
+| **`mxjson_t`** | Pointer **into** the map: **root = map base**, or an L1/L2 slot. All `set_*` / `get_*` / walk / `begin`/`end` take **`mxjson_t`**. Use **`mxtalk_root(map)`** after create/attach/wrap. |
+
+Offsets in the map are relative to the map base except **`MX_VOID`** (writer-local absolute pointers).
 
 | API | Role |
 |-----|------|
 | **`m1talk_create` / `m1talk_create_file` / `m1talk_map_size` / `m1talk_create_mem`** | Depth **1**: L1 STRING\|INT\|VOID only; no L2 / OBJECT; mem init for munix/mcontrol slots |
 | **`m2talk_create` / `m2talk_create_file` / `m2talk_map_size` / `m2talk_create_mem`** | Depth **2**: L1 + shared L2 pool; `mxtalk_json_create` creates OBJECT children; mem init for munix/mcontrol slots |
 | **`mxtalk_attach` / `mxtalk_wrap` / `mxtalk_detach`** | Open existing file / wrap memory; release owner |
-| **`mxtalk_data` / `mxtalk_size`** | Raw map pointer and byte size |
+| **`mxtalk_root` / `mxtalk_data` / `mxtalk_size`** | Root `mxjson_t` / raw map pointer / `hdr.map_size` |
 | **`mxtalk_begin` / `mxtalk_end`** | Seqlock writer fence (nested `set_*` is also nest-safe) |
 | **`mxtalk_json_create` / `mxtalk_json`** | Create/lookup OBJECT (depth 2 only; m1 → `EPERM`) |
 | **`mxtalk_set_string` / `_cap` / `mxtalk_string` / `stringp`** | STRING cells (heap) |
@@ -1636,11 +1645,11 @@ boole       reg_oget_boole(obj_t this, const char *name, boole def);
 
 **Defaults** when create args `<=0`: `max_l1=64`, `max_l2=32`, `max_l2_pool=max_l1×4` (min `max_l2`), `name_max=MX_DEFAULT_NAME_MAX` (32), `max_heap=MX_DEFAULT_HEAP` (64 KiB). Heap is **fully reserved** in `map_size` at create (no grow). STRING `cap<=0` follows register-style sizing (`REG_DEFAULT_VAR_SIZE` / round up). Full slot/heap → `NULL` + **`ENOSPC`**.
 
-**Concurrency:** single writer + multi reader (one map-wide `hdr.seq` seqlock). The writer process may call the same getters under `begin`/`end` (reentrant; no self-deadlock). **All** structure/lookup readers wait out an in-progress write (odd `seq`) then re-check: `mxtalk_string` / `stringp` / `json` / `int` / `exist` / `string_len` / `string_cap` / `name` / `type` / `next` / `intp` / `pointer` / `to_talk` (no `EAGAIN` for that reason). `mxtalk_each` is **step-consistent** (each `next` is quiet), not a frozen full-walk snapshot — a completed write between steps may prepend keys you will not see until a later walk. `*_create_file` / `mxtalk_attach(path,1)` take exclusive non-blocking **`flock`**; second writer → **`EBUSY`** (create locks before resizing so a failed second create does not wipe an in-use map). File **create always rebuilds** the map after the lock; to open an existing map for write use **`mxtalk_attach(path,1)`**. `mxtalk_attach(path,0)` is shared RO (no writer flock). `mxtalk_wrap(..., writable)` does **not** take `flock` — caller must ensure single-writer if the memory is shared.
+**Concurrency / write permission:** single writer + multi reader (one map-wide `hdr.seq` seqlock: **even = write/unpublished**, **odd = quiet**). `memset` / mid-create leave `seq==0` so readers block until create publishes (`seq=1` at end of init). Writable ops require this mapping’s base to equal **`hdr.writer_va`** (set on create / writable attach / writable wrap; **no pid**, no process-global owner table). `mxtalk_attach(path,0)` is a **new mmap** (different VA) and does not claim → writes → `EROFS`. `*_create_file` / `mxtalk_attach(path,1)` take exclusive non-blocking **`flock`**; second writer → **`EBUSY`** (create locks before resizing so a failed second create does not wipe an in-use map). File **create always rebuilds** the map; to open an existing map for write use **`mxtalk_attach(path,1)`** (does not rebuild). While the create/attach(1) owner still holds the handle, another `attach(1)` fails with `EBUSY`. Claim also **heals a stuck even `seq`** (previous writer may have died inside `begin`) so readers are not stuck forever. After **`fork`**, the child keeps the same VA — call **`mxtalk_detach`** on the inherited owner (caller owns the handle). `mxtalk_wrap(..., writable)` does **not** take `flock` — caller must ensure single-writer if the memory is shared. The writer mapping may call the same getters under `begin`/`end` (reentrant when `writer_va` matches and `seq` is even). **All** structure/lookup readers wait out an in-progress write (even `seq`) then re-check: `mxtalk_string` / `stringp` / `json` / `int` / `exist` / `string_len` / `string_cap` / `name` / `type` / `next` / `intp` / `pointer` / `to_talk` (no `EAGAIN` for that reason). `mxtalk_each` is **step-consistent** (each `next` is quiet), not a frozen full-walk snapshot.
 
-**Naming notes:** cell type **`MX_VOID`** is accessed via **`mxtalk_set_pointer` / `mxtalk_pointer`** (talk-like “pointer”; process-local, skipped by `mxtalk_to_talk`). In-place buffers use **`mxtalk_stringp`** vs **`mxtalk_intp`** (same idea, different suffix). **`mxtalk_type(root)`** is always **`MX_OBJECT`** (including depth-1 roots, which have no L2). Illegal names (empty / `>= name_max`): writers → **`EINVAL`**; readers that only look up often → **`ENOENT`** / “missing”. **`mxtalk_begin` / `mxtalk_end`** on a read-only map are silent no-ops (no `EROFS`).
+**Naming notes:** cell type **`MX_VOID`** is accessed via **`mxtalk_set_pointer` / `mxtalk_pointer`** (talk-like “pointer”; process-local, skipped by `mxtalk_to_talk`). In-place buffers use **`mxtalk_stringp`** vs **`mxtalk_intp`**. **`mxtalk_type(root)`** is always **`MX_OBJECT`** (including depth-1 roots). Illegal names (empty / `>= name_max`): writers → **`EINVAL`**; readers that only look up often → **`ENOENT`** / “missing”. **`mxtalk_begin` / `mxtalk_end`** without `writer_va` claim are silent no-ops (no `EROFS`).
 
-**Lifetime (caller-owned, like `malloc`/`free`):** Child `mxtalk_t` handles and pointers from `mxtalk_string` / `stringp` / `intp` / `mxtalk_pointer` are **interior pointers** into the map. After `mxtalk_detach`, or after the writer `remove`/`delete`/type-change/STRING grow that recycles that slot or heap block, those pointers are **dangling** — the same class of bug as keeping a pointer after `free`. The library does not stamp generations on handles. Do not cache OBJECT handles across deletes; re-lookup with `mxtalk_json` when needed. Copy string bytes out if they must outlive the next mutating publish or detach. In-place edits via `stringp` / `intp` belong inside `mxtalk_begin` / `mxtalk_end`. Prefer not to `delete`/`remove` the current node inside `mxtalk_each` without saving `mxtalk_next` first (same-process); freed slots keep `next_in_*` so a racing reader can often still step forward.
+**Lifetime (caller-owned, like `malloc`/`free`):** `mxjson_t` children and pointers from `mxtalk_string` / `stringp` / `intp` / `mxtalk_pointer` are **interior** to the map. After `mxtalk_detach`, or after the writer `remove`/`delete`/type-change/STRING grow that recycles that slot or heap block, those pointers are **dangling**. There is no handle generation stamp. Do not cache OBJECT handles across deletes; re-lookup with `mxtalk_json`. Copy string bytes out if they must outlive the next mutating publish or detach. In-place edits via `stringp` / `intp` belong inside `mxtalk_begin` / `mxtalk_end`. Prefer not to `delete`/`remove` the current node inside `mxtalk_each` without saving `mxtalk_next` first; freed slots keep `next_in_*` so a racing reader can often still step forward.
 
 **Layouts:**
 
@@ -1649,7 +1658,7 @@ depth 1: [hdr][L1 hash buckets][L1 slots][heap]
 depth 2: [hdr][L1 buckets][L1 slots][L2 buckets][L2 pool][heap]
 ```
 
-Same magic/`MX_VERSION`; `hdr.depth` distinguishes m1 vs m2 maps.
+Same magic/`MX_VERSION` (**6**); `hdr.depth` distinguishes m1 vs m2 maps. Header includes `writer_va` (mmap base of the writable claim; not cleared by `detach`).
 
 ---
 
@@ -1657,7 +1666,7 @@ Same magic/`MX_VERSION`; `hdr.depth` distinguishes m1 vs m2 maps.
 
 ```c
 #define MX_MAGIC            0x4d32544bu  /* 'M2TK' */
-#define MX_VERSION          2u
+#define MX_VERSION          6u
 #define MX_NIL              0xFFFFFFFFu
 #define MX_DEFAULT_NAME_MAX 32
 #define MX_DEFAULT_HEAP     (64u * 1024u)
@@ -1668,7 +1677,8 @@ Same magic/`MX_VERSION`; `hdr.depth` distinguishes m1 vs m2 maps.
 #define MX_OBJECT  3
 #define MX_VOID    4
 
-typedef struct mxtalk_st *mxtalk_t;
+typedef struct mxtalk_st *mxtalk_t;   /* map owner */
+typedef struct mxjson_st *mxjson_t;   /* node in map (root or L1/L2) */
 
 #define mxtalk_each(var, parent) \
     for ( (var) = mxtalk_next( (parent), NULL ); \
@@ -1676,7 +1686,7 @@ typedef struct mxtalk_st *mxtalk_t;
           (var) = mxtalk_next( (parent), (var) ) )
 ```
 
-**Description:** `mxtalk_type()` returns one of `MX_*`. Use `mxtalk_each` to walk all attributes under a parent (root or OBJECT).
+**Description:** `mxtalk_type()` returns one of `MX_*`. Use `mxtalk_each` to walk all attributes under a parent (root or OBJECT). `parent` / `var` are **`mxjson_t`**.
 
 ---
 
@@ -1698,20 +1708,22 @@ mxtalk_t m2talk_create_mem(void *mem, uint32_t size, int max_l1, int max_l2,
     int max_l2_pool, int name_max, int max_heap);
 ```
 
-**Description:** Anonymous create uses `MAP_ANONYMOUS`. File create takes the writer flock then `ftruncate`s to `map_size` and **reinitializes** the map (always rebuild; use `mxtalk_attach` to open an existing file). `max_l2` caps attributes **per OBJECT**; `max_l2_pool` is the **global** L2 slot pool. **`map_size`** returns bytes needed after cap normalize (`0` + errno on error). **`create_mem`** initializes a caller buffer (`MX_OWN_WRAP`; `size` must be `>= map_size`) — used by `mcontrol_salloc_m*talk` / `alloc_m*talk` inside munix slots; `mxtalk_detach` drops the wrap owner only (does not free the buffer). Failures: `EINVAL` (caps), `EBUSY` (second writer on file), `ENOMEM`, etc. Returns root handle or `NULL`.
+**Description:** Anonymous create uses `MAP_ANONYMOUS`. File create takes the writer flock then `ftruncate`s to `map_size` and **reinitializes** the map (always rebuild; use `mxtalk_attach` to open an existing file). `max_l2` caps attributes **per OBJECT**; `max_l2_pool` is the **global** L2 slot pool. **`map_size`** returns bytes needed after cap normalize (`0` + errno on error). **`create_mem`** initializes a caller buffer (`MX_OWN_WRAP`; `size` must be `>= map_size`) — used by `mcontrol_salloc_m*talk` / `alloc_m*talk` inside munix slots; `mxtalk_detach` drops the wrap owner only (does not free the buffer; does not clear `writer_va`). Failures: `EINVAL` (caps), `EBUSY` (second writer on file), `ENOMEM`, etc. Returns **`mxtalk_t` owner** or `NULL` — use `mxtalk_root(map)` for the root node.
 
 **Example:**
 ```c
 mxtalk_t flat;
 mxtalk_t nested;
-mxtalk_t file_root;
+mxtalk_t file_map;
+mxjson_t root;
 
 flat = m1talk_create(64, 32, 64 * 1024);
 nested = m2talk_create(64, 32, 256, 32, 64 * 1024);
-file_root = m2talk_create_file("/tmp/demo.m2.map", 128, 32, 512, 32, 128 * 1024);
-if (flat == NULL || nested == NULL || file_root == NULL) {
+file_map = m2talk_create_file("/tmp/demo.m2.map", 128, 32, 512, 32, 128 * 1024);
+if (flat == NULL || nested == NULL || file_map == NULL) {
     /* check errno: EINVAL / EBUSY / … */
 }
+root = mxtalk_root(flat);
 ```
 
 ---
@@ -1721,22 +1733,26 @@ if (flat == NULL || nested == NULL || file_root == NULL) {
 ```c
 mxtalk_t mxtalk_attach(const char *path, int writable);
 mxtalk_t mxtalk_wrap(void *mem, uint32_t size, int writable);
-void     mxtalk_detach(mxtalk_t t);
-void    *mxtalk_data(mxtalk_t t);
-uint32_t mxtalk_size(mxtalk_t t);
+void     mxtalk_detach(mxtalk_t map);
+mxjson_t mxtalk_root(mxtalk_t map);
+void    *mxtalk_data(mxtalk_t map);
+uint32_t mxtalk_size(mxtalk_t map);
 ```
 
-**Description:** `attach` opens an existing map file (`writable!=0` → RDWR + writer flock; `0` → RO). `wrap` adopts caller memory (must already be a valid map; magic/version checked; **no `flock`** — shared writable wrap is caller’s mutex). `detach` closes fd / unmaps owned maps. `data` / `size` return map base and `hdr.map_size` (root only meaningful for size of whole map).
+**Description:** `attach` opens an existing map file (`writable!=0` → RDWR + writer flock + layout check + claim `writer_va` and heal even `seq` if needed; corrupt hdr → `EINVAL`; `0` → RO, new mmap, no claim / no layout check beyond magic/version/size). `wrap` adopts caller memory (must already be a valid map; magic/version checked; **no `flock`** — shared writable wrap is caller’s mutex). `detach` closes fd / unmaps owned maps (`MX_OWN_MMAP` only); does **not** clear `writer_va` (a `fork` child must not steal the parent’s claim). After `fork`, the child must `detach` the inherited owner — same VA would otherwise still look writable. `root` returns the root `mxjson_t` (map base). `data` / `size` return map base and `hdr.map_size`.
 
 **Example:**
 ```c
 mxtalk_t w;
 mxtalk_t r;
+mxjson_t root;
+mxjson_t rroot;
 void *base;
 uint32_t sz;
 
 w = m1talk_create_file("/tmp/demo.m1.map", 32, 24, 8192);
-mxtalk_set_string(w, "host", "gw1");
+root = mxtalk_root(w);
+mxtalk_set_string(root, "host", "gw1");
 base = mxtalk_data(w);
 sz = mxtalk_size(w);
 mxtalk_detach(w);
@@ -1745,7 +1761,8 @@ r = mxtalk_attach("/tmp/demo.m1.map", 0);
 if (r != NULL) {
     const char *s;
 
-    s = mxtalk_string(r, "host");
+    rroot = mxtalk_root(r);
+    s = mxtalk_string(rroot, "host");
     (void)s;
     mxtalk_detach(r);
 }
@@ -1756,11 +1773,11 @@ if (r != NULL) {
 ### 9.4 Writer coherency
 
 ```c
-void mxtalk_begin(mxtalk_t t);
-void mxtalk_end(mxtalk_t t);
+void mxtalk_begin(mxjson_t node);
+void mxtalk_end(mxjson_t node);
 ```
 
-**Description:** Seqlock fence for multi-field updates. Public `set_*` already nest `begin`/`end` internally; use explicit `begin`/`end` when writing several related keys as one publish unit, or when patching string buffers returned by `mxtalk_stringp` / `mxtalk_intp`. On a read-only map, `begin`/`end` are **silent no-ops** (they do not set `EROFS`).
+**Description:** Seqlock fence for multi-field updates (`begin`: odd→even; `end`: even→odd). Public `set_*` already nest this internally; use explicit `begin`/`end` when writing several related keys as one publish unit, or when patching buffers from `mxtalk_stringp` / `mxtalk_intp`. Without a `writer_va` claim, `begin`/`end` are **silent no-ops** (they do not set `EROFS`).
 
 **Example:**
 ```c
@@ -1775,27 +1792,27 @@ mxtalk_end(root);
 ### 9.5 Set / get
 
 ```c
-mxtalk_t     mxtalk_json_create(mxtalk_t t, const char *name);
-mxtalk_t     mxtalk_json(mxtalk_t t, const char *name);
+mxjson_t     mxtalk_json_create(mxjson_t parent, const char *name);
+mxjson_t     mxtalk_json(mxjson_t parent, const char *name);
 
-char        *mxtalk_set_string(mxtalk_t t, const char *name, const char *val);
-char        *mxtalk_set_string_cap(mxtalk_t t, const char *name, const char *val, int cap);
-const char  *mxtalk_string(mxtalk_t t, const char *name);
-char        *mxtalk_stringp(mxtalk_t t, const char *name);
+char        *mxtalk_set_string(mxjson_t obj, const char *name, const char *val);
+char        *mxtalk_set_string_cap(mxjson_t obj, const char *name, const char *val, int cap);
+const char  *mxtalk_string(mxjson_t obj, const char *name);
+char        *mxtalk_stringp(mxjson_t obj, const char *name);
 
-int64_t     *mxtalk_set_int(mxtalk_t t, const char *name, int64_t v);
-int64_t      mxtalk_int(mxtalk_t t, const char *name, int64_t def);
-int64_t     *mxtalk_intp(mxtalk_t t, const char *name);
+int64_t     *mxtalk_set_int(mxjson_t obj, const char *name, int64_t v);
+int64_t      mxtalk_int(mxjson_t obj, const char *name, int64_t def);
+int64_t     *mxtalk_intp(mxjson_t obj, const char *name);
 
-boole        mxtalk_set_pointer(mxtalk_t t, const char *name, void *ptr);
-void        *mxtalk_pointer(mxtalk_t t, const char *name);
+boole        mxtalk_set_pointer(mxjson_t obj, const char *name, void *ptr);
+void        *mxtalk_pointer(mxjson_t obj, const char *name);
 ```
 
-**Description:** Parent `t` is root or (on m2) an OBJECT. Setting a new type replaces the previous cell. `mxtalk_json_create` fails on depth-1 maps and under an existing OBJECT (`EPERM`). `set_string` / `set_int` / `set_pointer` return pointers into the map (`NULL` + errno on fail: `EROFS`, `ENOSPC`, `EINVAL`, …). `mxtalk_int` returns `def` if missing/wrong type (does not require errno). Pointer getters (`mxtalk_string` / `mxtalk_json` / `mxtalk_pointer` / `mxtalk_stringp` / `mxtalk_intp`) return `NULL` with **`ENOENT`** (missing key), **`EINVAL`** (bad arg, wrong parent, or wrong cell type), or **`EROFS`** (writable-only on RO map); they **wait** if a writer holds the seqlock. Success does not modify errno. `stringp` / `intp` are for in-place mutation inside `begin`/`end`.
+**Description:** Parent is root or (on m2) an OBJECT. Setting a new type replaces the previous cell. `mxtalk_json_create` fails on depth-1 maps and under an existing OBJECT (`EPERM`). `set_string` / `set_int` / `set_pointer` return pointers into the map (`NULL` + errno on fail: `EROFS`, `ENOSPC`, `EINVAL`, …). `mxtalk_int` returns `def` if missing/wrong type (does not require errno). Pointer getters return `NULL` with **`ENOENT`** (missing key), **`EINVAL`** (bad arg, wrong parent, or wrong cell type), or **`EROFS`** (writable-only APIs without claim); they **wait** while `seq` is even. Success does not modify errno. `stringp` / `intp` are for in-place mutation inside `begin`/`end`.
 
 **Example:**
 ```c
-mxtalk_t obj;
+mxjson_t obj;
 char *sp;
 int64_t *ip;
 void *marker;
@@ -1817,22 +1834,22 @@ if (obj != NULL) {
 ### 9.6 Walk / introspect / delete
 
 ```c
-const char  *mxtalk_name(mxtalk_t t);
-int          mxtalk_type(mxtalk_t t);
-boole        mxtalk_exist(mxtalk_t t, const char *name);
-int          mxtalk_string_len(mxtalk_t t, const char *name);
-int          mxtalk_string_cap(mxtalk_t t, const char *name);
+const char  *mxtalk_name(mxjson_t node);
+int          mxtalk_type(mxjson_t node);
+boole        mxtalk_exist(mxjson_t obj, const char *name);
+int          mxtalk_string_len(mxjson_t obj, const char *name);
+int          mxtalk_string_cap(mxjson_t obj, const char *name);
 
-mxtalk_t     mxtalk_next(mxtalk_t parent, mxtalk_t cur);
-boole        mxtalk_delete(mxtalk_t node);
-boole        mxtalk_remove(mxtalk_t parent, const char *name);
+mxjson_t     mxtalk_next(mxjson_t parent, mxjson_t cur);
+boole        mxtalk_delete(mxjson_t node);
+boole        mxtalk_remove(mxjson_t parent, const char *name);
 ```
 
 **Description:** `name` / `type` on a child handle (also wait on `seq`). `mxtalk_type(root)` is always `MX_OBJECT`. `string_len` is stored size including NUL; `string_cap` is heap capacity. `next(parent,NULL)` starts iteration; `delete` frees a node handle’s slot by index under the writer fence (no name re-lookup); `remove` looks up by name under parent. Deleting an OBJECT clears its L2 attrs. Avoid deleting the current `each` cursor without saving the next handle first.
 
 **Example:**
 ```c
-mxtalk_t cur;
+mxjson_t cur;
 
 mxtalk_each(cur, root) {
     printf("%s type=%d\n", mxtalk_name(cur), mxtalk_type(cur));
@@ -1845,11 +1862,11 @@ mxtalk_each(cur, root) {
 ### 9.7 talk_t bridge
 
 ```c
-talk_t mxtalk_to_talk(mxtalk_t t);
-boole  talk_to_mxtalk(mxtalk_t t, const char *name, talk_t src);
+talk_t mxtalk_to_talk(mxjson_t node);
+boole  talk_to_mxtalk(mxjson_t parent, const char *name, talk_t src);
 ```
 
-**Description:** `mxtalk_to_talk` builds a heap `talk_t` from root or OBJECT (skips `MX_VOID`; caller `talk_free`). `talk_to_mxtalk` runs the import under one writer `begin`/`end` (nested `set_*` stay inside that publish). If `name` is NULL/empty, import leaves into root (`t` must be root); if `name` is set, create/lookup OBJECT then import (depth 2 only — on m1 → `EPERM`). Nested objects under an OBJECT are rejected. Mid-import failure can leave a partial map (not transactional). Skin `json_set_number` stores decimal text and uses `int`; mxtalk `MX_INT` is `int64_t` — round-trips are lossy / may land as `MX_STRING`.
+**Description:** `mxtalk_to_talk` builds a heap `talk_t` from root or OBJECT (skips `MX_VOID`; caller `talk_free`). `talk_to_mxtalk` runs the import under one writer fence (nested `set_*` stay inside that publish). If `name` is NULL/empty, import leaves into root (`parent` must be root); if `name` is set, create/lookup OBJECT then import (depth 2 only — on m1 → `EPERM`). Nested objects under an OBJECT are rejected. Mid-import failure can leave a partial map (not transactional). Skin `json_set_number` stores decimal text and uses `int`; mxtalk `MX_INT` is `int64_t` — round-trips are lossy / may land as `MX_STRING`.
 
 **Example:**
 ```c
@@ -1879,10 +1896,12 @@ talk_free(src);
 
 int main(void)
 {
-    mxtalk_t root;
-    mxtalk_t obj;
-    mxtalk_t cur;
+    mxtalk_t map;
+    mxjson_t root;
+    mxjson_t obj;
+    mxjson_t cur;
     mxtalk_t ro;
+    mxjson_t rroot;
     char *sp;
     const char *cs;
     int64_t *ip;
@@ -1896,13 +1915,14 @@ int main(void)
     const char *path = "/tmp/mxtalk_doc_demo.map";
 
     /* —— m1 create / flat ops —— */
-    root = m1talk_create(32, 24, 16384);
-    if (root == NULL) {
+    map = m1talk_create(32, 24, 16384);
+    if (map == NULL) {
         return 1;
     }
+    root = mxtalk_root(map);
     if (mxtalk_json_create(root, "nope") != NULL) {
         /* depth 1: must fail with EPERM */
-        mxtalk_detach(root);
+        mxtalk_detach(map);
         return 1;
     }
     sp = mxtalk_set_string(root, "s1", "hello");
@@ -1931,16 +1951,17 @@ int main(void)
     (void)talk_to_mxtalk(root, NULL, src);   /* flat import OK on m1 */
     talk_free(src);
     (void)mxtalk_remove(root, "s2");
-    mxtalk_detach(root);
+    mxtalk_detach(map);
 
     /* —— m2 create_file / OBJECT / attach / wrap / begin-end —— */
     unlink(path);
-    root = m2talk_create_file(path, 64, 16, 128, 32, 32768);
-    if (root == NULL) {
+    map = m2talk_create_file(path, 64, 16, 128, 32, 32768);
+    if (map == NULL) {
         return 1;
     }
-    base = mxtalk_data(root);
-    map_sz = mxtalk_size(root);
+    root = mxtalk_root(map);
+    base = mxtalk_data(map);
+    map_sz = mxtalk_size(map);
     mxtalk_begin(root);
     mxtalk_set_string(root, "tick_s", "s0");
     mxtalk_set_int(root, "tick", 0);
@@ -1959,12 +1980,13 @@ int main(void)
     json_set_string(src, "from", "talk");
     (void)talk_to_mxtalk(root, "imp", src);
     talk_free(src);
-    mxtalk_detach(root);
+    mxtalk_detach(map);
 
     ro = mxtalk_attach(path, 0);
     if (ro != NULL) {
-        (void)mxtalk_string(ro, "tick_s");
-        /* RO write fails with EROFS */
+        rroot = mxtalk_root(ro);
+        (void)mxtalk_string(rroot, "tick_s");
+        /* RO write fails with EROFS (different VA, no writer_va claim) */
         mxtalk_detach(ro);
     }
     /* optional: mxtalk_wrap(base, map_sz, 1) when owning raw memory */
@@ -1988,17 +2010,17 @@ int main(void)
 
 `munix.h` combines **AF_UNIX SOCK_DGRAM signaling** with **shared mmap slot pools** for payloads. The server owns two maps (`in` = client→server requests, `out` = server→client replies). Paths come from `project_var_path`: unix `…/<name>.unix`, maps `…/<name>.mmap.in` / `…/<name>.mmap.out`.
 
-**Handle is the unix socket `fd`** (`listen`/`connect` return it; **must** close with `munix_close`). **One fd = one serialized request/reply channel.** Parallel in-flight RPCs need multiple endpoints.
+**Handle is opaque `munix_t`** (`listen`/`connect` return it; **must** close with `munix_close`). Use **`munix_fd(mx)`** for `poll` / `select` / libevent. **One endpoint = one serialized request/reply channel.** Parallel in-flight RPCs need multiple connects.
 
-**Opaque handle:** `munix_slot_t` is a pointer to a private struct — free with `munix_slot_free`.
+**Opaque types:** `munix_t` / `munix_slot_t` are pointers to private structs. Free the endpoint with `munix_close`; free slots with `munix_slot_free`.
 
 **Peer:** `munix_client_st` is caller storage (like `recvfrom`); `munix_client_t` is `munix_client_st *`. `sunix_take` writes **`addr`/`addrlen`/`corr`** (preserves **`data`**); `sunix_post` echoes `corr` on the reply; pass `&peer` to take/post; no alloc/free.
 
-**fd / slot lifetime:** use only `munix_close(fd)`. Do **not** `close(fd)` or `dup()` the fd into munix APIs — `close` alone leaves the internal fd→ctx table and maps/paths unclean; a later open that reuses the number can hit the wrong endpoint. **`munix_slot_free` all owned slots before `munix_close`** — a slot handle keeps a pointer into the endpoint; free-after-close is use-after-free.
+**Endpoint / slot lifetime:** always `munix_close(mx, …)` — never bare `close(munix_fd(mx))` or `dup` into munix APIs. **`munix_slot_free` all owned slots before `munix_close`** — a slot handle keeps pointers into the endpoint/maps; free-after-close is use-after-free. `munix_close` does **not** free your slots. Normal exit: `munix_close(mx, 0)` (unlinks the unix path). After `fork`, if the parent still owns a listen path: `munix_close(mx, 1)` skips unlink.
 
 | API | Role |
 |-----|------|
-| **`munix_listen` / `munix_connect` / `munix_close`** | Endpoint; returned `fd` for `poll` / `select` / libevent |
+| **`munix_listen` / `munix_connect` / `munix_close` / `munix_fd`** | Endpoint; `munix_fd` for `poll` / `select` / libevent |
 | **`munix_set_data` / `munix_get_data`** | Caller cookie on endpoint (`void*`; munix never frees) |
 | **`munix_slot_alloc` / `sunix_slot_alloc`** | Client request slot / server reply slot |
 | **`munix_slot_data` / `munix_slot_cap` / `munix_slot_free`** | Payload pointer / usable size / return to pool |
@@ -2013,25 +2035,25 @@ int main(void)
 
 - **key**: required NUL-terminated string (may be `""`); soft max **1024** bytes in the implementation. Pointer from take is valid until the **next successful** take on that endpoint (failed take / alloc drain / discarded mismatch do not overwrite it). Short control/meta can go in **key only** (`slot=NULL`) without a payload slot.
 - **slot**: may be `NULL` on **post** for **key-only** traffic (`MUNIX_POST_KEEP` + `NULL` → `EINVAL`). On **take**, the out-pointer is required (`NULL` → `EINVAL`); `*slot` may be `NULL` (key-only reply). Wire length is always `munix_slot_cap` (full allocated/usable buffer), not a separate app length — frame inside the buffer yourself (`\0`, m1talk, …), or use key-only when the payload would be tiny. **`munix_slot_alloc` / `sunix_slot_alloc` require `len > 0`** (`len==0` → `NULL`/`EINVAL`); do not use `alloc(0)` for key-only.
-- **`timeout_ms`**: `0` = non-block (`EAGAIN`), `>0` = wait ms (`ETIMEDOUT`), `<0` = forever. Ignored when `MUNIX_MMAP_ONLY`. Client `munix_take` may wait; **`sunix_take` is always non-blocking** (server is 1:N — do not block the listen loop; `poll`/`select` first). **After `POLLIN`, drain like non-blocking `recvfrom`**: loop take until `NULL`/`EAGAIN`. One successful take is one `POST`; `GRANT_REQ` / `HELLO` / junk are consumed inside take and do not return to the caller. GRANT waiters are woken when take hits `EAGAIN` (socket empty) or when an in-map slot is freed.
-- **Client order**: one in-flight RPC per connect fd — `alloc → post → take` (then free as needed). Wire **`corr`** (monotonic `uint64`) tags each request `POST`; the reply must echo it. While a reply is pending, `munix_take` delivers only that corr (mismatched POSTs are discarded and **out** slots returned). Idle take (`reply_pending` clear) delivers any valid POST. Starting a new **`alloc` abandons** any prior unread reply by clearing `reply_pending` (one-shot; unread = failed/dropped). mmap-hit does **not** drain the fd — leftover datagrams stay until a later `take` / drain / `munix_close`. `post` while a reply is still pending → `EBUSY` (take it, or alloc to abandon). Parallel RPCs → multiple `connect` fds. `GRANT_REQ`/`GRANT` use the same corr field for alloc-wait matching. **`munix_slot_alloc` tries the mmap freelist first**, except a same-len pending GRANT skips mmap and only drains/claims; on miss it may `GRANT_REQ` + drain (claim GRANT into a slot, or discard leftover POSTs). Event loop: while waiting for GRANT, POLLIN must retry **`munix_slot_alloc`**, not `munix_take` (take returns unused GRANTs to the pool; matching `corr` clears `grant_pending_req`).
+- **`timeout_ms`**: `0` = non-block (`EAGAIN`), `>0` = wait ms (`ETIMEDOUT`), `<0` = forever. Ignored when `MUNIX_MMAP_ONLY`. Client `munix_take` may wait; **`sunix_take` is always non-blocking** (server is 1:N — do not block the listen loop; `poll`/`select` first on `munix_fd(mx)`). **After `POLLIN`, drain like non-blocking `recvfrom`**: loop take until `NULL`/`EAGAIN`. One successful take is one `POST`; `GRANT_REQ` / `HELLO` / junk are consumed inside take and do not return to the caller. GRANT waiters are woken when take hits `EAGAIN` (socket empty) or when an in-map slot is freed.
+- **Client order**: one in-flight RPC per connect endpoint — `alloc → post → take` (then free as needed). Wire **`corr`** (monotonic `uint64`) tags each request `POST`; the reply must echo it. While a reply is pending, `munix_take` delivers only that corr (mismatched POSTs are discarded and **out** slots returned). Idle take (`reply_pending` clear) delivers any valid POST. Starting a new **`alloc` abandons** any prior unread reply by clearing `reply_pending` (one-shot; unread = failed/dropped). mmap-hit does **not** drain the fd — leftover datagrams stay until a later `take` / drain / `munix_close`. `post` while a reply is still pending → `EBUSY` (take it, or alloc to abandon). Parallel RPCs → multiple `connect` endpoints. `GRANT_REQ`/`GRANT` use the same corr field for alloc-wait matching. **`munix_slot_alloc` tries the mmap freelist first**, except a same-len pending GRANT skips mmap and only drains/claims; on miss it may `GRANT_REQ` + drain (claim GRANT into a slot, or discard leftover POSTs). Event loop: while waiting for GRANT, POLLIN must retry **`munix_slot_alloc`**, not `munix_take` (take returns unused GRANTs to the pool; matching `corr` clears `grant_pending_req`).
 - **Server restart**: client `take`/`alloc`/`post` → `ESTALE` once the session is marked stale; `munix_close` + `munix_connect` and retry the whole RPC.
-- **Caller contracts (not enforced by the API)**: only `munix_close` (never bare `close`/`dup` into munix); free owned **slots** **before** `munix_close`; KEEP needs cooperative peers (see §10.1 / §10.9); **one fd is not thread-safe**; **multi-fd × one thread per fd is OK** (process×map `plock->gate` serializes map lock/unlock); parallel RPCs use multiple `connect` fds; do not use across `fork` without reconnect.
-- **mmap pool lock (v7):** header `lock` is `MU_LOCK_PACK(pid, epoch)` on a word matching the ABI (`uint64` on LP64: pid32|epoch32; `uint32` on 32-bit: pid16|epoch16, native CAS; keep `pid_max` ≤ 65536 on 32-bit). (`0` = free; legacy TAS `pid==1` still stealable). A separate **`dirty`** bit is set while a holder may be mid-update and cleared only on unlock. **Steal** (dead/legacy owner — `kill(0)` only after 65535 contended `sched_yield`s so live holders are not probed every spin; **pid reuse** where this process does not hold, or **held+epoch mismatch** across threads) or **`dirty`** forces dead-owner reclaim + freelist rebuild. Process-local hold state (`gate`+`held`+`epoch`) is keyed by map file identity (`dev`+`ino`) and shared by all fds on that map — `gate` allows one-thread-per-connect-fd; `held`+`epoch` detect pid reuse. Slot ownership is **`(owner_pid, owner_birth)`** (starttime; self cached once); pressure reclaim treats mismatched birth as dead. Steal/dirty repair under the map lock uses **`kill`-only** liveness (no `/proc`); full `(pid, birth)` checks run on **pressure** `mu_reclaim_dead` **outside** the lock (snapshot → classify → re-lock), and only for slots whose reserved stamp is at least ~2s old. **Hybrid concurrency:** the map lock covers **freelist + heap** (`alloc` / `free` / reclaim rebuild). Per-slot **`state`** for `post` (`ALLOC|HELD→POSTED`) and take claim (`POSTED→HELD`) is **lock-free CAS** (no map lock on that hot path); freelist return always **CAS → `FREE`** then `gen++` so it cannot race a concurrent post/take. **Heap:** first 8 bytes are permanent pad so chunk offset `0` stays the freelist-empty / alloc-fail sentinel.
-- **fd close**: only `munix_close(fd)` — never bare `close(fd)` / `dup()` into munix APIs (see §10.1).
+- **Caller contracts (not enforced by the API)**: only `munix_close` (never bare `close`/`dup` into munix); free owned **slots** **before** `munix_close`; KEEP needs cooperative peers (see §10.1 / §10.9); **one endpoint is not thread-safe**; **multi-endpoint × one thread each is OK** (lock word carries unix fd so siblings wait; each endpoint has its own mmap mapping); parallel RPCs use multiple connects; prefer close before `fork` (see §10.1).
+- **mmap pool lock (v8):** header `lock` is `MU_LOCK_PACK(pid, unix_fd)` on a word matching the ABI (`uint64` on LP64: pid32|fd32; `uint32` on 32-bit: pid16|fd16, native CAS; keep `pid_max` ≤ 65536 on 32-bit). (`0` = free; legacy TAS `pid==1` still stealable). A separate **`dirty`** bit is set while a holder may be mid-update and cleared only on unlock. **Steal** (dead/legacy owner — `kill(0)` only after 65535 contended `sched_yield`s so live holders are not probed every spin; or same pid+fd with this endpoint `!lock_held`) or **`dirty`** forces dead-owner reclaim + freelist rebuild. Each `munix_t` attaches the listen map files with its own `mmap` and keeps local `lock_held`/`owner_fd` — no process-global plock table; a sibling that sees another fd waits. Slot ownership is **`(owner_pid, owner_birth)`** (starttime; self cached once); pressure reclaim treats mismatched birth as dead. Steal/dirty repair under the map lock uses **`kill`-only** liveness (no `/proc`); full `(pid, birth)` checks run on **pressure** `mu_reclaim_dead` **outside** the lock (snapshot → classify → re-lock), and only for slots whose reserved stamp is at least ~2s old. **Hybrid concurrency:** the map lock covers **freelist + heap** (`alloc` / `free` / reclaim rebuild). Per-slot **`state`** for `post` (`ALLOC|HELD→POSTED`) and take claim (`POSTED→HELD`) is **lock-free CAS** (no map lock on that hot path); freelist return always **CAS → `FREE`** then `gen++` so it cannot race a concurrent post/take. **Heap:** first 8 bytes are permanent pad so chunk offset `0` stays the freelist-empty / alloc-fail sentinel.
+- **close**: only `munix_close(mx, dont_unlink)` — never bare `close` / `dup` into munix APIs (see §10.1).
 - **slot vs close**: `munix_slot_free` owned handles **before** `munix_close`; free-after-close is UAF (see §10.1 / §10.2).
 - **`munix_slot_t`**: opaque pointer. **`munix_client_st`**: caller-owned peer storage (`addr`/`addrlen`/`corr`/`data`); **`munix_client_t`**: pointer to it. `sunix_take` fills `addr`/`addrlen`/`corr` (preserves `data`); `sunix_post` echoes `corr`; pass `&peer` to take/post.
-- **`munix_set_data` / `munix_get_data`**: optional caller cookie on the endpoint (`void*`). Useful when an event loop only has `fd`. Munix never frees the pointer; clear or replace before `munix_close` if you own the object.
+- **`munix_set_data` / `munix_get_data`**: optional caller cookie on the endpoint (`void*`). Keep `munix_t` in your event arg (or your own map); cookie is for wrappers. Munix never frees the pointer; clear or replace before `munix_close` if you own the object.
 - **`munix_slot_set_data` / `munix_slot_get_data`**: optional caller cookie on a **slot handle** (not the mmap payload from `munix_slot_data`). Default `NULL` at handle create; `munix_slot_free` does not free the cookie.
 - **`munix_client_set_data` / `munix_client_get_data`**: optional caller cookie on peer storage; `sunix_take` does not clear it.
 - **Safe point for KEEP reuse**: after you `munix_take` the reply, the peer has finished with the previous request slot.
-- **Roles**: use client APIs only on `connect` fds and server APIs only on `listen` fds (wrong role → fail / `EINVAL`).
+- **Roles**: use client APIs only on `connect` endpoints and server APIs only on `listen` endpoints (wrong role → fail / `EINVAL`).
 
 **Roles:**
 
 ```text
 Client: connect → alloc → fill → post → take → (slot_free if needed)
-Server: listen  → poll(fd) → sunix_take until EAGAIN → (optional sunix_slot_alloc) → sunix_post
+Server: listen  → poll(munix_fd) → sunix_take until EAGAIN → (optional sunix_slot_alloc) → sunix_post
 ```
 
 ---
@@ -2039,47 +2061,54 @@ Server: listen  → poll(fd) → sunix_take until EAGAIN → (optional sunix_slo
 ### 10.1 Endpoint
 
 ```c
-int  munix_listen(const char *name,
+typedef struct munix_st *munix_t; /* opaque */
+
+munix_t munix_listen(const char *name,
     int in_slots, size_t in_heap,
     int out_slots, size_t out_heap);
-int  munix_connect(const char *name);
-void munix_close(int fd);
-void munix_set_data(int fd, void *data); /* caller cookie; never freed by munix */
-void *munix_get_data(int fd);
+munix_t munix_connect(const char *name);
+void    munix_close(munix_t mx, int dont_unlink);
+int     munix_fd(munix_t mx); /* poll/select/libevent; NULL → -1 */
+
+void    munix_set_data(munix_t mx, void *data); /* caller cookie; never freed by munix */
+void   *munix_get_data(munix_t mx);
 ```
 
-**Description:** `listen` creates the unix socket and both mmap files (new `map_gen` each listen). **Pool args:** `in_slots` / `out_slots` must be **`≥ 1`**; values **above 512 are clamped to 512**. `in_heap` / `out_heap` must be **`≥ 64`** and fit in `uint32_t`; the resulting map size (`header + slot table + heap`) must also fit in `uint32_t` or `listen` fails with `EINVAL` (rejects combinations that would wrap). `connect` attaches maps, reads `map_gen`, binds a **per-endpoint** client datagram path (`…/<name>.unix-<pid>-<fd>` so same-process multi-connect does not collide), then connects to the server unix (**does not** send HELLO). Both return the unix socket `fd` (`>=0`) or `-1` on failure. The fd is non-blocking and suitable for event loops; pass the same fd into the other munix APIs.
+**Description:** `listen` creates the unix socket and both mmap files (new `map_gen` each listen). **Pool args:** `in_slots` / `out_slots` must be **`≥ 1`**; values **above 512 are clamped to 512**. `in_heap` / `out_heap` must be **`≥ 64`** and fit in `uint32_t`; the resulting map size (`header + slot table + heap`) must also fit in `uint32_t` or `listen` fails with `EINVAL` (rejects combinations that would wrap). `connect` attaches maps, reads `map_gen`, binds a **per-endpoint** client datagram path (`…/<name>.unix-<pid>-<fd>` so same-process multi-connect does not collide), then connects to the server unix (**does not** send HELLO). Both return a **`munix_t`** or `NULL` on failure. The unix socket is non-blocking; use **`munix_fd(mx)`** in event loops and pass the same **`munix_t`** into the other munix APIs.
 
-**Cookie (`munix_set_data` / `munix_get_data`):** attach a private pointer for wrappers / libevent callbacks that only see `fd`. Default is `NULL`. Munix never frees it; `munix_close` drops the endpoint only.
+**`dont_unlink`:** `0` = unlink the unix path on close (normal). `1` = keep the path (e.g. fork child dropping an inherited listen while the parent still owns it). Close still closes the socket fd, unmaps, and frees `mx`; it does **not** `munix_slot_free` your slots.
+
+**Cookie (`munix_set_data` / `munix_get_data`):** attach a private pointer for wrappers / libevent callbacks. Default is `NULL`. Munix never frees it; `munix_close` drops the endpoint only.
 
 ```c
 munix_set_data(cli, my_session);
-/* in poll callback: */
-sess = munix_get_data(fd);
+/* keep munix_t in the event arg (or your own fd→mx map) */
+sess = munix_get_data(cli);
 ```
 
 **`munix_close` vs `close`:**
 
 | Do | Do not |
 |----|--------|
-| `munix_close(fd)` to destroy the endpoint | `close(fd)` on a munix fd |
-| `poll` / `select` / libevent on the same `fd` | `dup(fd)` then pass the copy into munix APIs |
+| `munix_close(mx, 0)` to destroy the endpoint (unlink unix path) | `close(munix_fd(mx))` on a munix socket |
+| `munix_close(mx, 1)` after fork when parent still owns the path | `dup(fd)` then pass the copy into munix APIs |
+| `poll` / `select` / libevent on `munix_fd(mx)` | treat `munix_fd` as the API handle |
 | `munix_slot_free` owned slots, then `munix_close` | `munix_slot_free` after / across `munix_close` |
 
 Why:
 
-- Bare `close(fd)`: munix keeps an internal **fd → endpoint** table plus mmap/path state. `close` only drops the kernel socket; the table entry and maps remain. When that fd number is reused later, munix APIs can hit the **wrong** endpoint (`EBUSY` on register, or silent mis-routing). No kernel hook can fix this — callers must use `munix_close`.
-- Free-after-close: each `munix_slot_t` points back at the endpoint. `munix_close` frees that endpoint; a later `munix_slot_free` / `munix_slot_data` is **use-after-free**. Munix does not track live slot handles, so this is a caller ordering rule (same class of contract as `close` vs `munix_close`).
+- Bare `close(fd)`: drops only the kernel socket; maps/paths/`munix_t` are left unclean. Always `munix_close`.
+- Free-after-close: each `munix_slot_t` points back at the endpoint. `munix_close` frees that endpoint; a later `munix_slot_free` / `munix_slot_data` is **use-after-free**. Munix does not track live slot handles.
 
 **Example:**
 
 ```c
-int srv;
-int cli;
+munix_t srv;
+munix_t cli;
 
 srv = munix_listen("echo_demo", 16, 64 * 1024, 16, 64 * 1024);
 cli = munix_connect("echo_demo");
-if (srv < 0 || cli < 0) {
+if (srv == NULL || cli == NULL) {
     /* path / map / bind failure */
 }
 ```
@@ -2099,8 +2128,8 @@ void         munix_slot_free(munix_slot_t slot);
 void         munix_slot_set_data(munix_slot_t slot, void *data);
 void        *munix_slot_get_data(munix_slot_t slot);
 
-munix_slot_t munix_slot_alloc(int fd, size_t len, int timeout_ms, int flags);
-munix_slot_t sunix_slot_alloc(int fd, size_t len);
+munix_slot_t munix_slot_alloc(munix_t mx, size_t len, int timeout_ms, int flags);
+munix_slot_t sunix_slot_alloc(munix_t mx, size_t len);
 ```
 
 **Description:**
@@ -2135,11 +2164,11 @@ if (b == NULL && errno == EAGAIN) {
 ```c
 #define MUNIX_POST_KEEP  0x1
 
-int         munix_post(int fd, const char *key, munix_slot_t slot, int flags);
-const char *munix_take(int fd, munix_slot_t *slot, int timeout_ms);
+int         munix_post(munix_t mx, const char *key, munix_slot_t slot, int flags);
+const char *munix_take(munix_t mx, munix_slot_t *slot, int timeout_ms);
 ```
 
-**`munix_post`:** `key` is required (not NULL; may be `""`). `slot` may be NULL (key-only). **`MUNIX_POST_KEEP` + `slot==NULL` → `EINVAL`**. `flags=0`: success **consumes** the handle (do not free/use again). **`MUNIX_POST_KEEP`**: handle stays valid; peer must not pool-free; reuse after you have taken the reply. One in-flight RPC per fd: `post` assigns a wire **`corr`**. **Send is non-blocking (`sendto`-style)**: socket send buffer full → `-1`/`EAGAIN` and the slot handle is **not** consumed (state rolled back) — wait for writable (`poll`/`EV_WRITE`) and retry the same post. Session already stale → `-1`/`ESTALE`. Wrong endpoint / wrong send-side map for `slot` → `-1`/`EINVAL`. Reply still pending → `-1`/`EBUSY` (take the reply, or `alloc` to abandon that round).
+**`munix_post`:** `key` is required (not NULL; may be `""`). `slot` may be NULL (key-only). **`MUNIX_POST_KEEP` + `slot==NULL` → `EINVAL`**. `flags=0`: success **consumes** the handle (do not free/use again). **`MUNIX_POST_KEEP`**: handle stays valid; peer must not pool-free; reuse after you have taken the reply. One in-flight RPC per endpoint: `post` assigns a wire **`corr`**. **Send is non-blocking (`sendto`-style)**: socket send buffer full → `-1`/`EAGAIN` and the slot handle is **not** consumed (state rolled back) — wait for writable (`poll`/`EV_WRITE` on `munix_fd(mx)`) and retry the same post. Session already stale → `-1`/`ESTALE`. Wrong endpoint / wrong send-side map for `slot` → `-1`/`EINVAL`. Reply still pending → `-1`/`EBUSY` (take the reply, or `alloc` to abandon that round).
 
 **`munix_take`:** out-pointer `slot` is required (`NULL` → `EINVAL`); `*slot` may be `NULL` (key-only). `timeout_ms` `< 0` block, `0` `EAGAIN`, `> 0` `ETIMEDOUT`. While a reply is pending, delivers only the last post’s matching `corr`; mismatched POSTs are discarded (**out** slots returned). Idle take (`reply_pending` clear) delivers any valid POST. Fail → `NULL` + errno (`EAGAIN` / `ETIMEDOUT` / `ESTALE` / `EPROTO` / `ENOMEM` / …). **Corrupt / truncated datagrams are skipped**; `EPROTO` is reserved for slot/state protocol breaks after a valid matching `POST` frame (e.g. gen mismatch, late aged reclaim). If building the slot handle fails with **`ENOMEM`**, or wire `payload_len` exceeds the slot **`payload_cap`** (`EPROTO`): non-KEEP reply is freelisted (message dropped); **KEEP** leaves the slot `POSTED` so the **sender’s** handle stays valid — the datagram is already consumed, so **this take cannot be retried** (further takes wait for a new reply). Timeout does **not** clear `reply_pending`. GRANT datagrams on take are always returned to the pool (not claimed). Matching `corr` **clears** `grant_pending_req` so a later alloc may send a fresh `GRANT_REQ`; wrong/late GRANT keeps the wait. Claim is only in `munix_slot_alloc`.
 
@@ -2156,15 +2185,15 @@ typedef struct munix_client_struct {
 } munix_client_st;
 typedef munix_client_st *munix_client_t;
 
-const char *sunix_take(int fd, munix_slot_t *slot, munix_client_t client);
-int         sunix_post(int fd, const char *key, munix_slot_t slot,
+const char *sunix_take(munix_t mx, munix_slot_t *slot, munix_client_t client);
+int         sunix_post(munix_t mx, const char *key, munix_slot_t slot,
                 munix_client_t client, int flags);
 
 void  munix_client_set_data(munix_client_t client, void *data);
 void *munix_client_get_data(munix_client_t client);
 ```
 
-**Description:** `sunix_take` is **always non-blocking** (`NULL`/`EAGAIN` if idle) by design: one server fd serves many clients, so the listen loop must not block inside take — use `poll`/`select`/libevent, then **drain like non-blocking `recvfrom`** (loop take until `EAGAIN`). One success is one `POST`; `GRANT_REQ` is queued inside take and waiters are woken on that `EAGAIN` (and on in-map `slot_free`). Out-pointer `slot` and `client` are required (`NULL` → `EINVAL`); `*slot` may be NULL (key-only). **Corrupt / truncated datagrams are skipped** (same as client take). On success: key (may be `""`), `*slot` may be NULL, and `client` gets peer **`addr`/`addrlen`/`corr`** (**recvfrom style** — **`data` is preserved**; caller owns the `munix_client_st`; safe to keep/copy across later takes). On failure, the caller's storage is **unchanged** — only trust `addr`/`addrlen`/`corr` after success. `sunix_post` requires a `munix_client_t` (pointer to that storage or any saved copy) and **echoes `client->corr`** on the reply wire; `slot` may be NULL; `flags` same KEEP rules as client post (`KEEP` + `NULL` → `EINVAL`). Slot must belong to this listen fd’s **out** map (`EINVAL` otherwise). **`sunix_post` is non-blocking (`sendto`-style)** — full send buffer → `-1`/`EAGAIN`, handle kept for retry when writable (do not block the listen loop waiting inside post). Optional: drain take first, copy `key` + `munix_client_st`, free the in slot, queue the reply, `sunix_post` on `POLLOUT` (§10.5.1). The listen fd is never marked `session_stale` (that flag is client-only), so `sunix_post` does not return `ESTALE` in practice. Library take paths write only `addr`/`addrlen`/`corr` (never wipe `data`); callers may zero-init or `munix_client_set_data` before first use if they rely on the cookie.
+**Description:** `sunix_take` is **always non-blocking** (`NULL`/`EAGAIN` if idle) by design: one server endpoint serves many clients, so the listen loop must not block inside take — use `poll`/`select`/libevent on `munix_fd(mx)`, then **drain like non-blocking `recvfrom`** (loop take until `EAGAIN`). One success is one `POST`; `GRANT_REQ` is queued inside take and waiters are woken on that `EAGAIN` (and on in-map `slot_free`). Out-pointer `slot` and `client` are required (`NULL` → `EINVAL`); `*slot` may be NULL (key-only). **Corrupt / truncated datagrams are skipped** (same as client take). On success: key (may be `""`), `*slot` may be NULL, and `client` gets peer **`addr`/`addrlen`/`corr`** (**recvfrom style** — **`data` is preserved**; caller owns the `munix_client_st`; safe to keep/copy across later takes). On failure, the caller's storage is **unchanged** — only trust `addr`/`addrlen`/`corr` after success. `sunix_post` requires a `munix_client_t` (pointer to that storage or any saved copy) and **echoes `client->corr`** on the reply wire; `slot` may be NULL; `flags` same KEEP rules as client post (`KEEP` + `NULL` → `EINVAL`). Slot must belong to this listen endpoint’s **out** map (`EINVAL` otherwise). **`sunix_post` is non-blocking (`sendto`-style)** — full send buffer → `-1`/`EAGAIN`, handle kept for retry when writable (do not block the listen loop waiting inside post). Optional: drain take first, copy `key` + `munix_client_st`, free the in slot, queue the reply, `sunix_post` on `POLLOUT` (§10.5.1). The listen endpoint is never marked `session_stale` (that flag is client-only), so `sunix_post` does not return `ESTALE` in practice. Library take paths write only `addr`/`addrlen`/`corr` (never wipe `data`); callers may zero-init or `munix_client_set_data` before first use if they rely on the cookie.
 
 ---
 
@@ -2177,7 +2206,8 @@ void *munix_client_get_data(munix_client_t client);
 
 static int run_server(const char *name)
 {
-    int mx;
+    munix_t mx;
+    int fd;
     struct pollfd pfd;
     munix_slot_t in_slot;
     munix_slot_t out_slot;
@@ -2188,10 +2218,11 @@ static int run_server(const char *name)
     size_t n;
 
     mx = munix_listen(name, 16, 64 * 1024, 16, 64 * 1024);
-    if (mx < 0) {
+    if (mx == NULL) {
         return 1;
     }
-    pfd.fd = mx;
+    fd = munix_fd(mx);
+    pfd.fd = fd;
     pfd.events = POLLIN;
     for (;;) {
         if (poll(&pfd, 1, 1000) <= 0) {
@@ -2221,7 +2252,7 @@ static int run_server(const char *name)
             }
         }
     }
-    /* munix_close(mx); */
+    /* munix_close(mx, 0); */
 }
 ```
 
@@ -2240,7 +2271,8 @@ static int run_server(const char *name)
 
 static int run_server_queued(const char *name)
 {
-    int mx;
+    munix_t mx;
+    int fd;
     struct pollfd pfd;
     struct {
         munix_client_st client;
@@ -2261,12 +2293,13 @@ static int run_server_queued(const char *name)
     size_t klen;
 
     mx = munix_listen(name, 16, 64 * 1024, 16, 64 * 1024);
-    if (mx < 0) {
+    if (mx == NULL) {
         return 1;
     }
     qhead = 0;
     qn = 0;
-    pfd.fd = mx;
+    fd = munix_fd(mx);
+    pfd.fd = fd;
     for (;;) {
         pfd.events = POLLIN;
         if (qn > 0) {
@@ -2333,7 +2366,7 @@ static int run_server_queued(const char *name)
             qn--;
         }
     }
-    /* munix_close(mx); */
+    /* munix_close(mx, 0); */
 }
 ```
 
@@ -2342,7 +2375,7 @@ static int run_server_queued(const char *name)
 ### 10.6 Client — synchronous call
 
 ```c
-static int rpc_sync(int mx, const char *api, const void *req, size_t req_len)
+static int rpc_sync(munix_t mx, const char *api, const void *req, size_t req_len)
 {
     munix_slot_t slot;
     munix_slot_t reply;
@@ -2391,7 +2424,7 @@ Pre-loan a KEEP slot (or use `MUNIX_MMAP_ONLY` and fail-fast). Loop only waits f
 enum { ST_IDLE = 0, ST_WAIT_REPLY };
 
 struct rpc_sel {
-    int mx;
+    munix_t mx;
     munix_slot_t req; /* KEEP */
     int state;
 };
@@ -2399,13 +2432,13 @@ struct rpc_sel {
 static int rpc_sel_open(struct rpc_sel *r, const char *name, size_t need)
 {
     r->mx = munix_connect(name);
-    if (r->mx < 0) {
+    if (r->mx == NULL) {
         return -1;
     }
     r->req = munix_slot_alloc(r->mx, need, -1, 0);
     if (r->req == NULL) {
-        munix_close(r->mx);
-        r->mx = -1;
+        munix_close(r->mx, 0);
+        r->mx = NULL;
         return -1;
     }
     r->state = ST_IDLE;
@@ -2462,7 +2495,7 @@ static void rpc_sel_loop(struct rpc_sel *r)
     int fd;
     int n;
 
-    fd = r->mx;
+    fd = munix_fd(r->mx);
     (void)rpc_sel_begin(r, "api");
     for (;;) {
         if (r->state == ST_IDLE) {
@@ -2494,7 +2527,7 @@ Without KEEP, each shot uses `munix_slot_alloc(mx, n, 0, MUNIX_MMAP_ONLY)` in `b
 #include <errno.h>
 
 struct rpc_ev {
-    int mx;
+    munix_t mx;
     munix_slot_t req;
     struct event *ev;
     int waiting;
@@ -2517,7 +2550,7 @@ static void rpc_ev_readable(evutil_socket_t fd, short what, void *arg)
         if (errno == EAGAIN) {
             return;
         }
-        /* ESTALE: munix_close, reconnect, re-arm event */
+        /* ESTALE: munix_close(mx, 0), reconnect, re-arm event */
         return;
     }
     if (reply != NULL) {
@@ -2531,15 +2564,15 @@ static int rpc_ev_open(struct rpc_ev *r, struct event_base *base, const char *na
     int fd;
 
     r->mx = munix_connect(name);
-    if (r->mx < 0) {
+    if (r->mx == NULL) {
         return -1;
     }
     r->req = munix_slot_alloc(r->mx, need, -1, 0);
     if (r->req == NULL) {
-        munix_close(r->mx);
+        munix_close(r->mx, 0);
         return -1;
     }
-    fd = r->mx;
+    fd = munix_fd(r->mx);
     r->ev = event_new(base, fd, EV_READ | EV_PERSIST, rpc_ev_readable, r);
     event_add(r->ev, NULL);
     r->waiting = 0;
@@ -2609,7 +2642,7 @@ Server KEEP for reply slots is the same idea via `sunix_post(..., MUNIX_POST_KEE
 - **Orphan GRANT:** after a successful GRANT send the slot is `UNCLAIMED` until the client claims it in mmap. The same aged `mu_reclaim_dead` pass freelists `ALLOC`+`UNCLAIMED` older than ~2s (no `/proc`; 29-bit modular second stamp in `reserved`). Server in-map scan is on take `EAGAIN` when waiters remain, not on each in-map free. Late claim after reclaim is ignored (`slot_gen` / state check).
 - **Orphan out POSTED (non-KEEP):** reply posted but never taken — under out-pool pressure, `POSTED` older than ~2s is freelisted (same stamp encoding). **KEEP replies** are not aged while the owner lives; **dead** KEEP owners are reclaimed by dead-owner pressure reclaim (not by POSTED age alone).
 - Server death + new `listen` still uses `map_gen` / `ESTALE` (reconnect). KEEP is not a substitute for that.
-- Map allocator (v6): slot-first + chunk `owner_slot`/`owner_gen`; freelist is rebuildable from the bump layout; age stamps use 29-bit seconds; map lock is `(pid, epoch)` in an ABI-sized word + **`dirty`** with mandatory reclaim+rebuild on steal/dirty; slot **state** for post/take is CAS (see §10.0 hybrid); slot owner is `(pid, starttime)`.
+- Map allocator (v8): slot-first + chunk `owner_slot`/`owner_gen`; freelist is rebuildable from the bump layout; age stamps use 29-bit seconds; map lock is `(pid, unix_fd)` in an ABI-sized word + **`dirty`** with mandatory reclaim+rebuild on steal/dirty; slot **state** for post/take is CAS (see §10.0 hybrid); slot owner is `(pid, starttime)`.
 
 ---
 
@@ -2641,51 +2674,53 @@ Thin **RPC/control** over **munix + libevent + optional mxtalk**.
 | Side | Flow |
 |------|------|
 | Server | `mcontrol_listen` → `mcontrol_fn` → sync post or `bind` + later `mcontrol_reply` |
-| Client | `mcontrol_connect` → `alloc*` → fill → `mcontrol_call` → `mcontrol_free(rep)` → `mcontrol_close` |
+| Client | `mcontrol_connect` → `alloc*` → fill → `mcontrol_call` → `mcontrol_free(mc, rep)` → `mcontrol_close(mc, 0)` |
 
-Pool args `0` → default **8 × 64 KiB**. Munix rules in §10 still apply. This layer does **not** add a second corr or a second in-flight RPC on the same connect fd.
+Pool args `0` → default **8 × 64 KiB**. Munix rules in §10 still apply. This layer does **not** add a second corr or a second in-flight RPC on the same connect handle.
 
 #### API
 
 ```c
-typedef const char *(*mcontrol_fn)(int fd,
+typedef struct mcontrol_st *mcontrol_t;
+
+typedef const char *(*mcontrol_fn)(mcontrol_t mc,
     const char *key, void *in, size_t in_len,
     munix_client_t client, void **out);
 
-int mcontrol_listen(struct event_base *base, const char *object, mcontrol_fn control,
+mcontrol_t mcontrol_listen(struct event_base *base, const char *object, mcontrol_fn control,
     int in_slots, size_t in_heap, int out_slots, size_t out_heap);
+mcontrol_t mcontrol_connect(const char *object);
+int        mcontrol_fd(mcontrol_t mc); /* munix fd; -1 if NULL */
+void       mcontrol_close(mcontrol_t mc, int keep_path);
+/* keep_path==0: tear down + unlink AF_UNIX path; keep_path!=0: tear down, keep path */
 
 /* server out-slot alloc (non-blocking sunix) */
-void        *mcontrol_salloc(int fd, size_t len);
-mxtalk_t     mcontrol_salloc_m1talk(int fd, int max_l1, int name_max, int max_heap);
-mxtalk_t     mcontrol_salloc_m2talk(int fd,
+void        *mcontrol_salloc(mcontrol_t mc, size_t len);
+mxjson_t     mcontrol_salloc_m1talk(mcontrol_t mc, int max_l1, int name_max, int max_heap);
+mxjson_t     mcontrol_salloc_m2talk(mcontrol_t mc,
     int max_l1, int max_l2, int max_l2_pool, int name_max, int max_heap);
 
-munix_client_t mcontrol_bind(void *p, munix_client_t client); /* heap copy; re-bind replaces */
-munix_client_t mcontrol_getbind(void *p); /* bound peer, or NULL — probe only */
-int            mcontrol_reply(const char *key, void *p);
-void           mcontrol_free(void *p);   /* always safe; no-op if unknown / already consumed */
-void           mcontrol_close(int fd);   /* sweep registry then munix_close */
+munix_client_t mcontrol_bind(mcontrol_t mc, void *p, munix_client_t client);
+munix_client_t mcontrol_getbind(mcontrol_t mc, void *p);
+int            mcontrol_reply(mcontrol_t mc, const char *key, void *p);
+void           mcontrol_free(mcontrol_t mc, void *p);
 
-/* client */
-int          mcontrol_connect(const char *object);
-void        *mcontrol_alloc(int fd, size_t len, int timeout_ms);
-mxtalk_t     mcontrol_alloc_m1talk(int fd, int timeout_ms,
+void        *mcontrol_alloc(mcontrol_t mc, size_t len, int timeout_ms);
+mxjson_t     mcontrol_alloc_m1talk(mcontrol_t mc, int timeout_ms,
     int max_l1, int name_max, int max_heap);
-mxtalk_t     mcontrol_alloc_m2talk(int fd, int timeout_ms,
+mxjson_t     mcontrol_alloc_m2talk(mcontrol_t mc, int timeout_ms,
     int max_l1, int max_l2, int max_l2_pool, int name_max, int max_heap);
-const char  *mcontrol_call(int fd, const char *key, void *req, void **rep, int timeout_ms);
+const char  *mcontrol_call(mcontrol_t mc, const char *key, void *req, void **rep, int timeout_ms);
 
-/* deprecated for sync *out — use *out = p; rare escape hatch to munix_slot_t */
-munix_slot_t mcontrol_slot(void *p);
+munix_slot_t mcontrol_slot(mcontrol_t mc, void *p);
 ```
 
 **Parameter order (`alloc*`):**
 
 | API | Arguments |
 |-----|-----------|
-| `mcontrol_alloc` | `(fd, len, timeout_ms)` — bare buffer needs `len` |
-| `mcontrol_alloc_m1talk` / `_m2talk` | `(fd, timeout_ms, geometry…)` — map size from geometry; **no** `len`, so `timeout` is 2nd |
+| `mcontrol_alloc` | `(mc, len, timeout_ms)` — bare buffer needs `len` |
+| `mcontrol_alloc_m1talk` / `_m2talk` | `(mc, timeout_ms, geometry…)` — map size from geometry; **no** `len`, so `timeout` is 2nd |
 | `mcontrol_salloc*` (server) | no timeout (non-blocking `sunix_slot_alloc`) |
 
 #### Errors (`errno`)
@@ -2696,7 +2731,7 @@ Fail → `NULL` / `-1` with **`errno`**. Munix details remain in §10.3–10.5; 
 
 | errno | When |
 |-------|------|
-| `EINVAL` | `fd` is not this process’s listen/`mcontrol` ctx; bad `len` / geometry at munix or mxtalk; slot payload unusable |
+| `EINVAL` | `mc` is NULL / not a valid listen endpoint; bad `len` / geometry at munix or mxtalk; slot payload unusable |
 | `EAGAIN` | out pool cannot satisfy now (no free slot **or** heap cannot fit `len` — munix often uses the same code for both) |
 | `ENOMEM` | slot obtained but local handle / registry add failed |
 
@@ -2706,7 +2741,7 @@ No **`ETIMEDOUT`** on `salloc*` (no wait). On `slot == NULL`, mcontrol usually *
 
 | errno | When |
 |-------|------|
-| `EINVAL` | not a connect/`mcontrol` ctx; `len==0` / overflow / bad geometry (munix or mxtalk) |
+| `EINVAL` | `mc` is NULL / not a valid connect endpoint; `len==0` / overflow / bad geometry (munix or mxtalk) |
 | `EAGAIN` | non-block (`timeout_ms==0`) or mmap-only: freelist/GRANT not ready; slot-empty vs heap-too-small often both `EAGAIN` |
 | `ETIMEDOUT` | `timeout_ms > 0` and wait expired (clears pending GRANT wait per §10) |
 | `ENOMEM` | slot obtained but register / create_mem path failed |
@@ -2717,7 +2752,7 @@ No **`ETIMEDOUT`** on `salloc*` (no wait). On `slot == NULL`, mcontrol usually *
 
 | Stage | errno | When / ownership |
 |-------|-------|------------------|
-| mcontrol | `EINVAL` | `key==NULL`; bad connect ctx; `req` not a registered `alloc*` pointer for this `fd` |
+| mcontrol | `EINVAL` | `key==NULL`; bad connect `mc`; `req` not a registered `alloc*` pointer for this `mc` |
 | post | `EBUSY` | previous reply still pending (often prior take timeout) — **this post did not run**; `req` still valid |
 | post | `EAGAIN` | send buffer full — slot **not** consumed; retry same `req` when writable |
 | post | `ESTALE` | session stale |
@@ -2728,51 +2763,51 @@ No **`ETIMEDOUT`** on `salloc*` (no wait). On `slot == NULL`, mcontrol usually *
 
 `timeout_ms` on `call` applies to **take only** (`<0` block). Successful `call` with a non-success **business** key still returns that key string — check the key/body, not `errno`.
 
-**Other mcontrol surfaces (short):** `mcontrol_connect` / `listen` fail → munix or `ENOMEM`/`EINVAL`. Sync/`reply` send path: queue full → drop with **`ENOBUFS`**. See ownership table and recovery below for `EBUSY` / `ETIMEDOUT` / `EAGAIN`.
+**Other mcontrol surfaces (short):** `mcontrol_connect` / `listen` fail → munix or `ENOMEM`/`EINVAL`. `mcontrol_close(mc, keep_path)` always tears down events, registry, send queue, and munix; `keep_path==0` unlinks the AF_UNIX path, nonzero keeps it (e.g. fork child while parent still listens). Sync/`reply` send path: `sunix_post` `EAGAIN` → malloc queue node → `EV_WRITE` (cap 512; full → **`ENOBUFS`**). Queued reply keys longer than 255 chars are rejected with **`EINVAL`**. See ownership table and recovery below for `EBUSY` / `ETIMEDOUT` / `EAGAIN`.
 
 #### Payload model
 
 - Same pointer kind everywhere: `in`, `*out`, client `req` / `*rep`, `salloc*` / `alloc*` → bare buffer **or** mxtalk map root.
 - No body → `in == NULL`, `in_len == 0`.
 - **`in_len` is munix slot cap** (usable size), **not** “bytes the peer wrote”. Frame inside the buffer yourself (`\0`, length prefix, m1/m2, …).
-- Inbound m1/m2: `(mxtalk_t)in` for read, or `mxtalk_wrap(in, (uint32_t)in_len, 0)` then `mxtalk_detach` before return.
+- Inbound m1/m2: treat `in` as map root **`mxjson_t`** (`(mxjson_t)in`) for read, or `mxtalk_wrap(in, (uint32_t)in_len, 0)` then `mxtalk_detach` before return.
 - Do **not** keep `in` after `control` returns (inbound slot is freed).
-- Sync body: `*out = p` where `p` came from `mcontrol_salloc*` / `salloc_m1talk` / `salloc_m2talk`. **Do not** `*out = mcontrol_slot(p)`.
+- Sync body: `*out = p` where `p` came from `mcontrol_salloc*` / `salloc_m1talk` / `salloc_m2talk`. **Do not** `*out = mcontrol_slot(mc, p)`.
 
 #### Munix mapping (corr, one-flight, EBUSY, drain / send)
 
-- **`corr`:** client `mcontrol_call` = one `post` then `take` on that connect fd. Server sync post reuses the `peer` from `sunix_take`. Async: `mcontrol_bind` copies the whole `munix_client_st` (incl. `corr`); `mcontrol_reply` echoes it. Do not hand-build a peer and omit `corr`.
-- **One in-flight RPC per connect fd.** Parallel RPCs → more `mcontrol_connect` fds. Listen fd is 1:N clients.
+- **`corr`:** client `mcontrol_call` = one `post` then `take` on that connect. Server sync post reuses the `peer` from `sunix_take`. Async: `mcontrol_bind` copies the whole `munix_client_st` (incl. `corr`); `mcontrol_reply` echoes it. Do not hand-build a peer and omit `corr`.
+- **One in-flight RPC per connect.** Parallel RPCs → more `mcontrol_connect` handles. Listen endpoint is 1:N clients.
 - **`EBUSY`:** post while a reply is still pending (typical: previous take timed out; §10.3). Clear with `mcontrol_alloc` (abandon) or `mcontrol_close` + reconnect. `errno==EBUSY` ⇒ **this** post did not run; `req` still valid until `mcontrol_free`.
 - **`timeout_ms` on `mcontrol_call`:** take wait only (`<0` block, `0` → `EAGAIN`, `>0` → `ETIMEDOUT`). Post `EAGAIN` fails immediately. Timeout on take does **not** clear `reply_pending`.
-- **Server drain:** `EV_READ|EV_PERSIST`; `on_read` loops `sunix_take` until `EAGAIN` (§10.5).
-- **Send-when-writable:** sync/`reply` `sunix_post`; `EAGAIN` → queue → `EV_WRITE`. Queue full → drop reply (`ENOBUFS`).
+- **Server drain:** `EV_READ|EV_PERSIST`; `on_read` loops `sunix_take` until `EAGAIN` or 512 takes this callback (§10.5).
+- **Send-when-writable:** sync/`reply` `sunix_post`; `EAGAIN` → dynamic send queue → `EV_WRITE`. Queue full (512) → drop reply (`ENOBUFS`).
 
 #### Client recovery convention (EBUSY / ETIMEDOUT)
 
 Business callers should **not** busy-loop `mcontrol_call` after a failed take or a busy post. Recommended wrapper policy:
 
-1. **`mcontrol_call` returns `NULL`** and `errno` is **`EBUSY`**, **`ETIMEDOUT`**, or **`EAGAIN`** (when `timeout_ms == 0`): treat as recoverable transport state for **this** connect fd.
-2. **Always** `mcontrol_free(req)` if you still hold a request pointer (safe no-op if post already consumed it).
+1. **`mcontrol_call` returns `NULL`** and `errno` is **`EBUSY`**, **`ETIMEDOUT`**, or **`EAGAIN`** (when `timeout_ms == 0`): treat as recoverable transport state for **this** connect.
+2. **Always** `mcontrol_free(mc, req)` if you still hold a request pointer (safe no-op if post already consumed it).
 3. **Abandon or reconnect** before retrying:
-   - **Abandon (keep fd):** `tmp = mcontrol_alloc(fd, small_len, short_timeout);` then `mcontrol_free(tmp);` — alloc clears `reply_pending` (§10.3). If alloc fails, fall through to reconnect.
-   - **Reconnect:** `mcontrol_close(fd);` `fd = mcontrol_connect(object);`
+   - **Abandon (keep mc):** `tmp = mcontrol_alloc(mc, small_len, short_timeout);` then `mcontrol_free(mc, tmp);` — alloc clears `reply_pending` (§10.3). If alloc fails, fall through to reconnect.
+   - **Reconnect:** `mcontrol_close(mc, 0);` `mc = mcontrol_connect(object);`
 4. **Retry** the original RPC with **backoff** (e.g. sleep / exponential delay, capped). Bound the retry count; then surface the error to the caller.
-5. Parallel work → **separate** `mcontrol_connect` fds (still one in-flight per fd), sized against server `in_slots` / `out_slots`.
+5. Parallel work → **separate** `mcontrol_connect` handles (still one in-flight per handle), sized against server `in_slots` / `out_slots`.
 
 Sketch (app glue — not a libskin API):
 
 ```c
-/* after: rkey = mcontrol_call(fd, key, req, &rep, ms); mcontrol_free(req); */
+/* after: rkey = mcontrol_call(mc, key, req, &rep, ms); mcontrol_free(mc, req); */
 if (rkey == NULL) {
     err = errno;
     if (err == EBUSY || err == ETIMEDOUT || err == EAGAIN) {
-        tmp = mcontrol_alloc(fd, 32, 100);
+        tmp = mcontrol_alloc(mc, 32, 100);
         if (tmp != NULL) {
-            mcontrol_free(tmp);          /* abandon pending round */
+            mcontrol_free(mc, tmp);          /* abandon pending round */
         } else {
-            mcontrol_close(fd);
-            fd = mcontrol_connect(object); /* or fail out */
+            mcontrol_close(mc, 0);
+            mc = mcontrol_connect(object); /* or fail out */
         }
         /* backoff, then retry alloc+call once/N times */
     }
@@ -2785,21 +2820,21 @@ if (rkey == NULL) {
 |--------|---------|
 | Sync, key only | `return "ttrue"` (or any key); leave `*out` NULL |
 | Sync, with body | `p = mcontrol_salloc*(…)`, fill, `*out = p`, `return ""` (or key) |
-| Async | `p = salloc*`, `mcontrol_bind(p, client)`, **do not** set `*out`, `return NULL`; later `mcontrol_reply(key, p)` |
+| Async | `p = salloc*`, `mcontrol_bind(mc, p, client)`, **do not** set `*out`, `return NULL`; later `mcontrol_reply(mc, key, p)` |
 | Drop | `return NULL` **without** `bind` (usually no `salloc` either) |
 
 **`return NULL` — async vs drop:**
 
 `NULL` only means “`on_read` will **not** sync-post this turn”. Whether a reply comes later depends **only** on `bind`:
 
-- **Async:** `bind` first, then `return NULL`. Optional probe: `mcontrol_getbind(p) != NULL`. Later `mcontrol_reply`.
+- **Async:** `bind` first, then `return NULL`. Optional probe: `mcontrol_getbind(mc, p) != NULL`. Later `mcontrol_reply`.
 - **Drop:** never `bind`. Typical: no alloc, just `return NULL`. Client take times out.
 - Forgetting `bind` on an intended async path **silently becomes drop**.
 - `getbind` is a **probe**, not the definition of drop (drop often has no `p` at all).
 
 **Illegal `*out`:**
 
-`*out` must be a **registered** `salloc*` payload for **this** listen fd. If `*out != NULL` but `reg_find` fails (malloc, stack, foreign pointer, already freed), the library **drops the body** and still posts **key only**. Prefer leaving `*out` NULL over guessing.
+`*out` must be a **registered** `salloc*` payload for **this** listen `mc`. If `*out != NULL` but `reg_find` fails (malloc, stack, foreign pointer, already freed), the library **drops the body** and still posts **key only**. Prefer leaving `*out` NULL over guessing.
 
 Other notes: mis-bind + sync `*out` → on_read strips heap peer and still sync-posts. Reply `key` / `rkey` must **not** point into `in` (inbound slot freed before post). Optional cookie: `munix_client_set_data(peer, biz)` — free `biz` yourself before `reply`/`free` (munix never frees cookies).
 
@@ -2807,13 +2842,13 @@ Other notes: mis-bind + sync `*out` → on_read strips heap peer and still sync-
 
 `mcontrol_call` = post then take.
 
-| Event | Dereference `req`? | `mcontrol_free(req)`? |
-|-------|--------------------|------------------------|
+| Event | Dereference `req`? | `mcontrol_free(mc, req)`? |
+|-------|--------------------|---------------------------|
 | post **failed** (`EBUSY` / `EAGAIN` / `EINVAL` / …) | yes, until free | **yes** (still registered) |
 | post **succeeded** (even if take fails: `ETIMEDOUT` / `EAGAIN` / `ESTALE`) | **no** (dangling; mmap may be reused) | **yes, always safe** — no-op if already consumed |
-| success with `*rep` | n/a | `mcontrol_free(rep)` when done |
+| success with `*rep` | n/a | `mcontrol_free(mc, rep)` when done |
 
-Recommended pattern: **always** `mcontrol_free(req)` after `mcontrol_call` returns (success or failure); never read/write `req` after a successful post. `rkey` is munix-internal until the next successful take on that fd — copy it if you need it later. `rep == NULL` in the call discards any reply body immediately.
+Recommended pattern: **always** `mcontrol_free(mc, req)` after `mcontrol_call` returns (success or failure); never read/write `req` after a successful post. `rkey` is munix-internal until the next successful take on that connect — copy it if you need it later. `rep == NULL` in the call discards any reply body immediately.
 
 #### Server example (sync + async, key / void* / m1 / m2)
 
@@ -2821,13 +2856,14 @@ Recommended pattern: **always** `mcontrol_free(req)` after `mcontrol_call` retur
 #include "skin/skin.h"
 
 /* queue_or_timer / later() are app glue — not part of mcontrol */
+static mcontrol_t g_mc;
 
-static const char *station_control(int fd, const char *key,
+static const char *station_control(mcontrol_t mc, const char *key,
     void *in, size_t in_len, munix_client_t client, void **out)
 {
     void *p;
-    mxtalk_t tin;
-    mxtalk_t tout;
+    mxjson_t tin;
+    mxjson_t tout;
     munix_client_t peer;
     const char *s;
     size_t n;
@@ -2838,13 +2874,13 @@ static const char *station_control(int fd, const char *key,
 
     /* ---- sync: key only ---- */
     if (strcmp(key, "ping") == 0) {
-        (void)fd; (void)in; (void)in_len; (void)client; (void)out;
+        (void)mc; (void)in; (void)in_len; (void)client; (void)out;
         return "ttrue";
     }
 
     /* ---- drop: NULL, no bind (no alloc) ---- */
     if (strcmp(key, "drop") == 0) {
-        (void)fd; (void)in; (void)in_len; (void)client; (void)out;
+        (void)mc; (void)in; (void)in_len; (void)client; (void)out;
         return NULL;
     }
 
@@ -2858,14 +2894,14 @@ static const char *station_control(int fd, const char *key,
                 n = 256;
             }
         }
-        p = mcontrol_salloc(fd, n);
+        p = mcontrol_salloc(mc, n);
         if (p == NULL) {
             return terror_string;
         }
         if (in != NULL && in_len > 0) {
             memcpy(p, in, n); /* in_len is cap — frame if you need exact length */
         }
-        *out = p; /* must be salloc pointer; not mcontrol_slot(p) */
+        *out = p; /* must be salloc pointer; not mcontrol_slot(mc, p) */
         return "";
     }
 
@@ -2873,11 +2909,11 @@ static const char *station_control(int fd, const char *key,
     if (strcmp(key, "m1") == 0) {
         (void)client;
         if (in != NULL && in_len > 0) {
-            tin = (mxtalk_t)in; /* or mxtalk_wrap(in, (uint32_t)in_len, 0) */
+            tin = (mxjson_t)in; /* or mxtalk_wrap(...); mxtalk_root */
             s = mxtalk_string(tin, "ifname");
             (void)s;
         }
-        tout = mcontrol_salloc_m1talk(fd, 32, 32, 4 * 1024);
+        tout = mcontrol_salloc_m1talk(mc, 32, 32, 4 * 1024);
         if (tout == NULL) {
             return terror_string;
         }
@@ -2890,11 +2926,11 @@ static const char *station_control(int fd, const char *key,
     if (strcmp(key, "m2") == 0) {
         (void)client;
         if (in != NULL && in_len > 0) {
-            tin = (mxtalk_t)in;
+            tin = (mxjson_t)in;
             s = mxtalk_string(tin, "name");
             (void)s;
         }
-        tout = mcontrol_salloc_m2talk(fd, 16, 32, 32, 32, 8 * 1024);
+        tout = mcontrol_salloc_m2talk(mc, 16, 32, 32, 32, 8 * 1024);
         if (tout == NULL) {
             return terror_string;
         }
@@ -2906,13 +2942,13 @@ static const char *station_control(int fd, const char *key,
     /* ---- async: bind + return NULL; reply later ---- */
     if (strcmp(key, "async") == 0) {
         (void)in; (void)in_len; (void)out;
-        p = mcontrol_salloc(fd, 64);
+        p = mcontrol_salloc(mc, 64);
         if (p == NULL) {
             return terror_string;
         }
-        peer = mcontrol_bind(p, client);
+        peer = mcontrol_bind(mc, p, client);
         if (peer == NULL) {
-            mcontrol_free(p);
+            mcontrol_free(mc, p);
             return terror_string;
         }
         /* optional: munix_client_set_data(peer, biz); free biz before reply/free */
@@ -2926,12 +2962,12 @@ static const char *station_control(int fd, const char *key,
 
 static void later(void *p)
 {
-    /* key-only async reply; or fill p then mcontrol_reply("", p) */
-    mcontrol_reply("ttrue", p);
+    /* key-only async reply; or fill p then mcontrol_reply(g_mc, "", p) */
+    mcontrol_reply(g_mc, "ttrue", p);
 }
 
 /* in _service: */
-fd = mcontrol_listen(base, "client@station", station_control,
+g_mc = mcontrol_listen(base, "client@station", station_control,
     8, 64 * 1024, 8, 64 * 1024);
 ```
 
@@ -2941,78 +2977,78 @@ fd = mcontrol_listen(base, "client@station", station_control,
 #include "skin/skin.h"
 
 /* ---- key only ---- */
-fd = mcontrol_connect("client@station");
-rkey = mcontrol_call(fd, "ping", NULL, NULL, 3000);
+mc = mcontrol_connect("client@station");
+rkey = mcontrol_call(mc, "ping", NULL, NULL, 3000);
 if (rkey == NULL || strcmp(rkey, "ttrue") != 0) {
     /* handle error */
 }
-mcontrol_close(fd);
+mcontrol_close(mc, 0);
 
 /* ---- bare void* ---- */
-fd = mcontrol_connect("client@station");
-req = mcontrol_alloc(fd, 64, 1000);          /* (fd, len, timeout) */
+mc = mcontrol_connect("client@station");
+req = mcontrol_alloc(mc, 64, 1000);          /* (mc, len, timeout) */
 if (req == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
 snprintf((char *)req, 64, "hello");
 rep = NULL;
-rkey = mcontrol_call(fd, "echo", req, &rep, 3000);
-mcontrol_free(req); /* always safe: real free or no-op if post consumed */
+rkey = mcontrol_call(mc, "echo", req, &rep, 3000);
+mcontrol_free(mc, req); /* always safe: real free or no-op if post consumed */
 if (rkey == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
 /* do not dereference req here if post succeeded */
 if (rep != NULL) {
     /* use (char *)rep … */
-    mcontrol_free(rep);
+    mcontrol_free(mc, rep);
 }
-mcontrol_close(fd);
+mcontrol_close(mc, 0);
 
 /* ---- m1talk ---- */
-fd = mcontrol_connect("client@station");
-req = mcontrol_alloc_m1talk(fd, 1000, 32, 32, 4 * 1024); /* (fd, timeout, geometry) */
+mc = mcontrol_connect("client@station");
+req = mcontrol_alloc_m1talk(mc, 1000, 32, 32, 4 * 1024); /* (mc, timeout, geometry) */
 if (req == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
-mxtalk_set_string((mxtalk_t)req, "ifname", "eth0");
+mxtalk_set_string(req, "ifname", "eth0");
 rep = NULL;
-rkey = mcontrol_call(fd, "m1", req, &rep, 3000);
-mcontrol_free(req);
+rkey = mcontrol_call(mc, "m1", req, &rep, 3000);
+mcontrol_free(mc, req);
 if (rkey == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
 if (rep != NULL) {
-    s = mxtalk_string((mxtalk_t)rep, "ifname");
+    s = mxtalk_string((mxjson_t)rep, "ifname");
     (void)s;
-    mcontrol_free(rep);
+    mcontrol_free(mc, rep);
 }
-mcontrol_close(fd);
+mcontrol_close(mc, 0);
 
 /* ---- m2talk ---- */
-fd = mcontrol_connect("client@station");
-req = mcontrol_alloc_m2talk(fd, 1000, 16, 32, 32, 32, 8 * 1024);
+mc = mcontrol_connect("client@station");
+req = mcontrol_alloc_m2talk(mc, 1000, 16, 32, 32, 32, 8 * 1024);
 if (req == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
-mxtalk_set_string((mxtalk_t)req, "name", "lan");
+mxtalk_set_string(req, "name", "lan");
 rep = NULL;
-rkey = mcontrol_call(fd, "m2", req, &rep, 3000);
-mcontrol_free(req);
+rkey = mcontrol_call(mc, "m2", req, &rep, 3000);
+mcontrol_free(mc, req);
 if (rkey == NULL) {
-    mcontrol_close(fd);
+    mcontrol_close(mc, 0);
     return -1;
 }
 if (rep != NULL) {
-    s = mxtalk_string((mxtalk_t)rep, "name");
+    s = mxtalk_string((mxjson_t)rep, "name");
     (void)s;
-    mcontrol_free(rep);
+    mcontrol_free(mc, rep);
 }
-mcontrol_close(fd);
+mcontrol_close(mc, 0);
 ```
 
 ---

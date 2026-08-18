@@ -5,14 +5,16 @@
  * @file munix.h
  * @brief mmap + AF_UNIX SOCK_DGRAM IPC (payload in shared maps, signaling on unix)
  *
- * Handle is the unix socket fd (listen/connect return fd; close with munix_close).
- * One fd = one serialized request/reply channel.
+ * Handle is opaque munix_t (listen/connect return it; close with munix_close).
+ * Use munix_fd(mx) for poll/select/libevent. One endpoint = one serialized
+ * request/reply channel.
  *
- * Naming (skinos style): munix_slot_t / munix_client_t are pointers (*_t).
- * munix_slot_st is opaque. munix_client_st is public caller storage (recvfrom):
+ * Naming (skinos style): munix_t / munix_slot_t / munix_client_t are pointers (*_t).
+ * munix_st / munix_slot_st are opaque. munix_client_st is public caller storage
+ * (recvfrom):
  *   munix_client_st peer;
- *   sunix_take(fd, &slot, &peer);   // fills addr/addrlen/corr; preserves data
- *   sunix_post(fd, key, slot, &peer, flags);  // echoes peer.corr on the reply
+ *   sunix_take(mx, &slot, &peer);   // fills addr/addrlen/corr; preserves data
+ *   sunix_post(mx, key, slot, &peer, flags);  // echoes peer.corr on the reply
  *
  * Client: munix_connect → munix_slot_alloc / munix_post / munix_take
  * Server: munix_listen  → sunix_take / sunix_slot_alloc / sunix_post
@@ -21,8 +23,8 @@
  * pending, take delivers only that corr (mismatched POSTs discarded, out slots
  * returned). Idle take (no pending post) delivers any valid POST.
  * GRANT_REQ/GRANT use the same corr field for alloc wait matching.
- * One connect fd = one in-flight RPC (alloc→post→take). Alloc abandons any
- * prior unread reply (clears reply_pending; mmap-hit does not drain the fd).
+ * One connect endpoint = one in-flight RPC (alloc→post→take). Alloc abandons
+ * any prior unread reply (clears reply_pending; mmap-hit does not drain the fd).
  * post without take → EBUSY; parallel RPCs → more connects.
  * Alloc tries the mmap freelist first; mmap-hit clears any pending GRANT wait.
  * Same-len pending GRANT skips mmap and only drains/claims. On miss may
@@ -34,25 +36,23 @@
  * post slot: may be NULL for key-only (KEEP + NULL → EINVAL).
  * take slot: out-pointer required; *slot may be NULL (key-only).
  * After server restart: take/alloc/post fail with errno=ESTALE; munix_close and reconnect.
- * Event loops: poll/select/libevent on the same fd; use timeout_ms=0.
+ * Event loops: poll/select/libevent on munix_fd(mx); use timeout_ms=0.
  *
- * Lifetime: always munix_close(fd) — never close(fd)/dup() into these APIs.
- * After fork: do not keep using inherited endpoints; munix_clear() (and
- * mcontrol_clear if used) then plain-close fds — never munix_close a listen
- * the parent still owns. connect/listen also run a pid guard that clears when
- * getpid() differs from the creating process. Do not use across fork without
- * clear + reconnect.
- * Cookie: munix_set_data / get_data (fd), munix_slot_set_data / get_data,
+ * Lifetime: always munix_close(mx, 0) — never close(munix_fd)/dup() into these APIs.
+ * Prefer munix_close all endpoints before fork (free slots first). After fork
+ * without prior close: munix_close(mx, 1) skips unix path unlink (parent listen
+ * may still own the path); plain-close fds only if you must avoid free/mmap too.
+ * Cookie: munix_set_data / get_data (mx), munix_slot_set_data / get_data,
  * munix_client_set_data / get_data. Munix never frees cookies.
  * Free slots before munix_close (slot free-after-close is UAF).
  *
  * KEEP + death / GRANT age: see skin.md §10.9.
- * Client: one in-flight RPC per fd (post while reply pending → EBUSY).
+ * Client: one in-flight RPC per endpoint (post while reply pending → EBUSY).
  * Server: sunix_take never blocks — poll first, then take until EAGAIN
  * (same as non-blocking recvfrom). GRANT waiters wake on that EAGAIN.
- * One fd is not thread-safe. Multi-fd × one thread per fd is OK (map lock
- * gated per process×map). Parallel RPCs → multiple connect fds.
- * listen pool: slots 1..512 (larger requests clamped to 512); heap >= 64
+ * One endpoint is not thread-safe. Multi-endpoint × one thread each is OK
+ * (map lock word carries unix fd so siblings wait without a global plock). Parallel RPCs → multiple connects.
+ * listen pool: slots 1..2048 (larger requests clamped to 2048); heap >= 64
  * and map size must fit uint32_t.
  */
 
@@ -65,6 +65,7 @@
 extern "C" {
 #endif
 
+typedef struct munix_st *munix_t; /* opaque; munix_close */
 typedef struct munix_slot_st *munix_slot_t; /* opaque; munix_slot_free */
 
 /** peer storage for sunix_take / sunix_post (caller-owned, recvfrom style) */
@@ -80,31 +81,23 @@ typedef munix_client_st *munix_client_t;
 #define MUNIX_POST_KEEP  0x1  /* post: peer must not pool-free; sender keeps handle */
 #define MUNIX_MMAP_ONLY  0x2  /* alloc: mmap only; never GRANT_REQ / drain fd */
 
-/* endpoint — returns fd (>=0) or -1 */
-int          munix_listen( const char *name,
+/* endpoint — returns munix_t or NULL */
+munix_t      munix_listen( const char *name,
 	int in_slots, size_t in_heap,
 	int out_slots, size_t out_heap );
-int          munix_connect( const char *name );
-/** tear down endpoint; never use close(fd)/dup(fd) instead */
-void         munix_close( int fd );
-/**
- * @brief drop all process-local munix endpoints without close/unlink
- *
- * For fork children that already (or will) plain-close inherited fds and must
- * not munix_close() a listen path the parent still owns. Clears g_by_fd,
- * munmaps local mappings, frees endpoint memory. Does not close fd numbers
- * and does not unlink *.unix. Updates g_munix_pid to getpid(). Call before or
- * after the fd sweep; pair with mcontrol_clear() when mcontrol was used.
- * connect/listen also auto-clear via pid guard when getpid() changes.
- */
-void         munix_clear( void );
+munix_t      munix_connect( const char *name );
+/** tear down endpoint; NULL-safe; never use close(fd)/dup(fd) instead.
+ * dont_unlink: 0 = unlink unix path (normal); 1 = keep path (e.g. fork child). */
+void         munix_close( munix_t mx, int dont_unlink );
+/** unix socket fd for poll/select/libevent; NULL → -1 */
+int          munix_fd( munix_t mx );
 
 /**
- * @brief attach / fetch caller cookie on endpoint (by fd)
+ * @brief attach / fetch caller cookie on endpoint
  * munix never frees data; clear or replace before munix_close as needed.
  */
-void         munix_set_data( int fd, void *data );
-void        *munix_get_data( int fd );
+void         munix_set_data( munix_t mx, void *data );
+void        *munix_get_data( munix_t mx );
 
 /**
  * @brief attach / fetch caller cookie on munix_client_st
@@ -132,13 +125,13 @@ void        *munix_slot_get_data( munix_slot_t slot );
  * @param flags 0=may GRANT via unix when mmap empty; MUNIX_MMAP_ONLY=mmap only
  *        (never GRANT_REQ/drain/wait; mmap-hit still clears a pending GRANT wait)
  */
-munix_slot_t munix_slot_alloc( int fd, size_t len, int timeout_ms, int flags );
+munix_slot_t munix_slot_alloc( munix_t mx, size_t len, int timeout_ms, int flags );
 
 /**
  * @brief server reply alloc from outbound map; full → NULL/EAGAIN (no wait)
  * @param len must be > 0 (len==0 → NULL/EINVAL); no-payload traffic uses slot=NULL on post
  */
-munix_slot_t sunix_slot_alloc( int fd, size_t len );
+munix_slot_t sunix_slot_alloc( munix_t mx, size_t len );
 
 /* client */
 /**
@@ -149,7 +142,7 @@ munix_slot_t sunix_slot_alloc( int fd, size_t len );
  * @return 0 on success; -1 on fail — errno=EAGAIN if would block (retry when writable);
  *         EBUSY if a reply is still pending; ESTALE if session expired (close + reconnect)
  */
-int          munix_post( int fd, const char *key, munix_slot_t slot, int flags );
+int          munix_post( munix_t mx, const char *key, munix_slot_t slot, int flags );
 
 /**
  * @brief client take one reply
@@ -163,7 +156,7 @@ int          munix_post( int fd, const char *key, munix_slot_t slot, int flags )
  * Corrupt datagrams and mismatched reply corr (while pending) are skipped
  * (out slots returned); EPROTO is for slot/state breaks on a valid matching POST.
  */
-const char  *munix_take( int fd, munix_slot_t *slot, int timeout_ms );
+const char  *munix_take( munix_t mx, munix_slot_t *slot, int timeout_ms );
 
 /* server */
 /**
@@ -174,7 +167,7 @@ const char  *munix_take( int fd, munix_slot_t *slot, int timeout_ms );
  * Corrupt datagrams are skipped (same as client take).
  * After POLLIN, loop until EAGAIN (same as recvfrom). GRANT waiters wake on that EAGAIN.
  */
-const char  *sunix_take( int fd, munix_slot_t *slot, munix_client_t client );
+const char  *sunix_take( munix_t mx, munix_slot_t *slot, munix_client_t client );
 
 /**
  * @brief server post reply (non-blocking sendto-style)
@@ -184,7 +177,7 @@ const char  *sunix_take( int fd, munix_slot_t *slot, munix_client_t client );
  * @param flags 0 or MUNIX_POST_KEEP
  * @return 0 on success; -1 on fail — errno=EAGAIN if would block (retry when writable)
  */
-int          sunix_post( int fd, const char *key, munix_slot_t slot,
+int          sunix_post( munix_t mx, const char *key, munix_slot_t slot,
 	munix_client_t client, int flags );
 
 #ifdef __cplusplus
