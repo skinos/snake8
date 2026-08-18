@@ -1,0 +1,10 @@
+# =============================================================================
+# mconfig — tty2http example (serial_open from libskinuart, HTTP via libcurl)
+# =============================================================================
+
+CFLAGS += -I../
+
+LDFLAGS += -lskinuart -lcurl
+
+LIBA_ADDIN :=
+LIBSO_ADDIN :=

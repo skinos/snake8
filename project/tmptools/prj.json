@@ -10,6 +10,10 @@
     {
         "testexe":"example for the executable program programming"
     },
+    "exe":
+    {
+        "tty2http":"example uart@tty serial to HTTP and write the reply back"
+    },
 
     "com":
     {
