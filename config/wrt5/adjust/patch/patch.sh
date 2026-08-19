@@ -57,7 +57,7 @@ if [ "${gPLATFORM}" = "/" ] || [ "${gPLATFORM}" = "." ] || [ "${gPLATFORM}" = ".
     exit 1
 fi
 
-# include the config/sopen to build
+# include the config/swrt5 to build
 rm -fr "${gSDK_DIR}/package/${gPLATFORM}"
 if [ ! -e ${gSDK_DIR}/package/${gPLATFORM} ]; then
     ln -s ${gPLATFORM_DIR}  ${gSDK_DIR}/package/${gPLATFORM}

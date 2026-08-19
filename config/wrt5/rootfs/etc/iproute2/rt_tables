@@ -1,0 +1,22 @@
+#
+# reserved values
+#
+128	prelocal
+255	local
+254	main
+253	default
+0	unspec
+1	ifname@lte
+2	ifname@lte2
+3	ifname@lte3
+4	ifname@lte4
+5	ifname@wan
+6	ifname@wan2
+7	ifname@wan3
+8	ifname@wan4
+9	ifname@wisp
+10	ifname@wisp2
+#
+# local
+#
+#1	inr.ruhep
