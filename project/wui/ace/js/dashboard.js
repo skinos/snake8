@@ -1,9 +1,11 @@
 var flush_interval = 2;
 var currentFrameData = null;
+var currentFrameStatus = null;
 
 // 缓存frame数据
 var dashboardCache = window.dashboardCache || null;
 var dashboardFrameCache = window.dashboardFrameCache || null;
+var dashboardFrameStatusCache = window.dashboardFrameStatusCache || null;
 
 /** Preload compact switch port icons so first paint matches online/offline (avoid lazy/delay on hidden imgs). */
 function preloadCompactPortIcons() {
@@ -15,13 +17,16 @@ function preloadCompactPortIcons() {
 }
 
 function fetchNetworkFrame() {
-    return he.bkload(["network@frame"]).then(function(v) {
+    return he.bkload(["network@frame", "network@frame.status"]).then(function(v) {
         if (v && v[0]) {
             currentFrameData = v[0];
+            currentFrameStatus = v[1] || {};
 
-            // 缓存frame数据
-            dashboardFrameCache = v[0];
-            window.dashboardFrameCache = v[0];
+            dashboardFrameCache = currentFrameData;
+            dashboardFrameStatusCache = currentFrameStatus;
+
+            window.dashboardFrameCache = currentFrameData;
+            window.dashboardFrameStatusCache = currentFrameStatus;
 
             adjustBoxLayout();
         }
@@ -31,19 +36,29 @@ function fetchNetworkFrame() {
 function adjustBoxLayout() {
     var containers = $('.responsive-flex-container');
 
-    // 排列规则1
+    // 排列规则：inuse 优先，然后按 network@frame 1-6 排序
     var priorityMap = {};
+    var inuseMap = {};
+    var frameStatus = currentFrameStatus || dashboardFrameStatusCache || {};
+
     if (currentFrameData) {
         for (var i = 1; i <= 6; i++) {
-            var ifname = currentFrameData[i.toString()]; 
+            var ifname = currentFrameData[i.toString()];
             if (ifname && ifname !== "") {
-                priorityMap[ifname] = i; 
-                // 拿取图表id
+                priorityMap[ifname] = i;
+
                 var shortName = ifname.replace("ifname@", "");
-                if (!priorityMap[shortName]) {
-                    priorityMap[shortName] = i;
-                }
+                priorityMap[shortName] = i;
             }
+        }
+    }
+
+    for (var key in frameStatus) {
+        if (frameStatus[key] && frameStatus[key].inuse == "enable") {
+            inuseMap[key] = true;
+
+            var shortKey = key.replace("ifname@", "");
+            inuseMap[shortKey] = true;
         }
     }
 
@@ -71,20 +86,28 @@ function adjustBoxLayout() {
             var aName = $(a).attr('id');
             var bName = $(b).attr('id');
 
-            // 匹配接口 1-6 优先级 没有配置接口frame的权重为999
+            // 匹配接口 1-6 优先级，没有配置接口 frame 的权重为 999
             var aWeight = priorityMap[aName] || 999;
             var bWeight = priorityMap[bName] || 999;
 
+            // inuse == enable 的接口优先
+            var aInuse = inuseMap[aName] ? 1 : 0;
+            var bInuse = inuseMap[bName] ? 1 : 0;
+
+            if (aInuse !== bInuse) {
+                return bInuse - aInuse;
+            }
+
             if (aWeight !== bWeight) {
-                // 如果接口配置了优先级 则按 1-6 排列
-                return aWeight - bWeight; 
+                return aWeight - bWeight;
             }
 
             var aOnline = $(a).attr('or-online') === 'true' ? 1 : 0;
             var bOnline = $(b).attr('or-online') === 'true' ? 1 : 0;
             if (aOnline !== bOnline) {
-                return bOnline - aOnline; 
+                return bOnline - aOnline;
             }
+
             return 0;
         });
         $.each(boxes, function(i, box) { 
