@@ -557,7 +557,7 @@ int main(void)
 
 ### 3.0 Summary
 
-`param_t` is an **ordered list of options** (at most `PARAM_OPTIONS_MAX` = 10) used when calling components (`ccall` / `scall` / …) and when driving services (`srun`, `sreset`, …). Each slot is either **text** (`PARAM_OPTION_TEXT`) or a **raw pointer** (`PARAM_OPTION_POINTER`); see `param.h`. Typical ways to build it:
+`param_t` is an **ordered list of options** (at most `PARAM_OPTIONS_MAX` = 20) used when calling components (`ccall` / `scall` / …) and when driving services (`srun`, `sreset`, …). Each slot is either **text** (`PARAM_OPTION_TEXT`) or a **raw pointer** (`PARAM_OPTION_POINTER`); see `param.h`. Typical ways to build it:
 
 | Source | Role |
 |--------|------|

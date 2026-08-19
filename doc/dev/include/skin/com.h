@@ -412,6 +412,27 @@ typedef com_struct *com_t;
 #define COM_CACHE_BUCKETS 64
 
 /**
+ * @brief build component object name for com_register (project + GAPC + name)
+ * @param[in] project project or instance prefix (e.g., "routes", "land")
+ * @param[in] name instance or component id (e.g., "123", "machine")
+ * @param[out] buffer buffer to store object name; NULL to use internal static buffer
+ * @param[in] buflen size of buffer; <=0 with NULL buffer selects the static buffer
+ * @return object name string (e.g., "routes@123")
+ * 	@retval string for succeed
+ *  @retval NULL for error, errno will be set
+ * @note Static buffer is not reentrant; copy the result before the next call if needed
+ */
+const char *com_name2com( const char *project, const char *name, char *buffer, int buflen );
+/**
+ * @brief get the name part after PROJECT_OBJECT_GAPC in a component object
+ * @param[in] com component object name (e.g., "routes@123", "land@machine")
+ * @return pointer to the name substring within com (e.g., "123", "machine")
+ * 	@retval string for succeed
+ *  @retval NULL for error, errno will be set
+ * @note Returned pointer aliases into com; do not free it
+ */
+const char *com_com2name( const char *com );
+/**
  * @brief register a component (maps object name to origin component or path)
  * @param[in] object object to register (e.g., "myproject@alias")
  * @param[in] origin component or path being aliased (e.g., "myproject@realcom", "/usr/share/skinos/myproject/mycom")

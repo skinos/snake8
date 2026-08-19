@@ -72,6 +72,10 @@ ttrue
     - succeed return ttrue
     - normally scheduled as **`init` → `app` → `forward@mark.setup`**
 
++ `shut[]` **remove all saved mark rules from mangle PREROUTING**
+    - succeed return ttrue
+    - iterates configuration and calls `mark_delete` for each rule
+
 + `add[ name, markid, [src], [dest], [protocol], [srcport], [destport] ]` **add mark rule**
     - name ----------- [ string ], rule name
     - markid --------- [ number ]

@@ -238,6 +238,9 @@ typedef int boole;
 
 /// forward project
 #define FORWARD_PROJECT "forward"
+/// routes project
+#define ROUTERS_PROJECT  "routes"
+#define ROUTERS_NAME     ROUTERS_PROJECT
 #define NAT_COM         FORWARD_PROJECT""PROJECT_OBJECT_GAPS"nat"
 #define DNAT_COM        FORWARD_PROJECT""PROJECT_OBJECT_GAPS"dnat"
 #define FIREWALL_COM    FORWARD_PROJECT""PROJECT_OBJECT_GAPS"firewall"

@@ -1,6 +1,16 @@
-## forward@alg — Management of Application Layer Gateway
+## forward@alg — Application Layer Gateway Management
 
-### Configuration ( `forward@alg` )
+### Overview
+
+Load and unload ALG (Application Layer Gateway) kernel helpers. Prefer the **Component API** below instead of editing raw configuration when possible.
+
+- each ALG protocol (FTP, SIP, H.323, …) is controlled by an enable/disable flag
+- skipped in **default** / **parasite** network modes
+
+
+
+### Configuration reference ( forward@alg )
+
 ```json
 // Attributes introduction 
 {
@@ -16,9 +26,12 @@
     "tftp":"tftp ALG function",                // [ "disable", "enable" ]
     "udplite":"udplite ALG function"           // [ "disable", "enable" ]
 }
-```   
+```
+
+#### Configuration example
 
 Example, show current all ALG settings
+
 ```shell
 forward@alg
 {
@@ -33,72 +46,52 @@ forward@alg
     "snmp":"disable",
     "tftp":"disable"
 }
-```   
+```
+
+#### Configuration settings example
 
 Example, disable the FTP ALG
+
 ```shell
 forward@alg:ftp=disable
 ttrue
-```   
+```
 
-Example, disable the sip ALG
-```shell
-forward@alg:sip=disable
-ttrue
-```   
+Example, merge several ALG settings at once
 
-Example, enable the h323 ALG
 ```shell
-forward@alg:h323=enable
-ttrue
-```   
-
-Example, show the FTP ALG settings
-```shell
-forward@alg:ftp
-disable
-```   
-
-Examples, change several attributes at once (**merge**)
-```shell
-forward@alg|{"ftp":"enable","sip":"disable"}
+forward@alg|{"ftp":"enable","sip":"disable","h323":"enable"}
 ttrue
 ```
 
-### Component API
-**Directly callable** APIs: standard configuration get/set/merge on **`forward@alg`** (see **Configuration**). No separate operator methods beyond **`setup[]` / `shut[]`** below.
-
-### Lifecycle API
-+ `setup[]` **load ALG kernel helpers from configuration**, *succeed return ttrue* — **`init` → `app` → `forward@alg.setup`** in the default package. In **default** / **parasite** network modes, ALG is skipped; otherwise enables/disables helpers (FTP, SIP, …) per saved flags.
-
-+ `shut[]` **unload ALG helpers**, *succeed return ttrue* — called from platform shutdown.
 
 
-### C Code Example
-**Read and update configuration**
+### API Reference
 
-```c
-#include "skin/skin.h"
+#### Management APIs
 
-static int example_config_forward_alg(void)
-{
-    char buf[128];
-    if (sgets_string(buf, sizeof(buf), "forward@alg", "status") == NULL)
-        return -1;
-    return ssets_string("forward@alg", "enable", "status") ? 0 : -1;
-}
-```
++ `setup[]` **load ALG kernel helpers from configuration**
+    - succeed return ttrue
+    - skipped in **default** / **parasite** network modes
+    - normally scheduled as **`init` → `app` → `forward@alg.setup`**
 
-**Call component methods**
++ `shut[]` **unload all ALG kernel helpers**
+    - succeed return ttrue
+    - removes all ALG-related kernel modules regardless of configuration
 
-```c
-#include "skin/skin.h"
 
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
+#### Query APIs
 
-/* e.g. scall("forward@alg", "list", NULL); talk_free if JSON */
-```
++ `status[]` **get the current ALG configuration**
+    - failed return NULL
+    - succeed return [ json ], same shape as configuration
+
+    Example, get ALG settings
+
+    ```shell
+    forward@alg.status
+    {
+        "ftp":"enable",
+        "sip":"disable"
+    }
+    ```

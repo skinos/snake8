@@ -14,7 +14,7 @@
 #define PARAM_OPTION_POINTER 1
 
 /// Maximum options in one parameter structure
-#define PARAM_OPTIONS_MAX    10
+#define PARAM_OPTIONS_MAX    20
 
 /// parameter structure
 /// example: 'myname,{"test":"testvalue"},test3' of options description for parameter
@@ -85,7 +85,7 @@ param_t     param_create( const char *options );
  * 	@retval parameter for succeed
  *  	@retval NULL for error, errno will be set
  * @note Caller retains ownership of input json; values are duplicated via talk_dup into the param
- * @note Looks for attributes named "1" through "10" (PARAM_OPTIONS_MAX); skips missing keys; fails if none found
+ * @note Looks for attributes named "1" through "20" (PARAM_OPTIONS_MAX); skips missing keys; fails if none found
  * @see param_create for string-based parameter creation
  */
 param_t     param_build( talk_t json );

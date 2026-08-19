@@ -1,0 +1,23 @@
+#!/bin/bash
+# Switch git origin remote between gitee and github.
+#
+# Usage: gitsw github | gitsw gitee
+
+GITEE="git@gitee.com:snake8/snake8.git"
+GITHUB="git@github.com:skinos/snake8.git"
+
+case "$1" in
+    github)
+        git remote set-url origin "$GITHUB"
+        echo "origin => $GITHUB"
+        ;;
+    gitee)
+        git remote set-url origin "$GITEE"
+        echo "origin => $GITEE"
+        ;;
+    *)
+        echo "Usage: gitsw github | gitsw gitee"
+        echo "Current origin: $(git remote get-url origin 2>/dev/null || echo 'none')"
+        exit 1
+        ;;
+esac
