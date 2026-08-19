@@ -7,6 +7,11 @@ Use board identity **`slave-x86-ubuntu2404`** (Ubuntu 24.04) on the host. Embedd
 gateways keep their own product firmware; point the **agent** project on each embedded
 gateway at this center host.
 
+Example command outputs below are from a **verified walkthrough** on Ubuntu 24.04 using a
+fresh Gitee clone under `~/tmp/snake8` (2026-08-19). Steps that require
+**`sudo`** (`make sdk_install`, `make sdk_start`) show **expected** output from a running
+center host when sudo is available.
+
 ---
 
 ## 1. What the platform provides
@@ -22,12 +27,6 @@ gateway at this center host.
 
 The slave platform includes **center** in `config/slave/project.config`; a slave
 build compiles center services together with land, webs, and wui.
-
-Embedded gateway **agent** configuration (components run on the embedded gateway, not on center):
-
-- [`doc/com/agent/heclient.md`](../../com/agent/heclient.md) — remote HE management on the embedded gateway
-- [`doc/com/agent/portc.md`](../../com/agent/portc.md) — port proxy client on the embedded gateway
-- [`doc/com/agent/gtog.md`](../../com/agent/gtog.md) — gateway mesh on the embedded gateway
 
 ---
 
@@ -45,15 +44,23 @@ Embedded gateway **agent** configuration (components run on the embedded gateway
 ```bash
 # Gitee
 git clone https://gitee.com/snake8/snake8.git
+cd snake8
 
 # GitHub
 git clone https://github.com/skinos/snake8.git
-
 cd snake8
+
 make preset
 ```
 
-`make preset` installs compilers, libraries, and other Ubuntu build dependencies.
+Example output (clone, verified):
+
+```text
+Cloning into 'snake8'...
+```
+
+`make preset` installs compilers, libraries, and other Ubuntu build dependencies (requires
+`sudo`; run once per machine).
 
 ---
 
@@ -65,14 +72,20 @@ Persist the choice (writes `gBOARDID`):
 make pid gBOARDID=slave-x86-ubuntu2404
 ```
 
-For a one-off build, pass the prefix on the command line:
+Example output (verified):
 
-```bash
-make gBOARDID=slave-x86-ubuntu2404
+```text
+Switch the Board Identify to slave-x86-ubuntu2404
+```
+
+The `gBOARDID` file should contain:
+
+```text
+gBOARDID=slave-x86-ubuntu2404
 ```
 
 > If unset, the Makefile defaults to `slave-x86-ubuntu2004`. On Ubuntu 24.04 use
-> **`slave-x86-ubuntu2404`** explicitly.
+> **`make pid gBOARDID=slave-x86-ubuntu2404`** as shown above.
 
 ---
 
@@ -85,7 +98,19 @@ setup or after changing machines:
 make update
 ```
 
-This syncs the repo and refreshes packages under `config/slave/`.
+Example output (start, verified):
+
+```text
+Already up to date.
+cd .../config/slave; git pull
+...
+2026-08-19 ... - ‘wui-8.0.3-x86.fpk’ saved [820232]
+...
+make[2]: Leaving directory '.../config/slave'
+```
+
+This syncs the repo and refreshes packages under `config/slave/` (including **center**
+FPKs unpacked into the build).
 
 ---
 
@@ -95,13 +120,31 @@ This syncs the repo and refreshes packages under `config/slave/`.
 make
 ```
 
-Or with an explicit board:
+Runtime files are staged under `build/rootfs/usr/share/skinos/`.
 
-```bash
-make gBOARDID=slave-x86-ubuntu2404
+Example output (end of build, verified):
+
+```text
+cd .../build/rootfs && tar jcf ../x86_ubuntu2404_std_v8.6.0819.tar.bz2 *
+make[3]: Leaving directory '.../config/slave'
 ```
 
-Runtime files are staged under `build/rootfs/usr/share/skinos/`.
+Example layout (verified):
+
+```text
+$ ls build/rootfs/usr/share/skinos/
+agent  arch  center  land  setup.sh  shut.sh  webs  wui
+```
+
+Default ports in the staged **`center`** package:
+
+```text
+$ grep '"port"' build/rootfs/usr/share/skinos/center/*.cfg
+center/heport.cfg:    "port":"20002",
+center/nport.cfg:     "port":"20002",
+center/pport.cfg:     "port":"20005",
+center/userwui.cfg:   "port":"20000",
+```
 
 ---
 
@@ -111,7 +154,21 @@ Runtime files are staged under `build/rootfs/usr/share/skinos/`.
 make sdk_install
 ```
 
-Alias: `make install`.
+Alias: `make install`. Requires **`sudo`** (copies into `/usr/share/skinos`, `/usr/local/lib`,
+`/usr/local/bin`).
+
+Example output (expected when sudo succeeds):
+
+```text
+make[2]: Entering directory '.../config/slave'
+sudo rm -fr /tmp/skinos
+sudo rm -fr /var/skinos
+sudo rm -fr /usr/share/skinos
+sudo cp -ar .../build/rootfs/usr/share/skinos /usr/share
+sudo cp -ar .../build/rootfs/usr/local/lib/* /usr/local/lib
+sudo cp -ar .../build/rootfs/usr/local/bin/* /usr/local/bin
+make[2]: Leaving directory '.../config/slave'
+```
 
 Install locations:
 
@@ -134,6 +191,14 @@ Alias: `make start`.
 
 This runs `/usr/share/skinos/setup.sh`: initializes arch/land, starts daemon, and
 calls init level **app** for **center** and related components.
+
+Example output (expected):
+
+```text
+make[2]: Entering directory '.../config/slave'
+/usr/share/skinos/setup.sh
+make[2]: Leaving directory '.../config/slave'
+```
 
 Related commands:
 
@@ -162,6 +227,50 @@ he 'center@nport'
 he 'center@userwui'
 ```
 
+Example output (expected after `make sdk_start`):
+
+```text
+$ he 'land@machine.status'
+{
+    "version":"v8.6.0819",
+    "name":"ubuntu2404",
+    ...
+}
+
+$ he 'center@heport'
+{
+    "status":"enable",
+    "port":"20002",
+    "api_port":"20003",
+    "talk_timeout":"25",
+    "key_lifetime":"300"
+}
+
+$ he 'center@pport'
+{
+    "status":"enable",
+    "port":"20005",
+    "dynamic_port":"20006",
+    "static_port":"25000",
+    ...
+}
+
+$ he 'center@nport'
+{
+    "status":"enable",
+    "port":"20002",
+    "nettest_port":"20003",
+    ...
+}
+
+$ he 'center@userwui'
+{
+    "status":"enable",
+    "port":"20000",
+    ...
+}
+```
+
 Expected:
 
 - `land@machine.status` returns JSON with a `version` field
@@ -184,6 +293,18 @@ Expected:
 ```bash
 netstat -lntp | egrep '20000|20001|20002|20003|20005'
 netstat -lnup | egrep '20002|20003'
+```
+
+Example output (expected):
+
+```text
+tcp  0  0 0.0.0.0:20000  0.0.0.0:*  LISTEN  .../httpd
+tcp  0  0 0.0.0.0:20001  0.0.0.0:*  LISTEN  .../httpd
+tcp  0  0 0.0.0.0:20002  0.0.0.0:*  LISTEN  .../heport
+tcp  0  0 0.0.0.0:20003  0.0.0.0:*  LISTEN  .../heport
+tcp  0  0 0.0.0.0:20005  0.0.0.0:*  LISTEN  .../pport
+udp  0  0 0.0.0.0:20002  0.0.0.0:*          .../nport
+udp  0  0 0.0.0.0:20003  0.0.0.0:*          .../nport
 ```
 
 You should see **20000, 20001, 20002, 20003, 20005** in **LISTEN** state; UDP
@@ -254,7 +375,7 @@ owns a set of embedded gateways and has a **`vcode`** used when an embedded gate
 
 1. Open **`http://<center-host-IP>:20001`**
 2. Log in as admin (default **`admin` / `admin`**)
-3. Menu **Cloud → User List** (帐号管理)
+3. Menu **Cloud → User List**
 4. Click **Add** and fill in:
    - **Username** (`A-Z`, `a-z`, `0-9`, `_`, `-` only)
    - **Password**
@@ -275,7 +396,23 @@ he 'center@ctrl.user_modify[ myuser,654321,cn,Updated note ]'
 he 'center@ctrl.user_reset[ myuser,NewPass456 ]'
 ```
 
-See [`config/slave/center/ctrl.md`](../../../config/slave/center/ctrl.md).
+Example output (expected after `make sdk_start`):
+
+```text
+$ he 'center@ctrl.user_add[ demo,DemoPass1,123456,en,Demo account ]'
+ttrue
+
+$ he 'center@ctrl.user_list'
+{
+    "demo":
+    {
+        "lang":"en",
+        "comment":"Demo account"
+    }
+}
+```
+
+See [../../com/center/ctrl.md](../../com/center/ctrl.md).
 
 ### 10.2 Confirm an embedded gateway is online
 
@@ -298,7 +435,7 @@ After an embedded gateway runs **`agent@heclient`** with matching **`user`** / *
 he 'center@api.list[ myuser ]'
 ```
 
-Example (online embedded gateway):
+Example output (expected — embedded gateway online):
 
 ```json
 {
@@ -313,13 +450,21 @@ Example (online embedded gateway):
 }
 ```
 
+Example output (expected — no embedded gateway connected yet):
+
+```text
+$ he 'center@api.list[ demo ]'
+{
+}
+```
+
 Admin session dump for one online embedded gateway:
 
 ```bash
 he 'center@ctrl.dump[ myuser,303D510049B0 ]'
 ```
 
-Field reference: [`config/slave/center/api.md`](../../../config/slave/center/api.md).
+Field reference: [../../com/center/api.md](../../com/center/api.md).
 
 ---
 
@@ -340,7 +485,7 @@ After connect, confirm the embedded gateway on center (§10.2).
 1. Open the embedded gateway local Web UI, for example **`http://<embedded-gateway-IP>`** (default port **80**,
    or the value of `land@machine:wui_port`).
 2. Log in with the embedded gateway admin account (often **`admin` / `admin`**).
-3. Open **System → Agent Control** (远程控制).
+3. Open **System → Agent Control**.
 4. Switch to the **Agent Control** tab (`agent@heclient` on this embedded gateway).
 5. Enable **He Client**, then set:
 
@@ -440,7 +585,7 @@ From a shell on the center host:
 he 'center@api.list[ <user> ]'
 ```
 
-Component reference: [`doc/com/agent/heclient.md`](../../com/agent/heclient.md).
+Component reference: [../../com/agent/heclient.md](../../com/agent/heclient.md).
 
 ### 11.3 Port proxy (optional)
 
@@ -451,12 +596,12 @@ agent@portc={"status":"enable","server":"<center-host-IP>","port":"20005","user"
 ```
 
 heclient **`adjust`** can push portc / gtog settings; see
-[`heclient.md`](../../com/agent/heclient.md).
+[../../com/agent/heclient.md](../../com/agent/heclient.md).
 
 ### 11.4 Embedded gateway mesh (optional)
 
 Mesh network uses **center@nport** and **`agent@gtog`** on the embedded gateway; see
-[`gtog.md`](../../com/agent/gtog.md).
+[../../com/agent/gtog.md](../../com/agent/gtog.md).
 
 ---
 
@@ -633,4 +778,26 @@ Or open **`http://<center-host-IP>:20001`**. See **§9** for full checks.
   **20006–25000** is the dynamic pport pool; **25000–30000** is the static map range.
 - Keep center and embedded gateway **agent** builds from the same SDK generation to avoid heport/pport
   protocol mismatch.
-- Broader Ubuntu install steps (including 20.04): [`config/slave/install.md`](../../../config/slave/install.md).
+
+---
+
+## 15. References
+
+### Embedded gateway (agent)
+
+- [../../com/agent/heclient.md](../../com/agent/heclient.md) — remote HE management
+- [../../com/agent/portc.md](../../com/agent/portc.md) — port proxy client
+- [../../com/agent/gtog.md](../../com/agent/gtog.md) — mesh network
+
+### Center host
+
+- [../../com/center/heport.md](../../com/center/heport.md) — device SSL / HE forwarding
+- [../../com/center/api.md](../../com/center/api.md) — cloud-user and embedded gateway APIs
+- [../../com/center/ctrl.md](../../com/center/ctrl.md) — admin user APIs
+- [../../com/center/pport.md](../../com/center/pport.md) — port proxy service
+- [../../com/center/nport.md](../../com/center/nport.md) — mesh coordinator
+- [../../com/center/userwui.md](../../com/center/userwui.md) — cloud-user Web
+
+### Platform install
+
+- [../../../config/slave/install.md](../../../config/slave/install.md) — broader Ubuntu install steps (including 20.04)
