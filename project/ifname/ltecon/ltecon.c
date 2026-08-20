@@ -2,6 +2,44 @@
  *  Description:  lte connection
  *       Author:  dimmalex (dim), dimmalex@gmail.com
  *      Company:  ASHYELF
+ *
+ * === Default Reset Behavior ===
+ *
+ * Three independent checks can trigger a module reset (scall ifdev "reset").
+ * Each check runs once per _service cycle with 1-second sleep between retries.
+ * After a successful check, the reset counter for that stage is cleared.
+ *
+ * reset_times  | simcard   | signal/PLMN | attach    | connect_failed
+ * --------------|-----------|-------------|-----------|---------------
+ *  0 (1st)     |  60s      |  120s       |  60s      |  3 cycles
+ *  1 (2nd)     | 180s      |  300s       | 180s      |  7 cycles
+ *  2 (3rd)     | 300s      |  600s       | 300s      | 15 cycles
+ *  3+          | 1800s     | 1800s       | 1800s     | 37 cycles
+ *
+ * Stage 1 — SIM card not detected:
+ *   Default need_simcard is enabled. Each check sleeps 1s.
+ *   1st reset after 60 failed checks (60s), 2nd after 180s, 3rd after 300s,
+ *   subsequent after 1800s (30min). Returns terror → _service exits and
+ *   restarts, incrementing reset_times.
+ *
+ * Stage 2 — Signal or PLMN not acquired:
+ *   Default need_plmn and need_signal are enabled (both required).
+ *   1st reset after 120s, 2nd after 300s, 3rd after 600s, then 1800s.
+ *
+ * Stage 3 — Network attach failed (non-PPP mode only):
+ *   Default need_attach is enabled.
+ *   1st reset after 60s, 2nd after 180s, 3rd after 300s, then 1800s.
+ *
+ * Stage 4 — Connect failed (consecutive _service cycle failures):
+ *   A per-cycle counter (connect_failed) accumulates across restarts.
+ *   Resets the module when the counter hits 3, 7, 15, or every 37 cycles.
+ *   Each cycle includes stages 1-3, so one cycle ≈ 60+120+60 = 240s minimum.
+ *   First connect-failure reset ≈ 3 * 240s = 12min.
+ *
+ * Worst case (all checks maxed out):
+ *   A single _service cycle can take up to 60+120+60 = 240s before
+ *   reaching the connect-failed counter. With failed_everytime=37,
+ *   the longest interval between resets is 37 * 240s ≈ 2.5 hours.
  */
 
 #include "skin/skin.h"
