@@ -1,0 +1,483 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+    <div id="script_html" style="display: none;">
+
+      <!-- Script list table -->
+      <table id="script-grid-table"></table>
+      <div id="script-grid-pager"></div>
+
+      <!-- Editor area (hidden by default) -->
+      <div id="script-editor" style="display: none; margin-top: 20px;">
+        <div class="hr hr32 hr-dotted"></div>
+        <div style="margin-bottom: 8px;">
+          <span data-i18n="Script Name"></span>
+          <span id="script-name" style="margin-left: 8px; font-weight: bold;"></span>
+        </div>
+        <textarea id="script-content" rows="24" style="width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace;"></textarea>
+        <div class="clearfix form-actions" style="margin-top: 12px; margin-left: 0;">
+          <button class="btn btn-second" type="button" id="cancel"><span data-i18n="Cancel"></span></button>
+          &nbsp; &nbsp; &nbsp;
+          <button class="btn btn-main" type="button" id="save"><span data-i18n="Save"></span></button>
+        </div>
+      </div>
+
+      <div class="hr hr32 hr-dotted"></div>
+
+      <!-- File list table -->
+      <table id="file-grid-table"></table>
+      <div id="file-grid-pager"></div>
+
+    </div>
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<!-- page specific plugin scripts -->
+<script type="text/javascript">
+(function () {
+    var obj = "wui@script";
+    var file_obj = "wui@file";
+    var script_table = '#script-grid-table';
+    var script_pager = '#script-grid-pager';
+    var file_table = '#file-grid-table';
+    var file_pager = '#file-grid-pager';
+    var current_object = null;
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+
+    /* load the script list */
+    function script_load()
+    {
+        he.load( [ obj + ".list" ] ).then( function(v){
+            var list = v[0];
+            var rows = [];
+            var object;
+            var info;
+            var path;
+            var methods;
+            var key;
+            var scrollPos;
+
+            if ( list && typeof list == "object" )
+            {
+                for ( object in list )
+                {
+                    info = list[object];
+                    path = "";
+                    methods = [];
+
+                    if ( typeof info == "string" )
+                    {
+                        path = info;
+                    }
+                    else if ( info )
+                    {
+                        path = info.path || "";
+                        if ( info.methods )
+                        {
+                            for ( key in info.methods )
+                            {
+                                methods.push( key );
+                            }
+                        }
+                    }
+                    rows.push( { object: object, path: path, methods: methods } );
+                }
+            }
+            scrollPos = jqtable.getScrollPos();
+            $(script_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
+            jqtable.setScrollPos(scrollPos);
+        });
+    }
+
+    /* call script API: object.api */
+    function script_call( object, api )
+    {
+        var cmd;
+
+        if ( !object || !api )
+        {
+            return;
+        }
+        cmd = object + "." + api;
+        he.exec( [ cmd ] ).then( function(v){
+            if ( v[0] === false || v[0] == null )
+            {
+                page.alert( { message: $.i18n('Execute failed') + ': ' + cmd } );
+                return;
+            }
+            page.hint2succeed( $.i18n('Execute successfully') + ': ' + cmd );
+        });
+    }
+
+    /* hide editor */
+    function script_editor_hide()
+    {
+        $( '#script-editor' ).hide();
+        $( '#script-content' ).val( '' );
+        $( '#script-name' ).text( '' );
+        current_object = null;
+    }
+
+    /* edit script */
+    function script_edit( object )
+    {
+        he.load( [ obj + ".view[" + object + "]" ] ).then( function(v){
+            var content = v[0];
+            var decoded;
+
+            if ( content == null || content === false || content === "" )
+            {
+                page.alert( { message: $.i18n('Load failed') } );
+                return;
+            }
+            try
+            {
+                decoded = decodeURIComponent( escape( atob( content ) ) );
+            }
+            catch ( e )
+            {
+                page.alert( { message: $.i18n('Load failed') } );
+                return;
+            }
+            current_object = object;
+            $( '#script-name' ).text( object );
+            $( '#script-content' ).val( decoded );
+            $( '#script-editor' ).show();
+        });
+    }
+
+    /* save script */
+    function script_save()
+    {
+        var content = $( '#script-content' ).val();
+        var encoded;
+        var cmd;
+
+        if ( !current_object )
+        {
+            return;
+        }
+        if ( !content )
+        {
+            page.alert( { message: $.i18n('Content cannot be empty') } );
+            return;
+        }
+        try
+        {
+            encoded = btoa( unescape( encodeURIComponent( content ) ) );
+        }
+        catch ( e )
+        {
+            page.alert( { message: $.i18n('Save failed') } );
+            return;
+        }
+        cmd = obj + ".save[" + current_object + "," + encoded + "]";
+        he.exec( [ cmd ] ).then( function(v){
+            if ( v[0] == true )
+            {
+                page.hint2succeed( $.i18n('Save successfully') );
+                script_editor_hide();
+                script_load();
+            }
+            else
+            {
+                page.alert( { message: $.i18n('Save failed') } );
+            }
+        });
+    }
+
+    /* delete script */
+    function script_delete( object )
+    {
+        page.confirm( { message: $.i18n('Are you sure to delete') + ' ' + object + '?' } ).then( function(result){
+            if ( !result )
+            {
+                return;
+            }
+            he.exec( [ obj + ".delete[" + object + "]" ] ).then( function(v){
+                if ( v[0] == true )
+                {
+                    page.hint2succeed( $.i18n('Delete successfully') );
+                    if ( current_object == object )
+                    {
+                        script_editor_hide();
+                    }
+                    script_load();
+                }
+                else
+                {
+                    page.alert( { message: $.i18n('Delete failed') } );
+                }
+            });
+        });
+    }
+
+    /* add script */
+    function script_add()
+    {
+        page.prompt({
+            message: $.i18n('Enter script name'),
+            value: '',
+            callback: function( result ){
+                var name;
+
+                if ( !result )
+                {
+                    return;
+                }
+                name = String( result ).replace( /^\s+|\s+$/g, '' );
+                if ( !name )
+                {
+                    page.alert( { message: $.i18n('Name cannot be empty') } );
+                    return;
+                }
+                if ( name.indexOf('/') >= 0 )
+                {
+                    page.alert( { message: $.i18n('Add failed') } );
+                    return;
+                }
+                he.exec( [ obj + ".add[" + name + "]" ] ).then( function(v){
+                    if ( v[0] == true )
+                    {
+                        page.hint2succeed( $.i18n('Add successfully') );
+                        script_editor_hide();
+                        script_load();
+                    }
+                    else
+                    {
+                        page.alert( { message: $.i18n('Add failed') } );
+                    }
+                });
+            }
+        });
+    }
+
+    /* load file list */
+    function file_load()
+    {
+        he.load( [ file_obj + ".list" ] ).then( function(v){
+            var list = v[0];
+            var rows = [];
+            var name;
+            var scrollPos;
+
+            if ( list && typeof list == "object" )
+            {
+                for ( name in list )
+                {
+                    rows.push( { name: name, path: list[name] } );
+                }
+            }
+            scrollPos = jqtable.getScrollPos();
+            $(file_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
+            jqtable.setScrollPos(scrollPos);
+        });
+    }
+
+    /* download file via /download + wui@file.list */
+    function file_download( name )
+    {
+        var opt;
+        var sform;
+
+        if ( !name )
+        {
+            return;
+        }
+        sform = document.createElement( "FORM" );
+        document.body.appendChild( sform );
+        sform.hidden = true;
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "username"; opt.value = window.username; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "object"; opt.value = file_obj; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "api"; opt.value = "list"; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "a"; opt.value = name; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "f"; opt.value = name; sform.appendChild( opt );
+        sform.method = "GET";
+        sform.action = "/download";
+        sform.submit();
+    }
+
+    /* delete file */
+    function file_delete( name )
+    {
+        page.confirm( { message: $.i18n('Are you sure to delete') + ' ' + name + '?' } ).then( function(result){
+            if ( !result )
+            {
+                return;
+            }
+            he.exec( [ file_obj + ".delete[" + name + "]" ] ).then( function(v){
+                if ( v[0] == true )
+                {
+                    page.hint2succeed( $.i18n('Delete successfully') );
+                    file_load();
+                }
+                else
+                {
+                    page.alert( { message: $.i18n('Delete failed') } );
+                }
+            });
+        });
+    }
+
+    $.i18n().load( page.lang(langjson) ).then( function () {
+        $.i18n().locale = window.lang; $('body').i18n();
+
+        $('#script_html').show();
+
+        jqtable.create( script_table, script_pager,
+            {
+                caption: $.i18n('Script List'),
+                colNames: [ $.i18n('Object'), $.i18n('Path'), $.i18n('API'), $.i18n('Operation') ],
+                colModel:
+                [
+                    { name:'object', width:140 },
+                    { name:'path', width:260 },
+                    {
+                        name:'methods', width:300,
+                        formatter: function( cellvalue, options, rowObject )
+                        {
+                            var object = rowObject.object;
+                            var list = rowObject.methods;
+                            var html = "";
+                            var i;
+                            var api;
+
+                            if ( !list || !list.length )
+                            {
+                                return "";
+                            }
+                            for ( i = 0; i < list.length; i++ )
+                            {
+                                api = list[i];
+                                html += '<a href="javascript:void(0)" class="btn btn-minier btn-success script-api" data-object="' + object + '" data-api="' + api + '" style="margin:1px 2px;">' + api + '</a>';
+                            }
+                            return html;
+                        }
+                    },
+                    {
+                        name:'operation', width:70, align:'center', fixed:true,
+                        formatter: function( cellvalue, options, rowObject )
+                        {
+                            var object = rowObject.object;
+                            var editBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-info script-edit" data-object="' + object + '" title="' + $.i18n('Edit') + '"><i class="ace-icon fa fa-pencil"></i></a>';
+                            var delBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-danger script-delete" data-object="' + object + '" title="' + $.i18n('Delete') + '"><i class="ace-icon fa fa-trash-o"></i></a>';
+                            return editBtn + '&nbsp;' + delBtn;
+                        }
+                    }
+                ],
+                rowNum: 20,
+                viewrecords: true,
+                pgbuttons: true,
+                pagerpos:'center',
+                pginput:true,
+                autowidth:true,
+                loadonce:true,
+                shrinkToFit:true,
+                responsive:true,
+            }
+        ).jqGrid( 'navGrid', script_pager,
+            $.extend(true, {}, jqtable.navOptions,
+                {
+                    add: true, addicon : 'ace-icon fa fa-plus-circle purple',
+                    del: false,
+                    edit: false,
+                    search: false, refresh: false, view: false
+                }
+            ),
+            {},
+            {
+                afterShowForm: function( form ){
+                    form.hide();
+                    form.closest('.ui-jqdialog').find('.ui-jqdialog-titlebar-close').click();
+                    script_add();
+                }
+            },
+            {}
+        );
+
+        $(script_table).on( 'click', '.script-edit', function () {
+            var object = $(this).attr( 'data-object' );
+            script_edit( object );
+        });
+        $(script_table).on( 'click', '.script-delete', function () {
+            var object = $(this).attr( 'data-object' );
+            script_delete( object );
+        });
+        $(script_table).on( 'click', '.script-api', function () {
+            var object = $(this).attr( 'data-object' );
+            var api = $(this).attr( 'data-api' );
+            script_call( object, api );
+        });
+
+        jqtable.create( file_table, file_pager,
+            {
+                caption: $.i18n('File List'),
+                colNames: [ $.i18n('Name'), $.i18n('Path'), $.i18n('Operation') ],
+                colModel:
+                [
+                    { name:'name', width:160 },
+                    { name:'path', width:400 },
+                    {
+                        name:'operation', width:70, align:'center', fixed:true,
+                        formatter: function( cellvalue, options, rowObject )
+                        {
+                            var name = rowObject.name;
+                            var downBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-info file-download" data-name="' + name + '" title="' + $.i18n('Download') + '"><i class="ace-icon fa fa-download"></i></a>';
+                            var delBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-danger file-delete" data-name="' + name + '" title="' + $.i18n('Delete') + '"><i class="ace-icon fa fa-trash-o"></i></a>';
+                            return downBtn + '&nbsp;' + delBtn;
+                        }
+                    }
+                ],
+                rowNum: 20,
+                viewrecords: true,
+                pgbuttons: true,
+                pagerpos:'center',
+                pginput:true,
+                autowidth:true,
+                loadonce:true,
+                shrinkToFit:true,
+                responsive:true,
+            }
+        ).jqGrid( 'navGrid', file_pager,
+            $.extend(true, {}, jqtable.navOptions,
+                {
+                    add: false,
+                    del: false,
+                    edit: false,
+                    search: false, refresh: false, view: false
+                }
+            ),
+            {},
+            {},
+            {}
+        );
+
+        $(file_table).on( 'click', '.file-download', function () {
+            var name = $(this).attr( 'data-name' );
+            file_download( name );
+        });
+        $(file_table).on( 'click', '.file-delete', function () {
+            var name = $(this).attr( 'data-name' );
+            file_delete( name );
+        });
+
+        $( '#cancel' ).on( ace.click_event, function () {
+            script_editor_hide();
+        });
+        $( '#save' ).on( ace.click_event, function () {
+            script_save();
+        });
+
+        script_load();
+        file_load();
+    });
+
+})();
+</script>

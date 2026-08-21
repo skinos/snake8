@@ -35,8 +35,39 @@
 	"Will shutdown LTE application when open the LTE terminal, Are you sure you want to open it":"打开4G模块终端将导致所有此模块上的应用被强制关闭, 确认是否打开",
 	"Will shutdown LTE/NR application when open the LTE/NR terminal, Are you sure you want to open it":"打开4G/5G模块终端将导致所有此模块上的应用被强制关闭, 确认是否打开",
 	"Cannot open it":"未能正常打开, 请确认设备是否正常",
-	"Cannot close it":"未能正常关闭, 请重启设备"
-
+	"Cannot close it":"未能正常关闭, 请重启设备",
 
     
+
+    "Script List": "脚本列表",
+    "File List": "文件列表",
+    "Object": "对象",
+    "Name": "名称",
+    "Path": "路径",
+    "Methods": "函数",
+    "API": "API",
+    "Operation": "操作",
+    "Edit": "编辑",
+    "Delete": "删除",
+    "Download": "下载",
+    "Add": "添加",
+    "Save": "保存",
+    "Cancel": "取消",
+    "Refresh": "刷新",
+    "Script Name": "脚本名称",
+    "Script Content": "脚本内容",
+    "Are you sure to delete": "确定要删除吗",
+    "Load failed": "加载失败",
+    "Save failed": "保存失败",
+    "Delete failed": "删除失败",
+    "Add failed": "添加失败",
+    "Save successfully": "保存成功",
+    "Delete successfully": "删除成功",
+    "Add successfully": "添加成功",
+    "Execute successfully": "执行成功",
+    "Execute failed": "执行失败",
+    "Content cannot be empty": "内容不能为空",
+    "Name cannot be empty": "名称不能为空",
+    "Enter script name": "请输入脚本名称"
+
 }

@@ -87,9 +87,10 @@ Components with TLS certificates (UART, IPsec, etc.) follow this pattern:
 
 ## Project authoring (new project / com / WUI / init)
 
-See **`.claude/skills/skinos-project/SKILL.md`** (Rule 0: user「项目」speech → `project/` / `rice/` / `config/<platform>/`, and per-platform **`arch`**). Template: `project/tmptools/`. 
-**WUI HTML pages** (registration + `he.js`): **`.claude/skills/skinos-wui/SKILL.md`** — save with **`he.exec`**, never invent `he.save`; ground truth `project/wui/ace/api/he.js` + `tmptools/page.html`. 
-**libskin API** (no land sources): `doc/com/land/skin.md` + `.claude/skills/skinos-project/reference-skin-api.md`. 
+See **`.claude/skills/skinos-project/SKILL.md`** (Rule 0: user「项目」speech → `project/` / `rice/` / `config/<platform>/`, and per-platform **`arch`**). Template: `project/tmptools/`.  
+**WUI HTML pages** (registration + `he.js`): **`.claude/skills/skinos-wui/SKILL.md`** — save with **`he.exec`**, never invent `he.save`; ground truth `project/wui/ace/api/he.js` + `tmptools/page.html`.  
+**Shell components** (bash HE via `exe` + flat script): **`.claude/skills/skinos-project/reference-shell.md`** (+ `doc/dev/shell.md`).  
+**libskin API** (no land sources): `doc/com/land/skin.md` + `.claude/skills/skinos-project/reference-skin-api.md`.
 **Cellular USB module** (`project/modem`): `.claude/skills/skinos-modem/`. **UART protocol app** (`project/uart`): `.claude/skills/skinos-uart/`. Where to put new work: [`projects.md`](projects.md).
 
 ## Project structure

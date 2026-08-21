@@ -30,3 +30,7 @@ do
         done
     fi
 done
+rm -fr ./build/store
+rm -fr ./build/rootfs
+rm -fr ./build/install
+

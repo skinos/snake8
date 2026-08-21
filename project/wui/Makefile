@@ -35,6 +35,7 @@ endef
 define Package/$(PKG_NAME)/install
 	$(call Build/Install/doc)
 	# ########## 在此可添加额外的安装指示: 开始 ########### #
+	$(CP) ./comshell $(FPK_BUILD_DIR)/
 	$(CP) ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
 	$(INSTALL_DIR) $(FPK_BUILD_DIR)/admin
 	$(CP) ./ace/* $(FPK_BUILD_DIR)/admin

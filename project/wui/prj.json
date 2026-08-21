@@ -5,6 +5,11 @@
     "version":"8.0.3",
     "author":"dimmalex@gmail.com",
 
+    "com":
+    {
+        "script":"shell script manager",
+        "file":"temporary file manager"
+    },
     "exe":
     {
         "ttyd":"ttyd for web term"
@@ -15,7 +20,12 @@
     },
     "init":
     {
-        "app":"wui@admin.setup"
+        "app":
+        {
+            "wui@admin.setup":"",
+            "wui@script.setup":"",
+            "wui@file.setup":""
+        }
     },
     "uninit":
     {
@@ -31,6 +41,13 @@
             "en":"Web Server",
             "page":"admin.html",
             "config":"wui@admin"
+        },
+        "script":
+        {
+            "menu":"Debug",
+            "cn":"脚本编程",
+            "en":"Script",
+            "page":"script.html"
         }
     }
     

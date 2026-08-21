@@ -15,8 +15,9 @@ export PKG_NAME PKG_VERSION PROJECT_ID VERSION_ID PKG_BUILD_DIR FPK_BUILD_DIR FP
 all:
 	$(call Build/Prepare/Default)
 	$(call Build/Compile/Default)
-	$(INSTALL_DIR) $(FPK_BUILD_DIR)/admin
+	$(CP) ./comshell $(FPK_BUILD_DIR)/
 	cp -fr ./*.ca ./*.crt ./*.key $(FPK_BUILD_DIR)/
+	$(INSTALL_DIR) $(FPK_BUILD_DIR)/admin
 	cp -fr ./ace/* $(FPK_BUILD_DIR)/admin
 	# 给JS/lang文件添加版本参数，防止IE缓存导致跨项目冲突
 	find $(FPK_BUILD_DIR)/admin -name "*.html" -exec sed -i 's|/api/\([^"]*\.js\)"|/api/\1?v=$(PKG_VERSION)"|g' {} \;

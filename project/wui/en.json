@@ -28,5 +28,39 @@
     "Will shutdown LTE application when open the LTE terminal, Are you sure you want to open it": "Will shut down LTE applications when opening the LTE terminal. Are you sure you want to open it?",
     "Will shutdown LTE/NR application when open the LTE/NR terminal, Are you sure you want to open it": "Will shut down LTE/NR applications when opening the LTE/NR terminal. Are you sure you want to open it?",
     "Cannot open it": "Cannot open it",
-    "Cannot close it": "Cannot close it"
+    "Cannot close it": "Cannot close it",
+
+
+
+    "Script List": "Script List",
+    "File List": "File List",
+    "Object": "Object",
+    "Name": "Name",
+    "Path": "Path",
+    "Methods": "Methods",
+    "API": "API",
+    "Operation": "Operation",
+    "Edit": "Edit",
+    "Delete": "Delete",
+    "Download": "Download",
+    "Add": "Add",
+    "Save": "Save",
+    "Cancel": "Cancel",
+    "Refresh": "Refresh",
+    "Script Name": "Script Name",
+    "Script Content": "Script Content",
+    "Are you sure to delete": "Are you sure to delete",
+    "Load failed": "Load failed",
+    "Save failed": "Save failed",
+    "Delete failed": "Delete failed",
+    "Add failed": "Add failed",
+    "Save successfully": "Save successfully",
+    "Delete successfully": "Delete successfully",
+    "Add successfully": "Add successfully",
+    "Execute successfully": "Execute successfully",
+    "Execute failed": "Execute failed",
+    "Content cannot be empty": "Content cannot be empty",
+    "Name cannot be empty": "Name cannot be empty",
+    "Enter script name": "Enter script name"
+
 }

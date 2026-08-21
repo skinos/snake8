@@ -3,22 +3,23 @@ name: skinos-project
 description: |
   Create and extend skinos projects under project/, rice/, or config/<platform>/
   (incl. per-platform arch): new project from tmptools, components (com),
-  executables (exe/cmd), libraries, Web UI pages, cn/en.json i18n, prj.json
-  init/uninit/joint/wui registration, and libskin (land/skin) APIs
-  (config_get, scall, cstart, MAIN2API, talk_t, …).
+  executables (exe/cmd), shell components (bash HE via exe + flat script),
+  libraries, Web UI pages, cn/en.json i18n, prj.json init/uninit/joint/wui
+  registration, and libskin (land/skin) APIs (config_get, scall, cstart,
+  MAIN2API, talk_t, …).
   Use when the user says "新建项目", "建一个项目", "在rice下建", "xxx项目",
   "在项目X下建组件", "给smtk2下的arch建组件", "创建组件", "加一个exe",
-  "加网页", "语言包", "开机启动", "关机", "注册joint", "prj.json",
-  "照着 tmptools", "skin API", "libskin", "config_get", "scall", "comexe",
-  "单实例", "MAIN2API", "_service", "unix_listen", or asks how to call land
-  APIs without land source.
+  "shell组件", "bash组件", "comshell", "加网页", "语言包", "开机启动",
+  "关机", "注册joint", "prj.json", "照着 tmptools", "skin API", "libskin",
+  "config_get", "scall", "comexe", "单实例", "MAIN2API", "_service",
+  "unix_listen", or asks how to call land APIs without land source.
   Resolve user speech with Rule 0 (project homes + arch-per-platform) before
   scaffolding — default bare "建项目" → project/; "rice下" → rice/; platform
   + arch → config/<platform>/arch/.
   For HTML page JS / he.load / he.exec / prj.json wui details, also apply
   **skinos-wui** (mandatory before inventing he.* helpers).
-  After any new/changed com/exe API surface, also apply **skinos-component-doc**
-  (English `<name>.md` per auth.md) — required, not optional.
+  After any new/changed com/exe/shell API surface, also apply
+  **skinos-component-doc** (English `<name>.md` per auth.md) — required.
   Do NOT use for board/sdk.config/rootfs customization (skinos-sdk) or device
   upgrade/deploy (device-upgrade).
 ---
@@ -94,8 +95,8 @@ Scaffolding steps below still apply; only the **target root** changes (`project/
 |------|------|
 | Project dir | `project/<name>/`, `rice/<name>/`, or `config/<platform>/<name>/` |
 | `prj.json` → `name` | **Must equal** directory name |
-| Component / exe / cmd / lib key | **Must equal** subdirectory name |
-| Runtime object | `PROJECT_ID@KEY` (e.g. `ipsec@list`, `tmptools@testcom`) |
+| Component / exe / cmd / lib key | **Must equal** subdirectory name **or** (shell `exe` only) flat script filename at project root |
+| Runtime object | `PROJECT_ID@KEY` (e.g. `ipsec@list`, `tmptools@testcom`, `ifname@netcap`) |
 | HE method | `project@key.method` → C `_method` (e.g. `.setup` → `_setup`) |
 
 ## Template map (`project/tmptools/`)
@@ -107,6 +108,7 @@ Scaffolding steps below still apply; only the **target root** changes (`project/
 | `component/component.c` | Minimal **com** (setup/shut/get/set) |
 | `testcom/testcom.c` + `testcom.html` | Full **com** + service + WUI example |
 | `comexe/comexe.c` | **exe** with `MAIN2API(exe_api_table)` |
+| `comshell` | **shell component** template (bash HE; register under `exe`) |
 | `testcmd/` | **cmd** (global shell command) |
 | `library/` | **lib** (`lib<key>.so`) |
 | `osc/` | Large/third-party **osc** tree |
@@ -129,7 +131,7 @@ cp -a project/tmptools project/myproj          # default: 「建一个项目 myp
 # 2) Rename: keep only what you need; delete unused template dirs
 # 3) Edit <home>/myproj/Makefile → PROJECT_ID:=myproj
 # 4) Edit prj.json → "name":"myproj", intro/desc/version/author
-# 5) Ensure every com/exe/cmd/lib key has a matching subdirectory
+# 5) Ensure every com/exe/cmd/lib key has a matching subdir (or flat shell script for exe)
 # 6) Build
 make obj=myproj
 # → build/store/myproj-<ver>-<hardware>.fpk
@@ -206,6 +208,43 @@ daemon patterns (libevent, Unix control socket, `cstart`/`flush`):
 **`cmd`** (global CLI): copy `testcmd/`, register under `"cmd": { "mycli": "…" }` → installed to FPK `bin/`.
 
 **`lib`**: copy `library/`, register `"lib": { "mylib": "…" }` → `libmylib.so`.
+
+## Create a shell component (bash HE)
+
+Bash script as an HE object (`COM_FILE_EXECUTE`). Full detail:
+**[reference-shell.md](reference-shell.md)**.
+
+**Default (preferred):** flat script at project root + `exe` in `prj.json`.  
+**Do not** invent `<key>/<key>` + Makefile unless the user wants a subdirectory.
+
+```bash
+cp project/tmptools/comshell project/myproj/myshell
+chmod +x project/myproj/myshell
+# edit: keep #!/bin/bash, . $cheader, cend; Unix LF only
+```
+
+```json
+"exe": {
+  "myshell": "shell glue description"
+}
+```
+
+| | C `exe` (comexe) | Shell `exe` |
+|--|------------------|---------------|
+| Source | `<key>/<key>.c` + `MAIN2API` | Flat `<key>` script (or `<key>/<key>`) |
+| Register | `prj.json` → `exe` | same |
+| Object | `proj@key` | same |
+| Reply | C `talk2fd` | `creturn` / `cend` via `$cheader` (`land/api.sh`) |
+
+Rules:
+
+1. Register under **`exe`**, never **`cmd`**.
+2. Nested `he` must use `env -u cpipe he …` before a final `creturn` (avoids reply-pipe pollution).
+3. Optional factory: `<project_root>/<key>.cfg`.
+4. **Mandatory — interface doc:** **skinos-component-doc** → English `<key>.md`.
+5. Build: `./mkdel` → `make obj=<proj>`.
+
+Not the same as **`wui@script`** (`script@filename` under internal dir).
 
 ## Web page + language files (`wui`)
 
@@ -334,10 +373,12 @@ Implement `_shut` to stop services cleanly.
 Verify before build:
 
 - [ ] `name` == directory name  
-- [ ] Every `com`/`exe`/`cmd`/`lib`/`osc`/`ko` key has a matching subdirectory  
-- [ ] Every `init`/`uninit`/`joint` call target exists as `_method`  
+- [ ] Every `com`/`cmd`/`lib`/`osc`/`ko` key has a matching subdirectory  
+- [ ] Every `exe` key has a matching subdirectory **or** a flat executable script at project root (shell component)  
+- [ ] Every `init`/`uninit`/`joint` call target exists as `_method` (C) or bash function (shell)  
 - [ ] Every `wui.page` file exists; `lang` JSON keys cover `data-i18n`  
 - [ ] `Makefile` `PROJECT_ID` matches  
+- [ ] Shell scripts: Unix LF, `chmod +x`, `. $cheader` + `cend` kept 
 
 ## Build & verify
 
@@ -366,16 +407,17 @@ Installed project paths are **dynamic** (`gBOARDID` / `PROJECT_DIR`, image vs FP
 |-----|---------|
 | [reference-skin-api.md](reference-skin-api.md) | Handbook: types, config/service/scall, MAIN2API, paths |
 | [reference-comexe.md](reference-comexe.md) | Single-instance `exe`: lifecycle, Unix socket, checklist |
+| [reference-shell.md](reference-shell.md) | Bash shell components: flat `exe` script, `creturn`/`cpipe`, pack rules |
 | `doc/com/land/skin.md` | **Full** API + per-function samples (~3300 lines) |
 
-When writing component code, **read `reference-skin-api.md` first**; for daemons open **`reference-comexe.md`**; use `skin.md` for exact signatures.
+When writing component code, **read `reference-skin-api.md` first**; for daemons open **`reference-comexe.md`**; for bash HE objects open **`reference-shell.md`**; use `skin.md` for exact signatures.
 
 ## Related skills
 
 | Skill | Use for |
 |-------|---------|
 | **skinos-wui** | Project HTML pages, `prj.json` wui, `he.load` / `he.exec` |
-| **skinos-component-doc** | English `<name>.md` interface doc (required after com/exe) |
+| **skinos-component-doc** | English `<name>.md` interface doc (required after com/exe/shell) |
 | **skinos-he** | Live device: eline / `he '…'` / `ashy` HE grammar |
 | **skinos-sdk** | `gBOARDID`, `config/swrt5` board overlays |
 | **device-upgrade** | Upload FPK / firmware, remote web `/he` |
