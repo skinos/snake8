@@ -9,7 +9,7 @@ if [ -d ${TOPDIR}/project ]; then
     list=`ls`
     for tmp in $list
     do
-        if [ -d ${TOPDIR}/project/${tmp} ]; then
+        if [ -d ${TOPDIR}/project/${tmp}/.git ]; then
             echo "################################################"
             echo "############## update the ${tmp} ###############"
             echo "################################################"
@@ -22,7 +22,7 @@ cd ${TOPDIR}
 # Custom
 for tmp in rice
 do
-    if [ -d ${TOPDIR}/${tmp} ]; then
+    if [ -d ${TOPDIR}/${tmp}/.git ]; then
         echo "################################################"
         echo "############## update the ${tmp} ###############"
         echo "################################################"
@@ -36,11 +36,23 @@ if [ -d ${TOPDIR}/config ]; then
     list=`ls`
     for tmp in $list
     do
-        if [ -d ${TOPDIR}/config/${tmp} ]; then
+        if [ -d ${TOPDIR}/config/${tmp}/.git ]; then
             echo "################################################"
             echo "############## update the ${tmp} ###############"
             echo "################################################"
             cd ${TOPDIR}/config/${tmp};git pull
+        fi
+        if [ -d ${TOPDIR}/config/${tmp} ]; then
+            sublist=`ls ${TOPDIR}/config/${tmp}`
+            for sub in $sublist
+            do
+                if [ -d ${TOPDIR}/config/${tmp}/${sub}/.git ]; then
+                    echo "################################################"
+                    echo "############## update the ${tmp}/${sub} ###############"
+                    echo "################################################"
+                    cd ${TOPDIR}/config/${tmp}/${sub};git pull
+                fi
+            done
         fi
     done
 fi
