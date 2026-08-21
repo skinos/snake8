@@ -10,5 +10,14 @@
     {
         "ethcon":"ethernet connect component",
         "ltecon":"lte modem connect component"
+    },
+    "exe":
+    {
+        "netcap":"tcpdump capture on ifname interfaces"
+    },
+    "obj":
+    {
+        "script@netcap":"netcap"
     }
+
 }

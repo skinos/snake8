@@ -175,6 +175,8 @@ typedef int boole;
 #define WUI_PROJECT     "wui"
 /** web user interface management component */
 #define WUI_COM         WUI_PROJECT""PROJECT_OBJECT_GAPS"admin"
+/// script custom project
+#define SCRIPT_PROJECT  "script"
 
 /// agent project
 #define AGENT_PROJECT    "agent"

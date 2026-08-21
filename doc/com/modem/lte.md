@@ -198,14 +198,15 @@ ttrue
     ```
 
 + `tty[ type ]` **get modem tty devices**
-    - type ------------- [ string ], optional, tty type: "stty", "mtty", "gtty"
+    - type ------------- [ string ], optional, tty type: "stty", "mtty", "gtty", "dtty"
     - failed return NULL
     - succeed return [ json ] when no type specified, [ string ] when type specified
     ```json
     {
         "stty":"status tty device",             // [ string ], AT/status channel
         "mtty":"misc tty device",               // [ string ], data/PPP or secondary AT channel
-        "gtty":"GNSS tty device"                // [ string ], GNSS/NMEA channel (if available)
+        "gtty":"GNSS tty device",               // [ string ], GNSS/NMEA channel (if available)
+        "dtty":"diag tty device"                // [ string ], DIAG/DM log port (if available)
     }
     ```
 
@@ -213,9 +214,10 @@ ttrue
     ```shell
     modem@lte.tty
     {
-        "stty":"/dev/ttyUSB1",
-        "mtty":"/dev/ttyUSB2",
-        "gtty":"/dev/ttyUSB3"
+        "stty":"/dev/ttyUSB2",
+        "mtty":"/dev/ttyUSB3",
+        "gtty":"/dev/ttyUSB1",
+        "dtty":"/dev/ttyUSB0"
     }
     ```
 

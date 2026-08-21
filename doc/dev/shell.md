@@ -4,25 +4,22 @@ A **shell component** is an HE object whose methods are functions in a shell scr
 
 There is **no** `prj add_shell`. Copy the template by hand from [`project/tmptools/comshell`](../../project/tmptools/comshell).
 
+Agent / pack rules (authoritative for agents): **`.claude/skills/skinos-project/reference-shell.md`**.
+
 For a C executable component, see [comexe.md](comexe.md). For a `main()` command that is not an HE object, see [cmd.md](cmd.md).
 
 ---
 
-## Copy the template
+## Preferred: flat script at project root
 
-From the SDK root, after `prj create myproj` (or any existing project):
+Put the script **next to** `prj.json`, same name as the `exe` key. Do **not** create a subdirectory by default.
 
 ```bash
-mkdir -p project/myproj/glue
-cp project/tmptools/comshell project/myproj/glue/glue
-chmod +x project/myproj/glue/glue
+cp project/tmptools/comshell project/myproj/glue
+chmod +x project/myproj/glue
 ```
 
-The packed artifact must be **`directory-name/directory-name`**. The SDK copies `PKG_BUILD_DIR/<key>/<key>` to the FPK root. If the script is named anything else, the pack step skips it.
-
-Register it under **`exe`** (not `cmd`). `land@fpk.register` treats `exe` keys as HE objects and starts them with `execl`, so a `#!/bin/bash` script works. A `cmd` key is only a `bin/` command and is not registered as `project@key`.
-
-Edit `project/myproj/prj.json`:
+Register under **`exe`** (not `cmd`):
 
 ```json
 "exe": {
@@ -30,9 +27,34 @@ Edit `project/myproj/prj.json`:
 }
 ```
 
-### Local Makefile
+Tree:
 
-If the subdirectory has no Makefile, the SDK compiles it with `exe.makefile` / `com.makefile` (expects `.c` files and a linked binary). Add a Makefile that only ensures the script is executable:
+```text
+project/myproj/
+├── glue              # the script (copy of comshell), chmod +x, Unix LF
+├── glue.cfg          # optional factory config
+├── glue.md           # English API doc
+├── Makefile
+└── prj.json
+```
+
+`skin.mk` copies a file `exe` key into the FPK root without compiling. A subdirectory is only needed when you want a local Makefile or extra sources (see below).
+
+`land@fpk.register` treats `exe` keys as HE objects and starts them with `execl`, so a `#!/bin/bash` script works. A `cmd` key is only a `bin/` command and is not registered as `project@key`.
+
+---
+
+## Alternate: subdirectory
+
+```bash
+mkdir -p project/myproj/glue
+cp project/tmptools/comshell project/myproj/glue/glue
+chmod +x project/myproj/glue/glue
+```
+
+The packed artifact must be **`directory-name/directory-name`**. The SDK installs `PKG_BUILD_DIR/<key>/<key>` to the FPK root.
+
+If the subdirectory has no Makefile, the SDK applies `exe.makefile` (expects `.c`). Add a Makefile that only ensures the script is executable:
 
 ```make
 BINS := $(notdir $(CURDIR))
@@ -51,12 +73,12 @@ Tree:
 
 ```text
 project/myproj/
-├── glue.cfg          # factory config (see below)
+├── glue.cfg
 ├── Makefile
 ├── prj.json
 └── glue/
     ├── Makefile
-    └── glue          # the script (copy of comshell)
+    └── glue
 ```
 
 ### Default configuration (`glue.cfg`)
@@ -99,16 +121,16 @@ To greet from `glue.cfg`, edit the **whole script**. Keep `#!/bin/bash`, `. $che
 
 setup()
 {
-    name=$( he ${PROJECT}@${COM}:name )
+    name=$(env -u cpipe he ${PROJECT}@${COM}:name)
     echo "hello, ${name}"
-    he log.info[ "hello, ${name}" ]
+    env -u cpipe he log.info[ "hello, ${name}" ]
     creturn ttrue
 }
 
 shut()
 {
     echo "the ${PROJECT}@${COM} shut has be called"
-    he log.info[ "the ${PROJECT}@${COM} shut has be called" ]
+    env -u cpipe he log.info[ "the ${PROJECT}@${COM} shut has be called" ]
     creturn ttrue
 }
 
@@ -118,7 +140,7 @@ service()
     while :
     do
         number=$[number+1]
-        he log.info[ "hello world ( $number ) times" ]
+        env -u cpipe he log.info[ "hello world ( $number ) times" ]
         sleep 1
     done
     creturn tfalse
@@ -132,6 +154,8 @@ list()
 
 cend
 ```
+
+**Nested `he`:** always `env -u cpipe he …` so nested calls do not write this component’s reply pipe; then one `creturn`.
 
 Call `setup` again; you should see `hello, hello`.
 
@@ -178,7 +202,7 @@ Then `myproj@glue.setup` should print `hello, glue1` if `setup` reads `:name` as
 
 ## What the template does
 
-`comshell` is a bash script. The file always has this shape: shebang, `. $cheader`, one function per HE method, then `cend`. Do not remove `. $cheader` or `cend`.
+`comshell` is a bash script. The file always has this shape: shebang, `. $cheader`, one function per HE method, then `cend`. Do not remove `. $cheader` or `cend`. Use **Unix LF** line endings (CRLF breaks the script).
 
 The hello-world listing above is that full file. `$cheader` loads the HE shell helpers (`creturn`, parameter variables, logging through `he`). `cend` dispatches the requested method.
 
@@ -187,8 +211,10 @@ Environment (set by the framework):
 | Name | Meaning |
 |------|---------|
 | `PROJECT` | Project id |
-| `COM` | Component directory name |
+| `COM` | Component directory / script name |
 | `PARAM1`, `PARAM2`, … | HE method arguments |
+| `API` | Method name being invoked |
+| `cpipe` | Reply pipe fd |
 
 | Function | HE | Role |
 |----------|-----|------|
@@ -197,7 +223,7 @@ Environment (set by the framework):
 | `service` | `myproj@glue.service` | Long-running loop (supervisor restarts on exit) |
 | `list` | `myproj@glue.list` | Example that returns JSON |
 
-`creturn ttrue` / `tfalse` match HE sentinels. `list` already returns a JSON string from `PARAM1` / `PARAM2`. Call other HE lines with `he` the same way as in `ashy` (quote when the shell would eat `|`, `{`, `[`).
+`creturn ttrue` / `tfalse` match HE sentinels. `list` already returns a JSON string from `PARAM1` / `PARAM2`. Call other HE lines with `env -u cpipe he …` (quote when the shell would eat `|`, `{`, `[`).
 
 ---
 
@@ -234,12 +260,6 @@ prj add_joint myproj network/online myproj@glue.online
 
 Read `PARAM1` (event) and keep the function short. Joint dispatch is synchronous.
 
-From the script, other HE lines work the same as in `ashy` (quote when the shell would eat `|`, `{`, `[`):
-
-```bash
-he ${PROJECT}@${COM}:status
-```
-
 Prefer a comexe when you need `config_get` / `_set` restart logic in-process ([comexe.md](comexe.md), [`../com/land/skin.md`](../com/land/skin.md)).
 
 ---
@@ -258,4 +278,4 @@ $ myproj@glue
 $ myproj@glue.setup
 ```
 
-Pack details: [`../../project2fpk.md`](../../project2fpk.md). HE: [`../com/land/he.md`](../com/land/he.md).
+Pack details: [`../../project2fpk.md`](../../project2fpk.md). HE: [`../com/land/he.md`](../com/land/he.md). Agent skill: [`.claude/skills/skinos-project/reference-shell.md`](../../.claude/skills/skinos-project/reference-shell.md).

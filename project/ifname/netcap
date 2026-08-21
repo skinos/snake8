@@ -1,0 +1,113 @@
+#!/bin/bash
+# Copyright (C) 2020-2022 ASHYELF
+# include fundamental function support, you cannot delete this
+. $cheader
+
+# ---- user-editable capture options ----
+# Protocol / bpf filter for tcpdump (empty = capture all). Examples: "tcp" "udp port 53" "icmp"
+NETCAP_PROTO=""
+# Max capture size in MB (tcpdump -C), then exit
+NETCAP_SIZE_MB=10
+# Capture output directory (pcap files only; for wui@file download)
+NETCAP_DIR="/tmp/file"
+# --------------------------------------
+
+stop()
+{
+    for pidfile in /tmp/netcap-*.pcap.pid
+    do
+        if [ -f "$pidfile" ]
+        then
+            pid=$(cat "$pidfile" 2>/dev/null)
+            if [ -n "$pid" ]
+            then
+                kill "$pid" >/dev/null 2>&1
+            fi
+            rm -f "$pidfile"
+        fi
+    done
+    creturn ttrue
+}
+
+# Start background tcpdump for ifname@xxx.netdev -> NETCAP_DIR/outname
+_cap()
+{
+    ifobj="$1"
+    outname="$2"
+    netdev=""
+    outfile=""
+    pidfile=""
+    pid=""
+
+    netdev=$(he ${ifobj}.netdev 2>/dev/null)
+    netdev=$(echo "$netdev" | tr -d '\r\n" ')
+    case "$netdev" in
+        ""|NULL|tfalse|tfalse,*|terror|terror,*|tpanic|tpanic,*)
+            creturn tfalse
+            return
+            ;;
+    esac
+
+    mkdir -p "$NETCAP_DIR"
+    outfile="${NETCAP_DIR}/${outname}"
+    pidfile="/tmp/${outname}.pid"
+
+    if [ -f "$pidfile" ]
+    then
+        pid=$(cat "$pidfile" 2>/dev/null)
+        if [ -n "$pid" ]
+        then
+            kill "$pid" >/dev/null 2>&1
+        fi
+        rm -f "$pidfile"
+    fi
+
+    if [ -n "$NETCAP_PROTO" ]
+    then
+        tcpdump -i "$netdev" -w "$outfile" -C "$NETCAP_SIZE_MB" -W 1 $NETCAP_PROTO >/dev/null 2>&1 &
+    else
+        tcpdump -i "$netdev" -w "$outfile" -C "$NETCAP_SIZE_MB" -W 1 >/dev/null 2>&1 &
+    fi
+    echo $! > "$pidfile"
+
+    he log.info[ "netcap: ${ifobj} netdev=${netdev} file=${outfile} size=${NETCAP_SIZE_MB}M proto=${NETCAP_PROTO:-all}" ]
+    creturn ttrue
+}
+
+lte()
+{
+    _cap "ifname@lte" "netcap-lte.pcap"
+}
+
+lte2()
+{
+    _cap "ifname@lte2" "netcap-lte2.pcap"
+}
+
+wan()
+{
+    _cap "ifname@wan" "netcap-wan.pcap"
+}
+
+wan2()
+{
+    _cap "ifname@wan2" "netcap-wan2.pcap"
+}
+
+wisp()
+{
+    _cap "ifname@wisp" "netcap-wisp.pcap"
+}
+
+wisp2()
+{
+    _cap "ifname@wisp2" "netcap-wisp2.pcap"
+}
+
+lan()
+{
+    _cap "ifname@lan" "netcap-lan.pcap"
+}
+
+# call the method, you cannot delete this
+cend
