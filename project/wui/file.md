@@ -50,12 +50,20 @@ ttrue
 
 - Description: List regular files under `FILE_DIR`. Creates the directory if it does not exist.
 - Parameters: none
-- Returns: JSON map `{ "filename": "fullpath", ... }`, or empty `{}` when the directory has no regular files. `NULL` on hard failure (cannot create/open directory).
+- Returns: JSON map `{ "filename": { "path":"fullpath", "size":bytes }, ... }`, or empty `{}` when the directory has no regular files. `NULL` on hard failure (cannot create/open directory). `size` is an integer byte count (capped at `INT_MAX`).
 
 ```shell
 $ wui@file.list
 {
-    "dump.log":"/tmp/file/dump.log",
-    "capture.pcap":"/tmp/file/capture.pcap"
+    "dump.log":
+    {
+        "path":"/tmp/file/dump.log",
+        "size":1024
+    },
+    "capture.pcap":
+    {
+        "path":"/tmp/file/capture.pcap",
+        "size":10485760
+    }
 }
 ```

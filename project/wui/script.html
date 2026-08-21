@@ -31,6 +31,12 @@
       <table id="file-grid-table"></table>
       <div id="file-grid-pager"></div>
 
+      <div class="clearfix form-actions">
+        <div class="col-md-offset-3 col-md-9">
+          <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+        </div>
+      </div>
+
     </div>
 
     </div>
@@ -265,13 +271,28 @@
             var list = v[0];
             var rows = [];
             var name;
+            var info;
+            var path;
+            var size;
             var scrollPos;
 
             if ( list && typeof list == "object" )
             {
                 for ( name in list )
                 {
-                    rows.push( { name: name, path: list[name] } );
+                    info = list[name];
+                    path = "";
+                    size = 0;
+                    if ( typeof info == "string" )
+                    {
+                        path = info;
+                    }
+                    else if ( info )
+                    {
+                        path = info.path || "";
+                        size = info.size || 0;
+                    }
+                    rows.push( { name: name, path: path, size: size } );
                 }
             }
             scrollPos = jqtable.getScrollPos();
@@ -297,7 +318,7 @@
         opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
         opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "object"; opt.value = file_obj; sform.appendChild( opt );
         opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "api"; opt.value = "list"; sform.appendChild( opt );
-        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "a"; opt.value = name; sform.appendChild( opt );
+        opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "a"; opt.value = name + "/path"; sform.appendChild( opt );
         opt = document.createElement( "input" ); opt.setAttribute( "type", "hidden" ); opt.name = "f"; opt.value = name; sform.appendChild( opt );
         sform.method = "GET";
         sform.action = "/download";
@@ -419,11 +440,36 @@
         jqtable.create( file_table, file_pager,
             {
                 caption: $.i18n('File List'),
-                colNames: [ $.i18n('Name'), $.i18n('Path'), $.i18n('Operation') ],
+                colNames: [ $.i18n('Name'), $.i18n('Path'), $.i18n('Size'), $.i18n('Operation') ],
                 colModel:
                 [
                     { name:'name', width:160 },
-                    { name:'path', width:400 },
+                    { name:'path', width:320 },
+                    {
+                        name:'size', width:100, align:'right',
+                        formatter: function( cellvalue, options, rowObject )
+                        {
+                            var n = Number( cellvalue );
+                            var u;
+                            var v;
+
+                            if ( !n || n < 0 )
+                            {
+                                return "0";
+                            }
+                            if ( n < 1024 )
+                            {
+                                return n + " B";
+                            }
+                            if ( n < 1024 * 1024 )
+                            {
+                                v = n / 1024;
+                                return v.toFixed( 1 ) + " KB";
+                            }
+                            u = n / ( 1024 * 1024 );
+                            return u.toFixed( 1 ) + " MB";
+                        }
+                    },
                     {
                         name:'operation', width:70, align:'center', fixed:true,
                         formatter: function( cellvalue, options, rowObject )
@@ -473,6 +519,10 @@
         });
         $( '#save' ).on( ace.click_event, function () {
             script_save();
+        });
+
+        $( '#refresh' ).on( ace.click_event, function () {
+            location.reload();
         });
 
         script_load();

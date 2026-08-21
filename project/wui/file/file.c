@@ -73,13 +73,15 @@ talk_t _delete( obj_t this, param_t param )
     return ttrue;
 }
 
-/* list[] — list files under FILE_DIR as { "name": "fullpath" } */
+/* list[] — list files under FILE_DIR as { "name": { "path", "size" } } */
 talk_t _list( obj_t this, param_t param )
 {
     DIR *pdir;
     struct stat st;
     struct dirent *pent;
     talk_t ret;
+    talk_t item;
+    int size;
     char dir[PATH_MAX];
     char path[PATH_MAX];
 
@@ -119,7 +121,22 @@ talk_t _list( obj_t this, param_t param )
         {
             continue;
         }
-        json_set_string( ret, pent->d_name, path );
+        item = json_create( NULL );
+        if ( item == NULL )
+        {
+            continue;
+        }
+        if ( st.st_size > INT_MAX )
+        {
+            size = INT_MAX;
+        }
+        else
+        {
+            size = (int)st.st_size;
+        }
+        json_set_string( item, "path", path );
+        json_set_number( item, "size", size );
+        json_set_value( ret, pent->d_name, item );
     }
     closedir( pdir );
 
