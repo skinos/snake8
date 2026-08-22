@@ -355,13 +355,20 @@
         jqtable.create( script_table, script_pager,
             {
                 caption: $.i18n('Script List'),
-                colNames: [ $.i18n('Object'), $.i18n('Path'), $.i18n('API'), $.i18n('Operation') ],
+                colNames: [ $.i18n('Object'), $.i18n('Description'), $.i18n('Path'), $.i18n('API'), $.i18n('Operation') ],
                 colModel:
                 [
                     { name:'object', width:140 },
-                    { name:'path', width:260 },
                     {
-                        name:'methods', width:300,
+                        name:'desc', width:140,
+                        formatter: function( cellvalue, options, rowObject )
+                        {
+                            return $.i18n( rowObject.object );
+                        }
+                    },
+                    { name:'path', width:220 },
+                    {
+                        name:'methods', width:280,
                         formatter: function( cellvalue, options, rowObject )
                         {
                             var object = rowObject.object;
