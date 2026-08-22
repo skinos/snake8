@@ -33,6 +33,12 @@ void low2upp( char *str );
  * @note Sets errno to EINVAL if str is NULL
  */
 void upp2low( char *str );
+/**
+ * @brief check whether a C string is well-formed UTF-8
+ * @param[in] s NUL-terminated string (NULL is treated as valid)
+ * @return 0 for valid UTF-8, -1 for invalid (errno = EILSEQ)
+ */
+ int utf8_check( const char *s );
 
 /** Default PBKDF2 iteration count for center/cloud login and passwd proof */
 #define AUTH_PBKDF2_ITER    10000

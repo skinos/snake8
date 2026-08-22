@@ -6,7 +6,9 @@ Shell component (flat `exe` script under `project/modem/fibocom-log`) that start
 background **fibocom-log** from the `modem-log` FPK on `lte` / `lte2`.
 
 Before capture it stops `network@connect`, shuts `ifname@lte` / `modem@lte` (or `lte2`),
-sends `AT+CFUN=0` on the AT port (`stty`), starts fibocom-log on `dtty`, then sends `AT+CFUN=1`.
+sends `AT+CFUN=0` on the AT port (`stty`), then starts fibocom-log on `dtty`. After
+capture starts it sends `AT+CFUN=1`, waits 2 seconds, then `modem@….setup` and
+`ifname@….setup` so the attach and dial sequence is in the log.
 
 Capture files go under **`FIBOCOM_LOG_DIR`** (default `/tmp/file`, usable via `wui@file`).
 Requires the `modem-log` package and `tip` (modem cmd).
@@ -39,7 +41,7 @@ Edit macros at the top of the script:
 
 ##### lte / lte2
 
-- Description: Capture on `modem@lte` / `modem@lte2`. Port from `modem@….tty:dtty`; AT on `….tty:stty`. Sequence: `service.stop[ network@connect ]` → `ifname@….shut` → `modem@….shut` → `AT+CFUN=0` → start fibocom-log → `AT+CFUN=1`. Re-call replaces the previous capture.
+- Description: Capture on `modem@lte` / `modem@lte2`. Port from `modem@….tty:dtty`; AT on `….tty:stty`. Sequence: `service.stop[ network@connect ]` → `ifname@….shut` → `modem@….shut` → `AT+CFUN=0` → start fibocom-log → `AT+CFUN=1` → wait 2s → `modem@….setup` → `ifname@….setup`. Re-call replaces the previous capture.
 - Returns: `ttrue` / `tfalse`
 
 ```shell
