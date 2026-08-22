@@ -88,7 +88,21 @@
         // 改变离线行的颜色
         $('td[title=' + $.i18n('stop') + ']').closest('tr').css({color: '#888'});
         $('td[title=' + $.i18n('finish') + ']').closest('tr').css({color: '#888'});
+        rule_set_width();
       });
+    }
+
+    function rule_set_width(){
+        var containerWidth;
+
+        containerWidth = $(rule_table).closest('.form-horizontal').width() ||
+                $(rule_table).closest('.col-xs-12').width() ||
+                $(window).width() - 100;
+
+        if ( $(rule_table)[0] && $(rule_table)[0].grid )
+        {
+            $(rule_table).jqGrid('setGridWidth', containerWidth);
+        }
     }
 
     $.i18n().load( page.lang('service') ).then( function () {
@@ -150,7 +164,10 @@
                 var newRowNum = parseInt($(this).val(),10);
                 $(rule_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
         });
-        
+        $( window ).off( 'resize.ruleGrid' ).on( 'resize.ruleGrid', function () {
+            rule_set_width();
+        } );
+
         /* load the configure */
         rule_load();
         /* bind the refresh */

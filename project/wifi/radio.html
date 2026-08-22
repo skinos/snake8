@@ -497,6 +497,8 @@
     knock_object = object;
     var clients_table = '#clients-grid-table-wifi';
     var clients_pager = '#clients-grid-pager-wifi';
+    var acl_table = '#acl-grid-table';
+    var acl_pager = '#acl-grid-pager';
 
     if (window.wifi_client.timer) {
         clearInterval(window.wifi_client.timer);
@@ -611,13 +613,7 @@
           if ($(this).prop('checked'))
           {
             $('#ssid_cfg').show();
-            var containerWidth = $('#ssid_cfg').parent().width() || $(window).width() - 100;
-            if ($('#clients-grid-table-wifi')[0].grid) { 
-                $('#clients-grid-table-wifi').jqGrid('setGridWidth', containerWidth);
-            }
-            if ($('#acl-grid-table')[0].grid) { 
-                $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
-            }
+            clients_set_width();
           }
           else
           {
@@ -699,6 +695,28 @@
       })
     }
 
+    function clients_set_width(){
+        var containerWidth;
+
+        containerWidth = $('#ssid_cfg').parent().width() || $(window).width() - 100;
+
+        if ( $(clients_table)[0] && $(clients_table)[0].grid )
+        {
+            $(clients_table).jqGrid('setGridWidth', containerWidth);
+        }
+    }
+
+    function acl_set_width(){
+        var containerWidth;
+
+        containerWidth = $('#wifi_config').parent().width() || $(window).width() - 100;
+
+        if ( $(acl_table)[0] && $(acl_table)[0].grid )
+        {
+            $(acl_table).jqGrid('setGridWidth', containerWidth);
+        }
+    }
+
     function wifiacl_load(force)
     {
       he.load( [ sobj, sobj+'.stalist', 'client@station.list' ] ).then( function(v){
@@ -763,15 +781,13 @@
         var scrollPos = jqtable.getScrollPos();
         $('#acl-grid-table').jqGrid('clearGridData').jqGrid('setGridParam',{data: rows}).trigger('reloadGrid');
         jqtable.setScrollPos(scrollPos);
-        
+        acl_set_width();
+
         $('#status_acl').unbind('change').change(function () {
             if ($(this).prop('checked'))
             {
                 $('#wifi_config').show();
-                var containerWidth = $('#wifi_config').parent().width() || $(window).width() - 100;
-                if ($('#acl-grid-table')[0].grid) { 
-                    $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
-                }
+                acl_set_width();
             }
             else
             {
@@ -887,6 +903,9 @@
             }).trigger('reloadGrid');
             // 恢复滚动条的位置
             jqtable.setScrollPos(scrollPos);
+
+            clients_set_width();
+
             // 改变离线行的颜色
             $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({color: '#888'});
         },function(){
@@ -1309,14 +1328,20 @@
         });
 
       $('#rowNums-acl').on('change',function(){
-                var newRowNum = parseInt($(this).val(),10);
-                $('#acl-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
-        });
+            var newRowNum = parseInt($(this).val(),10);
+            $('#acl-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
+    $( window ).off( 'resize.aclGrid' ).on( 'resize.aclGrid', function () {
+        if ( $( '#wifi_config' ).is( ':visible' ) )
+        {
+            acl_set_width();
+        }
+    } );
 
-        $('#rowNums-modal').on('change',function(){
-                var newRowNum = parseInt($(this).val(),10);
-                $('#stalist-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
-        });
+    $('#rowNums-modal').on('change',function(){
+            var newRowNum = parseInt($(this).val(),10);
+            $('#stalist-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+    });
 
 
        /* load the configure */
@@ -1455,6 +1480,12 @@
             var newRowNum = parseInt($(this).val(),10);
             $(clients_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
         });
+        $( window ).off( 'resize.clientsGrid' ).on( 'resize.clientsGrid', function () {
+            if ( $( '#ssid_cfg' ).is( ':visible' ) )
+            {
+                clients_set_width();
+            }
+        } );
 
       /* load the configure */
       cfg_load();

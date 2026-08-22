@@ -180,7 +180,7 @@ function modem_save() {
 
 /* init */
 page.password('passwd', 'password-icon' );
-$.i18n().load( page.lang('ltemodem') ).then( function () {
+$.i18n().load( page.lang('lte') ).then( function () {
 	/* init the language */
 	$.i18n().locale = lang; $('body').i18n();
 

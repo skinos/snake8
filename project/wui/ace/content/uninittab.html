@@ -82,8 +82,23 @@
 
         // 必须先清空表格数据, 然后才能重新给表格赋值,之后需要触发重新加载表格的事件
         $(rule_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
+        rule_set_width();
       });
     }
+
+    function rule_set_width(){
+        var containerWidth;
+
+        containerWidth = $(rule_table).closest('.form-horizontal').width() ||
+                $(rule_table).closest('.col-xs-12').width() ||
+                $(window).width() - 100;
+
+        if ( $(rule_table)[0] && $(rule_table)[0].grid )
+        {
+            $(rule_table).jqGrid('setGridWidth', containerWidth);
+        }
+    }
+
     // 添加规则
     function add_rule( rule )
     {
@@ -274,6 +289,9 @@
                 var newRowNum = parseInt($(this).val(),10);
                 $(rule_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
             });
+            $( window ).off( 'resize.ruleGrid' ).on( 'resize.ruleGrid', function () {
+                rule_set_width();
+            } );
 
         /* load the configure */
         rule_load();

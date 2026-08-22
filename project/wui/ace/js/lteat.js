@@ -43,6 +43,7 @@ function lte_at() {
             var scrollPos = jqtable.getScrollPos();
             $("#set-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
+            set_set_width();
         }
 		// custom watch
         if ( iconfig.custom_watch )
@@ -71,9 +72,36 @@ function lte_at() {
             var scrollPos = jqtable.getScrollPos();
             $("#watch-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
+            watch_set_width();
         }
 
     })
+}
+
+function set_set_width(){
+    var containerWidth;
+
+    containerWidth = $(set_table).closest('.form-horizontal').width() ||
+            $(set_table).closest('.col-xs-12').width() ||
+            $(window).width() - 100;
+
+    if ( $(set_table)[0] && $(set_table)[0].grid )
+    {
+        $(set_table).jqGrid('setGridWidth', containerWidth);
+    }
+}
+
+function watch_set_width(){
+    var containerWidth;
+
+    containerWidth = $(watch_table).closest('.form-horizontal').width() ||
+            $(watch_table).closest('.col-xs-12').width() ||
+            $(window).width() - 100;
+
+    if ( $(watch_table)[0] && $(watch_table)[0].grid )
+    {
+        $(watch_table).jqGrid('setGridWidth', containerWidth);
+    }
 }
 
 // 保存数据
@@ -280,7 +308,12 @@ function init_at() {
         $(set_table).jqGrid('setGridParam', { rowNum: newRowNum }).trigger('reloadGrid');
         $(watch_table).jqGrid('setGridParam', { rowNum: newRowNum }).trigger('reloadGrid');
     });
-    //console.log("初始化成功啦")
+    $( window ).off( 'resize.setGrid' ).on( 'resize.setGrid', function () {
+        set_set_width();
+    } );
+    $( window ).off( 'resize.watchGrid' ).on( 'resize.watchGrid', function () {
+        watch_set_width();
+    } );
     return true;
 }
 

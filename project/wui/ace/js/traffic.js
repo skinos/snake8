@@ -605,7 +605,21 @@ var clients_pager = '#clients-grid-pager';
             jqtable.setScrollPos(scrollPos);
             // 改变离线行的颜色
             $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({color: '#888'});
+            clients_set_width();
         });
+    }
+
+    function clients_set_width(){
+        var containerWidth;
+
+        containerWidth = $(clients_table).closest('.form-horizontal').width() ||
+                $(clients_table).closest('.col-xs-12').width() ||
+                $(window).width() - 100;
+
+        if ( $(clients_table)[0] && $(clients_table)[0].grid )
+        {
+            $(clients_table).jqGrid('setGridWidth', containerWidth);
+        }
     }
 
     function controlRefresh() {
@@ -770,6 +784,9 @@ var clients_pager = '#clients-grid-pager';
                 var newRowNum = parseInt($(this).val(),10);
                 $(clients_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
         });
+        $( window ).off( 'resize.clientsGrid' ).on( 'resize.clientsGrid', function () {
+            clients_set_width();
+        } );
     }
 
 // 主数据加载函数

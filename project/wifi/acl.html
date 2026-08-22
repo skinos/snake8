@@ -106,6 +106,8 @@
     var stalist;
     var clientlist;
     var object = "wifi@xssid";
+    var acl_table = '#acl-grid-table';
+    var acl_pager = '#acl-grid-pager';
     var index = page.param( 'object', location.hash );
     if ( index )
     {
@@ -177,15 +179,13 @@
         var scrollPos = jqtable.getScrollPos();
         $('#acl-grid-table').jqGrid('clearGridData').jqGrid('setGridParam',{data: rows}).trigger('reloadGrid');
         jqtable.setScrollPos(scrollPos);
-        
+        acl_set_width();
+
         $('#status').unbind('change').change(function () {
             if ($(this).prop('checked'))
             {
                 $('#wifi_config').show();
-                var containerWidth = $('#wifi_config').parent().width() || $(window).width() - 100;
-                if ($('#acl-grid-table')[0].grid) { 
-                    $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
-                }
+                acl_set_width();
             }
             else
             {
@@ -194,6 +194,17 @@
         }).trigger('change'); 
         
       });
+    }
+
+    function acl_set_width(){
+        var containerWidth;
+        
+        containerWidth = $('#wifi_config').parent().width() || $(window).width() - 100;
+
+        if ( $('#acl-grid-table')[0] && $('#acl-grid-table')[0].grid )
+        {
+            $('#acl-grid-table').jqGrid('setGridWidth', containerWidth);
+        }
     }
 
     /* save the configure */
@@ -505,11 +516,17 @@
             //'border-bottom': '1px solid #e1e1e1' // 加个分割线
         });
 
-      $('#rowNums').on('change',function(){
-                var newRowNum = parseInt($(this).val(),10);
-                $('#acl-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
+        $('#rowNums').on('change',function(){
+            var newRowNum = parseInt($(this).val(),10);
+            $('#acl-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
         });
-
+        $( window ).off( 'resize.aclGrid' ).on( 'resize.aclGrid', function () {
+            if ( $( '#wifi_config' ).is( ':visible' ) )
+            {
+                acl_set_width();
+            }
+        } );
+        
         $('#rowNums').on('change',function(){
                 var newRowNum = parseInt($(this).val(),10);
                 $('#stalist-grid-table').jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')

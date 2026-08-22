@@ -14,13 +14,8 @@ function lte_sms() {
 
     // 根据开关状态来调整表格宽度 需要处理好表格还没有正式渲染好的处理
     $('#sms').off('change').on('change', function () {  
-        if ($(this).prop('checked')) {  
-            // 计算容器宽度并调整 jqGrid (防止表格错位)
-            var containerWidth = $('#sms_cfg').parent().width() || $(window).width() - 100;  
-            // 修改判断逻辑
-            if ($(smslist_table)[0].grid) { 
-                $(smslist_table).jqGrid('setGridWidth', containerWidth);
-            }
+        if ($(this).prop('checked')) {
+            smslist_set_width();
             $('#sms_cfg').show();  
         } else {  
             $('#sms_cfg').hide();  
@@ -65,8 +60,19 @@ function smslist_load()
     $(smslist_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
     // 恢复滚动条的位置
     jqtable.setScrollPos(scrollPos);
+    smslist_set_width();
   })
 }
+
+// 计算容器宽度并调整 jqGrid (防止表格错位)
+function smslist_set_width(){
+    var containerWidth;
+    containerWidth = $('#sms_cfg').parent().width() || $(window).width() - 100;  
+    if ($(smslist_table)[0] && $(smslist_table)[0].grid) { 
+        $(smslist_table).jqGrid('setGridWidth', containerWidth);
+    }
+}
+
 // 删除多个短信
 function delete_smss( indexStr )
 {
@@ -227,7 +233,12 @@ function init_sms(){
         var newRowNum = parseInt($(this).val(),10);
         $(smslist_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
     });
-    //console.log("初始化成功啦")
+    $( window ).off( 'resize.smslistGrid' ).on( 'resize.smslistGrid', function () {
+        if ( $( '#sms_cfg' ).is( ':visible' ) )
+        {
+            smslist_set_width();
+        }
+    } );
     return true;
 }
 

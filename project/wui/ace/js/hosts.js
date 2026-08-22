@@ -31,8 +31,23 @@ function hosts_load()
         $(hosts_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
         // 恢复滚动条的位置
         jqtable.setScrollPos(scrollPos);
+        hosts_set_width();
     });
 }
+
+function hosts_set_width(){
+    var containerWidth;
+
+    containerWidth = $(hosts_table).closest('.form-horizontal').width() ||
+            $(hosts_table).closest('.col-xs-12').width() ||
+            $(window).width() - 100;
+
+    if ( $(hosts_table)[0] && $(hosts_table)[0].grid )
+    {
+        $(hosts_table).jqGrid('setGridWidth', containerWidth);
+    }
+}
+
 function hosts_save()
 {
     // 清除所有旧规则
@@ -153,6 +168,9 @@ $.i18n().load( page.lang('hosts') ).then( function () {
         var newRowNum = parseInt($(this).val(),10);
         $(hosts_table).jqGrid('setGridParam',{rowNum:newRowNum}).trigger('reloadGrid')
     });
+    $( window ).off( 'resize.hostsGrid' ).on( 'resize.hostsGrid', function () {
+        hosts_set_width();
+    } );
     
     /* 加载参数 */
     hosts_load();
