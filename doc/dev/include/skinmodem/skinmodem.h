@@ -24,6 +24,8 @@ void    modem_log( int level, const char *object, const char *file, int line, co
 talk_t  modem_operator( talk_t state );
 /* rsrp 2 rssi */
 int     rsrp2rssi( int rsrp );
+/* rsrp rssi 2 sinr */
+void    rsrprssi2sinr( talk_t state );
 
 
 

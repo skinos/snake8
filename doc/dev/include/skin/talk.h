@@ -87,9 +87,15 @@ summarize:
 		axp(It could also be point by talk_t), attribute identify must be x(string), value can be json or x(string/integer/boolean)
 		x(It could also be point by talk_t), actual data, content can be string/integer/boolean
 */
+/**
+ * @brief check all string nodes in a talk tree are well-formed UTF-8
+ * @param[in] json talk tree (object or scalar)
+ * @return true when valid, false when invalid (errno = EILSEQ)
+ */
+ boole       talk_utf8_check( talk_t json );
 
 
-
+ 
 /**
  * @brief determines whether the talk is a x or not
  * @param[in] v talk_t value to check
