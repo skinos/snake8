@@ -22,8 +22,9 @@
 /*
  * _setup -- apply configuration at boot or after _set.
  *
- * Skip on slave platforms. Require snmpd binary. When status is "enable",
- * start the supervised "service" child (ends in _service / execlp snmpd).
+ * Skip on slave platforms. When status is not "enable", return.
+ * Require snmpd binary only if enabled, then start the supervised
+ * "service" child (ends in _service / execlp snmpd).
  */
 boole_t _setup( obj_t this, param_t param )
 {
@@ -37,17 +38,17 @@ boole_t _setup( obj_t this, param_t param )
 		app_debug( "no snmp function on %s", platform );
 		return ttrue;
 	}
+	ptr = config_gets_string( NULL, 0, this, "status" );
+	if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
+	{
+		return ttrue;
+	}
 	if ( stat( SNMPD_BIN, &st ) != 0 )
 	{
 		app_debug( "%s not found", SNMPD_BIN );
 		return tfalse;
 	}
-	ptr = config_gets_string( NULL, 0, this, "status" );
-	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-	{
-		/* Avoid conflict with OpenWrt procd snmpd if present. */
-		cstart( this, "service", NULL, COM_IDPATH );
-	}
+	cstart( this, "service", NULL, COM_IDPATH );
 	return ttrue;
 }
 

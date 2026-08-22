@@ -20,13 +20,13 @@
  *
  * Steps:
  *  1) Slave platforms skip FTP entirely (no binary check, no service start).
- *  2) Ensure /usr/sbin/proftpd exists; otherwise setup fails (tfalse).
- *  3) If JSON "status" is "enable", register and start the "service" API
- *     (fork/exec path ends in _service with execlp proftpd).
+ *  2) If JSON "status" is not "enable", return without probing proftpd.
+ *  3) Ensure /usr/sbin/proftpd exists; otherwise setup fails (tfalse).
+ *  4) Start the "service" API (fork/exec path ends in _service with execlp proftpd).
  *
- * Returns ttrue when FTP is intentionally disabled (slave) or when proftpd
- * exists and setup completed (service may or may not have been started).
- * Returns tfalse only when the proftpd binary is missing on non-slave builds.
+ * Returns ttrue when FTP is intentionally disabled (slave or status) or when
+ * proftpd exists and the service was started. Returns tfalse only when the
+ * proftpd binary is missing on an enabled, non-slave setup.
  */
 boole_t _setup( obj_t this, param_t param )
 {
@@ -41,18 +41,17 @@ boole_t _setup( obj_t this, param_t param )
 		default_debug( "no ftp function on %s", platform );
 		return ttrue;
 	}
-    /* Binary must be present before we advertise or start the service. */
+    ptr = config_gets_string( NULL, 0, this, "status" );
+    if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
+    {
+        return ttrue;
+    }
     if ( stat( "/usr/sbin/proftpd", &st ) != 0 )
     {
 		default_debug( "/usr/sbin/proftpd not found" );
         return tfalse;
     }
-    /* Start foreground service child only when operator enabled FTP. */
-    ptr = config_gets_string( NULL, 0, this, "status" );
-    if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-    {
-		cstart( this, "service", NULL, COM_IDPATH );
-    }
+	cstart( this, "service", NULL, COM_IDPATH );
     return ttrue;
 }
 

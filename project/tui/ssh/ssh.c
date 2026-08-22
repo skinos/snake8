@@ -20,15 +20,15 @@
  *
  * Order of work:
  *  1) Skip on OpenWrt "wrt" scope or "slave" platform (no SSH by design).
- *  2) Require dropbear in PATH; otherwise fail setup.
- *  3) Load config; missing config -> succeed without doing more.
- *  4) If status != "enable", free config and succeed without starting dropbear.
- *  5) Ensure /etc/dropbear; copy DSS/RSA host keys from project config if present;
+ *  2) Load config; missing config or status != "enable" -> succeed without probing dropbear.
+ *  3) Require dropbear in PATH; otherwise fail setup.
+ *  4) Ensure /etc/dropbear; copy DSS/RSA host keys from project config if present;
  *     run dropbearkey.sh when shipped with the package to generate missing keys.
- *  6) If manager list is non-empty, same iptables pattern as telnet (chain tui_ssh).
- *  7) Start/restart supervised service (child runs dropbear).
+ *  5) If manager list is non-empty, same iptables pattern as telnet (chain tui_ssh).
+ *  6) Start/restart supervised service (child runs dropbear).
  *
- * Returns ttrue on success (including no-op paths), tfalse if dropbear is missing.
+ * Returns ttrue on success (including no-op paths), tfalse if dropbear is missing
+ * when SSH is enabled.
  */
 boole_t _setup( obj_t this, param_t param )
 {
@@ -55,16 +55,6 @@ boole_t _setup( obj_t this, param_t param )
 		return ttrue;
 	}
 
-    /* --- Require dropbear binary in PATH --- */
-    shell( "which dropbear > %s", test_file );
-    ptr = file2string( test_file, NULL, 0 );
-    if ( ptr == NULL || strlen( ptr ) < 8 )
-    {
-        unlink( test_file );
-        return tfalse;
-    }
-    unlink( test_file );
-
     cfg = config_get( this, NULL );
     if ( cfg == NULL )
     {
@@ -76,6 +66,17 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
         return ttrue;
     }
+
+    /* --- Require dropbear binary in PATH --- */
+    shell( "which dropbear > %s", test_file );
+    ptr = file2string( test_file, NULL, 0 );
+    if ( ptr == NULL || strlen( ptr ) < 8 )
+    {
+        unlink( test_file );
+        talk_free( cfg );
+        return tfalse;
+    }
+    unlink( test_file );
 
 	/* --- Host key material for Dropbear --- */
 	shell( "mkdir -p /etc/dropbear" );
