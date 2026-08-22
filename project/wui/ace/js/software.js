@@ -109,7 +109,7 @@ $.i18n().load( page.lang('software') ).then( function () {
 			available = Number( window.meminfo.available );
 			if ( available > 0 )
 			{
-				limit = available * 1024 * 80 / 100;
+				limit = available * 1024 * 90 / 100;
 				if ( file.size > limit )
 				{
 					page.alert( { message: $.i18n('File too large') } );
