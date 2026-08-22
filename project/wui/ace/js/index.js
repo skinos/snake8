@@ -578,7 +578,9 @@ jQuery(function($) {
 			'.ifname@lte3.status',
 			'.ifname@lte4.status',
 			'.ifname@wisp.status',
-			'.ifname@wisp2.status'
+			'.ifname@wisp2.status',
+			'land@machine.meminfo',
+			'land@machine.sginfo'
 	] ).then( function(v){
 		window.wui = v[0];
 		window.machine = v[1];
@@ -637,6 +639,8 @@ jQuery(function($) {
 		window.ifname["ifname@lte4"] = v[31];
 		window.ifname["ifname@wisp"] = v[32];
 		window.ifname["ifname@wisp2"] = v[33];
+		window.meminfo = v[34];
+		window.sginfo = v[35];
 		window.lang = window.machine.language;
 		document.title = window.machine.name;
 

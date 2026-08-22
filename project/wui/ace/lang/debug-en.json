@@ -1,0 +1,13 @@
+{
+    "Cannot close it": "Unable to close",
+    "Cannot open it": "Unable to open",
+    "Close before leave": "Close the terminal before leaving this page",
+    "I'm sorry that this feature does not support the current browser. It is recommended that you update and install Chrome, Firefox or IE11+.": "This feature is not supported in your browser. Please use Chrome, Firefox, or Edge.",
+    "Open HE Terminal": "Open HE Terminal",
+    "Opening...": "Opening…",
+    "Serial Terminal": "Serial Terminal",
+    "Serial2 Terminal": "Serial2 Terminal",
+    "Serial3 Terminal": "Serial3 Terminal",
+    "Will shutdown serial application when open the serial terminal, Are you sure you want to open it": "Opening the serial terminal will stop serial applications. Continue?",
+    "closing...": "closing…"
+}

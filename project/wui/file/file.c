@@ -27,6 +27,77 @@ boole_t _setup( obj_t this, param_t param )
     return ttrue;
 }
 
+/* add[ file ] — copy a source file into FILE_DIR by basename */
+talk_t _add( obj_t this, param_t param )
+{
+    struct stat st;
+    size_t dlen;
+    const char *file;
+    const char *slash;
+    const char *name;
+    char dir[PATH_MAX];
+    char path[PATH_MAX];
+
+    file = param_string( param, 1 );
+    if ( file == NULL || *file == '\0' )
+    {
+        errno = EINVAL;
+        return tfalse;
+    }
+
+    slash = strrchr( file, '/' );
+    if ( slash != NULL )
+    {
+        name = slash + 1;
+    }
+    else
+    {
+        name = file;
+    }
+    if ( *name == '\0' || *name == '.' )
+    {
+        errno = EINVAL;
+        return tfalse;
+    }
+
+    if ( stat( file, &st ) != 0 )
+    {
+        return tfalse;
+    }
+    if ( !S_ISREG( st.st_mode ) )
+    {
+        errno = EISDIR;
+        return tfalse;
+    }
+
+    snprintf( dir, sizeof(dir), "%s", FILE_DIR );
+    if ( stat( dir, &st ) != 0 )
+    {
+        if ( mkdir( dir, REGULAR_DIR_MODE ) != 0 )
+        {
+            return tfalse;
+        }
+    }
+    else if ( !S_ISDIR( st.st_mode ) )
+    {
+        errno = ENOTDIR;
+        return tfalse;
+    }
+
+    dlen = strlen( dir );
+    snprintf( path, sizeof(path), "%s/%s", dir, name );
+    if ( strncmp( path, dir, dlen ) != 0 || path[dlen] != '/' )
+    {
+        errno = EPERM;
+        return tfalse;
+    }
+    if ( shell( "cp -f \"%s\" \"%s\"", file, path ) == 0 )
+    {
+        return ttrue;
+    }
+    return tfalse;
+}
+
 /* delete[ name ] — delete a file under FILE_DIR by filename */
 talk_t _delete( obj_t this, param_t param )
 {

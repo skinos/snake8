@@ -1,18 +1,19 @@
 {
     "default": "Default",
-    "Are you sure you want to default the system configure": "Are you sure you want to default the system configure",
+    "Are you sure you want to default the system configure": "Are you sure you want to reset the system configuration to defaults?",
     "Change": "Change",
     "Choose": "Choose",
-    "Make sure that the device is reconnected": "Make sure that the device is reconnected",
+    "Make sure that the device is reconnected": "Reconnect to the device after it comes back online.",
     "Need to restart, whether to continue": "Need to restart, whether to continue",
     "No File": "No File",
-    "Restarting...": "Restarting...",
+    "Restarting...": "Restarting…",
     "Restore Failure": "Restore Failure",
-    "Restore the configuration is successful, now restarting...": "Restore the configuration is successful, now restarting...",
-    "Restore...": "Restore...",
-    "Backup Configure": "Backup Configure",
+    "Restore the configuration is successful, now restarting...": "Configuration restored. Restarting…",
+    "Restore...": "Restore…",
+    "Backup Configure": "Back Up Configuration",
     "Configuration Management": "Configuration Management",
-    "Configure Version": "Configure Version",
-    "Default Configure": "Default Configure",
-    "Restore Configure": "Restore Configure"
+    "Configure Version": "Configuration Version",
+    "Default Configure": "Reset to Defaults",
+    "Restore Configure": "Restore Configuration",
+    "File too large": "File too large"
 }

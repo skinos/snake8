@@ -99,6 +99,24 @@ $.i18n().load( page.lang('software') ).then( function () {
     dataType: 'text',
     add: function( e, data )
 	{ // 选择文件之后，执行升级之前
+		var file;
+		var available;
+		var limit;
+
+		file = data.files[0];
+		if ( file && window.meminfo )
+		{
+			available = Number( window.meminfo.available );
+			if ( available > 0 )
+			{
+				limit = available * 1024 * 80 / 100;
+				if ( file.size > limit )
+				{
+					page.alert( { message: $.i18n('File too large') } );
+					return;
+				}
+			}
+		}
 		page.confirm( { message: $.i18n('The device may need to be restarted, confirm whether to continue'),
 			callback: function( result ) {
 				if ( result )

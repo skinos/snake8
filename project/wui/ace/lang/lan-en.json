@@ -37,11 +37,11 @@
     "must be a valid IPv6 address": "must be a valid IPv6 address",
     "must be a valid number": "must be a valid number",
     "must be a number(0-128)": "must be a number (0-128)",
-    "Settings unchanged": "Settings unchanged",
+    "Settings unchanged": "No changes to apply",
     "The system will restart because of the change of configuration": "The system will restart due to configuration changes.",
     "Need to restart the system": "System restart required",
-    "Restarting to apply...": "Restarting to apply...",
-    "Make sure that the device is reconnected": "Make sure that the device is reconnected",
+    "Restarting to apply...": "Restarting to apply changes…",
+    "Make sure that the device is reconnected": "Reconnect to the device after it comes back online.",
     "Apply": "Apply",
     "Refresh": "Refresh"
 }

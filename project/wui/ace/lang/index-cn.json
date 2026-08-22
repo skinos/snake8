@@ -266,6 +266,7 @@
     "must be a valid port": "必须为合法的端口号(1-65535)",
     "AT command(LTE)": "AT命令(4G/5G基带)",
     "Data Error": "数据错误",
+    "Invalid character encoding": "字符编码无效（非 UTF-8）",
     "Traffic": "流量",
     "VPN": "VPN",
     "Enable": "启用",

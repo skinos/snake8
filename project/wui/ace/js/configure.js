@@ -62,6 +62,54 @@ $.i18n().load( page.lang('configure') ).then( function () {
         dataType: 'text',
         add: function (e, data)
         { // 选择文件之后，执行导入之前
+            var file;
+            var size_str;
+            var n;
+            var unit;
+            var bytes;
+            var limit;
+
+            file = data.files[0];
+            if ( file && window.sginfo && window.sginfo.config )
+            {
+                size_str = window.sginfo.config.size;
+                if ( size_str )
+                {
+                    size_str = String( size_str );
+                    n = parseFloat( size_str );
+                    unit = size_str.replace( /[0-9.\s]/g, '' );
+                    unit = unit.toUpperCase();
+                    if ( n > 0 )
+                    {
+                        if ( unit == 'T' || unit == 'TB' )
+                        {
+                            bytes = n * 1024 * 1024 * 1024 * 1024;
+                        }
+                        else if ( unit == 'G' || unit == 'GB' )
+                        {
+                            bytes = n * 1024 * 1024 * 1024;
+                        }
+                        else if ( unit == 'M' || unit == 'MB' )
+                        {
+                            bytes = n * 1024 * 1024;
+                        }
+                        else if ( unit == 'K' || unit == 'KB' )
+                        {
+                            bytes = n * 1024;
+                        }
+                        else
+                        {
+                            bytes = n * 1024;
+                        }
+                        limit = bytes * 90 / 100;
+                        if ( file.size > limit )
+                        {
+                            page.alert( { message: $.i18n('File too large') } );
+                            return;
+                        }
+                    }
+                }
+            }
             page.confirm( { message: $.i18n('Need to restart, whether to continue'),
                 callback: function (result) {
                     if (result)

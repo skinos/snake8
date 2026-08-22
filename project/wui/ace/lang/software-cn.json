@@ -53,5 +53,6 @@
     "Install failed": "安装失败",
     "Change": "重选",
     "Choose": "浏览",
-    "No File": "未指定文件"
+    "No File": "未指定文件",
+    "File too large": "文件太大"
 }

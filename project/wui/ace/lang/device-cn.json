@@ -141,5 +141,6 @@
     "Factory Configure":"出厂配置",
     "Custom Model":"定制版本",
     "Language Settings":"语言设置",
-    "Backup EEPROM":"备份EEPROM"
+    "Backup EEPROM":"备份EEPROM",
+    "File too large": "文件太大"
 }

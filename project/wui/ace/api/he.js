@@ -13,6 +13,89 @@ function shouldIgnoreAuthError()
 }
 var he =
 {
+    /* JS string must be encodable as well-formed UTF-8 (reject lone surrogates) */
+    _string_utf8_ok: function( s )
+    {
+        var i;
+        var c;
+        var d;
+        var enc;
+        var dec;
+
+        if ( s == null )
+        {
+            return true;
+        }
+        if ( typeof s != "string" )
+        {
+            return true;
+        }
+        if ( typeof TextEncoder != "undefined" && typeof TextDecoder != "undefined" )
+        {
+            try
+            {
+                enc = new TextEncoder().encode( s );
+                dec = new TextDecoder( "utf-8", { fatal: true } ).decode( enc );
+                if ( dec !== s )
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch ( e )
+            {
+                return false;
+            }
+        }
+        for ( i = 0; i < s.length; i++ )
+        {
+            c = s.charCodeAt( i );
+            if ( c >= 0xD800 && c <= 0xDBFF )
+            {
+                if ( i + 1 >= s.length )
+                {
+                    return false;
+                }
+                d = s.charCodeAt( i + 1 );
+                if ( d < 0xDC00 || d > 0xDFFF )
+                {
+                    return false;
+                }
+                i++;
+            }
+            else if ( c >= 0xDC00 && c <= 0xDFFF )
+            {
+                return false;
+            }
+        }
+        return true;
+    },
+
+    /* Check all HE command strings in the POST parameter object */
+    _payload_utf8_ok: function( paramter )
+    {
+        var k;
+        var v;
+
+        if ( !paramter )
+        {
+            return true;
+        }
+        for ( k in paramter )
+        {
+            v = paramter[k];
+            if ( typeof v != "string" )
+            {
+                continue;
+            }
+            if ( he._string_utf8_ok( v ) == false )
+            {
+                return false;
+            }
+        }
+        return true;
+    },
+
     /* excute cmd api */
     cmd:function ( a, args, func )
     {
@@ -83,8 +166,22 @@ var he =
             return null;
         }
 		//console.log( "POST:"+window.talkkey );
-        paramter["key"] = window.talkkey;
+		paramter["key"] = window.talkkey;
 		paramter["username"] = window.username;
+
+        if ( he._payload_utf8_ok( paramter ) == false )
+        {
+            if ( args && args.loading )
+            {
+                page.overlay2hide();
+            }
+            page.alert( { message: $.i18n( 'Invalid character encoding' ) } );
+            if ( func != null )
+            {
+                return;
+            }
+            return null;
+        }
 
         // 打印交互数据
         console.log( "Request:", paramter );

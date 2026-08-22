@@ -17,7 +17,7 @@
           <span data-i18n="Script Name"></span>
           <span id="script-name" style="margin-left: 8px; font-weight: bold;"></span>
         </div>
-        <textarea id="script-content" rows="24" style="width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace;"></textarea>
+        <textarea id="script-content"></textarea>
         <div class="clearfix form-actions" style="margin-top: 12px; margin-left: 0;">
           <button class="btn btn-second" type="button" id="cancel"><span data-i18n="Cancel"></span></button>
           &nbsp; &nbsp; &nbsp;
@@ -30,6 +30,15 @@
       <!-- File list table -->
       <table id="file-grid-table"></table>
       <div id="file-grid-pager"></div>
+
+      <div class="form-group" style="margin-top: 12px;">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Upload File"></label>
+        <div class="col-sm-9">
+          <div class="col-xs-10 col-sm-5">
+            <input type="file" id="file-upload" />
+          </div>
+        </div>
+      </div>
 
       <div class="clearfix form-actions">
         <div class="col-md-offset-3 col-md-9">
@@ -54,7 +63,75 @@
     var file_table = '#file-grid-table';
     var file_pager = '#file-grid-pager';
     var current_object = null;
+    var script_cm = null;
     var langjson = base64.decode( page.param( 'lang', location.hash ) );
+
+    function script_cm_load_css()
+    {
+        var href;
+        var link;
+
+        if ( document.getElementById( 'codemirror-css' ) )
+        {
+            return;
+        }
+        href = '/assets/css/codemirror.min.css';
+        link = document.createElement( 'link' );
+        link.id = 'codemirror-css';
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild( link );
+
+        href = '/assets/css/codemirror-eclipse.min.css';
+        link = document.createElement( 'link' );
+        link.id = 'codemirror-eclipse-css';
+        link.rel = 'stylesheet';
+        link.href = href;
+        document.head.appendChild( link );
+
+        link = document.createElement( 'style' );
+        link.id = 'codemirror-inline-css';
+        link.type = 'text/css';
+        link.appendChild( document.createTextNode(
+            '.CodeMirror{border:1px solid #d5d5d5;font-size:13px;height:480px;}'
+        ) );
+        document.head.appendChild( link );
+    }
+
+    function script_cm_ready( done )
+    {
+        script_cm_load_css();
+        if ( window.CodeMirror && CodeMirror.modes && CodeMirror.modes.shell )
+        {
+            done();
+            return;
+        }
+        $.getScript( '/assets/js/codemirror.min.js', function(){
+            $.getScript( '/assets/js/codemirror-shell.min.js', function(){
+                done();
+            } );
+        } );
+    }
+
+    function script_cm_ensure()
+    {
+        var ta;
+
+        if ( script_cm )
+        {
+            return;
+        }
+        ta = document.getElementById( 'script-content' );
+        script_cm = CodeMirror.fromTextArea( ta, {
+            mode: 'shell',
+            theme: 'eclipse',
+            lineNumbers: true,
+            lineWrapping: true,
+            indentUnit: 4,
+            tabSize: 4
+        } );
+        script_cm.setSize( '100%', '480px' );
+    }
 
     /* load the script list */
     function script_load()
@@ -125,7 +202,14 @@
     function script_editor_hide()
     {
         $( '#script-editor' ).hide();
-        $( '#script-content' ).val( '' );
+        if ( script_cm )
+        {
+            script_cm.setValue( '' );
+        }
+        else
+        {
+            $( '#script-content' ).val( '' );
+        }
         $( '#script-name' ).text( '' );
         current_object = null;
     }
@@ -153,21 +237,34 @@
             }
             current_object = object;
             $( '#script-name' ).text( object );
-            $( '#script-content' ).val( decoded );
-            $( '#script-editor' ).show();
+            script_cm_ready( function(){
+                script_cm_ensure();
+                script_cm.setValue( decoded );
+                $( '#script-editor' ).show();
+                script_cm.refresh();
+                script_cm.focus();
+            } );
         });
     }
 
     /* save script */
     function script_save()
     {
-        var content = $( '#script-content' ).val();
+        var content;
         var encoded;
         var cmd;
 
         if ( !current_object )
         {
             return;
+        }
+        if ( script_cm )
+        {
+            content = script_cm.getValue();
+        }
+        else
+        {
+            content = $( '#script-content' ).val();
         }
         if ( !content )
         {
@@ -519,6 +616,56 @@
         $(file_table).on( 'click', '.file-delete', function () {
             var name = $(this).attr( 'data-name' );
             file_delete( name );
+        });
+
+        $('#file-upload').ace_file_input( { no_file: $.i18n('No File'), btn_choose: $.i18n('Choose'), btn_change: $.i18n('Change'), icon_remove: '' } );
+        $('#file-upload').fileupload({
+            url:'/upload?username='+window.username+'&key='+window.talkkey+'&object='+file_obj+'&api=add',
+            paramName: 'filename',
+            dataType: 'text',
+            add: function (e, data)
+            {
+                var file;
+                var available;
+                var limit;
+
+                file = data.files[0];
+                if ( file && window.meminfo )
+                {
+                    available = Number( window.meminfo.available );
+                    if ( available > 0 )
+                    {
+                        limit = available * 1024 * 80 / 100;
+                        if ( file.size > limit )
+                        {
+                            page.alert( { message: $.i18n('File too large') } );
+                            return;
+                        }
+                    }
+                }
+                page.overlay($.i18n('Uploading...'));
+                data.submit();
+            },
+            done: function (e, data)
+            {
+                var ret = JSON.parse( data.result );
+                var result = ret["return"];
+                page.overlay2hide();
+                if ( result === 'ttrue' )
+                {
+                    page.hint2succeed( $.i18n('Upload successfully') );
+                    file_load();
+                }
+                else
+                {
+                    page.alert( { message: $.i18n('Upload failed') } );
+                }
+            },
+            fail: function ()
+            {
+                page.overlay2hide();
+                page.alert( { message: $.i18n('Upload failed') } );
+            }
         });
 
         $( '#cancel' ).on( ace.click_event, function () {

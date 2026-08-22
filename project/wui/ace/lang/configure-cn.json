@@ -14,5 +14,6 @@
     "Need to restart, whether to continue": "此操作需要重启系统",
     "No File": "未指定文件",
     "Restarting...": "重启中...",
-    "Configuration Management": "配置管理"
+    "Configuration Management": "配置管理",
+    "File too large": "文件太大"
 }
