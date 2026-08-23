@@ -10,13 +10,13 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
 - provides SIM card detection, PLMN registration, signal strength monitoring
 - supports backup SIM card failover with configurable thresholds
 - proxies modem-specific APIs: operator, reset, lock_imei, lock_imsi, custom_set, custom_watch
-- provides unified configuration view: modem-side configs (sms, gnss, atport, lock_*, custom_*, watch_interval) are accessible through ifname@lte and automatically forwarded to modem@lte, allowing users to manage the entire LTE device from a single interface
+- provides unified configuration view: modem-side configs (sms, gnss, ims, atport, lock_*, custom_*, watch_interval) are accessible through ifname@lte and automatically forwarded to modem@lte, allowing users to manage the entire LTE device from a single interface
 
 
 
 ### Network Architecture
 
-`ifname@lte` is an **extern interface** registered by `network@frame` during boot. It uses `ifname@ltecon` as concom and `modem@lte` as ifdev. It provides a unified configuration view: modem-side configs (`sms`, `gnss`, `atport`, `lock_*`, `custom_*`, `watch_interval`) are stored in `modem@lte` but accessible and settable through `ifname@lte`. Modem-specific APIs (`operator`, `reset`, `lock_imei`, etc.) are also proxied. As an extern interface, it is subject to multi-uplink scheduling and publishes `network/onextern` / `network/offextern` joint events.
+`ifname@lte` is an **extern interface** registered by `network@frame` during boot. It uses `ifname@ltecon` as concom and `modem@lte` as ifdev. It provides a unified configuration view: modem-side configs (`sms`, `gnss`, `ims`, `atport`, `lock_*`, `custom_*`, `watch_interval`) are stored in `modem@lte` but accessible and settable through `ifname@lte`. Modem-specific APIs (`operator`, `reset`, `lock_imei`, etc.) are also proxied. As an extern interface, it is subject to multi-uplink scheduling and publishes `network/onextern` / `network/offextern` joint events.
 
 For the full network architecture, see [`../network/frame.md`](../network/frame.md).
 
@@ -208,6 +208,12 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     // Setting these fields will automatically forward to modem@lte and reset the modem if changed
     "sms":"SMS function status",                                 // [ "disable", "enable" ]
     "gnss":"GNSS function status",                               // [ "disable", "enable" ]
+    "ims":"IMS function policy",                                  // [ "auto", "enable", "disable" ]
+                                                                     // "auto" follow the module / operator (default)
+                                                                     // "enable" force IMS on
+                                                                     // "disable" force IMS off
+                                                                     // Quectel maps to AT+QCFG="ims" 0/1/2 (MBN / force on / force off)
+                                                                     // Fibocom maps enable/disable to AT+CAVIMS=1/0; auto leaves CAVIMS unchanged
     "atport":"AT port function status",                          // [ "disable", "enable" ]
     "lock_nettype":"preferred RAT lock policy",                  // [ "auto", "2g", "3g", "4g", "nsa", "sa" ]
     "lock_imei":"lock IMEI function",                            // [ "disable", "enable", "specific imei string" ]
@@ -261,6 +267,7 @@ ifname@lte
     },
     "sms":"enable",                                  # enable SMS function
     "gnss":"enable",                                 # enable GNSS function
+    "ims":"auto",                                    # IMS follows the module / operator
     "atport":"enable",                               # enable AT port function
     "watch_interval":"8",                            # watch interval is 8 seconds
     "custom_set":                                    # custom AT commands to execute during setup
@@ -300,6 +307,12 @@ ttrue
 Example, enable GNSS function
 ```shell
 ifname@lte:gnss=enable
+ttrue
+```
+
+Example, set IMS policy (auto / enable / disable)
+```shell
+ifname@lte:ims=auto
 ttrue
 ```
 

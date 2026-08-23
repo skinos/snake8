@@ -10,12 +10,13 @@ Manage LTE/NR modem baseband services. This component handles the modem-side ope
 - executes custom AT commands during setup and periodic watch phases
 - exposes modem status including signal, PLMN, network type, and operator information
 - when **`up`/`profile`** applies an operator that differs from the last saved copy under `var` (`%s.profile` for the modem object), writes the profile to the module, returns **`tfalse`** to the caller (so **`ifname@lte` / ltecon** aborts this dial round and retries after `fun`), calls driver **`modem_off`** in-process (no atd exit), saves the file only after that succeeds, then continues FSM from CFUN/SETUP (only when `up` carries a non-NULL profile argument; auto `up` with no profile skips this sync). Unchanged profile returns **`ttrue`** after profile AT.
+- applies IMS policy from **`ims`** (`auto` / `enable` / `disable`) during setup on drivers that support it; independent of **`sms`**
 
 
 
 ### Network Architecture
 
-`modem@lte` is the **device layer** component that manages the LTE/NR baseband. It does NOT interact directly with `network@frame`; instead, `ifname@lte` (using `ifname@ltecon` as concom) delegates device operations to `modem@lte` via the ifdev binding. When `modem@lte` starts, it registers its netdev (e.g. `usb0`) with `network@frame`. Modem-side configs (`sms`, `gnss`, `atport`, `lock_*`, `custom_*`, `watch_interval`) are stored here but accessible through `ifname@lte` as a unified view.
+`modem@lte` is the **device layer** component that manages the LTE/NR baseband. It does NOT interact directly with `network@frame`; instead, `ifname@lte` (using `ifname@ltecon` as concom) delegates device operations to `modem@lte` via the ifdev binding. When `modem@lte` starts, it registers its netdev (e.g. `usb0`) with `network@frame`. Modem-side configs (`sms`, `gnss`, `ims`, `atport`, `lock_*`, `custom_*`, `watch_interval`) are stored here but accessible through `ifname@lte` as a unified view.
 
 For the full network architecture, see [`../network/frame.md`](../network/frame.md).
 
@@ -33,6 +34,13 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     // SMS and auxiliary services
     "sms":"SMS function status",                                 // [ "disable", "enable" ]
     "gnss":"GNSS function status",                               // [ "disable", "enable" ]
+    "ims":"IMS function policy",                                  // [ "auto", "enable", "disable" ]
+                                                                     // "auto" follow the module / operator (default)
+                                                                     // "enable" force IMS on
+                                                                     // "disable" force IMS off
+                                                                     // Quectel maps to AT+QCFG="ims" 0/1/2 (MBN / force on / force off)
+                                                                     // Fibocom maps enable/disable to AT+CAVIMS=1/0; auto leaves CAVIMS unchanged
+                                                                     // Drivers without an IMS AT ignore this key
     "atport":"AT port function status",                          // [ "disable", "enable" ]
 
     // Lock attributes
@@ -81,6 +89,7 @@ Example, show full configuration of the first LTE modem
 modem@lte
 {
     "gnss":"enable",                   # enable GNSS function
+    "ims":"auto",                      # IMS follows the module / operator
     "custom_set":                      # execute AT+COPS=3,2 first, then AT+CPIN=1234 during setup
     {
         "1":"AT+COPS=3,2",
@@ -99,6 +108,12 @@ modem@lte
 Example, enable SMS for the first LTE modem
 ```shell
 modem@lte:sms=enable
+ttrue
+```
+
+Example, set IMS policy (auto / enable / disable)
+```shell
+modem@lte:ims=auto
 ttrue
 ```
 
