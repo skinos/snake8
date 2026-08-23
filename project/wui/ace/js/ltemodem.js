@@ -74,7 +74,20 @@ function lte_modem()
             $('#lock_imsi').text( $.i18n("Unlocked" ) );
             $('#imsi_lock').show();
         }
-		
+		// IMS: empty / missing / auto → Auto (do not write ims)
+        $("#ims").empty();
+        $("#ims").append("<option value=''>" + $.i18n("Auto") + "</option>");
+        $("#ims").append("<option value='enable'>" + $.i18n("Enable") + "</option>");
+        $("#ims").append("<option value='disable'>" + $.i18n("Disable") + "</option>");
+        if ( iconfig.ims == "enable" || iconfig.ims == "disable" )
+        {
+            $('#ims').val( iconfig.ims );
+        }
+        else
+        {
+            $('#ims').val( '' );
+        }
+
 		// watch interval
         $('#watch_interval').val( iconfig.watch_interval||'' );
 
@@ -135,7 +148,7 @@ function modem_save() {
             'gnss', 'need_simcard', 'need_plmn', 'need_signal', 'need_attach'
         ],
         text: [
-            'lock_nettype', 'lock_pin', 'watch_interval',
+            'lock_nettype', 'lock_pin', 'ims', 'watch_interval',
             'simcard_failed_everytime', 'signal_failed_everytime', 'attach_failed_everytime', 'failed_everytime'
         ]
     };

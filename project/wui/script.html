@@ -321,6 +321,62 @@
         });
     }
 
+    /* pager delete: selected script rows */
+    function script_delete_rows( indexStr )
+    {
+        var indexs;
+        var cmds;
+        var i;
+        var n;
+        var row;
+        var object;
+        var ok;
+
+        if ( !indexStr )
+        {
+            return;
+        }
+        indexs = String( indexStr ).split( ',' );
+        cmds = [];
+        for ( i = 0; i < indexs.length; i++ )
+        {
+            row = $(script_table).jqGrid( 'getRowData', indexs[i] );
+            object = row.object;
+            if ( !object )
+            {
+                continue;
+            }
+            cmds.push( obj + ".delete[" + object + "]" );
+            if ( current_object == object )
+            {
+                script_editor_hide();
+            }
+        }
+        if ( cmds.length == 0 )
+        {
+            return;
+        }
+        he.exec( cmds ).then( function(v){
+            ok = true;
+            for ( n = 0; n < v.length; n++ )
+            {
+                if ( v[n] != true )
+                {
+                    ok = false;
+                }
+            }
+            script_load();
+            if ( ok )
+            {
+                page.hint2succeed( $.i18n('Delete successfully') );
+            }
+            else
+            {
+                page.alert( { message: $.i18n('Delete failed') } );
+            }
+        });
+    }
+
     /* add script */
     function script_add()
     {
@@ -444,6 +500,58 @@
         });
     }
 
+    /* pager delete: selected file rows */
+    function file_delete_rows( indexStr )
+    {
+        var indexs;
+        var cmds;
+        var i;
+        var n;
+        var row;
+        var name;
+        var ok;
+
+        if ( !indexStr )
+        {
+            return;
+        }
+        indexs = String( indexStr ).split( ',' );
+        cmds = [];
+        for ( i = 0; i < indexs.length; i++ )
+        {
+            row = $(file_table).jqGrid( 'getRowData', indexs[i] );
+            name = row.name;
+            if ( !name )
+            {
+                continue;
+            }
+            cmds.push( file_obj + ".delete[" + name + "]" );
+        }
+        if ( cmds.length == 0 )
+        {
+            return;
+        }
+        he.exec( cmds ).then( function(v){
+            ok = true;
+            for ( n = 0; n < v.length; n++ )
+            {
+                if ( v[n] != true )
+                {
+                    ok = false;
+                }
+            }
+            file_load();
+            if ( ok )
+            {
+                page.hint2succeed( $.i18n('Delete successfully') );
+            }
+            else
+            {
+                page.alert( { message: $.i18n('Delete failed') } );
+            }
+        });
+    }
+
     $.i18n().load( page.lang(langjson) ).then( function () {
         $.i18n().locale = window.lang; $('body').i18n();
 
@@ -511,7 +619,7 @@
             $.extend(true, {}, jqtable.navOptions,
                 {
                     add: true, addicon : 'ace-icon fa fa-plus-circle purple',
-                    del: false,
+                    del: true, delicon : 'ace-icon fa fa-trash-o red',
                     edit: false,
                     search: false, refresh: false, view: false
                 }
@@ -524,7 +632,7 @@
                     script_add();
                 }
             },
-            {}
+            $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function (params, data) { script_delete_rows(data); } })
         );
 
         $(script_table).on( 'click', '.script-edit', function () {
@@ -599,14 +707,14 @@
             $.extend(true, {}, jqtable.navOptions,
                 {
                     add: false,
-                    del: false,
+                    del: true, delicon : 'ace-icon fa fa-trash-o red',
                     edit: false,
                     search: false, refresh: false, view: false
                 }
             ),
             {},
             {},
-            {}
+            $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function (params, data) { file_delete_rows(data); } })
         );
 
         $(file_table).on( 'click', '.file-download', function () {
@@ -635,7 +743,7 @@
                     available = Number( window.meminfo.available );
                     if ( available > 0 )
                     {
-                        limit = available * 1024 * 80 / 100;
+                        limit = available * 1024 * 90 / 100;
                         if ( file.size > limit )
                         {
                             page.alert( { message: $.i18n('File too large') } );

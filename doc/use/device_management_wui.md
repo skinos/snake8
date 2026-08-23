@@ -23,7 +23,7 @@ or, if the web port was changed or mapped:
 http://<device-ip>:<port>/
 ```
 
-Factory HTTP port is **80**. HTTPS, when enabled, is usually **443**. The unit used for these pictures was reached at `http://114.132.219.158:25009/`.
+Factory HTTP port is **80**. HTTPS, when enabled, is usually **443**.
 
 The first page is **login.html**. The heading **Management** and **© Ashyelf** sit above a white sign-in box. The box title is the device name (here `3218-010FF8`).
 

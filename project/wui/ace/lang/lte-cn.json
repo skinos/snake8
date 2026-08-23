@@ -134,6 +134,8 @@
     "PIN Code": "PIN码",
     "Lock IMEI": "锁定IMEI",
     "Lock IMSI": "锁定IMSI",
+    "IMS": "IP多媒体子系统(IMS)",
+    "Enable": "启用",
     "Lock": "锁定",
     "Unlocked": "未锁定",
     "Locked": "已锁定",

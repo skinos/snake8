@@ -113,6 +113,8 @@
     "Attach Mode": "Attach Mode",
     "Lock IMEI": "Lock IMEI",
     "Lock IMSI": "Lock IMSI",
+    "IMS": "IP Multimedia Subsystem(IMS)",
+    "Enable": "Enable",
     "Lock": "Lock",
     "Watch Interval": "Watch Interval",
     "Need SIM Card": "Need SIM Card",

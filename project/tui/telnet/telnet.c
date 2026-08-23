@@ -19,15 +19,14 @@
  *
  * Order of work:
  *  1) Skip entirely on OpenWrt scope or slave platform (no telnet by design).
- *  2) Require telnetd in PATH; otherwise fail setup.
- *  3) Load config; missing config -> succeed without doing more.
- *  4) If status != "enable", free config and succeed without starting telnetd.
- *  5) If manager list is non-empty, install iptables: INPUT -> custom chain,
+ *  2) Load config; missing config or status != "enable" -> succeed without probing telnetd.
+ *  3) Require telnetd in PATH; otherwise fail setup.
+ *  4) If manager list is non-empty, install iptables: INPUT -> custom chain,
  *     ACCEPT for each allowed IPv4 or MAC, final DROP in chain.
- *  6) Start/restart supervised service (child runs telnetd).
+ *  5) Start/restart supervised service (child runs telnetd).
  *
  * Returns ttrue on success (including intentional no-op paths), tfalse if
- * telnetd binary is missing.
+ * telnetd binary is missing when telnet is enabled.
  */
 boole_t _setup( obj_t this, param_t param )
 {
@@ -52,29 +51,28 @@ boole_t _setup( obj_t this, param_t param )
 		return ttrue;
 	}
 
-    /* --- Locate telnetd: write "which" output to temp file and read it back --- */
-    shell( "which telnetd > %s", test_file );
-    ptr = file2string( test_file, NULL, 0 );
-    if ( ptr == NULL || strlen( ptr ) < 8 )
-    {
-        unlink( test_file );
-        return tfalse;
-    }
-    unlink( test_file );
-
-    /* --- Load full component configuration object --- */
     cfg = config_get( this, NULL );
     if ( cfg == NULL )
     {
         return ttrue;
     }
-    /* --- Only run service and firewall hooks when explicitly enabled --- */
     ptr = json_string( cfg, "status" );
     if ( ptr == NULL || 0 != strcmp( ptr, "enable" ) )
     {
         talk_free( cfg );
         return ttrue;
     }
+
+    /* --- Locate telnetd: write "which" output to temp file and read it back --- */
+    shell( "which telnetd > %s", test_file );
+    ptr = file2string( test_file, NULL, 0 );
+    if ( ptr == NULL || strlen( ptr ) < 8 )
+    {
+        unlink( test_file );
+        talk_free( cfg );
+        return tfalse;
+    }
+    unlink( test_file );
     /* --- Listen port for iptables and child; empty -> standard telnet 23 --- */
 	axp = NULL;
 	manager_init = false;
