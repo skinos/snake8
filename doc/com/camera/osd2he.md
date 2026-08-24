@@ -35,6 +35,9 @@ If the command returns a JSON **object** instead of a scalar string, **`camera@o
     "$L-P$":"LTE IP address",                                  // [ string ], HE for LTE IP field
     "$L-G$":"LTE gateway",                                     // [ string ], HE for LTE gateway field
     "$L-O$":"LTE operator name",                               // [ string ], HE for LTE operator field
+    "$G-LAT$":"GNSS latitude",                                  // [ string ], HE for latitude (decimal degrees)
+    "$G-LON$":"GNSS longitude",                                 // [ string ], HE for longitude (decimal degrees)
+    "$G-ALT$":"GNSS altitude",                                  // [ string ], HE for altitude in metres (GGA)
     "$T-O2$":"UART sensor O2",                                // [ string ], HE for sensor channel
     "$T-CO$":"UART sensor CO",                                 // [ string ], HE for sensor channel
     "$T-H2S$":"UART sensor H2S",                              // [ string ], HE for sensor channel
@@ -56,6 +59,9 @@ camera@osd2he
     "$L-P$":"ifname@lte.status:ip",           # LTE IP → $L-P$
     "$L-G$":"ifname@lte.status:gateway",      # LTE gateway → $L-G$
     "$L-O$":"ifname@lte.status:operator",      # LTE operator → $L-O$
+    "$G-LAT$":"gnss@nmea.status:pos/lat",      # latitude → $G-LAT$
+    "$G-LON$":"gnss@nmea.status:pos/lon",      # longitude → $G-LON$
+    "$G-ALT$":"gnss@nmea.status:pos/alt",      # altitude → $G-ALT$
     "$T-O2$":"uart@tty.status:02",             # O2 sensor → $T-O2$
     "$T-CO$":"uart@tty.status:CO",             # CO sensor → $T-CO$
     "$T-H2S$":"uart@tty.status:H2S",           # H2S sensor → $T-H2S$

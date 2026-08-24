@@ -91,11 +91,11 @@ ttrue
     - When **`status`** is **`enable`**, starts the **`service`** child process
     - Not intended for manual invocation
 
-+ `shut[]` **stop the OSD service and write shutdown text to the camera when enabled**
++ `shut[]` **stop the OSD service and restore the saved camera template when enabled**
     - failed return tfalse
     - succeed return ttrue
     - Stops the supervised **`service`** process
-    - When configuration **`status`** is **`enable`**, calls the camera driver shutdown handler (slot 1 shows localized **Router Shutdown**, other text slots cleared)
+    - When configuration **`status`** is **`enable`**, PUTs the saved Hikvision template (for example **`/etc/config/camera/hikvision`**) back to the camera
     - Invoked on configuration change and system **`uninit`**
 
 + `service` **background GET, replace, and conditional PUT loop**

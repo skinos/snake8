@@ -2,7 +2,7 @@
 
 ### Overview
 
-Parse NMEA sentences from a GNSS serial port and bridge complete fix cycles to TCP/UDP peers. Registered as `gnssdrv@nmea` and started by `gnss@nmea.setup` when `drvcom` is `gnssdrv@nmea`.
+Parse NMEA sentences from a GNSS serial port and bridge complete fix cycles to TCP/UDP peers. The executable is `gnss@nmead` (`nmead/`); public aliases `gnssdrv@nmea` / `uartdrv@gnss` map to it via `prj.json` `obj`. Started by `gnss@nmea.setup` when `drvcom` is `gnssdrv@nmea`.
 - UART is read line-by-line (`evbuffer_readln`); each line is optionally pushed to `nmea_sock`
 - sentences accumulate into a **cycle** until the next GGA (or next RMC on RMC-only streams), or **500ms** idle
 - when a cycle completes: update `latest_pos` from GGA/RMC/GSA, then forward the cycle to TCP/UDP peers
@@ -162,8 +162,8 @@ ttrue
         {
             "utc":"UTC date-time",               // [ string ], HH:MM:SS:mm:dd:YYYY, same form as land@machine.status current
                                                     // built from GGA/RMC time and RMC date; missing date fills 00/0000
-            "lat":"latitude",                    // [ string ], decimal degrees; north positive, south negative
-            "lon":"longitude",                   // [ string ], decimal degrees; east positive, west negative
+            "lat":"latitude",                    // [ string ], decimal degrees, 4 fractional digits; north positive, south negative
+            "lon":"longitude",                   // [ string ], decimal degrees, 4 fractional digits; east positive, west negative
             "alt":"altitude",                    // [ string ], metres above mean sea level (GGA)
             "geoid":"geoid separation",          // [ string ], metres (GGA)
             "valid":"fix validity",              // [ "0", "1" ], usable fix flag from quality_code
@@ -220,8 +220,8 @@ ttrue
         "pos":
         {
             "utc":"11:11:44:07:23:2026",    # UTC 11:11:44 on 2026-07-23
-            "lat":"22.54315667",            # latitude 22.54315667° N
-            "lon":"114.05811167",           # longitude 114.05811167° E
+            "lat":"22.5432",                # latitude 22.5432° N
+            "lon":"114.0581",               # longitude 114.0581° E
             "alt":"50.0",                   # altitude 50.0 m above MSL
             "geoid":"0.0",                  # geoid separation 0.0 m
             "valid":"1",                    # usable fix (quality_code > 0)

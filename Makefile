@@ -213,7 +213,8 @@ pidlist:
 dep:            # prepare gBUILD_DIR gINSTALL_DIR gosROOT_DIR gSTORE_DIR, install fpk to gosROOT_DIR
 	./mkdel
 	rm -rf ${gINSTALL_DIR} ${gBUILD_DIR}
-	install -d ${gBUILD_DIR} ${gINSTALL_DIR} ${gINSTALL_DIR}/lib ${gINSTALL_DIR}/include ${gosROOT_DIR} ${gSTORE_DIR}
+	install -d ${gBUILD_DIR} ${gINSTALL_DIR}
+	install -d ${gINSTALL_DIR}/lib ${gINSTALL_DIR}/include ${gosROOT_DIR} ${gSTORE_DIR}
 	make -f ${gLAY_MAKEFILE} rootfs_prepare
 rootfs_install: # call before image, copy all the file of config/xxxx/**rootfs** to gosROOT_DIR
 	make -f ${gLAY_MAKEFILE} rootfs_install

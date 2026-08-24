@@ -34,6 +34,9 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     // SMS and auxiliary services
     "sms":"SMS function status",                                 // [ "disable", "enable" ]
     "gnss":"GNSS function status",                               // [ "disable", "enable" ]
+                                                                     // Quectel ec2x/ec200x/rm520n: AT+QGPS? then AT+QGPS=1 / AT+QGPSEND
+                                                                     // Fibocom fm160: AT+GTGPSPOWER? then AT+GTGPSPOWER=1/0
+                                                                     // Drivers without a GNSS AT ignore this key
     "ims":"IMS function policy",                                  // [ "auto", "enable", "disable" ]
                                                                      // "auto" follow the module / operator (default)
                                                                      // "enable" force IMS on
