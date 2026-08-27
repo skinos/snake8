@@ -1,6 +1,6 @@
 #include "skin/skin.h"
 
-
+talk_t _list( obj_t this, param_t param );
 
 boole_t _setup( obj_t this, param_t param )
 {
@@ -74,6 +74,80 @@ talk_t _add( obj_t this, param_t param )
     
     com_name2com( SCRIPT_PROJECT, name, object, sizeof(object) );
     if ( com_register( object, path, COM_FILE_EXECUTE ) == false )
+    {
+        err = errno;
+        unlink( path );
+        errno = err;
+        return tfalse;
+    }
+    return ttrue;
+}
+
+/* copy[ object, name ] — copy an existing executable script and register it */
+talk_t _copy( obj_t this, param_t param )
+{
+    int err;
+    int exist;
+    boole registered;
+    talk_t list;
+    talk_t item;
+    struct stat st;
+    const char *object;
+    const char *name;
+    const char *src;
+    char srcpath[PATH_MAX];
+    char path[PATH_MAX];
+    char dest[NAME_MAX];
+
+    object = param_string( param, 1 );
+    name = param_string( param, 2 );
+    if ( object == NULL || *object == '\0' || name == NULL || *name == '\0' )
+    {
+        errno = EINVAL;
+        return tfalse;
+    }
+
+    list = _list( this, NULL );
+    if ( list == NULL )
+    {
+        return tfalse;
+    }
+    item = json_value( list, object );
+    src = json_string( item, "path" );
+    if ( src == NULL || *src == '\0' )
+    {
+        talk_free( list );
+        errno = EINVAL;
+        return tfalse;
+    }
+    snprintf( srcpath, sizeof(srcpath), "%s", src );
+    talk_free( list );
+
+    internal2path( path, sizeof(path), "%s", name );
+    exist = stat( path, &st );
+    if ( exist == 0 )
+    {
+        errno = EEXIST;
+        return tfalse;
+    }
+
+    err = shell( "cp %s %s", srcpath, path );
+    if ( err != 0 )
+    {
+        return tfalse;
+    }
+    err = chmod( path, 0755 );
+    if ( err != 0 )
+    {
+        err = errno;
+        unlink( path );
+        errno = err;
+        return tfalse;
+    }
+
+    com_name2com( SCRIPT_PROJECT, name, dest, sizeof(dest) );
+    registered = com_register( dest, path, COM_FILE_EXECUTE );
+    if ( registered == false )
     {
         err = errno;
         unlink( path );

@@ -377,6 +377,47 @@
         });
     }
 
+    /* copy script */
+    function script_copy( object )
+    {
+        if ( !object )
+        {
+            return;
+        }
+        page.prompt({
+            message: $.i18n('Enter script name'),
+            value: '',
+            callback: function( result ){
+                var name;
+                var cmd;
+
+                if ( !result )
+                {
+                    return;
+                }
+                name = String( result ).replace( /^\s+|\s+$/g, '' );
+                if ( !name )
+                {
+                    page.alert( { message: $.i18n('Name cannot be empty') } );
+                    return;
+                }
+                cmd = obj + ".copy[" + object + "," + name + "]";
+                he.exec( [ cmd ] ).then( function(v){
+                    if ( v[0] == true )
+                    {
+                        page.hint2succeed( $.i18n('Copy successfully') );
+                        script_editor_hide();
+                        script_load();
+                    }
+                    else
+                    {
+                        page.alert( { message: $.i18n('Copy failed') } );
+                    }
+                });
+            }
+        });
+    }
+
     /* add script */
     function script_add()
     {
@@ -595,13 +636,14 @@
                         }
                     },
                     {
-                        name:'operation', width:70, align:'center', fixed:true,
+                        name:'operation', width:100, align:'center', fixed:true,
                         formatter: function( cellvalue, options, rowObject )
                         {
                             var object = rowObject.object;
                             var editBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-info script-edit" data-object="' + object + '" title="' + $.i18n('Edit') + '"><i class="ace-icon fa fa-pencil"></i></a>';
+                            var copyBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-warning script-copy" data-object="' + object + '" title="' + $.i18n('Copy') + '"><i class="ace-icon fa fa-files-o"></i></a>';
                             var delBtn = '<a href="javascript:void(0)" class="btn btn-minier btn-danger script-delete" data-object="' + object + '" title="' + $.i18n('Delete') + '"><i class="ace-icon fa fa-trash-o"></i></a>';
-                            return editBtn + '&nbsp;' + delBtn;
+                            return editBtn + '&nbsp;' + copyBtn + '&nbsp;' + delBtn;
                         }
                     }
                 ],
@@ -638,6 +680,10 @@
         $(script_table).on( 'click', '.script-edit', function () {
             var object = $(this).attr( 'data-object' );
             script_edit( object );
+        });
+        $(script_table).on( 'click', '.script-copy', function () {
+            var object = $(this).attr( 'data-object' );
+            script_copy( object );
         });
         $(script_table).on( 'click', '.script-delete', function () {
             var object = $(this).attr( 'data-object' );
