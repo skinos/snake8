@@ -43,8 +43,16 @@ typedef struct he_st
     char *cmd;                                         // need free
 } he_struct;
 typedef he_struct* he_t;
+/**
+ * @brief list HE APIs of a component (shared library, ELF executable, or shell)
+ * @param[in] object component object name (e.g., "land@machine")
+ * @return json map: api name (no "_" prefix) → ""
+ * 	@retval talk_t for succeed - caller must free with talk_free()
+ *  @retval NULL for error, errno will be set
+ */
+ talk_t api_list( const char *object );
 
-
+ 
 
 /**
  * @brief parse main argv/argv into he structure (format: "project@component:attr=value" or "project@component.method[param]")

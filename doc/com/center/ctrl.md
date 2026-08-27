@@ -27,7 +27,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     - vcode ------ [ string ], optional device register code
     - lang ------- [ "en", "cn", … ], optional; empty follows system
     - comment ---- [ string ], optional
-    - fails if user already exists, key missing, or username has illegal characters
+    - fails if user already exists, key missing, username has illegal characters, or password encode fails
     - failed return tfalse
     - succeed return ttrue
 
@@ -39,7 +39,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     ```
 
 + `user_modify[ user, [vcode], [lang], [comment] ]` **change non-password fields**
-    - user ------- [ string ], required
+    - user ------- [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
     - omitted parameters leave that field unchanged
     - explicit empty string clears `vcode` / `comment`; empty `lang` follows system
     - does not change password
@@ -74,7 +74,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     ```
 
 + `user_delete[ user ]` **delete a user tree**
-    - user ------ [ string ], required
+    - user ------ [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
     - removes `{device_path}/<user>/` entirely
     - failed return tfalse
     - succeed return ttrue
@@ -87,7 +87,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     ```
 
 + `user_reset[ user, newkey ]` **admin reset password**
-    - user ------- [ string ], required
+    - user ------- [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
     - newkey ----- [ string ], required new plaintext password
     - no old password and no admin password check; access is gated by not exposing this component on userwui helist
     - failed return tfalse
@@ -102,7 +102,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 + `user_match[ , user, proof ]` **login credential check (httpd /auth)**
     - (param1) --- ignored; object name comes from `this`
-    - user ------- [ string ], check this user
+    - user ------- [ string ], required; same charset as `user_add` (reject empty `/` `.` `..`)
     - proof ------ [ string ], `Base64(PBKDF2-HMAC-SHA256(plaintext, salt=user:rand, iter=10000, dkLen=32))`
       - `rand` is `reg.int[rand]` / `land@machine.status` `rand` (same value the login page uses)
       - on-disk password remains `simple_encode` reversible storage; proof is only for the wire

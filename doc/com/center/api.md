@@ -382,7 +382,7 @@ the API can manage gateway
 
 + `comment[ user, macid, comment ]` **set gateway operator comment**
     - user --------------- [ string ], the username of gateway
-    - macid -------------- [ string ], mac identify of gateway
+    - macid -------------- [ string ], mac identify of gateway; invalid format fails
     - comment ------------ [ string ], free text; may be empty to clear
     - writes `{device_path}/<user>/dev/<macid>/config`
     - failed return tfalse
@@ -799,7 +799,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `network_add[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout] ]` **add a network**
     - user --------------- [ string ], username
-    - netid -------------- [ string ], network identify; reserved names rejected: gtog, cmd, net, agent, local, portc, heclient
+    - netid -------------- [ string ], network identify; basename only (no `/`); reserved names rejected: gtog, cmd, net, agent, local, portc, heclient
     - network------------- [ string ], VPN CIDR, default 172.16.0.0/24
     - keeplive interval--- [ number ], endpoint keeplive to server interval, default 15, the unit is second
     - keeplive failed----- [ number ], endpoint keeplive failed times, default 4
@@ -816,29 +816,45 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `network_delete[ user, netid ]` **delete a network**
     - user ---------- [ string ], username
-    - netid --------- [ string ], network identify
+    - netid --------- [ string ], network identify; basename only (no `/`)
     - failed return tfalse
     - succeed return ttrue
 
 + `network_list[ [user] ]` **list networks**
-    - user ---------- [ string ], optional; omit to list all users (each entry may include `"user"`)
+    - user ---------- [ string ], optional; omit to list all users
     - error return NULL   
     - succeed return json to describes the list
+    - with user: keyed by network identify
+    - without user: keyed by username, then network identify
     ```json
-    // Attributes introduction of talk by the API return
+    // with user
     {
-        "network identify":                        // [ string ]: {}
+        "network identify":
         {
-            "status": "enable or disable",                            // [ string ], only if present in file
-            "seq": "topology version",                                // [ number ], when present in file
-            "user": "owner username",                                 // [ string ], when listing without user filter
-            "network":"network address",                              // [ string ], 172.16.0.0/24
-            "keepintval":"endpoint keeplive to server interval",      // [ number ], the unit is second
-            "keepfailed":"endpoint keeplive failed times",            // [ number ]
-            "keeptimeout":"endpoint keeplive timeout"                 // [ number ], the unit is second
+            "status": "enable or disable",
+            "seq": "topology version",
+            "network":"network address",
+            "keepintval":"endpoint keeplive to server interval",
+            "keepfailed":"endpoint keeplive failed times",
+            "keeptimeout":"endpoint keeplive timeout"
         }
-        // ... more network
-    }    
+    }
+
+    // without user
+    {
+        "username":
+        {
+            "network identify":
+            {
+                "status": "enable or disable",
+                "seq": "topology version",
+                "network":"network address",
+                "keepintval":"endpoint keeplive to server interval",
+                "keepfailed":"endpoint keeplive failed times",
+                "keeptimeout":"endpoint keeplive timeout"
+            }
+        }
+    }
     ```
 
 + `network_knock[ user, netid ]` **reload network into center@nport and sync online members one by one**
@@ -1048,7 +1064,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `firmware_delete[ username, filename ]` **delete a firmware**
     - user ------------- [ string ], username
-    - filename --------- [ string ], filename of firmware
+    - filename --------- [ string ], firmware basename under the user firmware dir (no `/`)
     - failed return tfalse
     - succeed return ttrue
 
@@ -1151,7 +1167,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `firmware_path[ username, filename ]` **get a firmware file absolute path**
     - user ------------- [ string ], username
-    - filename --------- [ string ], filename of firmware
+    - filename --------- [ string ], firmware basename under the user firmware dir (no `/`)
     - failed return NULL
     - succeed return string of absolute path (composed even if the file is missing)
 
@@ -1164,7 +1180,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `firmware_push[ username, url, mac identify, [timeout] ]` **push a firmware to gateway to upgrade**
     - user ------------- [ string ], username
-    - url -------------- [ string ], url for download the firmware
+    - url -------------- [ string ], url for download the firmware; no comma, brackets, whitespace, or control characters
     - mac identify ----- [ string ], mac identify for gateway    
     - timeout ---------- [ number ], timeout for wait, the unit is second       
     - failed return tfalse
