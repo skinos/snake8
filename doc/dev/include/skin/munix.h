@@ -40,8 +40,9 @@
  *
  * Lifetime: always munix_close(mx, 0) — never close(munix_fd)/dup() into these APIs.
  * Prefer munix_close all endpoints before fork (free slots first). After fork
- * without prior close: munix_close(mx, 1) skips unix path unlink (parent listen
- * may still own the path); plain-close fds only if you must avoid free/mmap too.
+ * without prior close: munix_close(mx, 1) — close this process's unix fd, drop
+ * local mmap, keep the unix path; do not recvfrom (would steal parent datagrams)
+ * and do not touch the shared slot pool (slot free stays with the parent).
  * Cookie: munix_set_data / get_data (mx), munix_slot_set_data / get_data,
  * munix_client_set_data / get_data. Munix never frees cookies.
  * Free slots before munix_close (slot free-after-close is UAF).
@@ -87,8 +88,9 @@ munix_t      munix_listen( const char *name,
 	int out_slots, size_t out_heap );
 munix_t      munix_connect( const char *name );
 /** tear down endpoint; NULL-safe; never use close(fd)/dup(fd) instead.
- * dont_unlink: 0 = unlink unix path (normal); 1 = keep path (e.g. fork child). */
-void         munix_close( munix_t mx, int dont_unlink );
+ * after_fork 0: drain leftover client GRANTs, close fd, unlink unix path, unmap.
+ * after_fork 1: fork child — close fd and unmap only; no drain, no unlink. */
+void         munix_close( munix_t mx, int after_fork );
 /** unix socket fd for poll/select/libevent; NULL → -1 */
 int          munix_fd( munix_t mx );
 

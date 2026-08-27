@@ -20,8 +20,8 @@ Edit macros at the top of the script:
 
 | Macro | Default | Meaning |
 |-------|---------|---------|
-| `QUECTEL_LOG_SIZE_MB` | `20` | Max single file size in MB (`-m`) |
-| `QUECTEL_LOG_FILE_NUM` | `10` | Max rotated file count (`-n`) |
+| `QUECTEL_LOG_SIZE_MB` | `50` | Max single file size in MB (`-m`) |
+| `QUECTEL_LOG_FILE_NUM` | `1` | Max rotated file count (`-n`); when `1`, stop at `-m` limit without deleting |
 | `QUECTEL_LOG_DIR` | `/tmp/file` | Capture log directory only |
 | `QUECTEL_LOG_PID_DIR` | `/tmp` | Pid file directory (`quectel-log-lte.pid` …) |
 | `QUECTEL_LOG_FILTER` | `default.config` | `-f` filter; relative names resolve under `land@fpk.path[ modem-log ]` |

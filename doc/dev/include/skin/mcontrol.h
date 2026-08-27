@@ -35,8 +35,11 @@
  * alloc(mc, len, timeout) vs alloc_m1/m2talk(mc, timeout, geometry...) —
  * mxtalk has no len; timeout is 2nd. salloc* (server) has no timeout.
  *
- * mcontrol_close(mc, keep_path): always tears down events, regs, and munix.
- * keep_path==0 unlinks AF_UNIX path; keep_path!=0 keeps the path (e.g. fork child).
+ * mcontrol_close(mc, after_fork):
+ *   0 — normal: event/reg/sendq tear-down, munix_slot_free, unlink unix path.
+ *   1 — fork child: drop this process's events and unix fd, keep the path.
+ *        Do not munix_slot_free (shared pool stays with the parent).
+ *        Call event_reinit on the inherited base before this.
  */
 
 #include "munix.h"
@@ -58,7 +61,7 @@ mcontrol_t   mcontrol_listen( struct event_base *base, const char *object,
 	mcontrol_fn control, int in_slots, size_t in_heap, int out_slots, size_t out_heap );
 mcontrol_t   mcontrol_connect( const char *object );
 int          mcontrol_fd( mcontrol_t mc ); /* munix fd; -1 if NULL */
-void         mcontrol_close( mcontrol_t mc, int keep_path );
+void         mcontrol_close( mcontrol_t mc, int after_fork );
 
 void        *mcontrol_salloc( mcontrol_t mc, size_t len );
 mxjson_t     mcontrol_salloc_m1talk( mcontrol_t mc, int max_l1, int name_max, int max_heap );

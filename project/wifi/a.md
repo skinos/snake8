@@ -337,4 +337,24 @@ ttrue
     ```
 
 
+#### Control APIs
+
++ `create[ object ]` **create the wireless interface**
+    - object ----------- [ string ], SSID or station object, e.g. wifi@assid or wifi@asta
+    - failed return tfalse
+    - succeed return ttrue
+    - Creates the interface when it is missing; returns success if it already exists
+    - Used by wifi@ap and wifi@sta when the radio creates interfaces on demand
+
+    Example, create the first 5.8G SSID interface
+    ```shell
+    wifi@a.create[ wifi@assid ]
+    ttrue
+    ```
+
+    Example, create the 5.8G station interface
+    ```shell
+    wifi@a.create[ wifi@asta ]
+    ttrue
+    ```
 

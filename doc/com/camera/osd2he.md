@@ -25,6 +25,10 @@ Place the key literally in a Hikvision **`<displayText>`** field on the camera w
 
 If the command returns a JSON **object** instead of a scalar string, **`camera@osd`** logs a warning and leaves that placeholder unchanged in the output overlay.
 
+**Signal bars**
+
+Use **`camera@osd2he.signal2flag[ <he> ]`** when a placeholder should show LTE-style bar glyphs instead of a raw number. The inner HE command must return a plain string or number in the range **0–5** (for example **`ifname@lte.status:signal`**). Level **0** or a failed resolve is shown as **`✕`** (no signal); levels **1–5** map to **`▂`**, **`▂▄`**, **`▂▄▆`**, **`▂▄▆█`**.
+
 
 ### Configuration reference ( camera@osd2he )
 
@@ -87,6 +91,28 @@ ttrue
 
 Example, merge set several placeholder mappings( include "$L-S$" "$L-P$" "$T-O2$" )
 ```shell
-camera@osd2he|{"$L-S$":"ifname@lte.status:signal","$L-P$":"ifname@lte.status:ip","$T-O2$":"uart@tty.status:02"}
+camera@osd2he|{"$L-S$":"camera@osd2he.signal2flag[ifname@lte.status:signal]","$L-P$":"ifname@lte.status:ip","$T-O2$":"uart@tty.status:02"}
 ttrue
 ```
+
+
+### API Reference
+
+#### Query APIs
+
++ `signal2flag[ he ]` **map signal level 0–5 to bar glyphs for OSD**
+    - he --------------- [ string ], HE command that returns signal level as string or number (e.g. `ifname@lte.status:signal`)
+    - failed return NULL
+    - succeed return [ string ], `✕` for level 0 or resolve failure; `▂` … `▂▄▆█` for levels 1–5
+
+    Example, LTE signal bars for OSD placeholder mapping
+    ```shell
+    camera@osd2he.signal2flag[ifname@lte.status:signal]
+    ▂▄▆
+    ```
+
+    Example, use in osd2he mapping (default in osd2he.cfg)
+    ```shell
+    camera@osd2he:$L-S$=camera@osd2he.signal2flag[ifname@lte.status:signal]
+    ttrue
+    ```

@@ -388,6 +388,8 @@ boole_t _up( obj_t this, param_t param )
 	talk_t v;
 	talk_t cfg;
 	talk_t opt;
+	talk_t create_ret;
+	boole have_create;
 	const char *netdev;
 	const char *radio;
 	const char *object;
@@ -561,6 +563,18 @@ boole_t _up( obj_t this, param_t param )
 	}
 	reg_oput_str( this, "ifname", ifname );
 	reg_oput_str( this, "nossid", nossid );
+
+	have_create = com_have( radio, "create" );
+	if ( have_create )
+	{
+		create_ret = scalls( radio, "create", "%s", object );
+		if ( create_ret != ttrue )
+		{
+			talk_free( cfg );
+			reg_ounlock( this, "netdev" );
+			return terror;
+		}
+	}
 
 	/* up the device */
 	cstart( this, "wpa", NULL, "%s-wpa", netdev );
@@ -952,14 +966,23 @@ boole_t _offline( obj_t this, param_t param )
 
 talk_t _aplist( obj_t this, param_t param )
 {
+	int i;
+	pid_t hapd_pid;
 	talk_t ret;
+	talk_t cfg;
+	talk_t create_ret;
+	boole have_create;
+	boole hapd_on;
     const char *radio;
+	const char *object;
 	const char *netdev;
 	const char *peer;
 	const char *peer2;
 	const char *peer3;
 	const char *peermac;
+	char ssidobj[NAME_MAX];
 
+	object = obj_name( this );
 	radio = reg_oget_str( this, "radio" );
 	if ( radio == NULL || *radio == '\0' )
 	{
@@ -977,14 +1000,61 @@ talk_t _aplist( obj_t this, param_t param )
 	peer2 = param_string( param, 3 );
 	peer3 = param_string( param, 4 );
 
-	/* stop the hostapd to update the channel */
-	//sstop( "%s-hostapd", radio );
+	hapd_pid = spid( "%s-hostapd", radio );
+	if ( hapd_pid > 0 )
+	{
+		hapd_on = true;
+	}
+	else
+	{
+		hapd_on = false;
+	}
+
+	/* stop AP beaconing only when hostapd was running; keep the station iface */
+	if ( hapd_on )
+	{
+		sstop( "%s-hostapd", radio );
+		for ( i = 0; i < 4; i++ )
+		{
+			if ( i == 0 )
+			{
+				snprintf( ssidobj, sizeof(ssidobj), "%s%s", radio, "ssid" );
+			}
+			else
+			{
+				snprintf( ssidobj, sizeof(ssidobj), "%s%s%d", radio, "ssid", i + 1 );
+			}
+			cfg = config_sget( ssidobj, NULL );
+			if ( cfg == NULL )
+			{
+				continue;
+			}
+			scall( ssidobj, "down", NULL );
+			talk_free( cfg );
+		}
+	}
+
+	have_create = com_have( radio, "create" );
+	if ( have_create )
+	{
+		create_ret = scalls( radio, "create", "%s", object );
+		if ( create_ret != ttrue )
+		{
+			if ( hapd_on )
+			{
+				scall( radio, "start_hostapd", NULL );
+			}
+			return NULL;
+		}
+	}
 
 	/* scanning */
 	ret = station_dev_aplist( netdev, peer, peermac, peer2, peer3 );
 
-	/* start the hostapd */
-	//sstart( NULL, "NULL", NULL, "%s-hostapd", radio );
+	if ( hapd_on )
+	{
+		scall( radio, "start_hostapd", NULL );
+	}
 
 	return ret;
 }

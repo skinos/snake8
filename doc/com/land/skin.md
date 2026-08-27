@@ -2016,7 +2016,7 @@ int main(void)
 
 **Peer:** `munix_client_st` is caller storage (like `recvfrom`); `munix_client_t` is `munix_client_st *`. `sunix_take` writes **`addr`/`addrlen`/`corr`** (preserves **`data`**); `sunix_post` echoes `corr` on the reply; pass `&peer` to take/post; no alloc/free.
 
-**Endpoint / slot lifetime:** always `munix_close(mx, …)` — never bare `close(munix_fd(mx))` or `dup` into munix APIs. **`munix_slot_free` all owned slots before `munix_close`** — a slot handle keeps pointers into the endpoint/maps; free-after-close is use-after-free. `munix_close` does **not** free your slots. Normal exit: `munix_close(mx, 0)` (unlinks the unix path). After `fork`, if the parent still owns a listen path: `munix_close(mx, 1)` skips unlink.
+**Endpoint / slot lifetime:** always `munix_close(mx, …)` — never bare `close(munix_fd(mx))` or `dup` into munix APIs. **`munix_slot_free` all owned slots before `munix_close`** — a slot handle keeps pointers into the endpoint/maps; free-after-close is use-after-free. `munix_close` does **not** free your slots. Normal exit: `munix_close(mx, 0)` (unlinks the unix path). After `fork`, if the parent still owns a listen path: `munix_close(mx, 1)` closes this process's fd and drops local mmap — no `recvfrom`, no unlink.
 
 | API | Role |
 |-----|------|
@@ -2040,7 +2040,7 @@ int main(void)
 - **Server restart**: client `take`/`alloc`/`post` → `ESTALE` once the session is marked stale; `munix_close` + `munix_connect` and retry the whole RPC.
 - **Caller contracts (not enforced by the API)**: only `munix_close` (never bare `close`/`dup` into munix); free owned **slots** **before** `munix_close`; KEEP needs cooperative peers (see §10.1 / §10.9); **one endpoint is not thread-safe**; **multi-endpoint × one thread each is OK** (lock word carries unix fd so siblings wait; each endpoint has its own mmap mapping); parallel RPCs use multiple connects; prefer close before `fork` (see §10.1).
 - **mmap pool lock (v8):** header `lock` is `MU_LOCK_PACK(pid, unix_fd)` on a word matching the ABI (`uint64` on LP64: pid32|fd32; `uint32` on 32-bit: pid16|fd16, native CAS; keep `pid_max` ≤ 65536 on 32-bit). (`0` = free; legacy TAS `pid==1` still stealable). A separate **`dirty`** bit is set while a holder may be mid-update and cleared only on unlock. **Steal** (dead/legacy owner — `kill(0)` only after 65535 contended `sched_yield`s so live holders are not probed every spin; or same pid+fd with this endpoint `!lock_held`) or **`dirty`** forces dead-owner reclaim + freelist rebuild. Each `munix_t` attaches the listen map files with its own `mmap` and keeps local `lock_held`/`owner_fd` — no process-global plock table; a sibling that sees another fd waits. Slot ownership is **`(owner_pid, owner_birth)`** (starttime; self cached once); pressure reclaim treats mismatched birth as dead. Steal/dirty repair under the map lock uses **`kill`-only** liveness (no `/proc`); full `(pid, birth)` checks run on **pressure** `mu_reclaim_dead` **outside** the lock (snapshot → classify → re-lock), and only for slots whose reserved stamp is at least ~2s old. **Hybrid concurrency:** the map lock covers **freelist + heap** (`alloc` / `free` / reclaim rebuild). Per-slot **`state`** for `post` (`ALLOC|HELD→POSTED`) and take claim (`POSTED→HELD`) is **lock-free CAS** (no map lock on that hot path); freelist return always **CAS → `FREE`** then `gen++` so it cannot race a concurrent post/take. **Heap:** first 8 bytes are permanent pad so chunk offset `0` stays the freelist-empty / alloc-fail sentinel.
-- **close**: only `munix_close(mx, dont_unlink)` — never bare `close` / `dup` into munix APIs (see §10.1).
+- **close**: only `munix_close(mx, after_fork)` — never bare `close` / `dup` into munix APIs (see §10.1).
 - **slot vs close**: `munix_slot_free` owned handles **before** `munix_close`; free-after-close is UAF (see §10.1 / §10.2).
 - **`munix_slot_t`**: opaque pointer. **`munix_client_st`**: caller-owned peer storage (`addr`/`addrlen`/`corr`/`data`); **`munix_client_t`**: pointer to it. `sunix_take` fills `addr`/`addrlen`/`corr` (preserves `data`); `sunix_post` echoes `corr`; pass `&peer` to take/post.
 - **`munix_set_data` / `munix_get_data`**: optional caller cookie on the endpoint (`void*`). Keep `munix_t` in your event arg (or your own map); cookie is for wrappers. Munix never frees the pointer; clear or replace before `munix_close` if you own the object.
@@ -2067,7 +2067,7 @@ munix_t munix_listen(const char *name,
     int in_slots, size_t in_heap,
     int out_slots, size_t out_heap);
 munix_t munix_connect(const char *name);
-void    munix_close(munix_t mx, int dont_unlink);
+void    munix_close(munix_t mx, int after_fork);
 int     munix_fd(munix_t mx); /* poll/select/libevent; NULL → -1 */
 
 void    munix_set_data(munix_t mx, void *data); /* caller cookie; never freed by munix */
@@ -2076,7 +2076,7 @@ void   *munix_get_data(munix_t mx);
 
 **Description:** `listen` creates the unix socket and both mmap files (new `map_gen` each listen). **Pool args:** `in_slots` / `out_slots` must be **`≥ 1`**; values **above 512 are clamped to 512**. `in_heap` / `out_heap` must be **`≥ 64`** and fit in `uint32_t`; the resulting map size (`header + slot table + heap`) must also fit in `uint32_t` or `listen` fails with `EINVAL` (rejects combinations that would wrap). `connect` attaches maps, reads `map_gen`, binds a **per-endpoint** client datagram path (`…/<name>.unix-<pid>-<fd>` so same-process multi-connect does not collide), then connects to the server unix (**does not** send HELLO). Both return a **`munix_t`** or `NULL` on failure. The unix socket is non-blocking; use **`munix_fd(mx)`** in event loops and pass the same **`munix_t`** into the other munix APIs.
 
-**`dont_unlink`:** `0` = unlink the unix path on close (normal). `1` = keep the path (e.g. fork child dropping an inherited listen while the parent still owns it). Close still closes the socket fd, unmaps, and frees `mx`; it does **not** `munix_slot_free` your slots.
+**`after_fork`:** `0` = drain leftover client GRANTs, close fd, unlink the unix path, unmap (normal). `1` = fork child: close fd and unmap only — no `recvfrom` (would steal parent datagrams), no unlink. It does **not** `munix_slot_free` your slots.
 
 **Cookie (`munix_set_data` / `munix_get_data`):** attach a private pointer for wrappers / libevent callbacks. Default is `NULL`. Munix never frees it; `munix_close` drops the endpoint only.
 
@@ -2691,8 +2691,8 @@ mcontrol_t mcontrol_listen(struct event_base *base, const char *object, mcontrol
     int in_slots, size_t in_heap, int out_slots, size_t out_heap);
 mcontrol_t mcontrol_connect(const char *object);
 int        mcontrol_fd(mcontrol_t mc); /* munix fd; -1 if NULL */
-void       mcontrol_close(mcontrol_t mc, int keep_path);
-/* keep_path==0: tear down + unlink AF_UNIX path; keep_path!=0: tear down, keep path */
+void       mcontrol_close(mcontrol_t mc, int after_fork);
+/* after_fork==0: slot free + unlink path; after_fork!=0: fork child — close fd, keep path, do not slot-free */
 
 /* server out-slot alloc (non-blocking sunix) */
 void        *mcontrol_salloc(mcontrol_t mc, size_t len);
@@ -2763,7 +2763,7 @@ No **`ETIMEDOUT`** on `salloc*` (no wait). On `slot == NULL`, mcontrol usually *
 
 `timeout_ms` on `call` applies to **take only** (`<0` block). Successful `call` with a non-success **business** key still returns that key string — check the key/body, not `errno`.
 
-**Other mcontrol surfaces (short):** `mcontrol_connect` / `listen` fail → munix or `ENOMEM`/`EINVAL`. `mcontrol_close(mc, keep_path)` always tears down events, registry, send queue, and munix; `keep_path==0` unlinks the AF_UNIX path, nonzero keeps it (e.g. fork child while parent still listens). Sync/`reply` send path: `sunix_post` `EAGAIN` → malloc queue node → `EV_WRITE` (cap 512; full → **`ENOBUFS`**). Queued reply keys longer than 255 chars are rejected with **`EINVAL`**. See ownership table and recovery below for `EBUSY` / `ETIMEDOUT` / `EAGAIN`.
+**Other mcontrol surfaces (short):** `mcontrol_connect` / `listen` fail → munix or `ENOMEM`/`EINVAL`. `mcontrol_close(mc, 0)` tears down events, registry, send queue, slot-frees, and unlinks the AF_UNIX path. `after_fork!=0` is the fork child: drop this process's events and unix fd, keep the path, do **not** `munix_slot_free` (shared pool stays with the parent). Sync/`reply` send path: `sunix_post` `EAGAIN` → malloc queue node → `EV_WRITE` (cap 512; full → **`ENOBUFS`**). Queued reply keys longer than 255 chars are rejected with **`EINVAL`**. See ownership table and recovery below for `EBUSY` / `ETIMEDOUT` / `EAGAIN`.
 
 #### Payload model
 

@@ -68,6 +68,8 @@ boole_t _up( obj_t this, param_t param )
 {
 	talk_t ret;
 	talk_t cfg;
+	talk_t create_ret;
+	boole have_create;
 	const char *netdev;
 	const char *ptr;
 	const char *radio;
@@ -117,6 +119,17 @@ boole_t _up( obj_t this, param_t param )
 	}
 	else
 	{
+		have_create = com_have( radio, "create" );
+		if ( have_create )
+		{
+			create_ret = scalls( radio, "create", "%s", object );
+			if ( create_ret != ttrue )
+			{
+				reg_ounlock( this, "netdev" );
+				talk_free( cfg );
+				return tfalse;
+			}
+		}
 		if ( netdev_flags( netdev, IFF_UP ) <= 0 )
 		{
 			ifconfig( "%s up", netdev );

@@ -8,18 +8,19 @@ Push live device data to IP camera on-screen display (OSD) text overlays. The co
 - maps OSD placeholders to device HE commands via **`camera@osd2he`** (see [`osd2he.md`](osd2he.md))
 - stores the camera placeholder template under project config path **`hikvision`** so PUT results do not erase `$keyword$` markers
 - skips redundant PUT when resolved overlay XML is unchanged since the last successful update
-- on gateway shutdown, writes a localized shutdown message to overlay slot 1 and clears other text slots
+- on service stop, PUTs the saved placeholder template back to the camera
+- refreshes the local template from the camera only when it is missing (for example after configuration apply)
 
 
 ### Concepts
 
 **Placeholder template**
 
-Configure overlay text on the camera web UI with tokens such as `$L-S$` or `$T-O2$`. On GET, when the camera returns placeholders and the XML differs from the saved template, the gateway stores it at **`config/camera/hikvision`**. All replace operations read this file, not the live camera text (which already shows resolved values after PUT).
+Configure overlay text on the camera web UI with tokens such as `$L-S$` or `$T-O2$`. The gateway stores the template at **`config/camera/hikvision`**. All replace operations read this file, not the live camera text (which already shows resolved values after PUT). The template is fetched from the camera only when the local file is missing. Applying **`camera@osd`** configuration stops the service, restores the template to the camera, removes the local copy, and lets the service bootstrap it again when enabled.
 
 **Update loop**
 
-When **`status`** is **`enable`**, the background **`service`** repeatedly: GET from camera → refresh template if placeholders changed → replace from template using **`camera@osd2he`** → PUT only when output differs from the last successful PUT. Failures wait 10 seconds and retry.
+When **`status`** is **`enable`**, the background **`service`** repeatedly: ensure local template exists (bootstrap GET from camera when missing) → replace from template using **`camera@osd2he`** → PUT only when output differs from the last successful PUT. Failures wait 10 seconds and retry.
 
 **HE value requirement**
 
@@ -90,6 +91,10 @@ ttrue
     - This is a lifecycle method called automatically by the system during startup
     - When **`status`** is **`enable`**, starts the **`service`** child process
     - Not intended for manual invocation
+
++ `set` **save configuration, restore template to camera, refresh local template, restart service**
+    - On every configuration apply: **`shut`** (stop service and PUT saved template when previously enabled), remove local template file, save new configuration, **`setup`**
+    - Does not branch on the new **`status`** value for template removal; removal always runs after **`shut`**
 
 + `shut[]` **stop the OSD service and restore the saved camera template when enabled**
     - failed return tfalse

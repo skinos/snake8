@@ -5,6 +5,7 @@
 Manage executable shell components stored under the **wui** project internal directory and registered as HE objects in the **`script`** project namespace (`script@<name>`).
 - register existing executable scripts at boot via `setup` (`prj.json` `init.app`)
 - add a new script from the package `comshell` template
+- copy an existing executable script to a new internal name
 - delete scripts that live under the wui internal directory
 - view source of any `COM_FILE_EXECUTE` object as Base64
 - save Base64 content back only for scripts under the wui internal directory
@@ -17,6 +18,7 @@ Manage executable shell components stored under the **wui** project internal dir
 Registered object names use project id **`script`** (not `wui`): filename `netcap` becomes **`script@netcap`**.
 Scripts are regular files with owner execute permission under the wui **internal** path (`internal2path`).
 `add` copies the FPK misc file **`comshell`** as the starting template (`misc2path`).
+`copy` is the same as `add` except the source file is a `script@*` object from `list` instead of `comshell`.
 `list` parses the script text for lines that look like `name(` and reports those names under `methods`, skipping names that start with `_`.
 `view` may open any registered executable component path; `save` and `delete` refuse paths outside the wui internal directory (`EPERM`).
 
@@ -96,6 +98,21 @@ Scripts are regular files with owner execute permission under the wui **internal
     Example, add a new script named demo
     ```shell
     wui@script.add[ demo ]
+    ttrue
+    ```
+
++ `copy[ object, name ]` **copy an existing executable script and register it**
+    - object ----------- [ string ], source object that appears in `list`, e.g. `script@aaa`
+    - name ------------- [ string ], filename under the wui internal directory
+    - failed return tfalse
+    - succeed return ttrue
+    - Same as `add` except the source is that listed script instead of the `comshell` template
+    - Common failures: `EINVAL` (bad name or object not in `list`), `EEXIST` (file already present), copy/chmod/register errors
+    - On success the object is `script@<name>`
+
+    Example, copy script@aaa to a new script named bbb
+    ```shell
+    wui@script.copy[ script@aaa, bbb ]
     ttrue
     ```
 
