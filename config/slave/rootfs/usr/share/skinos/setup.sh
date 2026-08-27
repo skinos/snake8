@@ -21,8 +21,12 @@ fi
 # core
 $LANDDIR/bin/he land@init.call[arch]
 $LANDDIR/bin/he land@init.call[land]
-# network frame
-$LANDDIR/bin/he network@frame.setup
+# network frame (skip when the network package is not installed)
+npath=`$LANDDIR/bin/he land@fpk.path[network]`
+if [ -n "$npath" ]
+then
+    $LANDDIR/bin/he network@frame.setup
+fi
 
 # bus
 #$LANDDIR/bin/he land@init.call[bus]
