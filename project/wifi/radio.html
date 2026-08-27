@@ -520,29 +520,66 @@
 
     // 标签页状态保存
     var wifiTabStorageKey = 'wifi_active_tab';
+    var channel_seq = 0;
     /* load the configure on the input */
 
     function flash_channel( mode, country, channel, acs )
     {
-        he.bkload( [ robj+".chlist["+mode+","+country+"]" ] ).then( function(v){
+        var req;
+        var use_mode;
+        var use_country;
+        var cmd;
+        var c;
 
-            if ( v[0] )
+        use_mode = mode;
+        if ( !use_mode && radio )
+        {
+            use_mode = radio.mode;
+        }
+        use_country = country;
+        if ( !use_country && radio )
+        {
+            use_country = radio.country;
+        }
+        if ( !use_country )
+        {
+            use_country = "db";
+        }
+        if ( !use_mode )
+        {
+            return;
+        }
+
+        channel_seq = channel_seq + 1;
+        req = channel_seq;
+        cmd = robj + ".chlist[" + use_mode + "," + use_country + "]";
+        he.bkload( [ cmd ] ).then( function(v){
+            if ( req != channel_seq )
             {
-                $("#channel").empty();
-                if ( acs == true )
-                {
-                    $("#channel").append("<option value='0'>" + $.i18n("Auto") + "</option>");
-                }
-                for( c in v[0] )
-                {
-                    $("#channel").append("<option value='"+c+"'>" + c + "</option>");
-                }
-                if ( channel )
-                {
-                    $('#channel').val( channel );
-                }
+                return;
             }
-        })
+            if ( window.wifi_client.currentObject !== object )
+            {
+                return;
+            }
+            if ( !v[0] )
+            {
+                return;
+            }
+            $("#channel").empty();
+            if ( acs == true )
+            {
+                $("#channel").append("<option value='0'>" + $.i18n("Auto") + "</option>");
+            }
+            for ( c in v[0] )
+            {
+                $("#channel").append("<option value='"+c+"'>" + c + "</option>");
+            }
+            if ( channel )
+            {
+                $('#channel').val( channel );
+            }
+        });
     }
     function cfg_load()
     {
@@ -630,8 +667,7 @@
         $('#country').unbind('change').change(function (e) {
             var country = e.target.value;
             flash_channel( $('#mode').val(), country, radio.channel, acs );
-        }).trigger('change');
-        flash_channel( "", "", radio.channel, acs );
+        });
         if ( modelist )
         {
             $('#ssid_cfg a[href="#tab-mode"]').closest('li').show();
@@ -670,6 +706,7 @@
             }
             $('#ssid_cfg a[href="#tab-mode"]').closest('li').hide();
             $("#mode_set").hide();
+            flash_channel( radio.mode, $('#country').val(), radio.channel, acs );
         }
         if ( powerlist )
         {
