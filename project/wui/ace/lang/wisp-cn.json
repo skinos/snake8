@@ -1,6 +1,7 @@
 {
     "Status": "状态",
     "disable": "禁用",
+    "nodevice":"未启动",
     "down": "未连接",
     "scanning": "正在扫描",
     "uping": "正在连接",

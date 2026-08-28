@@ -479,11 +479,63 @@ function adjustColorBrightness(hex, percent) {
 }
 
 
+function temp_show(tempInfo) {
+    var container = $('#temp-container');
+    var tbody = $('#temp-table-body');
+    var entries;
+    var i;
+    var name;
+    var value;
+    var label;
+    var row;
+    var labelCell;
+    var valueCell;
+    var valueText;
+
+    if (!tempInfo || Object.keys(tempInfo).length === 0) {
+        container.hide();
+        return;
+    }
+
+    entries = Object.entries(tempInfo);
+    tbody.empty();
+
+    for (i = 0; i < entries.length; i++) {
+        name = entries[i][0];
+        value = entries[i][1];
+        if (value === null || value === undefined || value === '') {
+            continue;
+        }
+        label = name;
+        if ($.i18n) {
+            label = $.i18n(name);
+        }
+        valueText = value + ' \u00B0C';
+        labelCell = $('<td></td>').attr('data-i18n', name).text(label);
+        valueCell = $('<td></td>').text(valueText);
+        row = $('<tr></tr>');
+        row.append(labelCell);
+        row.append(valueCell);
+        tbody.append(row);
+    }
+
+    if (tbody.children().length === 0) {
+        container.hide();
+        return;
+    }
+
+    container.show();
+    if ($.i18n) {
+        tbody.find('[data-i18n]').i18n();
+    }
+}
+
 /* load the configure on the input */
 function utilization_reload() {
-    he.bkload(['land@machine.cpuinfo', 'land@machine.meminfo', 'land@machine.sginfo']).then(function(v) {
+    he.bkload(['land@machine.cpuinfo', 'land@machine.meminfo', 'land@machine.sginfo', 'land@machine.temp']).then(function(v) {
         cpumem_show(v[0], v[1]);
         sg_show(v[2]);
+        temp_show(v[3]);
     });
 }
 

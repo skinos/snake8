@@ -133,6 +133,24 @@
                 </div>
             </div>
 
+            <div class="row" id="temp-container" style="display:none;">
+                <div class="col-xs-12">
+                    <div class="widget-box dynamic-height-widget4">
+                        <div class="widget-header widget-header-flat widget-header-small">
+                            <i class="ace-icon fa fa-fire" style="color: white;"></i> 
+                            <h5 class="widget-title bigger lighter" data-i18n="Temperature" style="color: white;"></h5>
+                        </div>
+                        <div class="widget-body">
+                            <div class="widget-main no-padding">
+                                <table class="table" id="temp-table">
+                                    <tbody id="temp-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- PAGE CONTENT ENDS -->
         </div><!-- /.col -->
     </div><!-- /.row -->
@@ -212,6 +230,29 @@
 .widget-box.dynamic-height-widget3 .widget-header{
     background-color: rgb(61, 101, 139) !important;
     border-bottom: 1px solid rgb(61, 101, 139) !important;  
+}
+/* temperature */
+.widget-box.dynamic-height-widget4{
+    border-color: rgb(77, 88, 116) !important;
+}
+
+.widget-box.dynamic-height-widget4 .widget-header{
+    background-color: rgb(77, 88, 116) !important;
+    border-bottom: 1px solid rgb(77, 88, 116) !important;
+}
+
+#temp-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+#temp-container {
+    margin-top: 15px;
+}
+
+#temp-container .widget-box {
+    min-height: auto;
+    margin-bottom: 15px;
 }
 
 .dynamic-height-widget,

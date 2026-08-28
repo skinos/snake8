@@ -21,5 +21,9 @@
     "CPU0": "CPU0",
     "CPU1": "CPU1",
     "CPU2": "CPU2",
-    "CPU3": "CPU3"
+    "CPU3": "CPU3",
+    "Temperature": "Temperature",
+    "cpu": "CPU Temperature",
+    "wifi@n": "2.4G Radio Temperature",
+    "wifi@a": "5.8G Radio Temperature"
 }
