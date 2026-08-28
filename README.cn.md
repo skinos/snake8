@@ -56,7 +56,7 @@ English portal: [`README.md`](README.md).
 
 **根目录打包 / 项目文档：** [`project.md`](project.md) · [`projects.md`](projects.md) · [`fpk.md`](fpk.md) · [`project2fpk.md`](project2fpk.md) · [`fpk2rootfs.md`](fpk2rootfs.md)
 
-许多 `project/*`、`config/*` 为**独立 git 仓库**。辅助脚本：`gitst`、`gitup`、`mkdel`。
+许多 `project/*`、`config/*` 为**独立 git 仓库**。辅助脚本：`./git`（`pull`/`p`、`status`/`s`、`sw`、`tag`、`goto`）；另有 `mkdel`。
 
 ---
 

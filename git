@@ -1,0 +1,230 @@
+#!/bin/bash
+# Multi-repo helper for snake8 SDK (same scan as gitup / gitst).
+#
+# Usage:
+#   ./git pull | ./git p              # pull all repos
+#   ./git status | ./git s            # status all repos
+#   ./git sw github | gitee           # switch root origin
+#   ./git tag <name>                  # tag HEAD + push on all repos
+#   ./git goto <name>                 # checkout tag on all repos
+#   ./git help
+#
+# Env: FORCE=1  overwrite tag / force push on ./git tag
+
+TOPDIR=`pwd`
+CMD="$1"
+ARG="$2"
+FAIL=0
+OK=0
+SKIP=0
+
+usage()
+{
+	code="$1"
+	if [ -z "${code}" ]; then
+		code=1
+	fi
+	echo "./git — multi-repo helper (project/* rice config/*)"
+	echo ""
+	echo "Usage:"
+	echo "  ./git pull | ./git p           # pull all repos   (gitup)"
+	echo "  ./git status | ./git s         # status all repos (gitst)"
+	echo "  ./git sw github | gitee        # switch root origin (gitsw)"
+	echo "  ./git tag <name>               # tag HEAD + push all repos"
+	echo "  ./git goto <name>              # checkout tag on all repos"
+	echo "  ./git help                     # show this help"
+	echo ""
+	echo "Env: FORCE=1  overwrite tag / force push"
+	exit "${code}"
+}
+
+banner()
+{
+	path="$1"
+	echo "################################################"
+	echo "############## ${CMD} ${path} ###############"
+	echo "################################################"
+}
+
+do_pull()
+{
+	path="$1"
+	banner "$path"
+	git pull
+}
+
+do_status()
+{
+	path="$1"
+	banner "$path"
+	git status
+}
+
+do_tag()
+{
+	path="$1"
+	banner "$path"
+
+	if git rev-parse -q --verify "refs/tags/${ARG}" >/dev/null 2>&1; then
+		if [ "${FORCE}" = "1" ]; then
+			git tag -f "${ARG}"
+			echo "retagged ${ARG} -> `git rev-parse --short HEAD`"
+		else
+			echo "tag ${ARG} already exists -> `git rev-parse --short ${ARG}`"
+		fi
+	else
+		git tag "${ARG}"
+		echo "tagged ${ARG} -> `git rev-parse --short HEAD`"
+	fi
+
+	if ! git remote get-url origin >/dev/null 2>&1; then
+		echo "SKIP: no origin remote"
+		SKIP=$((SKIP + 1))
+		return
+	fi
+
+	if [ "${FORCE}" = "1" ]; then
+		git push origin "refs/tags/${ARG}" --force
+	else
+		git push origin "refs/tags/${ARG}"
+	fi
+	if [ $? -eq 0 ]; then
+		echo "pushed ${ARG}"
+		OK=$((OK + 1))
+	else
+		echo "FAIL: push ${ARG}"
+		FAIL=$((FAIL + 1))
+	fi
+}
+
+do_goto()
+{
+	path="$1"
+	banner "$path"
+	if ! git rev-parse -q --verify "refs/tags/${ARG}" >/dev/null 2>&1; then
+		echo "FAIL: tag ${ARG} not found"
+		FAIL=$((FAIL + 1))
+		return
+	fi
+	if [ -n "`git status --porcelain 2>/dev/null`" ]; then
+		echo "FAIL: dirty working tree, skip checkout"
+		FAIL=$((FAIL + 1))
+		return
+	fi
+	git checkout "${ARG}"
+	echo "now at ${ARG} (`git rev-parse --short HEAD`)"
+	OK=$((OK + 1))
+}
+
+do_sw()
+{
+	GITEE="git@gitee.com:snake8/snake8.git"
+	GITHUB="git@github.com:skinos/snake8.git"
+	cd "${TOPDIR}"
+	case "${ARG}" in
+		github)
+			git remote set-url origin "${GITHUB}"
+			echo "origin => ${GITHUB}"
+			;;
+		gitee)
+			git remote set-url origin "${GITEE}"
+			echo "origin => ${GITEE}"
+			;;
+		*)
+			echo "Usage: ./git sw github | gitee"
+			echo "Current origin: `git remote get-url origin 2>/dev/null || echo none`"
+			exit 1
+			;;
+	esac
+}
+
+run_one()
+{
+	dir="$1"
+	path="$2"
+	cd "${dir}" || return
+	case "${CMD}" in
+		pull)   do_pull "$path" ;;
+		status) do_status "$path" ;;
+		tag)    do_tag "$path" ;;
+		goto)   do_goto "$path" ;;
+	esac
+	cd "${TOPDIR}"
+}
+
+walk_repos()
+{
+	run_one "${TOPDIR}" "."
+
+	if [ -d "${TOPDIR}/project" ]; then
+		for tmp in `ls "${TOPDIR}/project"`; do
+			if [ -d "${TOPDIR}/project/${tmp}/.git" ]; then
+				run_one "${TOPDIR}/project/${tmp}" "project/${tmp}"
+			fi
+		done
+	fi
+
+	for tmp in rice; do
+		if [ -d "${TOPDIR}/${tmp}/.git" ]; then
+			run_one "${TOPDIR}/${tmp}" "${tmp}"
+		fi
+	done
+
+	if [ -d "${TOPDIR}/config" ]; then
+		for tmp in `ls "${TOPDIR}/config"`; do
+			if [ -d "${TOPDIR}/config/${tmp}/.git" ]; then
+				run_one "${TOPDIR}/config/${tmp}" "config/${tmp}"
+			fi
+			if [ -d "${TOPDIR}/config/${tmp}" ]; then
+				for sub in `ls "${TOPDIR}/config/${tmp}"`; do
+					if [ -d "${TOPDIR}/config/${tmp}/${sub}/.git" ]; then
+						run_one "${TOPDIR}/config/${tmp}/${sub}" "config/${tmp}/${sub}"
+					fi
+				done
+			fi
+		done
+	fi
+}
+
+case "${CMD}" in
+	""|help|-h|--help)
+		usage 0
+		;;
+	p|pull)
+		CMD="pull"
+		walk_repos
+		;;
+	s|status)
+		CMD="status"
+		walk_repos
+		;;
+	sw)
+		do_sw
+		;;
+	tag)
+		if [ -z "${ARG}" ]; then
+			usage 1
+		fi
+		walk_repos
+		echo ""
+		echo "==== ./git tag ${ARG} done: ok=${OK} skip=${SKIP} fail=${FAIL} ===="
+		if [ ${FAIL} -gt 0 ]; then
+			exit 1
+		fi
+		;;
+	goto)
+		if [ -z "${ARG}" ]; then
+			usage 1
+		fi
+		walk_repos
+		echo ""
+		echo "==== ./git goto ${ARG} done: ok=${OK} skip=${SKIP} fail=${FAIL} ===="
+		if [ ${FAIL} -gt 0 ]; then
+			exit 1
+		fi
+		;;
+	*)
+		usage 1
+		;;
+esac
+exit 0

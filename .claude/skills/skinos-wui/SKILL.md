@@ -198,6 +198,37 @@ he.exec( [ object + ".setup" ] ).then( function () { /* ... */ });
 - Separators: `<div class="hr hr32 hr-dotted"></div>` (see peer pages).
 - Keep markup as an **AJAX fragment** (no full `<html>` document).
 
+### English key casing (required)
+
+English UI strings **are** the i18n keys (locale `en` usually falls back to the key). Use one style per kind of string; do not mix for the same concept across pages.
+
+| Kind | Style | Examples |
+|------|--------|----------|
+| Form labels, table headers, menu titles, short options | **Title Case** | `IP Address`, `External Interface`, `DHCP Server` |
+| Buttons / 1–2 word actions | **Title Case** | `Apply`, `Refresh`, `Sign In` |
+| Confirmations, toasts, long help, sentences | **Sentence case** | `No changes to apply.`, `Are you sure you want to restart?` |
+| Validation fragments | **lowercase fixed phrase** | `must be a valid IP address` |
+| Backend / API status & option ids | **keep identifier** (not display prose) | `connected`, `upgrading`, `wifi@a` — still map in `en.json`/`cn.json` when needed |
+
+**Title Case details**
+
+- Capitalize each significant word; keep short function words lowercase unless first: `a`, `an`, `the`, `of`, `for`, `to`, `and`, `or`, `in`, `on`, `at`, `by`, `with`.
+- Preserve known acronyms / product tokens: `IP`, `IPv4`, `IPv6`, `MAC`, `DNS`, `DHCP`, `SSID`, `VPN`, `LTE`, `HTTP`, `HTTPS`, `MQTT`, `FPK`, `HE`, `NAT`, `VLAN`, …
+- Unit suffixes in labels: prefer `(sec)`, `(KB)` style already used on the page; do not invent a third variant.
+- Heuristic: about **≤ 5 words**, no `?`, and not a full sentence → treat as label → Title Case.
+- Placeholders / prompts starting with `Enter …`, `Input …`, `Select …` stay **Sentence case** (do not Title-Case them).
+
+**Sentence case details**
+
+- Capitalize only the first letter (plus acronyms as usual).
+- Use when the string is a full sentence, ends with `.` / `?` / `…`, or is a long prompt (`Are you sure…`, `Reconnect to the device…`).
+
+**Consistency**
+
+- One concept → **one** English key worldwide (e.g. always `External Interface`, always `Modified successfully` for success toasts).
+- After renaming a key: update `data-i18n` / `$.i18n('…')`, rename the entry in `cn.json`, and drop redundant `en.json` rows when `key == English display`.
+- Do **not** Title-Case API identifiers just to look nicer.
+
 ---
 
 ## Checklist before saying “done”
@@ -206,6 +237,7 @@ he.exec( [ object + ".setup" ] ).then( function () { /* ... */ });
 - [ ] Save path uses **`he.exec([ obj+"="+JSON.stringify(cfg) ])`**
 - [ ] `prj.json` `wui.page` / `lang` files exist in the project
 - [ ] `data-i18n` keys covered in `cn.json` (and `en.json` if needed)
+- [ ] English keys follow casing rules above (labels Title Case; tips Sentence case)
 - [ ] Built FPK uploaded; verified page URL via `land@fpk.wui_menu` (hard-refresh browser)
 - [ ] Component `_get` / `_set` (or default config) match what the page reads/writes
 

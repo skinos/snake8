@@ -704,6 +704,7 @@ talk_t _status( obj_t this, param_t param )
 	talk_t ret;
 	talk_t cfg;
 	const char *netdev;
+	char mac[NAME_MAX];
     char path[PATH_MAX];
 
 	/* get the netdev */
@@ -725,6 +726,11 @@ talk_t _status( obj_t this, param_t param )
 		json_set_string( ret, "status", "nodevice" );
 		talk_free( cfg );
 		return ret;
+	}
+	/* get the mac */
+	if ( netdev_info( netdev, NULL, 0, NULL, 0, NULL, 0, mac, sizeof(mac) ) == 0 )
+	{
+		json_set_string( ret, "mac", mac );
 	}
 	/* state get */
 	if ( netdev_flags( netdev, IFF_UP ) <= 0 )

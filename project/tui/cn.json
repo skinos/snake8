@@ -1,8 +1,8 @@
 {
-    "SSH server": "SSH服务器",
-    "Telnet server": "Telnet服务器",
-    "Designated address access": "指定地址访问",
-    "Address (separated by semicolon)": "地址(多个以;号分隔)",
+    "SSH Server": "SSH服务器",
+    "Telnet Server": "Telnet服务器",
+    "Designated Address Access": "指定地址访问",
+    "Address (Separated by Semicolon)": "地址(多个以;号分隔)",
     "Port": "端口",
     "Refresh": "刷新",
     "Apply": "应用",

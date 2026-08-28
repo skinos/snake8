@@ -5,7 +5,7 @@
 
   <div id="storage_html" style="display: none;">
     <div class="form-horizontal" id="ftp"  style="display: none;" >
-      <h4 data-i18n="FTP server"></h4>
+      <h4 data-i18n="FTP Server"></h4>
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
@@ -19,11 +19,11 @@
       <div id="ftp-sets">
         <!-- 登录模式 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login mode"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
           <div class="col-sm-9">
             <select class="col-xs-10 col-sm-5" id="ftp-mode">
               <option value="anonymous" data-i18n="Anonymous"></option>
-              <option value="user" data-i18n="Username and password"></option>
+              <option value="user" data-i18n="Username and Password"></option>
             </select>
           </div>
         </div>
@@ -42,7 +42,7 @@
 
 
     <div class="form-horizontal" id="samba"  style="display: none;" >
-      <h4 data-i18n="SAMBA server"></h4>
+      <h4 data-i18n="SAMBA Server"></h4>
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
@@ -56,11 +56,11 @@
       <div id="samba-sets">
         <!-- 登录模式 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login mode"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
           <div class="col-sm-9">
             <select class="col-xs-10 col-sm-5" id="samba-mode">
               <option value="anonymous" data-i18n="Anonymous"></option>
-              <option value="user" data-i18n="Username and password"></option>
+              <option value="user" data-i18n="Username and Password"></option>
             </select>
           </div>
         </div>
@@ -81,10 +81,10 @@
 
 
     <div id="auth-wrapper">
-      <h4 data-i18n="User management"></h4>
+      <h4 data-i18n="User Management"></h4>
       <div class="form-horizontal">
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="User table"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="User Table"></label>
           <div class="col-sm-9">
             <div>
               <table id="auth-grid-table"></table>
@@ -406,7 +406,7 @@
       /* load the configure */
       jqtable.create( auth_table, auth_pager,
         {
-            caption: $.i18n('User table'),
+            caption: $.i18n('User Table'),
             toolbar: [true, "top"],
             colNames: [ $.i18n('Username'), $.i18n('Password'), $.i18n('Operation') ],
             colModel: [
@@ -421,7 +421,7 @@
                         custom_func: function (value)
                         {
                             // 名称不能为admin
-                            return [value !== 'admin', $.i18n('Invalid username')]
+                            return [value !== 'admin', $.i18n('Invalid Username')]
                         }
                     }
                 },

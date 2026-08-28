@@ -361,7 +361,7 @@ window.wifi_client = window.wifi_client || {
     var client = $('#clients-grid-table-wifi').jqGrid( 'getRowData', rowId );
     var mac = client.mac;
     // 执行唤醒
-    he.exec( [ knock_object+".stabeat["+mac+"]" ], $.i18n("Waking up") ).then( function(v){
+    he.exec( [ knock_object+".stabeat["+mac+"]" ], $.i18n("Waking Up") ).then( function(v){
         var ret = v[0];
         if ( ret == true )
         {

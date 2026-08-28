@@ -56,7 +56,7 @@ Chinese portal: [`README.cn.md`](README.cn.md).
 
 **Root packaging / project docs:** [`project.md`](project.md) · [`projects.md`](projects.md) · [`fpk.md`](fpk.md) · [`project2fpk.md`](project2fpk.md) · [`fpk2rootfs.md`](fpk2rootfs.md)
 
-Many `project/*` and `config/*` trees are **separate git repos**. Helpers: `gitst`, `gitup`, `mkdel`.
+Many `project/*` and `config/*` trees are **separate git repos**. Helper: `./git` (`pull`/`p`, `status`/`s`, `sw`, `tag`, `goto`); also `mkdel`.
 
 ---
 
