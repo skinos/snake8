@@ -1,6 +1,5 @@
 {
     "Clients Table": "终端列表",
-    "Enter Hostname": "输入主机名",
     "Enter MAC Address": "输入MAC地址",
     "Fields marked with * are required": "带*的字段为必填项",
     "Hostname": "主机名",
@@ -30,5 +29,6 @@
     "ifname@wisp Speed": "无线连网(2.4G)速率",
     "ifname@wisp2 Speed": "无线连网(5.8G)速率",
     "wifi@assid Speed": "5.8G热点速率",
-    "wifi@nssid Speed": "2.4G热点速率"
+    "wifi@nssid Speed": "2.4G热点速率",
+    "Enter hostname": "输入主机名"
 }

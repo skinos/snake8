@@ -59,12 +59,12 @@ function update_copyright_year()
 function logout_system()
 {
 	bootbox.confirm({
-		message: $.i18n('Are you sure you want to logout?'),
+		message: $.i18n('Are you sure you want to sign out?'),
 		buttons:
 		{
 			confirm:
 			{
-				label: '<i class="fa fa-check"></i>'+$.i18n('Logout'), className: 'btn btn-main'
+				label: '<i class="fa fa-check"></i>'+$.i18n('Sign Out'), className: 'btn btn-main'
 			},
 			cancel:
 			{
@@ -96,7 +96,7 @@ function jquery_setup()
 		{
 		  recordtext: $.i18n('recordtext'),
 		  emptyrecords: $.i18n('No records to view'),
-		  loadtext: $.i18n('Loading...'),
+		  loadtext: $.i18n('Loading…'),
 		  savetext: "Saving...",
 		  pgtext : "{0} / {1}",
 		  pgfirst : $.i18n('First Page'),
@@ -116,7 +116,7 @@ function jquery_setup()
 		},
 		search :
 		{
-		  caption: $.i18n('Search...'),
+		  caption: $.i18n('Search…'),
 		  Find: "Find",
 		  Reset: "Reset",
 		  odata: [{ oper:'eq', text:'equal'},{ oper:'ne', text:'not equal'},{ oper:'lt', text:'less'},{ oper:'le', text:'less or equal'},{ oper:'gt', text:'greater'},{ oper:'ge', text:'greater or equal'},{ oper:'bw', text:'begins with'},{ oper:'bn', text:'does not begin with'},{ oper:'in', text:'is in'},{ oper:'ni', text:'is not in'},{ oper:'ew', text:'ends with'},{ oper:'en', text:'does not end with'},{ oper:'cn', text:'contains'},{ oper:'nc', text:'does not contain'},{ oper:'nu', text:'is null'},{ oper:'nn', text:'is not null'}],
@@ -373,6 +373,11 @@ function frame_url( hash )
 	{
 		var paper = page.param( 'page', hash );
 		return base64.decode(paper);
+	}
+	/* dmisp/dwisp/mwm share one Connection page */
+	else if ( name === 'dmisp' || name === 'dwisp' || name === 'mwm' )
+	{
+		return 'content/mix.html';
 	}
 	return 'content/' + name + '.html';
 }
@@ -820,7 +825,7 @@ jQuery(function($) {
 				{
 					if ( !wuimenu || wuimenu.connection != "disable" )
 					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Connection' ), window.machines.mode );
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Connection' ), 'mix' );
 					}
 				}
 				if ( window.ifname["ifname@lte"]  )
@@ -883,14 +888,14 @@ jQuery(function($) {
 				{
 					if ( !wuimenu || wuimenu.wisp != "disable" )
 					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(2.4G)' ), 'wisp?object=ifname@wisp' );
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP (2.4G)' ), 'wisp?object=ifname@wisp' );
 					}
 				}
 				if ( window.ifdev["wifi@a"] == true && window.ifname["ifname@wisp2"] )
 				{
 					if ( !wuimenu || wuimenu.wisp2 != "disable" )
 					{
-						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP(5.8G)' ), 'wisp?object=ifname@wisp2' );
+						menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'WISP (5.8G)' ), 'wisp?object=ifname@wisp2' );
 					}
 				}
 				if ( window.ifname["ifname@lan"] )

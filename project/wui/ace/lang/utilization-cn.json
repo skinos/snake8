@@ -5,7 +5,6 @@
     "CPU IRQ": "处理器中断",
     "CPU Softirq": "处理器软中断",
     "CPU User": "处理器用户",
-    "CPU system": "处理器内核",
     "Free": "空闲",
     "Memory Buffers": "内存缓冲区",
     "Memory Cached": "内存缓存区",
@@ -24,5 +23,6 @@
     "Temperature": "温度",
     "cpu": "CPU温度",
     "wifi@n": "2.4G射频温度",
-    "wifi@a": "5.8G射频温度"
+    "wifi@a": "5.8G射频温度",
+    "CPU System": "处理器内核"
 }

@@ -115,7 +115,7 @@
             return rule_load();
         }).then(function () {
             // 提示成功
-            page.hint2succeed( $.i18n('Add successfully') );
+            page.hint2succeed( $.i18n('Added successfully') );
         });
     }
     function edit_rule( rule )
@@ -158,7 +158,7 @@
             return rule_load();
         }).then(function (){
             // 提示成功
-            page.hint2succeed( $.i18n('Delete successfully') );
+            page.hint2succeed( $.i18n('Deleted successfully') );
         });
     }
 
@@ -171,7 +171,7 @@
         {
             caption: $.i18n('Shutdown Table'),
             toolbar: [true, "top"],
-            colNames:[ $.i18n('Name(unique)'), $.i18n('Call'), $.i18n('Level'), $.i18n('Operation') ],
+            colNames:[ $.i18n('Name (unique)'), $.i18n('Call'), $.i18n('Level'), $.i18n('Actions') ],
             colModel:
             [
                 {

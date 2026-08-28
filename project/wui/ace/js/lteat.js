@@ -39,7 +39,7 @@ function lte_at() {
                 rows.push( row );
                 count++;
             }
-            $(set_table).jqGrid("setCaption", $.i18n('Custom setting AT') + '(' + count + ')' );
+            $(set_table).jqGrid("setCaption", $.i18n('Custom Setup AT Command') + '(' + count + ')' );
             var scrollPos = jqtable.getScrollPos();
             $("#set-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
@@ -68,7 +68,7 @@ function lte_at() {
                 rows.push( row );
                 count++;
             }
-            $(watch_table).jqGrid("setCaption", $.i18n('Custom watching AT') + '(' + count + ')' );
+            $(watch_table).jqGrid("setCaption", $.i18n('Custom Polling AT Command') + '(' + count + ')' );
             var scrollPos = jqtable.getScrollPos();
             $("#watch-grid-table").jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
@@ -161,17 +161,17 @@ function at_save() {
 	}
 	if ( needsave == false )
 	{
-		page.alert( { message: $.i18n('Settings unchanged') } );
+		page.alert( { message: $.i18n('No changes to apply') } );
 		return;
 	}
 
 	// save
-    var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
+    var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
 	page.confirm( { message: msg } ).then( function(result){
     if ( result )
     {
         he.exec( cmds ).then( function(){
-            page.hint2succeed( $.i18n('Modify successfully') );
+            page.hint2succeed( $.i18n('Modified successfully') );
             lte_at();
         });
     }
@@ -187,8 +187,8 @@ var customForm = {
             '<span style="color: red;">*</span> ' + $.i18n('Fields marked with * are required') +
             '</div>';
         $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
-        $("#name", form).attr("placeholder", $.i18n('Enter Command Name'));
-        $("#at", form).attr("placeholder", $.i18n('Enter AT Command'));
+        $("#name", form).attr("placeholder", $.i18n('Enter command name'));
+        $("#at", form).attr("placeholder", $.i18n('Enter AT command'));
     }
 };
 
@@ -215,9 +215,9 @@ function init_at() {
     
     // 初始化设置表格
     jqtable.create(set_table, set_pager, {
-        caption: $.i18n("Custom setting AT"),
+        caption: $.i18n("Custom Setup AT Command"),
         toolbar: [true, "top"],
-        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Operation')],
+        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Actions')],
         colModel: [
             { name: 'name', width: 100, editable: true, editrules: { required: true } },
             { name: 'at', width: 250, editable: true, editrules: { required: true } },
@@ -248,9 +248,9 @@ function init_at() {
     
     // 初始化监控表格
     jqtable.create(watch_table, watch_pager, {
-        caption: $.i18n("Custom watching AT"),
+        caption: $.i18n("Custom Polling AT Command"),
         toolbar: [true, "top"],
-        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Operation')],
+        colNames: [$.i18n('Command Name'), $.i18n('AT Command'), $.i18n('Return'), $.i18n('Actions')],
         colModel: [
             { name: 'name', width: 200, editable: true, editrules: { required: true } },
             { name: 'at', width: 300, editable: true, editrules: { required: true } },

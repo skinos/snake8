@@ -123,11 +123,11 @@ function save_syslog()
     }
     if ( ocompare( syslog, syslogcopy ) )
     {
-        page.alert( { message: $.i18n('Settings unchanged') } );
+        page.alert( { message: $.i18n('No changes to apply') } );
         return;
     }
     he.exec( [ "land@syslog="+JSON.stringify(syslog) ] ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
+        page.hint2succeed( $.i18n('Modified successfully') );
         load_syslog();
     });
 }
@@ -152,7 +152,7 @@ function syslog_delete( indexStr )
         return load_syslog();
     }).then(function (){
         // 提示成功
-        page.hint2succeed( $.i18n('Delete successfully') );
+        page.hint2succeed( $.i18n('Deleted successfully') );
     });
 }
 
@@ -191,7 +191,7 @@ $.i18n().load( page.lang('syslog') ).then( function () {
     {
         caption: ' ', // 必需设置值, 防止表格不能折叠
         toolbar: [true, "top"],
-        colNames: [ $.i18n('Log File'), $.i18n('Download'), $.i18n('Operation') ],
+        colNames: [ $.i18n('Log File'), $.i18n('Download'), $.i18n('Actions') ],
         colModel: [
             { name:'name'},
             {

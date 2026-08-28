@@ -95,7 +95,7 @@ function delete_smss( indexStr )
         return smslist_load();
     }).then(function (){
         // 提示成功
-        page.hint2succeed( $.i18n('Delete successfully') );
+        page.hint2succeed( $.i18n('Deleted successfully') );
     });
 }
 
@@ -124,30 +124,30 @@ function sms_save()
         lte.sms_cfg.he_prefix = $('#he_prefix').val();
         if ( lte.sms_cfg.he_contact == "" )
         {
-            page.alert( { message: $.i18n("Command Contact")+" "+$.i18n('Can not be empty') } );
+            page.alert( { message: $.i18n("Command Contact")+" "+$.i18n('Cannot be empty') } );
             return;
         }
 
         if ( lte.sms_cfg.he_prefix == "" )
         {
-            page.alert( { message: $.i18n("Command Prefix")+" "+$.i18n('Can not be empty') } );
+            page.alert( { message: $.i18n("Command Prefix")+" "+$.i18n('Cannot be empty') } );
             return;
         }
       }
   }
   if ( ocompare( lte, ltecopy ) )
   {
-      page.alert( { message: $.i18n('Settings unchanged') } );
+      page.alert( { message: $.i18n('No changes to apply') } );
       return;
   }
 
-  var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
+  var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
   page.confirm( { message: msg } ).then( function(result){
     if (!result) return location.reload();
     
     var cmds = [ modem+"="+JSON.stringify(lte) ];
     he.exec(cmds).then( function(){
-      page.hint2succeed( $.i18n('Modify successfully') );
+      page.hint2succeed( $.i18n('Modified successfully') );
       lte_sms();
     });
     
@@ -171,7 +171,7 @@ function init_sms(){
       {
           caption: ' ', // 必需设置值, 防止表格不能折叠
           toolbar: [true, "top"],
-          colNames: [ $.i18n('Contact'), $.i18n('SMS ID'), $.i18n('Date'), $.i18n('Content'), $.i18n('Operation') ],
+          colNames: [ $.i18n('Contact'), $.i18n('SMS ID'), $.i18n('Date'), $.i18n('Content'), $.i18n('Actions') ],
           colModel:
           [
               {

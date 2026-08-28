@@ -239,18 +239,18 @@
         <div class="col-sm-9">
           <select class="col-xs-10 col-sm-5" id="type">
             <option value="default" data-i18n="Use First Online"></option>
-            <option value="cold" data-i18n="Backup(Cold)"></option>
-            <option value="hot" data-i18n="Backup(Hot)"></option>
-            <option value="hot2" data-i18n="Backup(Hot) on First/Second"></option>
-            <option value="hot3" data-i18n="Backup(Hot) on First/Second/Third"></option>
-            <option value="hot4" data-i18n="Backup(Hot) on First/Second/Third/Fourth"></option>
-            <option value="hot5" data-i18n="Backup(Hot) on First/Second/Third/Fourth/Fifth"></option>
+            <option value="cold" data-i18n="Backup (Cold)"></option>
+            <option value="hot" data-i18n="Backup (Hot)"></option>
+            <option value="hot2" data-i18n="Backup (Hot) on First/Second"></option>
+            <option value="hot3" data-i18n="Backup (Hot) on First/Second/Third"></option>
+            <option value="hot4" data-i18n="Backup (Hot) on First/Second/Third/Fourth"></option>
+            <option value="hot5" data-i18n="Backup (Hot) on First/Second/Third/Fourth/Fifth"></option>
 
-            <option value="lazy" data-i18n="Backup(Lazy)"></option>
-            <option value="lazy2" data-i18n="Backup(Lazy) on First/Second"></option>
-            <option value="lazy3" data-i18n="Backup(Lazy) on First/Second/Third"></option>
-            <option value="lazy4" data-i18n="Backup(Lazy) on First/Second/Third/Fourth"></option>
-            <option value="lazy5" data-i18n="Backup(Lazy) on First/Second/Third/Fourth/Fifth"></option>
+            <option value="lazy" data-i18n="Backup (Lazy)"></option>
+            <option value="lazy2" data-i18n="Backup (Lazy) on First/Second"></option>
+            <option value="lazy3" data-i18n="Backup (Lazy) on First/Second/Third"></option>
+            <option value="lazy4" data-i18n="Backup (Lazy) on First/Second/Third/Fourth"></option>
+            <option value="lazy5" data-i18n="Backup (Lazy) on First/Second/Third/Fourth/Fifth"></option>
 
             <option value="dbdc" data-i18n="Balancing"></option>
             <option value="dbdc2" data-i18n="Balancing on First/Second"></option>
@@ -358,7 +358,7 @@
         </div>
         <div id="delay-detail">
           <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Boundary(ms)"></label>
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Boundary (ms)"></label>
             <div class="col-sm-9">
               <div class="clearfix">
                 <input type="text" id="delay_divide" class="col-xs-10 col-sm-5" maxlength="32" />
@@ -366,7 +366,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Difference(ms)"></label>
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay Difference (ms)"></label>
             <div class="col-sm-9">
               <div class="clearfix">
                 <input type="text" id="delay_diff" class="col-xs-10 col-sm-5" maxlength="32" />
@@ -985,14 +985,14 @@
         }
         if ( ocompare( frame, framecopy ) )
         {
-            page.alert( { message: $.i18n('Settings unchanged') } );
+            page.alert( { message: $.i18n('No changes to apply') } );
             return;
         }
-        page.confirm( { message: $.i18n('The connection will be disconnected because of the change of configuration') } ).then( function(result){
+        page.confirm( { message: $.i18n('The connection will be disconnected due to configuration changes.') } ).then( function(result){
             if ( result )
             {
                 he.exec( [ "network@frame="+JSON.stringify(frame) ] ).then( function(){
-                    page.hint2succeed( $.i18n('Modify successfully') );
+                    page.hint2succeed( $.i18n('Modified successfully') );
                     frame_load();
                     status_load();
                 });

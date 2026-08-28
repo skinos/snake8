@@ -45,10 +45,10 @@ $.i18n().load( page.lang('configure') ).then( function () {
 
     // 恢复默认设置
     $('#default').on(ace.click_event, function () {
-        page.confirm( { message: $.i18n('Are you sure you want to default the system configure') } ).then( function(result){
+        page.confirm( { message: $.i18n('Are you sure you want to reset the system configuration to defaults?') } ).then( function(result){
             if ( result )
             {
-                he.reboot( { title: $.i18n('Restarting...'), hint:$.i18n('Make sure that the device is reconnected'), cmds:["arch@data.default"] } );
+                he.reboot( { title: $.i18n('Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.'), cmds:["arch@data.default"] } );
             }
         });
     });
@@ -115,7 +115,7 @@ $.i18n().load( page.lang('configure') ).then( function () {
                     if (result)
                     {
                         // 提示正在导入配置
-                        page.overlay($.i18n('Restore...'));
+                        page.overlay($.i18n('Restore…'));
                         // 执行导入
                         data.submit();
                     }
@@ -130,7 +130,7 @@ $.i18n().load( page.lang('configure') ).then( function () {
             page.overlay2hide();
             if ( result === 'ttrue' )
             { // 导入成功重启
-                he.reboot( { title: $.i18n('Restore the configuration is successful, now restarting...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                he.reboot( { title: $.i18n('Configuration restored. Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
             }
             else
             {

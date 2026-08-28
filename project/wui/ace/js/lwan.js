@@ -306,7 +306,7 @@ function config_save()
 		        dhcps.lease = $('#lease').val();
 		        if ( dhcps.lease && check.number(dhcps.lease) == false )
 		        {
-		            page.alert( { message: $.i18n('Lease(Sec)')+" "+$.i18n('must be a valid number') } );
+		            page.alert( { message: $.i18n('Lease (sec)')+" "+$.i18n('must be a valid number') } );
 		            return;
 		        }
 		        dhcps.gw = $('#gw').val();
@@ -333,7 +333,7 @@ function config_save()
 
 	if ( ocompare( config, copy ) )
 	{
-	  page.alert( { message: $.i18n('Settings unchanged') } );
+	  page.alert( { message: $.i18n('No changes to apply') } );
 	  return;
 	}
 
@@ -351,14 +351,14 @@ function config_save()
         config.dhcps.endip = arr.join('.');
     }
 
-    page.confirm( { message: $.i18n('The system will restart because of the change of configuration') } ).then( function(result){
+    page.confirm( { message: $.i18n('The system will restart due to configuration changes.') } ).then( function(result){
         if ( result )
         {
             he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
-                page.confirm( { message: $.i18n('Need to restart the system') } ).then( function(result){
+                page.confirm( { message: $.i18n('System restart required') } ).then( function(result){
                     if ( result )
                     {
-                        he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                        he.reboot( { title: $.i18n('Restarting to apply changes…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
                     }
                     else
                     {

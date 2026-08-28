@@ -249,7 +249,7 @@ function lte_basic(v)
 
     /* init the network mode select */
     $("#mode").empty();
-    $("#mode").append("<option value=''>"+$.i18n('Advise')+"</option>");
+    $("#mode").append("<option value=''>"+$.i18n('Auto (modem default)')+"</option>");
     $("#mode").append("<option value='ppp'>"+$.i18n('PPP')+"</option>");
     $("#mode").append("<option value='dhcpc'>"+$.i18n('DHCP')+"</option>");
     $("#mode").append("<option value='static'>"+$.i18n('Static IP')+"</option>");
@@ -539,7 +539,7 @@ function config_save() {
     var getAndValidate = function(selector, label, type, required) {
         var val = $(selector).val();
         if (required && (!val || val.trim() === "")) {
-            page.alert({ message: $.i18n(label) + " " + $.i18n('Can not be empty') });
+            page.alert({ message: $.i18n(label) + " " + $.i18n('Cannot be empty') });
             throw "VALIDATION_FAILED"; // 抛出异常直接中断整个函数
         }
         if (val) {
@@ -660,15 +660,15 @@ function config_save() {
         }
 
         if (ocompare(config, copy)) {
-            page.alert({ message: $.i18n('Settings unchanged') });
+            page.alert({ message: $.i18n('No changes to apply') });
             return;
         }
 
-        var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
+        var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
         page.confirm({ message: msg }).then(function(result) {
             if (!result) return location.reload();
             he.exec([object + "=" + JSON.stringify(config)]).then(function() {
-                page.hint2succeed($.i18n('Modify successfully'));
+                page.hint2succeed($.i18n('Modified successfully'));
                 config_load();
             });
         });

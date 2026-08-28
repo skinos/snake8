@@ -156,17 +156,17 @@ function sim_save()
   }
   if ( ocompare( lte, ltecopy ) )
   {
-      page.alert( { message: $.i18n('Settings unchanged') } );
+      page.alert( { message: $.i18n('No changes to apply') } );
       return;
   }
 
-  var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
+  var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
   page.confirm( { message: msg } ).then( function(result){
     if (!result) return location.reload();
     
     var cmds = [ object+"="+JSON.stringify(lte) ];
     he.exec(cmds).then( function(){
-      page.hint2succeed( $.i18n('Modify successfully') );
+      page.hint2succeed( $.i18n('Modified successfully') );
       lte_sim();
     });
     

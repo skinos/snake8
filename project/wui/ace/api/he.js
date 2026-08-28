@@ -175,7 +175,7 @@ var he =
             {
                 page.overlay2hide();
             }
-            page.alert( { message: $.i18n( 'Invalid character encoding' ) } );
+            page.alert( { message: $.i18n( 'Invalid character encoding (not UTF-8)' ) } );
             if ( func != null )
             {
                 return;
@@ -501,8 +501,8 @@ var he =
                 /* Keep overlay until navigation completes — hide would flash the old page */
                 bar.finish({ skipCallback: true, keepVisible: true });
             }
-            $('#overlay-progress-title').text($.i18n('Reboot successfully'));
-            page.hint2succeed($.i18n('Reboot successfully'));
+            $('#overlay-progress-title').text($.i18n('Restarted successfully'));
+            page.hint2succeed($.i18n('Restarted successfully'));
             setTimeout(goReload, 1200);
         }
 
@@ -520,7 +520,7 @@ var he =
                 bar.finish({ skipCallback: true });
             }
             page.alert({
-                message: arg.hint || $.i18n('Make sure that the device is reconnected')
+                message: arg.hint || $.i18n('Reconnect to the device after it comes back online.')
             }).then(function () {
                 goReload();
             });
@@ -654,7 +654,7 @@ var he =
         }
 
         window.rebooting = true;
-        he._waitDeviceReload(arg, timeout, $.i18n('Restarting...'));
+        he._waitDeviceReload(arg, timeout, $.i18n('Restarting…'));
 
         if ( !arg.norestart )
         {

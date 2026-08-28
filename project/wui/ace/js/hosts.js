@@ -65,11 +65,11 @@ function hosts_save()
     $(hosts_table).jqGrid('setGridParam', { rowNum: rowNum }).trigger('reloadGrid');  //还原成原先状态        
     if ( ocompare( hosts, hostscopy ) )
     {
-        page.alert( { message: $.i18n('Settings unchanged') } );
+        page.alert( { message: $.i18n('No changes to apply') } );
         return;
     }
     he.exec( [ obj+"="+JSON.stringify(hosts) ] ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
+        page.hint2succeed( $.i18n('Modified successfully') );
         hosts_load();
     });
 }
@@ -87,7 +87,7 @@ var customForm = {
         
         $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
         // 设置 placeholder
-        $("#hostname", form).attr("placeholder", $.i18n('Enter Hostname'));
+        $("#hostname", form).attr("placeholder", $.i18n('Enter hostname'));
         $("#ip", form).attr("placeholder", $.i18n('Enter IP'));
 }
 };
@@ -109,7 +109,7 @@ $.i18n().load( page.lang('hosts') ).then( function () {
         {
             caption: $.i18n('Hosts Table'),
             toolbar: [true, "top"], 
-            colNames: [ $.i18n('Hostname'), $.i18n('IP Address'), $.i18n('Operation') ],
+            colNames: [ $.i18n('Hostname'), $.i18n('IP Address'), $.i18n('Actions') ],
             colModel:
             [
                 {

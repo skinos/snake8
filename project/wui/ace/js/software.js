@@ -22,7 +22,7 @@ function project_load()
         count++;
       }
       // 表头设置为在线客户端的数量
-      $(project_table).jqGrid( "setCaption", $.i18n('FPK Number') + '(' + count + ')' );
+      $(project_table).jqGrid( "setCaption", $.i18n('FPK Count') + '(' + count + ')' );
       // 记住滚动条的位置
       var scrollPos = jqtable.getScrollPos();
       // load data into the projects grid
@@ -47,7 +47,7 @@ function delete_project( indexStr )
         var path = projects[key].path;
         if ( path && 0 == path.indexOf("/prj" ) )
         {
-            page.alert( { message: $.i18n("Cannot delete the software buildin firmware") } );
+            page.alert( { message: $.i18n("Cannot delete software built into the firmware") } );
             return;
         }
         cmds.push( 'land@fpk.delete[ '+key+']' );
@@ -58,7 +58,7 @@ function delete_project( indexStr )
         project_load();
     }).then(function (){
         // 提示成功
-        page.alert( { message: $.i18n('Delete successfully'), callback: function( result ){location.reload();} } );
+        page.alert( { message: $.i18n('Deleted successfully'), callback: function( result ){location.reload();} } );
     });
 }
 
@@ -117,7 +117,7 @@ $.i18n().load( page.lang('software') ).then( function () {
 				}
 			}
 		}
-		page.confirm( { message: $.i18n('The device may need to be restarted, confirm whether to continue'),
+		page.confirm( { message: $.i18n('The device may need to restart. Do you want to continue?'),
 			callback: function( result ) {
 				if ( result )
 				{
@@ -128,7 +128,7 @@ $.i18n().load( page.lang('software') ).then( function () {
 					}
 					data.url = url;
 					// 提示正在升级
-					page.overlay($.i18n('Upgrading...'));
+					page.overlay($.i18n('Upgrading…'));
 					// 执行升级
 					data.submit();
 				}
@@ -174,7 +174,7 @@ $.i18n().load( page.lang('software') ).then( function () {
 				}
 				page.alert( { message: hint, callback: function()
 				{
-					he.upgrade_reboot( { title: $.i18n('Update successfully, now restarting...'), hint:$.i18n('Make sure that the device is reconnected'), restartTime:wait, norestart: true } );
+					he.upgrade_reboot( { title: $.i18n('Update succeeded. Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.'), restartTime:wait, norestart: true } );
 				}});
 			}
 			else if ( !result.restart )
@@ -189,21 +189,21 @@ $.i18n().load( page.lang('software') ).then( function () {
 			{
 				if ( result.msgs )
 				{
-					hint += "<br><br><center>"+$.i18n( "Restart the system or not" )+"</center>";
+					hint += "<br><br><center>"+$.i18n( "Restart the system now?" )+"</center>";
 				}
 				else if ( hint )
 				{
-					hint += ", "+$.i18n( "Restart the system or not" );
+					hint += ", "+$.i18n( "Restart the system now?" );
 				}
 				else
 				{
-					hint = $.i18n( "Success" )+", "+$.i18n( "Restart the system or not" );
+					hint = $.i18n( "Success" )+", "+$.i18n( "Restart the system now?" );
 				}
 				page.confirm( { message: hint,	callback: function( result )
 				{
 					if ( result )
 					{
-						he.upgrade_reboot( { title: $.i18n('Update successfully, now restarting...'), hint:$.i18n('Make sure that the device is reconnected'), restartTime:wait } );
+						he.upgrade_reboot( { title: $.i18n('Update succeeded. Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.'), restartTime:wait } );
 					}
 					else
 					{
@@ -230,7 +230,7 @@ $.i18n().load( page.lang('software') ).then( function () {
   }
   // check new version online
   $('#check').unbind(ace.click_event).on(ace.click_event, function () {
-      he.exec( [ 'arch@firmware.online_check' ], $.i18n("Checking...") ).then( function(v){
+      he.exec( [ 'arch@firmware.online_check' ], $.i18n("Checking…") ).then( function(v){
         if ( !v[0] )
         {
             page.alert( { message: $.i18n('No new version'), callback: function( result ){
@@ -296,18 +296,18 @@ $.i18n().load( page.lang('software') ).then( function () {
           page.hint2warning($.i18n('No new version'));
           return;
       }
-      page.confirm( { message: $.i18n('Are you sure you want to upgrade the newst version online, it will take long time') } ).then( function(result){
+      page.confirm( { message: $.i18n('Are you sure you want to upgrade to the latest version online? This may take a long time.') } ).then( function(result){
           if ( result )
           {
-              he.exec( [ 'arch@firmware.online_upgrade['+newst_url+']' ], $.i18n("Upgrading...") ).then( function(v){
+              he.exec( [ 'arch@firmware.online_upgrade['+newst_url+']' ], $.i18n("Upgrading…") ).then( function(v){
                 if ( v[0] )
                 {
-                    page.confirm( { message: $.i18n("Upgrade online successfully, Restart the system or not"),
+                    page.confirm( { message: $.i18n("Online upgrade succeeded. Restart the system now?"),
                       callback: function( result )
                       {
                         if ( result )
                         {
-                          he.upgrade_reboot( { title: $.i18n('Upgrade online successfully, now restarting...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                          he.upgrade_reboot( { title: $.i18n('Online upgrade succeeded. Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
                         }
                         else
                         {
@@ -319,7 +319,7 @@ $.i18n().load( page.lang('software') ).then( function () {
                 }
                 else
                 {
-                    page.alert( { message: $.i18n("Upgrade online Failure, Please try again"), callback: function( result ){} } );
+                    page.alert( { message: $.i18n("Online upgrade failed. Please try again."), callback: function( result ){} } );
                 }
               });
           }
@@ -342,7 +342,7 @@ $.i18n().load( page.lang('software') ).then( function () {
     {
         caption: ' ', // 必需设置值, 防止表格不能折叠
         multiselect: false,
-        colNames: [$.i18n('Name'), $.i18n('Size'), $.i18n('Version'), $.i18n('Path'), $.i18n('Author'), $.i18n('Introduction'), $.i18n('Operation') ],
+        colNames: [$.i18n('Name'), $.i18n('Size'), $.i18n('Version'), $.i18n('Path'), $.i18n('Author'), $.i18n('Introduction'), $.i18n('Actions') ],
         colModel:
         [
           { name:'pname', width:100 },
@@ -358,7 +358,7 @@ $.i18n().load( page.lang('software') ).then( function () {
   );
   // release
   $('#release').on(ace.click_event, function () {
-      page.confirm( { message: $.i18n('Are you sure you want to clear all install FPK and default the system configure') } ).then( function(result){
+      page.confirm( { message: $.i18n('Are you sure you want to remove all installed FPK packages and reset the system configuration to defaults?') } ).then( function(result){
           if ( result )
           {
               he.upgrade_reboot( { cmds:["arch@data.release"] } );

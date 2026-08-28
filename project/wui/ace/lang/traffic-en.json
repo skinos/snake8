@@ -14,21 +14,5 @@
     "ifname@lan3 Speed": "LAN3 Speed",
     "ifname@lan4 Speed": "LAN4 Speed",
     "wifi@nssid Speed": "2.4G SSID Speed",
-    "wifi@assid Speed": "5.8G SSID Speed",
-    "Clients Table": "Clients Table",
-    "Enter Hostname": "Enter hostname",
-    "Enter MAC Address": "Enter MAC Address",
-    "Fields marked with * are required": "Fields marked with * are required",
-    "Hostname": "Hostname",
-    "IP Address": "IP Address",
-    "Interface": "Interface",
-    "Interface Device": "Interface Device",
-    "Leave": "Leave",
-    "Live Time": "Live Time",
-    "MAC Address": "MAC Address",
-    "RX byte": "RX byte",
-    "Rx/Tx": "Rx/Tx",
-    "TX byte": "TX byte",
-    "Display": "Display",
-    "This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray.": "This table shows all connected clients. Online clients are shown at the top, offline clients are shown in gray."
+    "wifi@assid Speed": "5.8G SSID Speed"
 }

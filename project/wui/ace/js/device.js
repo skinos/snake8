@@ -4,45 +4,45 @@ var dates;
 var ntps;
 var wuimenu = window.wui.menu;
 var timezones =  [
-	{label: $.i18n('UTC-12(IDL- International Date Line)'),value: '-12'},
-	{label: $.i18n('UTC-11(MIT - Midway Island Standard Time)'),value: '-11'},
-	{label: $.i18n('UTC-10(HST - Hawaii- Aleutian Standard Time)'),value: '-10'},
-	{label: $.i18n('UTC-9:30(MSIT - Marquesas Islands Standard Time)'),value: '-9:30'},
-	{label: $.i18n('UTC-9(AKST - Alaska Standard Time)'),value: '-9'},
-	{label: $.i18n('UTC-8(PSTA - Pacific Ocean Standard Time A)'),value: '-8'},
-	{label: $.i18n('UTC-7(MST - North American mountains Standard Time)'),value: '-7'}, 
-	{label: $.i18n('UTC-6(CST - Central North America Standard Time)'),value: '-6'}, 
-	{label: $.i18n('UTC-5(EST - Eastern North America Standard Time)'),value: '-5'}, 
-	{label: $.i18n('UTC-4(AST - Atlantic Ocean Standard Time)'),value: '-4'}, 
-	{label: $.i18n('UTC-3:30(NST - Newfoundland Standard Time)'),value: '-3:30'}, 
-	{label: $.i18n('UTC-3(SAT -  South America Standard Time)'),value: '-3'}, 
-	{label: $.i18n('UTC-2(BRT - Brazil Time)'),value: '-2'}, 
-	{label: $.i18n('UTC-1(CVT - Cape Verde Standard Time)'),value: '-1'}, 
-	{label: $.i18n('UTC(WET - Western European Time Zone, GMT)'),value: '0'}, 
-	{label: $.i18n('UTC+1(CET - Mid European Time Zone)'),value: '1'}, 
-	{label: $.i18n('UTC+2(EET - Eastern Europe Time Zone)'),value: '2'}, 
-	{label: $.i18n('UTC+3(MSK - Moscow Time Zone)'),value: '3'}, 
-	{label: $.i18n('UTC+3:30(IRT - Iran Time Zone)'),value: '3:30'}, 
-	{label: $.i18n('UTC+4(META - Middle East Time Zone A)'),value: '4'}, 
-	{label: $.i18n('UTC+4:30(AFT- Afghanistan Standard Time)'),value: '4:30'}, 
-	{label: $.i18n('UTC+5(METB - Middle East Time Zone B)'),value: '5'}, 
-	{label: $.i18n('UTC+5:30(IDT - India Standard Time)'),value: '5:30'}, 
-	{label: $.i18n('UTC+45(NPT - Nepal Standard Time)'),value: '5:45'}, 
-	{label: $.i18n('UTC+6(BHT - Bangladesh Standard Time)'),value: '6'}, 
-	{label: $.i18n('UTC+6:30(MRT - Burma Standard Time)'),value: '6:30'}, 
-	{label: $.i18n('UTC+7(MST - Thailand Bangkok Standard Time)'),value: '7'}, 
-	{label: $.i18n('UTC+8(EAT - China Standard Time(BJT)'),value: '8'}, 
-	{label: $.i18n('UTC+8:30(KRT- Korea Republi Standard Time)'),value: '8:30'}, 
-	{label: $.i18n('UTC+9(FET- Far East Standard Time)'),value: '9'}, 
-	{label: $.i18n('UTC+9:30(ACST - Central Australia Standard Time)'),value: '9:30'}, 
-	{label: $.i18n('UTC+10(ACST - Eastern Australia Standard Time)'),value: '10'}, 
+	{label: $.i18n('UTC-12 (IDL- International Date Line)'),value: '-12'},
+	{label: $.i18n('UTC-11 (MIT - Midway Island Standard Time)'),value: '-11'},
+	{label: $.i18n('UTC-10 (HST - Hawaii- Aleutian Standard Time)'),value: '-10'},
+	{label: $.i18n('UTC-9:30 (MSIT - Marquesas Islands Standard Time)'),value: '-9:30'},
+	{label: $.i18n('UTC-9 (AKST - Alaska Standard Time)'),value: '-9'},
+	{label: $.i18n('UTC-8 (PSTA - Pacific Ocean Standard Time A)'),value: '-8'},
+	{label: $.i18n('UTC-7 (MST - North American mountains Standard Time)'),value: '-7'}, 
+	{label: $.i18n('UTC-6 (CST - Central North America Standard Time)'),value: '-6'}, 
+	{label: $.i18n('UTC-5 (EST - Eastern North America Standard Time)'),value: '-5'}, 
+	{label: $.i18n('UTC-4 (AST - Atlantic Ocean Standard Time)'),value: '-4'}, 
+	{label: $.i18n('UTC-3:30 (NST - Newfoundland Standard Time)'),value: '-3:30'}, 
+	{label: $.i18n('UTC-3 (SAT -  South America Standard Time)'),value: '-3'}, 
+	{label: $.i18n('UTC-2 (BRT - Brazil Time)'),value: '-2'}, 
+	{label: $.i18n('UTC-1 (CVT - Cape Verde Standard Time)'),value: '-1'}, 
+	{label: $.i18n('UTC (WET - Western European Time Zone, GMT)'),value: '0'}, 
+	{label: $.i18n('UTC+1 (CET - Mid European Time Zone)'),value: '1'}, 
+	{label: $.i18n('UTC+2 (EET - Eastern Europe Time Zone)'),value: '2'}, 
+	{label: $.i18n('UTC+3 (MSK - Moscow Time Zone)'),value: '3'}, 
+	{label: $.i18n('UTC+3:30 (IRT - Iran Time Zone)'),value: '3:30'}, 
+	{label: $.i18n('UTC+4 (META - Middle East Time Zone A)'),value: '4'}, 
+	{label: $.i18n('UTC+4:30 (AFT- Afghanistan Standard Time)'),value: '4:30'}, 
+	{label: $.i18n('UTC+5 (METB - Middle East Time Zone B)'),value: '5'}, 
+	{label: $.i18n('UTC+5:30 (IDT - India Standard Time)'),value: '5:30'}, 
+	{label: $.i18n('UTC+45 (NPT - Nepal Standard Time)'),value: '5:45'}, 
+	{label: $.i18n('UTC+6 (BHT - Bangladesh Standard Time)'),value: '6'}, 
+	{label: $.i18n('UTC+6:30 (MRT - Burma Standard Time)'),value: '6:30'}, 
+	{label: $.i18n('UTC+7 (MST - Thailand Bangkok Standard Time)'),value: '7'}, 
+	{label: $.i18n('UTC+8 (EAT - China Standard Time (BJT)'),value: '8'}, 
+	{label: $.i18n('UTC+8:30 (KRT- Korea Republi Standard Time)'),value: '8:30'}, 
+	{label: $.i18n('UTC+9 (FET- Far East Standard Time)'),value: '9'}, 
+	{label: $.i18n('UTC+9:30 (ACST - Central Australia Standard Time)'),value: '9:30'}, 
+	{label: $.i18n('UTC+10 (ACST - Eastern Australia Standard Time)'),value: '10'}, 
 	{label: $.i18n('UTC+10:30 (FAST - Far eastern Australia Standard Time)'),value: '10:30'}, 
-	{label: $.i18n('UTC+11( VTT - Vanuatu Standard Time)'),value: '11'}, 
-	{label: $.i18n('UTC+11:30(NFT - Norfolk Island Standard Time)'),value: '11:30'}, 
-	{label: $.i18n('UTC+12(PSTB - Pacific Ocean Standard Time B)'),value: '12'}, 
-	{label: $.i18n('UTC+12:45(CIT - Chatham Islands Standard Time)'),value: '12:45'}, 
-	{label: $.i18n('UTC+13(PSTC - Pacific Ocean Standard Time C)'),value: '13'}, 
-	{label: $.i18n('UTC+14(PSTD - Pacific Ocean Standard Time D)'),value: '14'}
+	{label: $.i18n('UTC+11 ( VTT - Vanuatu Standard Time)'),value: '11'}, 
+	{label: $.i18n('UTC+11:30 (NFT - Norfolk Island Standard Time)'),value: '11:30'}, 
+	{label: $.i18n('UTC+12 (PSTB - Pacific Ocean Standard Time B)'),value: '12'}, 
+	{label: $.i18n('UTC+12:45 (CIT - Chatham Islands Standard Time)'),value: '12:45'}, 
+	{label: $.i18n('UTC+13 (PSTC - Pacific Ocean Standard Time C)'),value: '13'}, 
+	{label: $.i18n('UTC+14 (PSTD - Pacific Ocean Standard Time D)'),value: '14'}
 ];
 
 /* load the configure on the input */
@@ -193,11 +193,11 @@ function date_save()
 
     if ( needsave == false )
     {
-      page.alert( { message: $.i18n('Settings unchanged') } );
+      page.alert( { message: $.i18n('No changes to apply') } );
       return;
     }
     he.exec( cmds ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
+        page.hint2succeed( $.i18n('Modified successfully') );
         date_load();
     });
 }
@@ -246,10 +246,10 @@ $.i18n().load( page.lang('device') ).then( function () {
   });
   // bind reboot
   $('#reboot').on(ace.click_event, function () {
-      page.confirm( { message: $.i18n('Are you sure you want to restart') } ).then( function(result){
+      page.confirm( { message: $.i18n('Are you sure you want to restart?') } ).then( function(result){
           if ( result )
           { 
-              he.reboot( { title: $.i18n('Restarting...'), hint:$.i18n('Make sure that the device is reconnected') } );
+              he.reboot( { title: $.i18n('Restarting…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
           }
       });
   });
@@ -295,14 +295,14 @@ $.i18n().load( page.lang('device') ).then( function () {
     var nmode = $("#mode").val();
     if ( nmode != window.machine.mode )
     {
-        page.confirm( { message: $.i18n('The system will restart because of the change of settings') } ).then( function(result){
+        page.confirm( { message: $.i18n('The device will restart to apply these changes.') } ).then( function(result){
             if ( result )
             {
                 he.exec( [ "land@machine:mode="+nmode ] ).then( function(){
-                    page.confirm( { message: $.i18n('Restart the system to apply') } ).then( function(result){
+                    page.confirm( { message: $.i18n('Restart now to apply changes') } ).then( function(result){
                         if ( result )
                         {
-                            he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                            he.reboot( { title: $.i18n('Restarting to apply changes…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
                         }
                     });
                 });

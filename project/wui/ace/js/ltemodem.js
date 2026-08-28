@@ -174,16 +174,16 @@ function modem_save() {
     });
 
     if (ocompare(iconfig, icopy)) {
-        return page.alert({ message: $.i18n('Settings unchanged') });
+        return page.alert({ message: $.i18n('No changes to apply') });
     }
 
-    var msg = $.i18n('The LTE connection will be disconnected because of the change of configuration');
+    var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
     page.confirm({ message: msg }).then(function(result) {
         if (!result) return location.reload();
 
         var cmds = [ ifname + "=" + JSON.stringify(iconfig) ];
         he.exec(cmds).then(function() {
-            page.hint2succeed($.i18n('Modify successfully'));
+            page.hint2succeed($.i18n('Modified successfully'));
             lte_modem();
         });
     });
@@ -202,7 +202,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 
 	// 锁IMEI
 	$('#imei_lock').off('click').on('click', function () {
-		page.confirm( { message: $.i18n('Once locked cannot be undone'), callback:function(result){
+		page.confirm( { message: $.i18n('Once locked, this cannot be undone.'), callback:function(result){
 			if ( result )
 			{ 
 				// 执行修改
@@ -218,7 +218,7 @@ $.i18n().load( page.lang('lte') ).then( function () {
 	});
 	// 锁IMSI
 	$('#imsi_lock').off('click').on('click', function () {
-		page.confirm( { message: $.i18n('Once locked cannot be undone'), callback:function(result){
+		page.confirm( { message: $.i18n('Once locked, this cannot be undone.'), callback:function(result){
 			if ( result )
 			{ 
 				// 执行修改

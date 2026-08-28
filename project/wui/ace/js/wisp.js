@@ -594,7 +594,7 @@ function config_save()
             config.manual.prefix = $('#prefix').val();
             if ( config.manual.prefix && ( config.manual.prefix < 0 || config.manual.prefix > 128 ) )
             {
-                page.alert( { message: $.i18n('Subnet Prefix')+" "+$.i18n('must be a number(0-128)') } );
+                page.alert( { message: $.i18n('Subnet Prefix')+" "+$.i18n('must be a number (0-128)') } );
                 return;
             }
             config.manual.hop = $('#hop').val();
@@ -642,7 +642,7 @@ function config_save()
         config.keeplive.icmp.dest.test = $('#icmp_test').val();
         if ( !config.keeplive.icmp.dest.test )
         {
-            page.alert( { message: $.i18n('Test Address')+" "+$.i18n('Can not be empty') } );
+            page.alert( { message: $.i18n('Test Address')+" "+$.i18n('Cannot be empty') } );
             return;
         }
         config.keeplive.icmp.dest.test2 = $('#icmp_test2').val();
@@ -650,7 +650,7 @@ function config_save()
         config.keeplive.icmp.timeout = $('#icmp_timeout').val();
         if ( check.number(config.keeplive.icmp.timeout) == false )
         {
-            page.alert( { message: $.i18n('Each Query Timeout(sec)')+" "+$.i18n('must be a valid number') } );
+            page.alert( { message: $.i18n('Each Query Timeout (sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
         config.keeplive.icmp.failed = $('#icmp_failed').val();
@@ -662,7 +662,7 @@ function config_save()
         config.keeplive.icmp.interval = $('#icmp_interval').val();
         if ( check.number(config.keeplive.icmp.interval) == false )
         {
-            page.alert( { message: $.i18n('Test Interval(sec)')+" "+$.i18n('must be a valid number') } );
+            page.alert( { message: $.i18n('Test Interval (sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
       }
@@ -675,7 +675,7 @@ function config_save()
         config.keeplive.dns.timeout = $('#dns_timeout').val();
         if ( check.number(config.keeplive.dns.timeout) == false )
         {
-            page.alert( { message: $.i18n('Each Query Timeout(sec)')+" "+$.i18n('must be a valid number') } );
+            page.alert( { message: $.i18n('Each Query Timeout (sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
         config.keeplive.dns.failed = $('#dns_failed').val();
@@ -687,7 +687,7 @@ function config_save()
         config.keeplive.dns.interval = $('#dns_interval').val();
         if ( check.number(config.keeplive.dns.interval) == false )
         {
-            page.alert( { message: $.i18n('Query Interval(sec)')+" "+$.i18n('must be a valid number') } );
+            page.alert( { message: $.i18n('Query Interval (sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
       }
@@ -700,7 +700,7 @@ function config_save()
         config.keeplive.recv.timeout = $('#recv_timeout').val();
         if ( check.number(config.keeplive.recv.timeout) == false )
         {
-            page.alert( { message: $.i18n('Count Duration(sec)')+" "+$.i18n('must be a valid number') } );
+            page.alert( { message: $.i18n('Count Duration (sec)')+" "+$.i18n('must be a valid number') } );
             return;
         }
         config.keeplive.recv.failed = $('#recv_failed').val();
@@ -780,7 +780,7 @@ function config_save()
       config.wpa_key = $('#wpa_key').val();
       if ( !config.wpa_key )
       {
-          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Cannot be empty') } );
           return;
       }
   }
@@ -791,7 +791,7 @@ function config_save()
       config.wpa_key2 = $('#wpa_key2').val();
       if ( !config.wpa_key2 )
       {
-          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Cannot be empty') } );
           return;
       }
   }
@@ -802,7 +802,7 @@ function config_save()
       config.wpa_key3 = $('#wpa_key3').val();
       if ( !config.wpa_key3 )
       {
-          page.alert( { message: $.i18n('Password')+" "+$.i18n('Can not be empty') } );
+          page.alert( { message: $.i18n('Password')+" "+$.i18n('Cannot be empty') } );
           return;
       }
   }
@@ -824,15 +824,15 @@ function config_save()
   }
   if ( ocompare( config, copy ) )
   {
-      page.alert( { message: $.i18n('Settings unchanged') } );
+      page.alert( { message: $.i18n('No changes to apply') } );
       return;
   }
-  page.confirm( { message: $.i18n('The WISP connection will be disconnected because of the change of configuration') } ).then( function(result){
+  page.confirm( { message: $.i18n('Changing this setting will disconnect the WISP connection.') } ).then( function(result){
     if (!result) return location.reload();
     if ( result )
     {
       he.exec( [ object+"="+JSON.stringify(config)] ).then( function(){
-        page.hint2succeed( $.i18n('Modify successfully') );
+        page.hint2succeed( $.i18n('Modified successfully') );
         config_load();
       });
     }

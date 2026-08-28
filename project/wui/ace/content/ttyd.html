@@ -6,7 +6,7 @@
 
     <div class="clearfix form-actions">
       <div class="col-md-9">
-        <span> <button class="btn btn-danger" type="button" id="close"><span data-i18n="Close before leave"></span></button>&nbsp; &nbsp; &nbsp;</span>
+        <span> <button class="btn btn-danger" type="button" id="close"><span data-i18n="Close the terminal before leaving this page"></span></button>&nbsp; &nbsp; &nbsp;</span>
         <span> <button class="btn btn-success" type="button" id="hetui"><span data-i18n="Open HE Terminal"></span></button> &nbsp; &nbsp; &nbsp;</span>
         <span id="serial_line" style="display: none;"> <button class="btn btn-warning" type="button" id="serial"><span data-i18n="Serial Terminal"></span></button>&nbsp; &nbsp; &nbsp;</span>
         <span id="serial2_line" style="display: none;"> <button class="btn btn-warning" type="button" id="serial2"><span data-i18n="Serial2 Terminal"></span></button>&nbsp; &nbsp; &nbsp;</span>
@@ -19,7 +19,7 @@
       <button type="button" class="close" data-dismiss="alert">
         <i class="ace-icon fa fa-times"></i>
       </button>
-      <span data-i18n="I'm sorry that this feature does not support the current browser. It is recommended that you update and install Chrome, Firefox or IE11+."></span>
+      <span data-i18n="This feature is not supported in your browser. Please use Chrome, Firefox, or Edge."></span>
     </div>
     <iframe id="terminal" frameborder="0" width="100%" height="500px" style="display: none;"></iframe>
 
@@ -78,7 +78,7 @@
 
       $('#hetui').on(ace.click_event, function () {
           $('#terminal').hide();
-          he.exec( [ 'wui@admin.ttyd_he' ], $.i18n("Opening...") ).then( function(v){
+          he.exec( [ 'wui@admin.ttyd_he' ], $.i18n("Opening…") ).then( function(v){
             if ( v[0] == true )
             {
                 $('#terminal').attr('src', null );
@@ -86,17 +86,17 @@
             }
             else
             {
-                page.alert( { message: $.i18n('Cannot open it') } );
+                page.alert( { message: $.i18n('Unable to open') } );
                 return;
             }
           });
       });
       $('#serial').on(ace.click_event, function () {
-          page.confirm( { message: $.i18n('Will shutdown serial application when open the serial terminal, Are you sure you want to open it') } ).then( function(result){
+          page.confirm( { message: $.i18n('Opening the serial terminal will stop serial applications. Continue?') } ).then( function(result){
               if ( result )
               {
                   $('#terminal').hide();
-                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial]' ], $.i18n("Opening...") ).then( function(v){
+                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial]' ], $.i18n("Opening…") ).then( function(v){
                     if ( v[0] == true )
                     {
                         $('#terminal').attr('src', null );
@@ -104,7 +104,7 @@
                     }
                     else
                     {
-                        page.alert( { message: $.i18n('Cannot open it') } );
+                        page.alert( { message: $.i18n('Unable to open') } );
                         return;
                     }
                   });
@@ -112,11 +112,11 @@
           });
       });
       $('#serial2').on(ace.click_event, function () {
-          page.confirm( { message: $.i18n('Will shutdown serial application when open the serial terminal, Are you sure you want to open it') } ).then( function(result){
+          page.confirm( { message: $.i18n('Opening the serial terminal will stop serial applications. Continue?') } ).then( function(result){
               if ( result )
               {
                   $('#terminal').hide();
-                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial2]' ], $.i18n("Opening...") ).then( function(v){
+                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial2]' ], $.i18n("Opening…") ).then( function(v){
                     if ( v[0] == true )
                     {
                         $('#terminal').attr('src', null );
@@ -124,7 +124,7 @@
                     }
                     else
                     {
-                        page.alert( { message: $.i18n('Cannot open it') } );
+                        page.alert( { message: $.i18n('Unable to open') } );
                         return;
                     }
                   });
@@ -132,11 +132,11 @@
           });
       });
       $('#serial3').on(ace.click_event, function () {
-          page.confirm( { message: $.i18n('Will shutdown serial application when open the serial terminal, Are you sure you want to open it') } ).then( function(result){
+          page.confirm( { message: $.i18n('Opening the serial terminal will stop serial applications. Continue?') } ).then( function(result){
               if ( result )
               {
                   $('#terminal').hide();
-                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial3]' ], $.i18n("Opening...") ).then( function(v){
+                  he.exec( [ 'wui@admin.ttyd_serial[uart@serial3]' ], $.i18n("Opening…") ).then( function(v){
                     if ( v[0] == true )
                     {
                         $('#terminal').attr('src', null );
@@ -144,7 +144,7 @@
                     }
                     else
                     {
-                        page.alert( { message: $.i18n('Cannot open it') } );
+                        page.alert( { message: $.i18n('Unable to open') } );
                         return;
                     }
                   });
@@ -159,7 +159,7 @@
             }
             else
             {
-                page.alert( { message: $.i18n('Cannot close it') } );
+                page.alert( { message: $.i18n('Unable to close') } );
                 return;
             }
           });

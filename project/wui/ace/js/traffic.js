@@ -684,7 +684,7 @@ var clients_pager = '#clients-grid-pager';
             $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
             
             // 设置 placeholder
-            $("#name", form).attr("placeholder", $.i18n('Enter Hostname'));
+            $("#name", form).attr("placeholder", $.i18n('Enter hostname'));
             $("#mac", form).attr("placeholder", $.i18n('Enter MAC Address'));
         }
     };
