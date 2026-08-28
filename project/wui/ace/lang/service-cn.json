@@ -1,5 +1,5 @@
 {
-    "Service Live": "活动服务数",
+    "Active Services": "活动服务数",
     "Service Name": "服务名称",
     "arch@gpio": "GPIO管理",
     "wui@admin": "网页服务",
@@ -69,12 +69,12 @@
     "done": "已完成",
     "error": "错误",
     "unkown": "未知",
-    "Reset": "重启服务",
-    "Reset succeed": "重启服务成功",
+    "Reset Service": "重启服务",
+    "Reset succeeded": "重启服务成功",
     "Reset failed": "重启服务失败",
     "Display": "显示",
     "Refresh": "刷新",
-    "Reseting": "重置中",
+    "Resetting": "重置中",
     "Service ID": "服务ID",
     "finish": "完成",
     "Actions": "操作"

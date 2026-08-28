@@ -384,6 +384,7 @@ var page =
      * progress.title - title text
      * progress.sec - estimated total seconds (default 50)
      * progress.holdAt - optional percent to pause at (e.g. 95) until finish()
+     * progress.crawlAfterHold - if true, after holdAt creep toward 99% with slowing steps (never auto-finish)
      * progress.callback - called when bar reaches 100% by itself (not via finish skipCallback)
      * @returns {{ finish: function(opts) }} controller; finish({ skipCallback:true }) jumps to 100%
      */
@@ -397,6 +398,10 @@ var page =
         var totalMs = (progress.sec || 50) * 1000;
         var interval = totalMs / 100;
         var holdAt = (progress.holdAt != null) ? progress.holdAt : 100;
+        var crawlAfterHold = !!progress.crawlAfterHold;
+        var crawlMax = 99;
+        var crawlGap = 1;
+        var crawlWait = 0;
         var done = false;
         var timer;
 
@@ -424,9 +429,26 @@ var page =
             {
                 return;
             }
-            /* Hold near the end while waiting for an external finish() */
+            /* Near the end: hard hold, or slow crawl to 99% until external finish() */
             if (holdAt < 100 && percent >= holdAt)
             {
+                if (!crawlAfterHold)
+                {
+                    return;
+                }
+                if (percent >= crawlMax)
+                {
+                    return;
+                }
+                crawlWait++;
+                if (crawlWait < crawlGap)
+                {
+                    return;
+                }
+                crawlWait = 0;
+                crawlGap = crawlGap + 2;
+                percent++;
+                paint();
                 return;
             }
             percent++;

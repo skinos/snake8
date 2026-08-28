@@ -37,7 +37,7 @@
     "must be a valid IPv6 address": "必须为合法的IPv6地址",
     "must be a valid number": "必须为数值",
     "Apply": "应用",
-    "DHCP Server Options (separated by semicolons)": "DHCP服务器选项（用分号分隔）",
+    "DHCP Server Options (Separated by Semicolons)": "DHCP服务器选项（用分号分隔）",
     "Refresh": "刷新",
     "Lease (sec)": "租期(秒)",
     "DHCPv6 Server": "DHCPV6服务器",

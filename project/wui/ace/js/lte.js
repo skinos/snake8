@@ -249,7 +249,7 @@ function lte_basic(v)
 
     /* init the network mode select */
     $("#mode").empty();
-    $("#mode").append("<option value=''>"+$.i18n('Auto (modem default)')+"</option>");
+    $("#mode").append("<option value=''>"+$.i18n('Auto (Modem Default)')+"</option>");
     $("#mode").append("<option value='ppp'>"+$.i18n('PPP')+"</option>");
     $("#mode").append("<option value='dhcpc'>"+$.i18n('DHCP')+"</option>");
     $("#mode").append("<option value='static'>"+$.i18n('Static IP')+"</option>");

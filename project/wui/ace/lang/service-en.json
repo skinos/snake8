@@ -1,6 +1,4 @@
 {
-    "Service Live": "Active Services",
-    "Service Name": "Service Name",
     "arch@gpio": "GPIO",
     "wui@admin": "Web Server",
     "tui@telnet": "Telnet Server",
@@ -57,10 +55,6 @@
     "client@station": "Client Manager",
     "center@heport": "Device Management",
     "center@pport": "Port Forwarding Service",
-    "PID": "PID",
-    "Component": "Component",
-    "Interface": "Interface",
-    "Uptime": "Uptime",
     "start": "Running",
     "stop": "Stop",
     "off": "Off",
@@ -69,13 +63,5 @@
     "done": "Done",
     "error": "Error",
     "unkown": "Unknown",
-    "Reset": "Reset Service",
-    "Reset succeed": "Reset succeeded",
-    "Reset failed": "Reset failed",
-    "Display": "Display",
-    "Refresh": "Refresh",
-    "Reseting": "Resetting",
-    "Service ID": "Service ID",
-    "finish": "Finished",
-    "Actions": "Actions"
+    "finish": "Finished"
 }

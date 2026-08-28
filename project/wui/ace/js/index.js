@@ -95,7 +95,7 @@ function jquery_setup()
 		defaults :
 		{
 		  recordtext: $.i18n('recordtext'),
-		  emptyrecords: $.i18n('No records to view'),
+		  emptyrecords: $.i18n('No Records to View'),
 		  loadtext: $.i18n('Loading…'),
 		  savetext: "Saving...",
 		  pgtext : "{0} / {1}",
@@ -166,11 +166,11 @@ function jquery_setup()
 		nav :
 		{
 		  edittext: "",
-		  edittitle: $.i18n('Edit selected row'),
+		  edittitle: $.i18n('Edit Selected Row'),
 		  addtext:"",
-		  addtitle: $.i18n('Add new row'),
+		  addtitle: $.i18n('Add New Row'),
 		  deltext: "",
-		  deltitle: $.i18n('Delete selected row'),
+		  deltitle: $.i18n('Delete Selected Row'),
 		  searchtext: "",
 		  searchtitle: "Find records",
 		  refreshtext: "",
@@ -178,7 +178,7 @@ function jquery_setup()
 		  alertcap: $.i18n('Warning'),
 		  alerttext: $.i18n('Please, select row'),
 		  viewtext: "",
-		  viewtitle: $.i18n('View selected row'),
+		  viewtitle: $.i18n('View Selected Row'),
 		  savetext: "",
 		  savetitle: "Save row",
 		  canceltext: "",
@@ -1011,7 +1011,7 @@ jQuery(function($) {
 				var app_hash = 'app?page='+base64.encode(app_page);
 				var app_title = app[window.lang];
 				var app_object = app['object'];
-				if ( app_mode && app_mode[window.machine.mode] != "enable" )
+				if ( app_mode && app_mode[window.machine.mode] == "disable" )
 				{
 					continue;
 				}

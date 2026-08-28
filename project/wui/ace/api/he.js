@@ -439,24 +439,25 @@ var he =
 
     /*
      * After reboot/upgrade: wait until the device web is back, then reload.
-     * restart_time / upgrade wait is the max wait (progress estimate).
+     * timeoutSec is only the progress estimate — never force success or navigate on timeout.
+     * If the device stays unreachable, the bar holds / crawls slowly and keeps probing.
      * @param {object} arg - title/hint/href from reboot callers
-     * @param {number} timeoutSec - max wait seconds
+     * @param {number} timeoutSec - progress estimate seconds
      * @param {string} titleDefault - progress title when arg.title missing
      */
     _waitDeviceReload: function ( arg, timeoutSec, titleDefault )
     {
-        var pollMs = 2000;       /* probe interval */
+        var pollMs = 2000;
         var probeTimeout = 1500;
-        var needOk = 2;          /* consecutive successes after offline */
-        /* Keep enough time after grace for offline + two live probes when T is short */
-        var graceMs = Math.min(10000, Math.max(3000, (timeoutSec - 20) * 1000));
+        var needOk = 3;
+        var minOfflineMs = 8000;
+        var graceMs = Math.min(15000, Math.max(8000, (timeoutSec - 15) * 1000));
         var start = Date.now();
-        var offlineSeen = false;
+        var offlineSince = 0;
         var okStreak = 0;
         var finished = false;
         var probeTimer = null;
-        var maxTimer = null;
+        var hintTimer = null;
         var bar;
 
         function goReload()
@@ -481,10 +482,10 @@ var he =
                 clearInterval(probeTimer);
                 probeTimer = null;
             }
-            if (maxTimer)
+            if (hintTimer)
             {
-                clearTimeout(maxTimer);
-                maxTimer = null;
+                clearTimeout(hintTimer);
+                hintTimer = null;
             }
         }
 
@@ -506,28 +507,11 @@ var he =
             setTimeout(goReload, 1200);
         }
 
-        function finishTimeout()
-        {
-            if (finished)
-            {
-                return;
-            }
-            finished = true;
-            stopWait();
-            if (bar)
-            {
-                /* Must hide overlay or bootbox alert underneath cannot be clicked */
-                bar.finish({ skipCallback: true });
-            }
-            page.alert({
-                message: arg.hint || $.i18n('Reconnect to the device after it comes back online.')
-            }).then(function () {
-                goReload();
-            });
-        }
-
         function probeOnce()
         {
+            var now;
+            var downFor;
+
             if (finished)
             {
                 return;
@@ -546,27 +530,35 @@ var he =
                     {
                         return;
                     }
-                    elapsed = Date.now() - start;
+                    now = Date.now();
+                    elapsed = now - start;
                     alive = (s === 'success' && x.status >= 200 && x.status < 400);
-                    if (elapsed < graceMs)
+                    if (!alive)
                     {
-                        /* Grace: only remember offline, never treat as ready */
-                        if (!alive)
+                        okStreak = 0;
+                        if (!offlineSince)
                         {
-                            offlineSeen = true;
-                            okStreak = 0;
+                            offlineSince = now;
                         }
                         return;
                     }
-                    if (!alive)
+                    /* Still within grace: ignore live hits (old process may still answer) */
+                    if (elapsed < graceMs)
                     {
-                        offlineSeen = true;
+                        return;
+                    }
+                    /* Alive but never went down long enough — not a real reboot recovery */
+                    if (!offlineSince)
+                    {
                         okStreak = 0;
                         return;
                     }
-                    /* Alive after grace: require prior offline to avoid old process */
-                    if (!offlineSeen)
+                    downFor = now - offlineSince;
+                    if (downFor < minOfflineMs)
                     {
+                        /* Short blip only; require a real offline stretch before counting */
+                        offlineSince = 0;
+                        okStreak = 0;
                         return;
                     }
                     okStreak++;
@@ -581,18 +573,28 @@ var he =
         bar = page.progress({
             title: arg.title || titleDefault,
             sec: timeoutSec,
-            holdAt: 95
+            holdAt: 95,
+            crawlAfterHold: true
         });
         probeTimer = setInterval(probeOnce, pollMs);
         probeOnce();
-        maxTimer = setTimeout(finishTimeout, timeoutSec * 1000);
+        /* Estimate elapsed: keep overlay, only refresh hint — never navigate */
+        hintTimer = setTimeout(function () {
+            if (finished)
+            {
+                return;
+            }
+            $('#overlay-progress-title').text(
+                arg.hint || $.i18n('Reconnect to the device after it comes back online.')
+            );
+        }, timeoutSec * 1000);
     },
 
     /*
      * Reboot the device and show a progress bar until web is reachable again.
      * @param {any} args
      * args.title
-     * args.restartTime - max wait seconds (also progress estimate)
+     * args.restartTime - progress estimate seconds (bar slows after this; no forced jump)
      * args.href
      * args.hint
      * args.cmds - extra HE commands before machine.restart
@@ -628,7 +630,7 @@ var he =
      * Progress UX after firmware upgrade (optional restart).
      * @param {any} args
      * args.title
-     * args.restartTime - max wait seconds
+     * args.restartTime - progress estimate seconds (bar slows after this; no forced jump)
      * args.href
      * args.hint
      * args.norestart - only wait/reload UX, do not send restart

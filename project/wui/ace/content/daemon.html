@@ -78,7 +78,7 @@
             }
         }
         // 表头设置为在线客户端的数量
-        $(rule_table).jqGrid( "setCaption", $.i18n('Service Live') + '(' + count + ')' );
+        $(rule_table).jqGrid( "setCaption", $.i18n('Active Services') + '(' + count + ')' );
         // 记住滚动条的位置
         var scrollPos = jqtable.getScrollPos();
         // 必须先清空表格数据, 然后才能重新给表格赋值,之后需要触发重新加载表格的事件
@@ -128,7 +128,7 @@
                     fixed: true, sortable: false,
                     formatter: function ( cellvalue, options, rowObject )
                     {
-                        return '<button class="btn btn-warning btn-xs btn-choose" onclick="service_reset(' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Reset') + '</button>'
+                        return '<button class="btn btn-warning btn-xs btn-choose" onclick="service_reset(' + options.rowId + ')" data-id="' + options.rowId + '">' + $.i18n('Reset Service') + '</button>'
                     }
                 }
             ],
@@ -186,11 +186,11 @@
     var client = $('#service-grid-table').jqGrid( 'getRowData', rowId );
     var sid = client.sid;
     // 执行重启服务
-    he.exec( [ "land@service.reset["+sid+"]" ], $.i18n("Reseting") ).then( function(v){
+    he.exec( [ "land@service.reset["+sid+"]" ], $.i18n("Resetting") ).then( function(v){
         var ret = v[0];
         if ( ret == true )
         {
-            page.alert( { message: $.i18n('Reset succeed'), callback: function( result ){location.reload();} } );
+            page.alert( { message: $.i18n('Reset succeeded'), callback: function( result ){location.reload();} } );
         }
         else
         {

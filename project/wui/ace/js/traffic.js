@@ -398,12 +398,12 @@ const chartManager = {
         
         const datas = [
             { 
-                label: $.i18n('TX byte'), 
+                label: $.i18n('TX Byte'), 
                 color: "#0000ff", 
                 data: buff[`${ifname}_txdata`]
             },
             { 
-                label: $.i18n('RX byte'), 
+                label: $.i18n('RX Byte'), 
                 color: "#00ff00", 
                 data: buff[`${ifname}_rxdata`]
             },

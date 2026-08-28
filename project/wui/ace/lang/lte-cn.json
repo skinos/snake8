@@ -150,7 +150,7 @@
     "Failure Reset 2nd": "失败重置阈值2",
     "Failure Reset 3rd": "失败重置阈值3",
     "Failure Reset Interval": "失败重置阈值(后续)",
-    "Auto (modem default)": "基带建议",
+    "Auto (Modem Default)": "基带建议",
     "Cannot be empty": "不能为空",
     "No changes to apply": "配置未修改，不需要应用",
     "Changing this setting will disconnect the LTE connection.": "LTE配置变更将导致连接中断并重连",

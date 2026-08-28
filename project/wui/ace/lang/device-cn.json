@@ -19,6 +19,7 @@
     "Sys Reboot  ": "系统重启",
     "Operation Mode": "工作模式",
     "default": "默认配置",
+    "Access Point": "接入点",
     "gateway": "有线网关",
     "dgateway": "双WAN口网关",
     "tgateway": "三WAN口网关",

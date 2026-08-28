@@ -7,7 +7,7 @@
     "Refresh": "刷新",
     "Apply": "应用",
     "Minimum Running Time (sec)": "最小运行时长(秒)",
-    "Idle duration with no clients (sec)": "无客户端时长(秒)",
+    "Idle Duration with No Clients (sec)": "无客户端时长(秒)",
     "Scheduled Reboot Time": "定点重启时间",
     "Maximum Running Time (sec)": "最大运行时长(秒)",
     "Reboot Interval (sec)": "重启时间间隔(秒)",

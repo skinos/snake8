@@ -254,7 +254,8 @@ $.i18n().load( page.lang('device') ).then( function () {
       });
   });
 
-  // mode
+  // mode (value "default" shows as Access Point; keep i18n "default" for 默认配置)
+  var mode_text;
   if ( window.custom && window.custom.mode )
   {
     var m;
@@ -262,12 +263,29 @@ $.i18n().load( page.lang('device') ).then( function () {
     {
         if ( window.custom.mode[m] != "null" )
         {
-            $("#mode").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+            if ( m == "default" )
+            {
+                mode_text = $.i18n( "Access Point" );
+            }
+            else
+            {
+                mode_text = $.i18n( m );
+            }
+            $("#mode").append( "<option value='"+m+"'>" + mode_text + "</option>" );
         }
     }
     if ( window.custom.mode[window.machine.mode] == null )
     {
-        $("#mode").append("<option value='"+window.machine.mode+"'>" + $.i18n(window.machine.mode) + "</option>");
+        m = window.machine.mode;
+        if ( m == "default" )
+        {
+            mode_text = $.i18n( "Access Point" );
+        }
+        else
+        {
+            mode_text = $.i18n( m );
+        }
+        $("#mode").append( "<option value='"+m+"'>" + mode_text + "</option>" );
     }
   }
   else if ( window.mode_list )
@@ -275,19 +293,40 @@ $.i18n().load( page.lang('device') ).then( function () {
     var m;
     for( m in window.mode_list )
     {
-        $("#mode").append("<option value='"+m+"'>" + $.i18n(m) + "</option>");
+        if ( m == "default" )
+        {
+            mode_text = $.i18n( "Access Point" );
+        }
+        else
+        {
+            mode_text = $.i18n( m );
+        }
+        $("#mode").append( "<option value='"+m+"'>" + mode_text + "</option>" );
     }
     if ( window.mode_list[window.machine.mode] == null )
     {
-        $("#mode").append("<option value='"+window.machine.mode+"'>" + $.i18n(window.machine.mode) + "</option>");
+        m = window.machine.mode;
+        if ( m == "default" )
+        {
+            mode_text = $.i18n( "Access Point" );
+        }
+        else
+        {
+            mode_text = $.i18n( m );
+        }
+        $("#mode").append( "<option value='"+m+"'>" + mode_text + "</option>" );
     }
   }
   else
   {
-    $("#mode").append("<option value='default'>"+$.i18n('default')+"</option>");
-    $("#mode").append("<option value='misp'>"+$.i18n('misp')+"</option>");
-    $("#mode").append("<option value='gateway'>"+$.i18n('gateway')+"</option>");
-    $("#mode").append("<option value='wisp'>"+$.i18n('wisp')+"</option>");
+    mode_text = $.i18n( "Access Point" );
+    $("#mode").append( "<option value='default'>"+mode_text+"</option>" );
+    mode_text = $.i18n( "misp" );
+    $("#mode").append( "<option value='misp'>"+mode_text+"</option>" );
+    mode_text = $.i18n( "gateway" );
+    $("#mode").append( "<option value='gateway'>"+mode_text+"</option>" );
+    mode_text = $.i18n( "wisp" );
+    $("#mode").append( "<option value='wisp'>"+mode_text+"</option>" );
   }
   $("#mode").val( window.machine.mode );
   // bind mode modify
