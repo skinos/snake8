@@ -5,7 +5,7 @@
 
   <div id="storage_html" style="display: none;">
     <div class="form-horizontal" id="ftp"  style="display: none;" >
-      <h4 data-i18n="FTP Server"></h4>
+      <h4 data-i18n="FTP server"></h4>
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
@@ -19,11 +19,11 @@
       <div id="ftp-sets">
         <!-- 登录模式 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login mode"></label>
           <div class="col-sm-9">
             <select class="col-xs-10 col-sm-5" id="ftp-mode">
               <option value="anonymous" data-i18n="Anonymous"></option>
-              <option value="user" data-i18n="Username And Password"></option>
+              <option value="user" data-i18n="Username and password"></option>
             </select>
           </div>
         </div>
@@ -42,7 +42,7 @@
 
 
     <div class="form-horizontal" id="samba"  style="display: none;" >
-      <h4 data-i18n="SAMBA Server"></h4>
+      <h4 data-i18n="SAMBA server"></h4>
       <!-- 状态 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
@@ -56,11 +56,11 @@
       <div id="samba-sets">
         <!-- 登录模式 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login Mode"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Login mode"></label>
           <div class="col-sm-9">
             <select class="col-xs-10 col-sm-5" id="samba-mode">
               <option value="anonymous" data-i18n="Anonymous"></option>
-              <option value="user" data-i18n="Username And Password"></option>
+              <option value="user" data-i18n="Username and password"></option>
             </select>
           </div>
         </div>
@@ -81,10 +81,10 @@
 
 
     <div id="auth-wrapper">
-      <h4 data-i18n="User Management"></h4>
+      <h4 data-i18n="User management"></h4>
       <div class="form-horizontal">
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="User Table"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="User table"></label>
           <div class="col-sm-9">
             <div>
               <table id="auth-grid-table"></table>
@@ -319,7 +319,7 @@
             return;
         }
         he.exec( cmds ).then( function(){
-            page.hint2succeed( $.i18n('Modify successfully') );
+            page.hint2succeed( $.i18n('Modified successfully') );
             storage_load();
         });
     }
@@ -358,7 +358,7 @@
             return auth_load();
         }).then(function () {
             // 提示成功
-            page.hint2succeed( $.i18n('Add successfully') );
+            page.hint2succeed( $.i18n('Added successfully') );
         });
     }
     function del_user( data   )
@@ -387,7 +387,7 @@
             return auth_load();
         }).then(function (){
             // 提示成功
-            page.hint2succeed( $.i18n('Delete successfully') );
+            page.hint2succeed( $.i18n('Deleted successfully') );
         });
     }
 
@@ -406,7 +406,7 @@
       /* load the configure */
       jqtable.create( auth_table, auth_pager,
         {
-            caption: $.i18n('User Table'),
+            caption: $.i18n('User table'),
             toolbar: [true, "top"],
             colNames: [ $.i18n('Username'), $.i18n('Password'), $.i18n('Operation') ],
             colModel: [
@@ -479,8 +479,8 @@
                     
                     $("table > tbody > tr:first", form).before('<tr><td colspan="2">' + hintText + '</td></tr>');
                     // 设置 placeholder
-                    $("#username", form).attr("placeholder", $.i18n('Enter Username'));
-                    $("#password", form).attr("placeholder", $.i18n('Enter Password'));
+                    $("#username", form).attr("placeholder", $.i18n('Enter username'));
+                    $("#password", form).attr("placeholder", $.i18n('Enter password'));
             }
             } ),
             $.extend(true, {}, jqtable.deleteOptions, { onclickSubmit: function (params, data) { del_user(data); } } ),

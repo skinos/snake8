@@ -7,7 +7,7 @@
     <div id="telnet_html" style="display: none;">
       <!-- 状态 -->
       <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Telnet Server"></label>
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Telnet server"></label>
         <div class="col-sm-9">
           <label>
             <input id="status" class="ace ace-switch ace-switch-6" type="checkbox" />
@@ -20,7 +20,7 @@
       
         <!-- 指定地址访问 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Designated Address Access"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Designated address access"></label>
           <div class="col-sm-9">
             <label>
               <input id="manager_status" class="ace ace-switch ace-switch-6" type="checkbox" />
@@ -29,7 +29,7 @@
           </div>
         </div>
         <div class="form-group" id="managerSets" style="display: none;">
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Address(separated by semicolon)"></label>
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Address (separated by semicolon)"></label>
             <div class="col-sm-9">
               <textarea type="text" id="manager" class="col-xs-10 col-sm-5" maxlength="1024" />
             </div>
@@ -151,7 +151,7 @@
             return;
         }
         he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
-            page.hint2succeed( $.i18n('Modify successfully') );
+            page.hint2succeed( $.i18n('Modified successfully') );
             load_config();
         });
     }

@@ -137,7 +137,7 @@
 
             <div class="hr hr32 hr-dotted"></div>
             <div class="form-group">
-                <label class="col-sm-3 control-label no-padding-right" data-i18n="Configure Options"></label>
+                <label class="col-sm-3 control-label no-padding-right" data-i18n="Configure Options (semicolon-separated)"></label>
                 <div class="col-sm-9">
                   <textarea type="text" id="options" class="col-xs-10 col-sm-5" maxlength="1024"></textarea>
                 </div>
@@ -368,7 +368,7 @@
             return;
         }
         he.exec( [ object+"="+JSON.stringify(cfg) ] ).then( function(){
-            page.hint2succeed( $.i18n('Modify successfully') );
+            page.hint2succeed( $.i18n('Modified successfully') );
             cfg_load();
         });
     }

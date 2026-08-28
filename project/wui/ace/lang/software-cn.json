@@ -54,5 +54,11 @@
     "Restart the system now?": "是否立即重启系统",
     "Full changelog": "所有版本更新日志",
     "Changelog": "更新日志",
-    "Reset FPK & Configuration": "恢复出厂FPK&配置"
+    "Reset FPK & Configuration": "恢复出厂FPK&配置",
+    "restarting": "重启中",
+    "upgrading": "升级中",
+    "downloading": "下载中",
+    "failed": "失败",
+    "succeed": "成功",
+    "error": "错误"
 }

@@ -1,1 +1,8 @@
-{}
+{
+    "restarting": "Restarting",
+    "upgrading": "Upgrading",
+    "downloading": "Downloading",
+    "failed": "Failed",
+    "succeed": "Succeeded",
+    "error": "Error"
+}

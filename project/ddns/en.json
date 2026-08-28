@@ -1,11 +1,7 @@
 {
-  "register":"Registing",
-  "succeed":"Update Succeed",
-  "already":"Registing Succeed, No Update",
-  "noneed":"Registing Succeed, No Need Update",
-  "deny":"Registing Succeed, Reject Update",
-
-  "Extern Interface":"Extern Interface",
-  "Default Gateway":"Default Gateway",
-  "Disable":"Disable"
+    "register": "Registing",
+    "succeed": "Update Succeed",
+    "already": "Registing Succeed, No Update",
+    "noneed": "Registing Succeed, No Need Update",
+    "deny": "Registing Succeed, Reject Update"
 }

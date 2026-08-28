@@ -72,16 +72,18 @@ $.i18n().load( page.lang('software') ).then( function () {
 
   $('#software_html').show();
 
-  /* load the firmware info */
+  /* load the firmware info (version may be machine_state id e.g. upgrading) */
+  var fw_ver = window.machines.version || '';
   if ( window.wui.bigversion && window.wui.bigversion == "enable" )
   {
-    var v = window.machines.version.split('.');
-    $('#firmware_version').text( v[0]+"."+v[1] );
+    var v = fw_ver.split('.');
+    if ( v.length >= 2 )
+    {
+      fw_ver = v[0]+"."+v[1];
+    }
   }
-  else
-  {
-    $('#firmware_version').text(window.machines.version);
-  }
+  var fw_text = $.i18n( fw_ver );
+  $('#firmware_version').text( fw_text );
   $('#firmware_sdk').text( window.machines.platform );
   $('#firmware_id').text( window.machines.hardware+"-"+window.machines.custom+"-"+window.machines.scope );
   if ( !window.wui.firmware_id || window.wui.firmware_id != "disable" )
@@ -266,7 +268,8 @@ $.i18n().load( page.lang('software') ).then( function () {
             else
             {
                 newst_url = v[0].url;
-                $('#online_version').html( v[0].version+ '   <i class="ace-icon fa fa-arrow-up">' );
+                var online_ver = $.i18n( v[0].version );
+                $('#online_version').html( online_ver + '   <i class="ace-icon fa fa-arrow-up">' );
                 $('#new_version').show();
                 if ( v[0].changelog )
                 {
@@ -347,7 +350,13 @@ $.i18n().load( page.lang('software') ).then( function () {
         [
           { name:'pname', width:100 },
           { name:'size', width:100 },
-          { name:'version', width:80 },
+          { name:'version', width:80, formatter: function( cell ) {
+              if ( !cell )
+              {
+                return '';
+              }
+              return $.i18n( cell );
+            } },
           { name:'path', width:180 },
           { name:'author', width:150 },
           { name:'intro', width:300 },

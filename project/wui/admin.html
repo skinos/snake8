@@ -55,7 +55,7 @@
 
         <!-- 指定地址访问 -->
         <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Designated Address Access"></label>
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Restrict Access by Address"></label>
           <div class="col-sm-9">
             <label>
               <input id="manager_status" class="ace ace-switch ace-switch-6" type="checkbox" />
@@ -64,7 +64,7 @@
           </div>
         </div>
         <div class="form-group" id="managerSets" >
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="Address(separated by semicolon)"></label>
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Addresses (semicolon-separated)"></label>
             <div class="col-sm-9">
               <textarea type="text" id="manager" class="col-xs-10 col-sm-5" maxlength="1024" />
             </div>
@@ -245,17 +245,17 @@
         }
         if ( ocompare( config, configcopy ) )
         {
-            page.alert( { message: $.i18n('Settings unchanged') } );
+            page.alert( { message: $.i18n('No changes to apply') } );
             return;
         }
-        page.confirm( { message: $.i18n('The system will restart because of the change of settings') } ).then( function(result){
+        page.confirm( { message: $.i18n('The device will restart to apply these changes.') } ).then( function(result){
             if ( result )
             {
                 he.exec( [ object+"="+JSON.stringify(config) ] ).then( function(){
-                    page.confirm( { message: $.i18n('Restart the system to apply') } ).then( function(result){
+                    page.confirm( { message: $.i18n('Restart now to apply changes') } ).then( function(result){
                         if ( result )
                         {
-                            he.reboot( { title: $.i18n('Restarting to apply...'), hint:$.i18n('Make sure that the device is reconnected') } );
+                            he.reboot( { title: $.i18n('Restarting to apply changes…'), hint:$.i18n('Reconnect to the device after it comes back online.') } );
                         }
                     });
                 });

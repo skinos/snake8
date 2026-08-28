@@ -1,11 +1,1 @@
-{
-    "SSH Server": "SSH server",
-    "Telnet Server": "Telnet server",
-    "Designated Address Access": "Designated address access",
-    "Address(separated by semicolon)": "Address (separated by semicolon)",
-    "Port": "Port",
-    "Refresh": "Refresh",
-    "Apply": "Apply",
-    "Settings unchanged": "Settings unchanged",
-    "Modify successfully": "Modified successfully"
-}
+{}
