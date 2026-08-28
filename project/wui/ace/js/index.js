@@ -969,14 +969,17 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'Debug' ), 'debug', 'menu-icon fa fa-bug' );
 			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Syslog' ), 'syslog' );
-			if ( window.ttyd_port && ( !wuimenu || wuimenu.terminal != "disable" ) )
+			if ( window.machines.platform != "slave" )
 			{
-				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
+				if ( window.ttyd_port && ( !wuimenu || wuimenu.terminal != "disable" ) )
+				{
+					menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Terminal' ), 'terminal' );
+				}
+				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Inittab' ), 'inittab' );
+				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Uninittab' ), 'uninittab' );
+				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Jointtab' ), 'jointtab' );
+				menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Daemon' ), 'daemon' );
 			}
-			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Inittab' ), 'inittab' );
-			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Uninittab' ), 'uninittab' );
-            menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Jointtab' ), 'jointtab' );
-			menu.addlink( menus, $.i18n( 'Debug' ), $.i18n( 'Daemon' ), 'daemon' );
 			if ( window.machines.scope == "std" )
 			{
 				if ( !wuimenu || wuimenu.development != "disable" )

@@ -34,6 +34,7 @@ UDP coordinator for gateway-to-gateway mesh (register, NAT probe, keeplive, topo
     "nettest_port": "UDP listen port for NAT type test",        // [ number ], default be 20003
                                                                     // may share the number with heport api TCP 20003
     "key": "shared key for UDP simple encode",                  // [ string ], default be "NPORT-UDP@ashyelf.com"
+                                                                    // built-in; not shown on nport.html / not for customer edit
                                                                     // must match agent@net*.key
     "timeout": "endpoint idle timeout on server"                // [ number ], default be 60, the unit is second
 }
@@ -63,12 +64,10 @@ center@nport:status=disable
 ttrue
 ```
 
-Example, change UDP listen port and shared key
+Example, change UDP listen port
 
 ```shell
 center@nport:port=20012
-ttrue
-center@nport:key=MyMeshKey
 ttrue
 ```
 

@@ -17,6 +17,9 @@ description: |
   Also use when the user says "更新fpk仓库", "上传fpk到仓库", "make sdk_repo",
   "fpk仓库" — that is `make sdk_repo` (uploads build/store FPKs via repo-upload).
   Do NOT use for device upload/upgrade/remote test — that is device-upgrade.
+  Do NOT use for slave-* host install/run/stop/uninstall on this SDK server
+  — that is skinos-slave (`make dep; make;` / sdk_install / sdk_start /
+  sdk_stop / sdk_uninstall / rebuild).
 ---
 
 # Skinos SDK Structure & Build System
@@ -337,6 +340,10 @@ make clangd           # compile_commands.json
 make pidinfo          # print active gBOARDID
 ```
 
+**`slave-*` on this host** (not a remote flash): `make dep; make;` compile,
+`make sdk_install` / `sdk_start` / `sdk_stop` / `sdk_uninstall`, or `make rebuild`.
+See **skinos-slave**. Do not treat those targets as device-upgrade.
+
 ### Build order (full image)
 
 `dep → kernel_dep/app_dep → kernel → app → kernel_install → app_install` → pack `.zz` into `build/`.
@@ -384,6 +391,6 @@ When building or explaining the SDK:
 4. Prefer **`./mkdel`** / **`make obj=`** over **`make clean`**
 5. sdk / rootfs / makefile.config / DTS / **`kernel/` source overlays** → **`./mkdel` && `make`** → deploy **`.zz`** (**device-upgrade**); **land / arch** changes → same **`.zz` only** (never FPK hot-deploy to test); other project-only → **`make obj=`** → **FPK**
 6. For kernel USB modem IDs (`option.c`): edit winning `config/…/kernel/` for this `gBOARDID`; dial AT driver is **skinos-modem**
-7. Point **device** deploy/upgrade to **device-upgrade**. Repo uploads (not a live device): **firmware repository** → **`make ftp`**; **FPK repository** → **`make sdk_repo`**
+7. Point **device** deploy/upgrade to **device-upgrade**. **`slave-*` on this SDK host** (compile / `sdk_install` / `sdk_start` / stop / uninstall / `rebuild`) → **skinos-slave**. Repo uploads (not a live device): **firmware repository** → **`make ftp`**; **FPK repository** → **`make sdk_repo`**
 8. Do not invent board IDs — use `make pidlist` or the user’s active `gBOARDID`
 9. OpenWrt/BusyBox/package edits in `swrt5/` `wrt5/` `smtk2/` … → **skinos-adjust** (`config/<platform>/adjust` + `patch.sh`); those SDK trees are generated and not git-managed

@@ -88,7 +88,7 @@ make obj=land             # one project → build/store/<name>-<ver>-<hw>.fpk
 | `build/install/` | Staged headers/libs for further builds |
 | `doc/dev/include/` | Headers refreshed after a successful build |
 
-Deeper board / `config/swrt5` customization: [`.claude/skills/skinos-sdk/SKILL.md`](.claude/skills/skinos-sdk/SKILL.md). Slave host walkthrough: [`config/slave/readme.md`](config/slave/readme.md) (if present).
+Deeper board / `config/swrt5` customization: [`.claude/skills/skinos-sdk/SKILL.md`](.claude/skills/skinos-sdk/SKILL.md). Slave host compile/install/run: [`.claude/skills/skinos-slave/SKILL.md`](.claude/skills/skinos-slave/SKILL.md) · [`config/slave/install.md`](config/slave/install.md).
 
 Useful extras: `make update`, `make rebuild`, `make menuconfig`, `make tftp` / `make ftp` (see `misc.makefile` / platform docs).
 

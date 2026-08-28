@@ -75,7 +75,10 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 + `user_delete[ user ]` **delete a user tree**
     - user ------ [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
-    - removes `{device_path}/<user>/` entirely
+    - first deletes each gateway via `center@api.delete` (maps, mesh membership, heport knock)
+    - then deletes remaining networks via `center@api.network_delete` and leftover TCP/UDP maps
+    - then removes `{device_path}/<user>/` entirely
+    - cleanup is best-effort; the user tree is still removed
     - failed return tfalse
     - succeed return ttrue
 

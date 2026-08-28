@@ -88,7 +88,7 @@ make obj=land             # 单工程 → build/store/<name>-<ver>-<hw>.fpk
 | `build/install/` | 供继续编译的头文件/库 |
 | `doc/dev/include/` | 成功编译后同步的头文件 |
 
-板级 / `config/swrt5` 定制详见 [`.claude/skills/skinos-sdk/SKILL.md`](.claude/skills/skinos-sdk/SKILL.md)。slave 主机说明见 [`config/slave/readme.md`](config/slave/readme.md)（若存在）。
+板级 / `config/swrt5` 定制详见 [`.claude/skills/skinos-sdk/SKILL.md`](.claude/skills/skinos-sdk/SKILL.md)。slave 本机编译/安装/运行见 [`.claude/skills/skinos-slave/SKILL.md`](.claude/skills/skinos-slave/SKILL.md) · [`config/slave/install.md`](config/slave/install.md)。
 
 其它目标：`make update`、`make rebuild`、`make menuconfig`、`make tftp` / `make ftp`（见 `misc.makefile` / 平台文档）。
 

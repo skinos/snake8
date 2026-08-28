@@ -9,12 +9,17 @@ description: |
   other project-only packages → FPK. Never test land or arch changes via FPK upload.
   After FPK upload success: do not restart — start debugging immediately.
   Do NOT use for local builds only (no device URL given).
+  Do NOT use when gBOARDID is slave-* and the user wants to run on this SDK
+  server — that is skinos-slave (make sdk_install / sdk_start / rebuild).
 ---
 
 # Device Upgrade & Remote Testing
 
 Build firmware/FPK packages and deploy them to remote landos devices via the HTTP web API.
 Supports full firmware (`.zz`) upgrade (`p2=restart` auto-reboot) and FPK package install (**hot-swap: no restart; debug right after `"status":"success"`**).
+
+**`slave-*` is not this skill.** Those boards install and run on the SDK server
+(`make sdk_install` / `sdk_start` / `rebuild`). Use **skinos-slave**.
 
 ## What to deploy: `.zz` vs FPK (read this first)
 

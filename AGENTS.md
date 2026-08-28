@@ -13,6 +13,7 @@ Embedded Linux gateway SDK with a **component model**. Each feature is a named c
 
 See **`.claude/skills/skinos-sdk/SKILL.md`** for SDK layout, `gBOARDID`, and Makefile details. 
 **Switch product / firmware model** (`make pid`, resolve `r600` → platform): **`.claude/skills/skinos-board/SKILL.md`**. 
+**`slave-*` 本机编译/安装/运行/停止/卸载**（装到 SDK 所在服务器，不是远程刷机）：**`.claude/skills/skinos-slave/SKILL.md`**. 
 Per-board overlays (`config/swrt5/` `makefile.config` / `rootfs` / `config/*.cfg`): **`.claude/skills/skinos-sdk/reference-swrt5.md`**. 
 **OpenWrt/SDK package patches** (busybox / hostapd / feeds under generated `swrt5/` `wrt5/` `smtk2/` …): **`.claude/skills/skinos-adjust/SKILL.md`** — never keep edits only in those trees.
 
@@ -34,9 +35,10 @@ make clangd       # Generate compile_commands.json for IDE
 ```
 
 **Build workflow (IMPORTANT — do NOT use `make clean`)**:
-- **修改单个普通项目代码** (如 ipsec、modem、uart): `./mkdel` → `make obj=<name>` → 生成 `build/store/<name>-<ver>.fpk` → 可用 FPK 热部署测
-- **修改 `project/land/` 或 `config/*/arch/`（含 `config/swrt5/arch/`）**: 二者是**基础固件**，**不能**靠上传 land/arch 的 FPK 在设备上更新/验证 → 必须 `./mkdel` → `make` → 升级完整固件 **`.zz`** 后再测（详见 **device-upgrade** skill）
-- **修改 sdk.config / kernel / rootfs 等**: `./mkdel` → `make` → 生成完整固件 `build/*.zz`
+- **`slave-*` 本机** (`gBOARDID` 以 `slave-` 开头): `make dep; make;` 编译 → `make sdk_install` 安装到本机 → `make sdk_start` 运行后测试。`make rebuild` = 编译+安装+运行。`make sdk_stop` 停止，`make sdk_uninstall` 卸载。详见 **skinos-slave**。不要走远程 `.zz` / FPK 上传。
+- **修改单个普通项目代码** (如 ipsec、modem、uart) **且目标是远程设备**: `./mkdel` → `make obj=<name>` → 生成 `build/store/<name>-<ver>.fpk` → 可用 FPK 热部署测
+- **修改 `project/land/` 或 `config/*/arch/`（含 `config/swrt5/arch/`）** **且目标是远程设备**: 二者是**基础固件**，**不能**靠上传 land/arch 的 FPK 在设备上更新/验证 → 必须 `./mkdel` → `make` → 升级完整固件 **`.zz`** 后再测（详见 **device-upgrade** skill）
+- **修改 sdk.config / kernel / rootfs 等** **且目标是远程设备**: `./mkdel` → `make` → 生成完整固件 `build/*.zz`
 - **禁止使用 `make clean`** — 会导致全量重编，耗时极长。`./mkdel` 足够清理增量状态
 
 **FPK 热部署**: 非 land/arch 的 FPK 可通过 web API 安装到运行中的设备，无需重启

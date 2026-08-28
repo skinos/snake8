@@ -397,7 +397,9 @@ the API can manage gateway
 + `delete[ user, macid ]` **delete one gateway of the user**
     - user --------------- [ string ], the username of gateway
     - macid -------------- [ string ], mac identify of gateway
+    - removes this mac from the user's TCP/UDP maps and from each mesh network `endpoint`
     - knocks online session when possible, then removes `dev/<macid>/` tree
+    - map/mesh cleanup is best-effort; missing records do not fail the delete
     - failed return tfalse
     - succeed return ttrue
 
@@ -409,7 +411,7 @@ the API can manage gateway
 
 + `update[ user, macid, [timeout] ]` **update the gateway of the user**
     - user --------------- [ string ], the username of gateway
-    - macid -------------- [ string ], mac identify of gateway
+    - macid -------------- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - timeout ------------ [ number ], wait timeout
     - failed return tfalse
     - succeed return ttrue
@@ -422,7 +424,7 @@ the API can manage gateway
 
 + `reboot[ user, macid, [timeout] ]` **reboot the gateway of the user**
     - user --------------- [ string ], the username of gateway
-    - macid -------------- [ string ], mac identify of gateway
+    - macid -------------- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - timeout ------------ [ number ], wait timeout
     - failed return tfalse
     - succeed return ttrue
@@ -435,7 +437,7 @@ the API can manage gateway
 
 + `default[ user, macid, [timeout] ]` **default all configure of gateway of the user**
     - user --------------- [ string ], the username of gateway
-    - macid -------------- [ string ], mac identify of gateway
+    - macid -------------- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - timeout ------------ [ number ], optional HE timeout seconds, default 10
     - failed return tfalse
     - succeed return ttrue
@@ -549,6 +551,7 @@ the API can manage port proxy
 + `tcpmap_list[ user, [mac identify] ]` **list all tcp map rule**
     - user ---------- [ string ], username
     - mac identify -- [ string ], mac identify of gateway
+    - missing map file or empty store returns `{}`
     - failed return NULL
     - succeed return json to describes the list
     ```json
@@ -683,6 +686,7 @@ the API can manage port proxy
 + `udpmap_list[ user, [mac identify] ]` **list all udp map rule**
     - user ---------- [ string ], username
     - mac identify -- [ string ], mac identify of gateway
+    - missing map file or empty store returns `{}`
     - failed return NULL
     - succeed return json to describes the list
     ```json
@@ -726,7 +730,7 @@ the API can manage port proxy
 
 + `gateway_hline[ user, mac identify ]` **create a http port for access the gateway he terminal**
     - user ---------- [ string ], username
-    - mac identify -- [ string ], mac identify of gateway
+    - mac identify -- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - failed return NULL
     - succeed return string to describe the port
 
@@ -740,7 +744,7 @@ the API can manage port proxy
 
 + `gateway_http[ user, mac identify, [ip], [port] ]` **create a http port for access the web server of gateway**
     - user ---------- [ string ], username
-    - mac identify -- [ string ], mac identify of gateway
+    - mac identify -- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - ip ------------ [ string ], ip address in gateway side, none for gateway self
     - port ---------- [ string ], port of ip address, none be 80 when ip not none, none be gateway web server when ip be none
     - failed return NULL
@@ -756,7 +760,7 @@ the API can manage port proxy
 
 + `gateway_telnet[ user, mac identify, [ip], [port] ]` **create a http port for access the telnet of gateway**
     - user ---------- [ string ], username
-    - mac identify -- [ string ], mac identify of gateway
+    - mac identify -- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - ip ------------ [ string ], ip address in gateway side, none for gateway self
     - port ---------- [ string ], port of ip address, none be 23 when ip not none, none be gateway telnet server when ip be none
     - failed return NULL
@@ -772,7 +776,7 @@ the API can manage port proxy
 
 + `gateway_ssh[ user, mac identify, [ip], [port] ]` **create a http for access the ssh of gateway**
     - user ---------- [ string ], username
-    - mac identify -- [ string ], mac identify of gateway
+    - mac identify -- [ string ], mac identify of gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - ip ------------ [ string ], ip address in gateway side, none for gateway self
     - port ---------- [ string ], port of ip address, none be 22 when ip not none, none be gateway ssh server when ip be none
     - failed return NULL
@@ -804,6 +808,8 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     - keeplive interval--- [ number ], endpoint keeplive to server interval, default 15, the unit is second
     - keeplive failed----- [ number ], endpoint keeplive failed times, default 4
     - keeplive timeout---- [ number ], endpoint keeplive timeout, default 15, the unit is second
+    - create only; existing netid (this user or another) returns tfalse (`EEXIST`)
+    - to change CIDR or keepalive after create, use `network_modify`
     - bumps topology `seq` and knocks `center@nport`
     - failed return tfalse
     - succeed return ttrue
@@ -811,6 +817,28 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     Example, add a network that address is 172.16.0.0/24
     ```shell
     center@api.network_add[ ashyelf, mynet, 172.16.0.0/24 ]
+    ttrue
+    ```
+
++ `network_modify[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout] ]` **change an existing network**
+    - user --------------- [ string ], username
+    - netid -------------- [ string ], network identify; basename only (no `/`)
+    - omitted parameters leave that field unchanged
+    - explicit empty string also leaves that field unchanged (CIDR / keepalive are not cleared)
+    - does not change `endpoint` membership or reallocate `point`
+    - missing network returns tfalse (`ENOENT`)
+    - when at least one field changes: bumps topology `seq` and knocks `center@nport`
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example, change CIDR only
+    ```shell
+    center@api.network_modify[ ashyelf, mynet, 10.8.0.0/24 ]
+    ttrue
+    ```
+    Example, change keepalive interval only
+    ```shell
+    center@api.network_modify[ ashyelf, mynet,, 20 ]
     ttrue
     ```
 
@@ -1123,6 +1151,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 + `firmware_list[ user ]` **get the device firmware list of username**
     - user ------------- [ string ], username
+    - missing or empty firmware dir returns `{}`
     - error return NULL
     - succeed return json to describes the list
     ```json
@@ -1181,7 +1210,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 + `firmware_push[ username, url, mac identify, [timeout] ]` **push a firmware to gateway to upgrade**
     - user ------------- [ string ], username
     - url -------------- [ string ], url for download the firmware; no comma, brackets, whitespace, or control characters
-    - mac identify ----- [ string ], mac identify for gateway    
+    - mac identify ----- [ string ], mac identify for gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - timeout ---------- [ number ], timeout for wait, the unit is second       
     - failed return tfalse
     - succeed return ttrue
