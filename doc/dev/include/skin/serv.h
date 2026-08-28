@@ -9,15 +9,18 @@
  * @brief service management client API (mcontrol + daemon.service status map)
  */
 
-/* status int in daemon *.service map (daemon writer / sinfo·slist reader) */
-#define SERVICE_ORDER_DELETE  6
-#define SERVICE_ORDER_STOP    5
-#define SERVICE_ORDER_OFFDEL  4
-#define SERVICE_ORDER_OFF     3
-#define SERVICE_ORDER_RESET   2
-#define SERVICE_ORDER_START   1
-#define SERVICE_ORDER_FINISH  0
-#define SERVICE_ORDER_ERROR  (-1)
+/* OR-able bits in daemon *.service map (daemon writer / sinfo·slist reader)
+ * START  — fork when pid==0; keep running after exit
+ * STOP   — current pid must die; only service_wait clears this
+ * DELETE — service_free when pid becomes 0
+ * off    — clear START only (no bit)
+ * offdel — DELETE without STOP
+ * unregister — STOP|DELETE
+ * reset / register-while-running — set START and STOP
+ */
+#define SERVICE_ORDER_START   (1 << 0)
+#define SERVICE_ORDER_STOP    (1 << 1)
+#define SERVICE_ORDER_DELETE  (1 << 2)
 
 
 

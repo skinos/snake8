@@ -1,9 +1,0 @@
-1. fix the mutil metric for route rule cannot show well
-2. add the ipset manage
-3. add the iptables mark manage
-4. add the ip rule manage
-5. add the lock for all the component setup/shut
-6. getty report setsid: Operation not permitted in srock
-7. arch@gpio use configure for action
-8. use the nft for iptables
-

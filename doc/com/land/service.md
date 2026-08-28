@@ -136,15 +136,9 @@ Manage service processes through the daemon supervisor. Services are component m
     ```json
     {
         "pid": 0,                              // [ number ], map value (0 when not running)
-        "status": "service status",            // [ string ], converted from SERVICE_ORDER_* int
-                                                   // "start": under run supervision (pending start or already running)
-                                                   // "reset": waiting to restart
-                                                   // "stop": waiting to stop
-                                                   // "delete": waiting to be deleted
-                                                   // "off": disabled (keep registration)
-                                                   // "offdel": disabled, delete registration after exit
-                                                   // "done": finished successfully (do not restart)
-                                                   // "error": exited with error (do not restart)
+        "status": "service status",            // [ string ], set bits joined by "|"
+                                                   // START → "start", STOP → "stop", DELETE → "delete"
+                                                   // e.g. "start", "start|stop", "stop|delete", "" if none
         "delay": 0,                            // [ number ], ms; may be 0
         "obj": "component object name",        // [ string ]
         "op": "method name",                   // [ string ], may be empty
@@ -180,7 +174,7 @@ Manage service processes through the daemon supervisor. Services are component m
     - not found / empty dump return NULL
     - daemon IPC failure return terror (or tpanic if daemon replies tpanic)
     - succeed return [ json ], filtered detail: includes `"name"`, omits zero/empty noise fields when unused, expands param slots `"1"`/`"2"`/…
-    - note: dump keeps map `status` as int (`SERVICE_ORDER_*`); use `info`/`list` for readable status names
+    - note: dump keeps map `status` as OR-able `SERVICE_ORDER_*` bits; use `info`/`list` for readable names
 
     Example, dump service mywan
     ```shell
