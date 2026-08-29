@@ -120,7 +120,7 @@ Recommended read order:
 
 1. [`he.md`](./he.md) — `he` command format, quick start, config/method examples
 2. [`eline.md`](./eline.md) — interactive terminal (`eline`)
-3. [`daemon.md`](./daemon.md) — system daemon
+3. [`daemon.md`](./daemon.md) — system daemon (`exec` → [`heexec.md`](./heexec.md))
 4. [`fpk.md`](./fpk.md) — FPK packaging/install and `prj.json` overview
 5. [`prj.json.md`](./prj.json.md) — project manifest fields in depth
 6. [`skin.md`](./skin.md) — libskin C API (`-lskin`)

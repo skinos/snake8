@@ -4,7 +4,7 @@
 
 CFLAGS += -I../
 
-LDFLAGS += -lskinuart -lcurl
+LDFLAGS += -lskinuart -lcurl -lskinm
 
 LIBA_ADDIN :=
 LIBSO_ADDIN :=

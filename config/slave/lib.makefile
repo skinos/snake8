@@ -32,7 +32,9 @@ all: ${STATIC_LIB} ${DYNAMIC_LIB}
 install:
 	install -d ${gINSTALL_DIR}/include/${BINS}
 	install -d ${gINSTALL_DIR}/lib
+ifneq ($(strip $(HDS)),)
 	cp $(HDS) ${gINSTALL_DIR}/include/${BINS}
+endif
 	cp ${DYNAMIC_LIB} ${gINSTALL_DIR}/lib
 	ln -sf ${DYNAMIC_LIB} ${gINSTALL_DIR}/lib/${DYNAMIC_LIB}.${DYNAMIC_LIB_VERSION}
 clean distclean:

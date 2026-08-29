@@ -3,7 +3,7 @@
 CFLAGS += -I../
 
 # Compile-time increment LDFLAGS
-LDFLAGS +=
+LDFLAGS += -lskinm
 
 # The library file that links to the.a or.so added at compile time
 LIBA_ADDIN :=

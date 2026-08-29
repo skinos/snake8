@@ -2,7 +2,8 @@
 # mconfig — local compile/link knobs for this directory (Skinos build reads this)
 # =============================================================================
 # CFLAGS    extra -I / -D for this target only
-# LDFLAGS   extra link flags
+# LDFLAGS   extra link flags (default is -lskin)
+#           add -lskinm for cstart/sstart; add -lskine for md5/b64/aes
 # LIBA_ADDIN / LIBSO_ADDIN  static (.a) or shared (.so) libs to link
 # =============================================================================
 

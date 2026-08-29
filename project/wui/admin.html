@@ -35,21 +35,23 @@
             </div>
         </div>
 
-        <!-- 开启HTTPS -->
-        <div class="form-group">
-          <label class="col-sm-3 control-label no-padding-right" data-i18n="Enable HTTPS"></label>
-          <div class="col-sm-9">
-            <label>
-              <input id="sslport_status" class="ace ace-switch ace-switch-6" type="checkbox" />
-              <span class="lbl"></span>
-            </label>
-          </div>
-        </div>
-        <div class="form-group" id="sslportSets" >
-            <label class="col-sm-3 control-label no-padding-right" data-i18n="SSL Port"></label>
+        <!-- Enable HTTPS: shown only when config has sslport (may be empty) -->
+        <div id="sslportBlock" style="display: none;">
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Enable HTTPS"></label>
             <div class="col-sm-9">
-              <input type="text" id="sslport" class="col-xs-10 col-sm-5" maxlength="128" />
+              <label>
+                <input id="sslport_status" class="ace ace-switch ace-switch-6" type="checkbox" />
+                <span class="lbl"></span>
+              </label>
             </div>
+          </div>
+          <div class="form-group" id="sslportSets">
+              <label class="col-sm-3 control-label no-padding-right" data-i18n="SSL Port"></label>
+              <div class="col-sm-9">
+                <input type="text" id="sslport" class="col-xs-10 col-sm-5" maxlength="128" />
+              </div>
+          </div>
         </div>
 
 
@@ -96,6 +98,7 @@
 <script type="text/javascript">
   (function () {
     var config;
+    var sslport_supported = false;
     var object = window.object;
     var index = page.param( 'object', location.hash );
     if ( index )
@@ -161,29 +164,38 @@
                 }
             }).trigger('change');
 
-            $('#sslport').val( config.sslport||"" );
-            if ( config.sslport )
+            sslport_supported = config.hasOwnProperty('sslport');
+            if ( sslport_supported )
             {
-                $('#sslport_status').prop('checked', true );
-            }
-            else
-            {
-                $('#sslport_status').prop('checked', false );
-            }
-            $('#sslport_status').unbind('change').change(function () {
-                if ($(this).prop('checked'))
+                $('#sslportBlock').show();
+                $('#sslport').val( config.sslport || "" );
+                if ( config.sslport )
                 {
-                    if ( !$('#sslport').val() )
-                    {
-                        $('#sslport').val( "443" );
-                    }
-                    $('#sslportSets').show();
+                    $('#sslport_status').prop('checked', true );
                 }
                 else
                 {
-                    $('#sslportSets').hide();
+                    $('#sslport_status').prop('checked', false );
                 }
-            }).trigger('change');
+                $('#sslport_status').unbind('change').change(function () {
+                    if ($(this).prop('checked'))
+                    {
+                        if ( !$('#sslport').val() )
+                        {
+                            $('#sslport').val( "443" );
+                        }
+                        $('#sslportSets').show();
+                    }
+                    else
+                    {
+                        $('#sslportSets').hide();
+                    }
+                }).trigger('change');
+            }
+            else
+            {
+                $('#sslportBlock').hide();
+            }
 
             $('#manager').val(manager);
             if ( manager )
@@ -226,13 +238,17 @@
             {
                 delete config.port;
             }
-            if ( $('#sslport_status').prop('checked') == true )
+            if ( sslport_supported )
             {
-                config.sslport = $('#sslport').val();
-            }
-            else
-            {
-                delete config.sslport;
+                if ( $('#sslport_status').prop('checked') == true )
+                {
+                    config.sslport = $('#sslport').val();
+                }
+                else
+                {
+                    /* Keep the key (empty) so the HTTPS block stays visible */
+                    config.sslport = "";
+                }
             }
             if ( $('#manager_status').prop('checked') == true )
             {

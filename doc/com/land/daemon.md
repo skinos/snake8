@@ -17,6 +17,7 @@ The daemon executable is the main supervisor process of the system. It feeds the
 // Attributes introduction 
 {
     "service_check":"service scan interval",                       // [ number ], interval in seconds to scan registered services, default be 3
+    "exec":"run .com services via heexec after fork",              // [ "disable", "enable" ], default be "disable"
 
     "watchdog_file":"watchdog device file path",                   // [ string ], path to the hardware watchdog device (e.g. /dev/watchdog), empty means disabled
     "watchdog_interval":"watchdog feed interval",                  // [ number ], feed interval in microseconds, default be 1000000 (1 second)
@@ -39,6 +40,7 @@ Example, show all the daemon configure
 land@daemon
 {
     "service_check":"5",                       # scan registered services every 5 seconds
+    "exec":"disable",                          # keep .com services in the forked daemon image
     "watchdog_file":"/dev/watchdog",           # hardware watchdog device path
     "watchdog_interval":"1000000",             # feed watchdog every 1000000 microseconds (1 second)
     "memory_check":"10",                       # check free memory every 10 seconds
@@ -62,6 +64,12 @@ ttrue
 Example, set the watchdog feed interval to 2 seconds
 ```shell
 land@daemon:watchdog_interval=2000000
+ttrue
+```
+
+Example, run .com services through heexec after fork
+```shell
+land@daemon:exec=enable
 ttrue
 ```
 

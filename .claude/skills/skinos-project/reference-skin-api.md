@@ -5,7 +5,7 @@
 
 **Public headers (source of prototypes):** installed as `skin/*.h`  
 → after build: `build/install/include/skin/`, `doc/dev/include/skin/`  
-→ on device: linked via `-lskin` (`/usr/lib/libskin.so` typical)
+→ on device: linked via `-lskin` (`/usr/lib/libskin.so` typical); add `-lskine` / `-lskinm` when those APIs are used
 
 When **`project/land` is FPK-only (no `.c`)**, develop against **headers + `skin.md`**. Do not require `project/land/skin/*.c`.
 
@@ -17,7 +17,7 @@ Scaffolding skill: [SKILL.md](SKILL.md).
 
 | Deliverable | Role for app authors |
 |-------------|----------------------|
-| **`libskin.so`** (`lib` key `skin`) | Link all com/exe/cmd with `-lskin` (+ crypto/ssl/event as in board `makefile.config`) |
+| **`libskin.so`** (`lib` key `skin`) | Link all com/exe/cmd with `-lskin`. Add `-lskine` for `pbkdf2_sha256_b64`; add `-lskinm` for `cstart`/`sstart`/`mcontrol` |
 | **Headers** `skin.h`, `talk.h`, `com.h`, … | Compile-time API |
 | **Components** `land@machine`, `land@init`, `land@joint`, `land@uninit`, `land@service`, `land@fpk`, `land@auth`, `land@component`, `land@register`, `land@syslog`, … | Call via `scall` / HE |
 | **Commands** `he`, `daemon`, `eline` | Shell / HE entry |

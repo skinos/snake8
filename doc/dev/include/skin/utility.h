@@ -61,26 +61,29 @@ char *pbkdf2_sha256_b64( const char *password, const char *salt, int iterations,
  * @param[in] len input length (use strlen(s) if len <= 0)
  * @return MD5 hash string (32 hex characters + internal '\\0'), caller must free
  *   @retval string for succeed
- *   @retval NULL for failed (EINVAL if s is NULL; ENOMEM if OpenSSL MD context allocation fails)
+ *   @retval NULL for failed (EINVAL if s is NULL; ENOMEM on alloc)
+ * @note Built-in RFC 1321 MD5 (no OpenSSL)
  */
 char *md5_encode( const char *s, int len );
 
 /**
- * @brief Base64 encoding
+ * @brief Base64 encoding (same alphabet/padding as former EVP_EncodeBlock)
  * @param[in] s input string
- * @param[in] len input length
+ * @param[in] len input length (use strlen(s) if len <= 0)
  * @return Base64 encoded string, need to free after use
  *   @retval string for succeed
  *   @retval NULL for failed
+ * @note Built-in (no OpenSSL)
  */
 char *b64_encode( const char *s, int len );
 /**
- * @brief Base64 decoding
+ * @brief Base64 decoding (same *len rule as former EVP_DecodeBlock)
  * @param[in] s Base64 encoded string
- * @param[out] len output length
+ * @param[out] len output length including zero bytes from '=' padding
  * @return Decoded string, need to free after use
  *   @retval string for succeed
  *   @retval NULL for failed
+ * @note Built-in (no OpenSSL). Callers that subtract one per trailing '=' stay correct.
  */
 char *b64_decode( const char *s, int *len );
 
@@ -107,11 +110,11 @@ int   url_decode( char *str, int len );
 /**
  * @brief Lightweight AES-128-CBC encrypt + Base64 (default key snake8@SkinOS if tok NULL)
  * @param[in] message plaintext (non-empty)
- * @param[in] tok passphrase (at most 16 bytes used for key material; padded key buffer internally)
+ * @param[in] tok passphrase (at most 16 bytes used for key material; rest filled with '1')
  * @return Base64 ciphertext, caller must free
  *   @retval string for succeed
- *   @retval NULL for failed (EINVAL empty message, or crypto/OOM)
- * @note Not a substitute for authenticated encryption; IV is zero-filled in implementation
+ *   @retval NULL for failed (EINVAL empty message, or OOM)
+ * @note Built-in AES (no OpenSSL). Not authenticated encryption; IV is zero-filled.
  */
 char *simple_encode( const char *message, const char *tok );
 /**

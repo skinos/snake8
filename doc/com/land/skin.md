@@ -8,7 +8,7 @@
 
 ## Overview
 
-**libskin** is the platform library behind Skinos components: communication, configuration, logging, services, structured mmap talk (`mxtalk` / m1·m2), unix mmap IPC (`munix`), control RPC over munix+libevent (`mcontrol`), and related facilities. It is built from `project/land` as shared library **`libskin.so`** (`prj.json` → `"lib": { "skin": ... }`) and linked by other skinos packages (`-lskin`).
+**libskin** is the platform library behind Skinos components: communication, configuration, logging, structured mmap talk (`mxtalk` / m1·m2), unix mmap IPC (`munix`), and related facilities. It is built from `project/land` as **`libskin.so`** (`prj.json` `"lib": { "skin": ... }`). Crypto helpers live in **`libskine.so`** (`skine`); `mcontrol` and the service client (`cstart` / `sstart` / …) live in **`libskinm.so`** (`skinm`). Most packages link **`-lskin` only**. Add **`-lskine`** for `pbkdf2_sha256_b64`. Add **`-lskinm`** for `mcontrol_*` or `cstart` / `sstart` / `srun` / `sreset` / `sdelete` / `sinfo` / `slist`. Headers stay under `skin/` (`#include "skin/skin.h"`).
 
 **Master header:** `#include "skin.h"` pulls in, in order of dependency, `stdhead.h` (standard C/POSIX includes), `skinhead.h` (types, limits, `*_COM` constants), and `skinapi.h` (shortcuts such as `scalls`, `machine_config`). This matches the on-disk layout next to the umbrella header. For a smaller compile surface you may include only what you need (e.g. `talk.h` + `com.h`); the samples elsewhere in Markdown assume the full `skin.h` entry point unless noted.
 
@@ -3748,7 +3748,7 @@ char *md5_encode(const char *s, int len);
 char *b64_encode(const char *s, int len);
 char *b64_decode(const char *s, int *len);
 ```
-**Description:** MD5 digest as **hex string**; Base64 encode/decode. **`md5_encode`**: **`NULL`** / invalid length → **`NULL`** with **`EINVAL`**; allocation failure → **`NULL`** with **`ENOMEM`**. Caller frees returned strings.
+**Description:** Built-in **MD5** (RFC 1321, lowercase hex) and **Base64** in **libskin** (no OpenSSL). **`b64_decode`** `*len` matches former `EVP_DecodeBlock` (counts `=` as trailing zero bytes; callers that trim by counting `=` stay correct). **`md5_encode`**: **`NULL`** → **`NULL`** with **`EINVAL`**. Caller frees returned strings.
 
 #### url_encode / url_decode
 ```c
@@ -3762,7 +3762,7 @@ int url_decode(char *str, int len);
 char *simple_encode(const char *message, const char *tok);
 char *simple_decode(const char *message, const char *tok);
 ```
-**Description:** **AES-128-CBC** (key/IV derived from **`tok`** and fixed salt in the implementation), then **Base64** for the wire form — not XOR. On failure returns **`NULL`** with **`errno`** set (**`EINVAL`**, **`ENOMEM`**, etc., per the encoding helpers).
+**Description:** Built-in **AES-128-CBC** + PKCS7 + **Base64** in **libskin** (no OpenSSL). Key is up to 16 bytes from **`tok`** (NULL uses `snake8@SkinOS`), remainder filled with `'1'`; IV is all zeros. On failure returns **`NULL`** with **`errno`** set (**`EINVAL`**, **`ENOMEM`**, …). `simple_decode` also accepts a leading `*` (plaintext rest) and the legacy `|*|V2` hex form.
 
 #### string2hex / hex2string / hex2printf
 ```c
@@ -4598,22 +4598,19 @@ int main(int argc, char *argv[]) {
 
 ```bash
 gcc -o myapp myapp.c \
-    -I/path/to/skin \
+    -I/path/to/include \
     -L/path/to/lib \
-    -lskin \
-    -levent \
-    -lpthread \
-    -ldl \
-    -lm
+    -lskin
+# add -lskine when using pbkdf2_sha256_b64
+# add -lskinm when using mcontrol or cstart/sstart
 ```
 
 ### 18.3 Link libraries
 
-- libskin.so - SkinOS core library
-- libevent.so - Event loop library
-- libpthread.so - Thread library
-- libdl.so - Dynamic loading library
-- libm.so - Math library
+- libskin.so — core (no OpenSSL, no libevent)
+- libskine.so — crypto helpers (`-lcrypto`); optional
+- libskinm.so — mcontrol + service client (`-levent`); optional
+- libpthread.so / libdl.so / libm.so — as needed by the app
 
 ---
 

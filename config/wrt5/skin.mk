@@ -127,8 +127,7 @@ endef
 #     编译$(OSC_LIST) ${CMD_LIST}时如果对应的子目录下无Makefile, 使用OSCMakefilePath为Makefile
 define Build/Compile/Default
 	$(FIND) $(PKG_BUILD_DIR) -name \*.o -or -name \*.a | $(XARGS) rm -f
-	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE})
-	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE},install)
+	$(call Build/Compile/bin,${LIB_LIST},${gLIB_MAKEFILE},all install)
 	$(call Build/Compile/bin,${COM_LIST},${gCOM_MAKEFILE})
 	$(call Build/Compile/bin,${EXE_LIST},${gEXE_MAKEFILE})
 	$(call Build/Compile/ko,${KO_LIST})
@@ -274,7 +273,9 @@ define Build/Install/fpk
 	for i in ${LIB_LIST} ;do \
 		if [ -d $(PKG_BUILD_DIR)/$$$$i ]; then \
 			$(INSTALL_DIR) ${FPK_BUILD_DIR}/install/include/$$$$i; \
-			$(CP) $(PKG_BUILD_DIR)/$$$$i/*.h ${FPK_BUILD_DIR}/install/include/$$$$i; \
+			if ls $(PKG_BUILD_DIR)/$$$$i/*.h >/dev/null 2>&1; then \
+				$(CP) $(PKG_BUILD_DIR)/$$$$i/*.h ${FPK_BUILD_DIR}/install/include/$$$$i; \
+			fi; \
 			$(INSTALL_DIR) ${FPK_BUILD_DIR}/install/lib; \
 			$(CP) $(PKG_BUILD_DIR)/$$$$i/lib*.so ${FPK_BUILD_DIR}/install/lib; \
 			$(LN) lib$$$$i.so ${FPK_BUILD_DIR}/install/lib/lib$$$$i.so.0; \

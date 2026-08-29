@@ -31,7 +31,7 @@ Deeper field semantics: `project.md`, `doc/com/land/prj.json.md`, `project/AGENT
 
 **libskin (from `land` FPK):** when implementing com/exe/cmd, follow  
 [reference-skin-api.md](reference-skin-api.md) and the full book **`doc/com/land/skin.md`**.  
-Include `#include "skin/skin.h"`, link `-lskin`. Headers live under `doc/dev/include/skin/` / `build/install/include/skin/` after build — **do not require `project/land` C sources**.
+Include `#include "skin/skin.h"`, link `-lskin`. Add `-lskine` for `pbkdf2_sha256_b64`; add `-lskinm` for `cstart`/`sstart`/`mcontrol`. Headers live under `doc/dev/include/skin/` / `build/install/include/skin/` after build — **do not require `project/land` C sources**.
 
 ## Rule 0 — User speech → project path (mandatory)
 

@@ -45,10 +45,10 @@ Build (e.g. `config/swrt5/exe.makefile`) injects:
 
 ```makefile
 CFLAGS +=
-LDFLAGS += -levent -lskinnet
+LDFLAGS += -lskinm -levent -lskinnet
 ```
 
-Common libs: `-levent`, `-lskinnet`, `-lcrypto -lssl`, …
+Default board flags are `-lskin` only. Add `-lskinm` for `cstart`/`sstart`/`mcontrol`; add `-lskine` for md5/b64/aes. Other common extras: `-levent`, `-lskinnet`, `-lcrypto -lssl`.
 
 ---
 
