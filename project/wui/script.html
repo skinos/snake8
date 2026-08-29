@@ -175,7 +175,21 @@
             scrollPos = jqtable.getScrollPos();
             $(script_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
+            script_set_width();
         });
+    }
+
+    function script_set_width(){
+        var containerWidth;
+
+        containerWidth = $(script_table).closest('.form-horizontal').width() ||
+                $(script_table).closest('.col-xs-12').width() ||
+                $(window).width() - 100;
+
+        if ( $(script_table)[0] && $(script_table)[0].grid )
+        {
+            $(script_table).jqGrid('setGridWidth', containerWidth);
+        }
     }
 
     /* call script API: object.api */
@@ -191,10 +205,10 @@
         he.exec( [ cmd ] ).then( function(v){
             if ( v[0] === false || v[0] == null )
             {
-                page.alert( { message: $.i18n('Failed to run') + ': ' + cmd } );
+                page.alert( { message: $.i18n('Execute failed') + ': ' + cmd } );
                 return;
             }
-            page.hint2succeed( $.i18n('Ran successfully') + ': ' + cmd );
+            page.hint2succeed( $.i18n('Execute successfully') + ': ' + cmd );
         });
     }
 
@@ -223,7 +237,7 @@
 
             if ( content == null || content === false || content === "" )
             {
-                page.alert( { message: $.i18n('Failed to load') } );
+                page.alert( { message: $.i18n('Load failed') } );
                 return;
             }
             try
@@ -232,7 +246,7 @@
             }
             catch ( e )
             {
-                page.alert( { message: $.i18n('Failed to load') } );
+                page.alert( { message: $.i18n('Load failed') } );
                 return;
             }
             current_object = object;
@@ -277,20 +291,20 @@
         }
         catch ( e )
         {
-            page.alert( { message: $.i18n('Failed to save') } );
+            page.alert( { message: $.i18n('Save failed') } );
             return;
         }
         cmd = obj + ".save[" + current_object + "," + encoded + "]";
         he.exec( [ cmd ] ).then( function(v){
             if ( v[0] == true )
             {
-                page.hint2succeed( $.i18n('Saved successfully') );
+                page.hint2succeed( $.i18n('Save successfully') );
                 script_editor_hide();
                 script_load();
             }
             else
             {
-                page.alert( { message: $.i18n('Failed to save') } );
+                page.alert( { message: $.i18n('Save failed') } );
             }
         });
     }
@@ -298,7 +312,7 @@
     /* delete script */
     function script_delete( object )
     {
-        page.confirm( { message: $.i18n('Are you sure you want to delete') + ' ' + object + '?' } ).then( function(result){
+        page.confirm( { message: $.i18n('Are you sure to delete') + ' ' + object + '?' } ).then( function(result){
             if ( !result )
             {
                 return;
@@ -306,7 +320,7 @@
             he.exec( [ obj + ".delete[" + object + "]" ] ).then( function(v){
                 if ( v[0] == true )
                 {
-                    page.hint2succeed( $.i18n('Deleted successfully') );
+                    page.hint2succeed( $.i18n('Delete successfully') );
                     if ( current_object == object )
                     {
                         script_editor_hide();
@@ -315,7 +329,7 @@
                 }
                 else
                 {
-                    page.alert( { message: $.i18n('Failed to delete') } );
+                    page.alert( { message: $.i18n('Delete failed') } );
                 }
             });
         });
@@ -368,11 +382,11 @@
             script_load();
             if ( ok )
             {
-                page.hint2succeed( $.i18n('Deleted successfully') );
+                page.hint2succeed( $.i18n('Delete successfully') );
             }
             else
             {
-                page.alert( { message: $.i18n('Failed to delete') } );
+                page.alert( { message: $.i18n('Delete failed') } );
             }
         });
     }
@@ -385,7 +399,7 @@
             return;
         }
         page.prompt({
-            message: $.i18n('Enter a script name'),
+            message: $.i18n('Enter script name'),
             value: '',
             callback: function( result ){
                 var name;
@@ -405,13 +419,13 @@
                 he.exec( [ cmd ] ).then( function(v){
                     if ( v[0] == true )
                     {
-                        page.hint2succeed( $.i18n('Copied successfully') );
+                        page.hint2succeed( $.i18n('Copy successfully') );
                         script_editor_hide();
                         script_load();
                     }
                     else
                     {
-                        page.alert( { message: $.i18n('Failed to copy') } );
+                        page.alert( { message: $.i18n('Copy failed') } );
                     }
                 });
             }
@@ -422,7 +436,7 @@
     function script_add()
     {
         page.prompt({
-            message: $.i18n('Enter a script name'),
+            message: $.i18n('Enter script name'),
             value: '',
             callback: function( result ){
                 var name;
@@ -439,19 +453,19 @@
                 }
                 if ( name.indexOf('/') >= 0 )
                 {
-                    page.alert( { message: $.i18n('Failed to add') } );
+                    page.alert( { message: $.i18n('Add failed') } );
                     return;
                 }
                 he.exec( [ obj + ".add[" + name + "]" ] ).then( function(v){
                     if ( v[0] == true )
                     {
-                        page.hint2succeed( $.i18n('Added successfully') );
+                        page.hint2succeed( $.i18n('Add successfully') );
                         script_editor_hide();
                         script_load();
                     }
                     else
                     {
-                        page.alert( { message: $.i18n('Failed to add') } );
+                        page.alert( { message: $.i18n('Add failed') } );
                     }
                 });
             }
@@ -492,7 +506,21 @@
             scrollPos = jqtable.getScrollPos();
             $(file_table).jqGrid('clearGridData').jqGrid('setGridParam', { data: rows }).trigger('reloadGrid');
             jqtable.setScrollPos(scrollPos);
+            file_set_width();
         });
+    }
+
+    function file_set_width(){
+        var containerWidth;
+
+        containerWidth = $(file_table).closest('.form-horizontal').width() ||
+                $(file_table).closest('.col-xs-12').width() ||
+                $(window).width() - 100;
+
+        if ( $(file_table)[0] && $(file_table)[0].grid )
+        {
+            $(file_table).jqGrid('setGridWidth', containerWidth);
+        }
     }
 
     /* download file via /download + wui@file.list */
@@ -522,7 +550,7 @@
     /* delete file */
     function file_delete( name )
     {
-        page.confirm( { message: $.i18n('Are you sure you want to delete') + ' ' + name + '?' } ).then( function(result){
+        page.confirm( { message: $.i18n('Are you sure to delete') + ' ' + name + '?' } ).then( function(result){
             if ( !result )
             {
                 return;
@@ -530,12 +558,12 @@
             he.exec( [ file_obj + ".delete[" + name + "]" ] ).then( function(v){
                 if ( v[0] == true )
                 {
-                    page.hint2succeed( $.i18n('Deleted successfully') );
+                    page.hint2succeed( $.i18n('Delete successfully') );
                     file_load();
                 }
                 else
                 {
-                    page.alert( { message: $.i18n('Failed to delete') } );
+                    page.alert( { message: $.i18n('Delete failed') } );
                 }
             });
         });
@@ -584,11 +612,11 @@
             file_load();
             if ( ok )
             {
-                page.hint2succeed( $.i18n('Deleted successfully') );
+                page.hint2succeed( $.i18n('Delete successfully') );
             }
             else
             {
-                page.alert( { message: $.i18n('Failed to delete') } );
+                page.alert( { message: $.i18n('Delete failed') } );
             }
         });
     }
@@ -600,8 +628,8 @@
 
         jqtable.create( script_table, script_pager,
             {
-                caption: $.i18n('Scripts'),
-                colNames: [ $.i18n('Object'), $.i18n('Description'), $.i18n('Path'), $.i18n('API'), $.i18n('Actions') ],
+                caption: $.i18n('Script List'),
+                colNames: [ $.i18n('Object'), $.i18n('Description'), $.i18n('Path'), $.i18n('API'), $.i18n('Operation') ],
                 colModel:
                 [
                     { name:'object', width:140 },
@@ -697,8 +725,8 @@
 
         jqtable.create( file_table, file_pager,
             {
-                caption: $.i18n('Files'),
-                colNames: [ $.i18n('Name'), $.i18n('Path'), $.i18n('Size'), $.i18n('Actions') ],
+                caption: $.i18n('File List'),
+                colNames: [ $.i18n('Name'), $.i18n('Path'), $.i18n('Size'), $.i18n('Operation') ],
                 colModel:
                 [
                     { name:'name', width:160 },
@@ -807,18 +835,18 @@
                 page.overlay2hide();
                 if ( result === 'ttrue' )
                 {
-                    page.hint2succeed( $.i18n('Uploaded successfully') );
+                    page.hint2succeed( $.i18n('Upload successfully') );
                     file_load();
                 }
                 else
                 {
-                    page.alert( { message: $.i18n('Failed to upload') } );
+                    page.alert( { message: $.i18n('Upload failed') } );
                 }
             },
             fail: function ()
             {
                 page.overlay2hide();
-                page.alert( { message: $.i18n('Failed to upload') } );
+                page.alert( { message: $.i18n('Upload failed') } );
             }
         });
 
@@ -832,6 +860,14 @@
         $( '#refresh' ).on( ace.click_event, function () {
             location.reload();
         });
+
+        $( window ).off( 'resize.scriptGrid' ).on( 'resize.scriptGrid', function () {
+            script_set_width();
+        } );
+
+        $( window ).off( 'resize.fileGrid' ).on( 'resize.fileGrid', function () {
+            file_set_width();
+        } );
 
         script_load();
         file_load();
