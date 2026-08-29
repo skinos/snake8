@@ -110,7 +110,7 @@ $TIP -s 115200 -A 'AT' /dev/ttyUSB1 # exit 0=OK, 1=ERROR/+CME, 2=timeout
 在能 AT 之后、写驱动之前：
 
 1. 对照 Skinos **`modem@atd` 回调**（下表）和相近模板驱动（`mt5710` / `rm500u` / `fm650` / …）列出候选 AT。
-2. 记下：哪个 `ttyUSB*` 是 AT；哪个 netdev 是数据口（`cdc_ncm`→常 `eth*`，`qmi_wwan`→`wwan*`，…）。
+2. tip 分清串口角色：**AT（`stty`）**、**Modem/PPP（`mtty`）**、可选 **DIAG/抓包（`dtty`）**、可选 **GPS（`gtty`）**；并记下 netdev（`cdc_ncm`→常 `eth*`，`qmi_wwan`→`wwan*`，ECM→常 `usb0`，…）。见阶段 5「串口角色」。
 
 | Callback | 用途 | AT 族示例（按芯片选） |
 |----------|------|------------------------|
@@ -147,12 +147,38 @@ ping -c 3 -I eth1 223.5.5.5
 
 ### 阶段 5 — 写模块驱动（信息够了才写）
 
-上线成功后，你已有：VID:PID、`option` 绑定、AT 口、数据 netdev、全套可用 AT、拨号/挂断/状态查询语义。
+上线成功后，你已有：VID:PID、`option` 绑定、各串口角色、数据 netdev、全套可用 AT、拨号/挂断/状态查询语义。
 
 1. 复制相近模板 → 实现 `_usb_match` / callbacks，AT **必须与 tip 验证一致**。
 2. 非标准回包用**专用 parse**（如 `hcsq_parse`）；**禁止**滥用无关的 `PARSE_*`。
-3. `make obj=modem` → FPK 热更（**device-upgrade**；无需重启）→ 测 `modem@lte` / `ifname@lte`。
-4. 若自动拨号仍挂，先回 **阶段 4** 用 tip 复测，不要在 C 里瞎改。
+3. `_usb_match` 里按下方 **「串口角色（强制）」** 登记 `stty` / `mtty` / `dtty` / `gtty`。
+4. `make obj=modem` → FPK 热更（**device-upgrade**；无需重启）→ 测 `modem@lte` / `ifname@lte`。
+5. 若自动拨号仍挂，先回 **阶段 4** 用 tip 复测，不要在 C 里瞎改。
+
+#### 串口角色（强制）
+
+`_usb_match` 必须按 tip 实测分配寄存器（有口才登记；**确认没有**才允许省略）：
+
+| Register | 角色 | 要求 |
+|----------|------|------|
+| **`stty`** | **AT 口**（给 `modem@atd` 查状态 / 发 AT） | 必须能 AT |
+| **`mtty`** | **Modem 口**（给 **PPP** 拨号） | 必须能 AT（PPP chat 也走 AT）；**禁止与 `stty` 相同** |
+| **`dtty`** | **抓包 / DIAG** 口 | tip 确认是 DIAG/抓包口才登记；没有则省略并在报告里写明 |
+| **`gtty`** | **GPS / NMEA** 口 | tip 确认有 GPS 才登记；没有则省略并在报告里写明 |
+
+**`stty` 与 `mtty` 不能是同一个 `ttyUSB*`：**
+
+- `mtty` 会被 PPP 占用；若与 `stty` 相同，PPP 拨号后 **`atd` 无法再 AT 查询**。
+- tip 阶段必须分别证明：**至少两个**能通 `AT` 的口，再分别定为 `stty` / `mtty`（常见：USB 描述里 Modem 口 → `mtty`，AT 口 → `stty`）。
+- **若模组只有一个能通 AT 的口**：
+  1. **停止按「双口 + PPP」默认写驱动**；
+  2. **明确报告用户**：该模组 **不能支持 PPP 拨号**（或 PPP 与 atd 互斥），因为只有一个 AT 口，PPP 占用后 atd 无法工作；
+  3. 与用户确认后再做特殊处理（例如仅 ECM/RNDIS/NCM 等非 PPP 数据面、或接受无 PPP 等）。**不要静默把 `stty`/`mtty` 设成同一路径。**
+
+#### 不要为 usbdrv 写 Markdown 组件文档
+
+`project/modem/<drv>/` 这类 **USB 模组驱动（`usbdrv@*`）不要** 写 `<drv>.md` / 组件接口 Markdown。  
+**skinos-component-doc** **不适用于** 新增/修改 `usbdrv@` 模组驱动。共享框架文档仍用已有 `lte.md` / `sms.md` 等。
 
 ---
 
@@ -214,6 +240,7 @@ Docs: [`doc/com/modem/lte.md`](../../doc/com/modem/lte.md), [`sms.md`](../../doc
 | `ec2x` / `ec200x` | Quectel 4G | `usbdrv@ec2x` / `@ec200x` |
 | `rm500u` / `rm520n` | Quectel 5G | `usbdrv@rm500u` / `@rm520n` |
 | `fm610` / `fm650` / `fm160` | Fibocom | `usbdrv@fm610` … |
+| `nl668` | Fibocom NL668 (`1508:1001`, ECM + `GTRNDIS`) | `usbdrv@nl668` |
 | `mt5710` | TD Tech MT5710 / MT5700M (`3466:3301`, NCM + `AT^NDISDUP`) | `usbdrv@mt5710` |
 | `atd` / `smsd` | Shared | (not usbdrv) |
 
@@ -234,8 +261,10 @@ Docs: [`doc/com/modem/lte.md`](../../doc/com/modem/lte.md), [`sms.md`](../../doc
 - `_usb_match` / `_usb_disappear` / `_usb_shutdown`
 - atd 回调：`modem_init`, `modem_cfun`, `modem_setup`, `modem_watch`, `modem_profile`；常用 `sim`/`pin`/`imei`/`imsi`/`iccid`、`attach`/`detach`/`connected`、`urc`
 - **`modem_attach` = 只拨号**；**`modem_connected` = 只查状态**（勿在 connected 里狂拨）
+- **`stty` ≠ `mtty`**；有则设 **`dtty` / `gtty`**（见阶段 5「串口角色」）
 - `prj.json`：`"com"` + `"obj": { "usbdrv@mymod": "mymod" }`
 - 板级 `usb.cfg` match → `modem@lte` / `lte2`
+- **不要**为 `usbdrv@` 模组驱动写 Markdown 组件文档
 
 ### 部署
 
@@ -251,18 +280,17 @@ he 'modem@lte.netdev'
 he 'ifname@lte.status'
 ```
 
-HE/config 面变更时用 **skinos-component-doc** 更新 `doc/com/modem/*.md`。
-
 ## Gotchas
 
 - **顺序不可跳**：option/ttyUSB → tip 能 AT → tip 全套 AT + 拨号 + udhcpc 上线 → 再写驱动。
 - **反复失败要停并报告用户**（AT 不通，或拨号/DHCP 反复失败），不要无限猜。
 - **无 SIM / 无信号**：tip 测出后 **停止并报告用户**，等装好 SIM/天线再继续；勿当 AT 方言问题穷举。
+- **只有一个 AT 口**：不得把 `stty`/`mtty` 设成同一口；须报告用户 PPP 与 atd 冲突，再特殊处理。
 - 有 shell 时用 **tip** 证明 AT；不要未验证就写进 C。
 - **tip 前先** `he 'modem@lte.shut'`（多实例则一并 shut），避免原 modem/atd 抢串口。
 - 专用回包 → 专用 parse；勿滥用 `PARSE_CSQ` 等。
 - 驱动放 `project/modem/`，不要放 `land` / `uart`。
-- `obj` 值 = **com 目录名**；AT/数据口 index 因模组而异。
+- `obj` 值 = **com 目录名**；AT/Modem/DIAG/GPS 口 index 因模组而异，以 tip 为准。
 - 同 VID:PID 多 SKU（如 MT5710 与 MT5700M）可共用 `option.c` + 一驱动（接口一致时）。
 - `new_id` 只是临时；长期支持在 **`config/.../kernel/option.c`**。
 - 内核覆盖修改必须带 **`/* add by <name> for … */`**。

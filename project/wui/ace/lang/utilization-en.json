@@ -2,7 +2,7 @@
     "oem": "OEM",
     "config": "Config",
     "internal": "Internal",
-    "cpu": "CPU Temperature",
-    "wifi@n": "2.4G Radio Temperature",
-    "wifi@a": "5.8G Radio Temperature"
+    "cpu": "CPU",
+    "wifi@n": "2.4G Radio",
+    "wifi@a": "5.8G Radio"
 }

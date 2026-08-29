@@ -265,11 +265,13 @@ Top `Makefile` forwards: `kernel`, `kernel_%`, `app`, `app_%`, `boot`, `sdk_%` �
 ### Full firmware (`.zz`)
 
 ```bash
-cat gBOARDID                    # must match target device
+cat gBOARDID                    # must match device (device-upgrade Step 0)
 ./mkdel                         # or: make dep (dep itself runs ./mkdel then recreates build/)
 make                            # all: dep → kernel → app → kernel_install → app_install
 # Output: build/<hardware>_<custom>_<scope>_<version>.zz
 ```
+
+Before any **live-device** `.zz` / FPK deploy: verify `land@machine.status` `platform`/`hardware`/`custom` against this `gBOARDID` (**device-upgrade** Step 0). Platform leading-`s` vs no-`s` are compatible (`wrt`↔`swrt5`). On mismatch → **skinos-board** `make pid`, then rebuild.
 
 **Do not use `make clean`** for normal work — full rebuild is very slow.
 

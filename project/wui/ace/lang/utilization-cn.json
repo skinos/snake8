@@ -21,8 +21,8 @@
     "CPU2": "核心2",
     "CPU3": "核心3",
     "Temperature": "温度",
-    "cpu": "CPU温度",
-    "wifi@n": "2.4G射频温度",
-    "wifi@a": "5.8G射频温度",
+    "cpu": "CPU",
+    "wifi@n": "2.4G射频",
+    "wifi@a": "5.8G射频",
     "CPU System": "处理器内核"
 }

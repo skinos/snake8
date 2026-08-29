@@ -66,12 +66,13 @@ FPK files can be uploaded to a running device without restart (**except land/arc
 See **`.claude/skills/device-upgrade/SKILL.md`** for the full workflow.
 
 Quick summary:
-1. **Build firmware (.zz)**: `./mkdel` → `make` → `build/*.zz`
-2. **Authenticate**: `POST /public` → get `rand` → compute `MD5(pass:user:rand)` → base64 → `POST /auth` → get `key`
-3. **Upgrade (.zz)**: `POST /upload?...&api=zz&p2=restart` → if response has `"status":"success"` wait **30s**, if upload never returns wait **90s**, then confirm `land@machine.status` (`version` ~ `^v[0-9]`); if bad version → `land@machine.restart` ×≤3 (wait 90s each); still fail → ask user to manual reboot
-4. **FPK package** (not land/arch): `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
-5. **land / arch 修改上设备**: 只能走步骤 1–3（完整 `.zz`），禁止用步骤 4 的 FPK 热部署来测
-6. **Test**: web `POST /he` first; shell via SSH/telnet if needed (`ashy`). IPsec: read hub `ipsec.conf` if user gave server SSH; poll `ipsec@client.status` until `established` (early `down` is normal). Details: `.claude/skills/device-upgrade/SKILL.md`
+1. **Match board (mandatory)**: query device `land@machine.status` → compare `platform`/`hardware`/`custom` to local `gBOARDID`; if mismatch, `make pid` to the device model first (**platform**: leading-`s` vs no-`s` are compatible, e.g. `wrt`↔`swrt5`). Details: **device-upgrade** Step 0
+2. **Build firmware (.zz)**: `./mkdel` → `make` → `build/*.zz`
+3. **Authenticate**: `POST /public` → get `rand` → compute `MD5(pass:user:rand)` → base64 → `POST /auth` → get `key`
+4. **Upgrade (.zz)**: `POST /upload?...&api=zz&p2=restart` → if response has `"status":"success"` wait **30s**, if upload never returns wait **90s**, then confirm `land@machine.status` (`version` ~ `^v[0-9]`); if bad version → `land@machine.restart` ×≤3 (wait 90s each); still fail → ask user to manual reboot
+5. **FPK package** (not land/arch): same Step-0 board match → `make obj=<name>` → `POST /upload?object=arch@firmware&api=fpk` → no restart
+6. **land / arch 修改上设备**: 只能走步骤 1–4（完整 `.zz`），禁止用步骤 5 的 FPK 热部署来测
+7. **Test**: web `POST /he` first; shell via SSH/telnet if needed (`ashy`). IPsec: read hub `ipsec.conf` if user gave server SSH; poll `ipsec@client.status` until `established` (early `down` is normal). Details: `.claude/skills/device-upgrade/SKILL.md`
 
 ## Certificate handling convention
 

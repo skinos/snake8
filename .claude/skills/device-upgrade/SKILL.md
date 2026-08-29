@@ -5,6 +5,9 @@ description: |
   Use when the user says "帮我升级固件", "upgrade firmware", "上传fpk", "deploy to device",
   "测试一下设备", "remote test", "把编译的包传上去", or asks to push code changes to a running device.
   Also use when the user provides a device URL (e.g. http://x.x.x.x:port) and asks to upgrade or test.
+  Before any .zz upgrade or FPK install: query device land@machine.status and match
+  platform/hardware/custom against local gBOARDID; on mismatch switch gBOARDID first
+  (platform: leading-s vs no-s forms are compatible, e.g. wrt↔swrt5).
   Choose .zz vs FPK by what changed: land/arch (core) or config/kernel → full .zz ONLY;
   other project-only packages → FPK. Never test land or arch changes via FPK upload.
   After FPK upload success: do not restart — start debugging immediately.
@@ -59,12 +62,76 @@ Same rule is recorded in **skinos-sdk** / **AGENTS.md** / **skinos-modem**. Do *
 
 If this session has **no** device URL yet and the user asks to upgrade/deploy, **ask once**, then keep using that `BASE`.
 
-## Step 1: Build Firmware (.zz)
+## Step 0: Match `gBOARDID` to the device (mandatory)
 
-Do **not** use `make clean` (full rebuild is very slow). Prefer `./mkdel` then a full `make`:
+**Before** building for deploy, uploading `.zz`, or installing any FPK: the SDK board must match the live device. Do **not** skip this for “I already know the board” unless this session already verified the same `BASE`.
+
+`gBOARDID` segments map to Makefile vars and to `land@machine.status` fields:
+
+| `gBOARDID` segment | Makefile | Device `land@machine.status` |
+|--------------------|----------|------------------------------|
+| 1 — platform | `gPLATFORM` | `platform` |
+| 2 — chip | `gHARDWARE` | `hardware` |
+| 3 — product | `gCUSTOM` | `custom` |
+
+Example: `gBOARDID=swrt5-mt7628-r600` → platform=`swrt5`, hardware=`mt7628`, custom=`r600`.
+
+### How to check
+
+1. Read local board: `cat gBOARDID` or `make pidinfo` → parse `gPLATFORM` / `gHARDWARE` / `gCUSTOM`.
+2. Query the device (auth first if needed — Step 2). Prefer authenticated `/he`; `/public` may return status with `rand` for login:
 
 ```bash
-# Check target board first
+# After auth (or via /public he wrapper — see Step 2)
+curl -sS -X POST "$BASE/he" \
+  -H 'Content-Type: application/json' \
+  -d "{\"username\":\"admin\",\"key\":\"$KEY\",\"he\":\"land@machine.status\"}"
+```
+
+3. Compare device `platform` / `hardware` / `custom` to local `gPLATFORM` / `gHARDWARE` / `gCUSTOM`.
+
+### Match rules
+
+- **`hardware`** and **`custom`**: must be **exact** match (case-sensitive as returned / as in `gBOARDID`).
+- **`platform`**: exact match **or** **s-compatible** (leading `s` vs no `s` are the same family):
+  1. If the two strings are equal → OK.
+  2. Else normalize each: strip **one** optional leading `s`, then strip **trailing digits**; if the remaining letter stems are equal → OK.
+  3. Else → **not** compatible.
+
+Examples (platform only; hardware/custom still must match):
+
+| Device `platform` | Local `gPLATFORM` | Result |
+|-------------------|-------------------|--------|
+| `wrt` | `swrt5` | **OK** (`wrt` ↔ `wrt` after strip `s` + digits) |
+| `swrt` | `wrt5` | **OK** |
+| `swrt5` | `swrt5` | **OK** (exact) |
+| `smtk2` | `mtk2` | **OK** (same stem rule) |
+| `swrt5` | `smtk2` | **FAIL** (different stem) |
+
+Device `wrt-mt7628-r600` with local `gBOARDID=swrt5-mt7628-r600` → **compatible**, do **not** switch.  
+Device `swrt-mt7628-r600` with local `gBOARDID=wrt5-mt7628-r600` → **compatible**.
+
+### On mismatch — switch before build/upload
+
+If `hardware`/`custom` differ, or `platform` is not s-compatible:
+
+1. Resolve a deployable `gBOARDID` for this device:
+   - Use device **`hardware`** and **`custom`** as segments 2 and 3.
+   - For platform: pick a directory under `config/` that **exists** and is **s-compatible** with device `platform`. Prefer keeping the current local `gPLATFORM` if it is already s-compatible; otherwise follow **skinos-board** (prefer names ending in digits and starting with `s`, e.g. `swrt5` over `wrt`). **Do not** `make pid` to a platform string that has no `config/<platform>/` (device may report `wrt` / `swrt` while the SDK tree is `swrt5` / `wrt5`).
+   - Optional 4th segment (`scope` / customer): keep only if the user already required that customer, or device `scope` clearly maps to an existing `config/.../<custom>/<scope>/`; otherwise use the three-segment standard product id (**skinos-board** Rule 1 / `std`).
+2. Switch: `make pid gBOARDID=<platform>-<hardware>-<custom>[...]` then `make pidinfo` (see **skinos-board**).
+3. Only then build (`.zz` / `make obj=`) and upload.
+
+Wrong-board `.zz` / FPK must not be uploaded “to try” — switch and rebuild first.
+
+## Step 1: Build Firmware (.zz)
+
+Do **not** use `make clean` (full rebuild is very slow). Prefer `./mkdel` then a full `make`.
+
+**Prerequisite:** Step 0 passed for this device (board matches).
+
+```bash
+# Confirm board after Step 0
 make pidinfo   # or: make pidlist
 
 # Incremental clean of skinos build dirs, then full firmware image
@@ -76,7 +143,7 @@ Output: `build/*.zz` (full firmware image for the current `gBOARDID`).
 
 If only `sdk.config` / platform config changed, same flow: `./mkdel` → `make`.
 
-Skip this step when the `.zz` is already built and you only need to upload.
+Skip this step when the `.zz` is already built **for this matched board** and you only need to upload.
 
 ## Step 2: Authenticate
 
@@ -106,6 +173,8 @@ KEY=$(curl -sS -X POST "$BASE/auth" \
 **Key expires** after each `/he` or `/upload` call — re-authenticate between operations if needed.
 
 ## Step 3: Full Firmware Upgrade (.zz)
+
+**Prerequisite:** Step 0 — local `gBOARDID` matches device `platform`/`hardware`/`custom` (with platform s-compat).
 
 Upload the built image. Pass **`p2=restart`** so the device restarts automatically after a successful upgrade (same as the web UI checkbox).
 
@@ -197,6 +266,8 @@ sleep 90
 ## Step 4: FPK Package Build & Deploy (No Restart)
 
 FPK packages are **hot-swappable** for **non-core** projects only.
+
+**Prerequisite:** Step 0 — local `gBOARDID` matches device `platform`/`hardware`/`custom` (with platform s-compat). FPK filenames include `<hardware>`; a mismatched board builds the wrong package for the device.
 
 **Forbidden for device test:** do **not** upload `land-*.fpk` or `arch-*.fpk` to validate changes to `project/land/` or `config/*/arch/`. Those are **core base firmware** — use **Step 3 (`.zz`)** instead. See **HARD RULE — land and arch** above.
 
@@ -448,6 +519,7 @@ When implementing certificate management for a new component, follow the UART pa
 | `tpanic,22` | Component not registered | Call `<project>@list.setup` first |
 | `tpanic,89` | Command not in helist | Use authenticated `/he` not `/public` |
 | `{"return":"false"}` | Login failed | Fetch new `rand`, recompute password |
+| Board mismatch / wrong FPK hardware | Local `gBOARDID` ≠ device model | Step 0: compare `land@machine.status` platform/hardware/custom; switch with **skinos-board**; rebuild. Platform `wrt`↔`swrt5` (s-compat) is OK |
 | Device not responding after upgrade | Still restarting | Upload returned `"status":"success"` → wait **30s**; upload hung / no return → wait **90s**; then poll `land@machine.status` until `version` matches `^v[0-9]` |
 | Upload `/zz` never returns | Likely upgrade/reboot mid-request | Do **not** retry upload immediately; wait **90s**, then run confirm |
 | `status` OK but `version` not `^v[0-9]` | Abnormal post-upgrade state | `land@machine.restart[3,upgrade]` → wait 90s → confirm; max **3** cycles; then tell user to **manual reboot** |
