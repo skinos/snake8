@@ -39,6 +39,7 @@ function adjustBoxLayout() {
     // 排列规则：inuse 优先，然后按 network@frame 1-6 排序
     var priorityMap = {};
     var inuseMap = {};
+    var onlineMap = {};
     var frameStatus = currentFrameStatus || dashboardFrameStatusCache || {};
 
     if (currentFrameData) {
@@ -54,11 +55,20 @@ function adjustBoxLayout() {
     }
 
     for (var key in frameStatus) {
-        if (frameStatus[key] && frameStatus[key].inuse == "enable") {
-            inuseMap[key] = true;
+        if (!frameStatus[key]) {
+            continue;
+        }
 
-            var shortKey = key.replace("ifname@", "");
+        var shortKey = key.replace("ifname@", "");
+
+        if (frameStatus[key].inuse == "enable") {
+            inuseMap[key] = true;
             inuseMap[shortKey] = true;
+        }
+
+        if (frameStatus[key].status == "up" || frameStatus[key].status == "online") {
+            onlineMap[key] = true;
+            onlineMap[shortKey] = true;
         }
     }
 
@@ -98,14 +108,17 @@ function adjustBoxLayout() {
                 return bInuse - aInuse;
             }
 
-            if (aWeight !== bWeight) {
-                return aWeight - bWeight;
-            }
+            // network@frame.status 里 status == up/online 的接口第二优先
+            var aOnline = onlineMap[aName] ? 1 : 0;
+            var bOnline = onlineMap[bName] ? 1 : 0;
 
-            var aOnline = $(a).attr('or-online') === 'true' ? 1 : 0;
-            var bOnline = $(b).attr('or-online') === 'true' ? 1 : 0;
             if (aOnline !== bOnline) {
                 return bOnline - aOnline;
+            }
+
+            // 最后按 network@frame 1-6 数字顺序排序
+            if (aWeight !== bWeight) {
+                return aWeight - bWeight;
             }
 
             return 0;
@@ -1240,25 +1253,36 @@ $.i18n().load(page.lang('dashboard')).then(function() {
 
     preloadCompactPortIcons();
 
-    
+    function refresh_dashboard()
+    {
+        $.when(
+            interface_load(),
+            fetchNetworkFrame()
+        ).done(function() {
+            adjustBoxLayout();
+        });
+    }
+
     // 如果有上一次 dashboard 正确数据
     // 立即渲染，不显示错误框架，不白屏
     if (dashboardFrameCache) {
         currentFrameData = dashboardFrameCache;
     }
 
+    if (dashboardFrameStatusCache) {
+        currentFrameStatus = dashboardFrameStatusCache;
+    }
+
     if (dashboardCache) {
         renderInterfaceData(dashboardCache);
         adjustBoxLayout();
 
-        
         // 后台刷新最新数据
-        interface_load();
-        fetchNetworkFrame();
+        refresh_dashboard();
 
         page.timing({
             refresh: function() {
-                interface_load();
+                refresh_dashboard();
             },
             interval: flush_interval * 1000
         });
@@ -1267,18 +1291,12 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     }
 
     // 没有缓存，第一次进入dashboard等数据加载
-    $.when(
-        interface_load(),
-        fetchNetworkFrame()
-    ).done(function() {
-        adjustBoxLayout();
+    refresh_dashboard();
 
-        page.timing({
-            refresh: function() {
-                interface_load();
-            },
-            interval: flush_interval * 1000
-        });
-
-    })
+    page.timing({
+        refresh: function() {
+            refresh_dashboard();
+        },
+        interval: flush_interval * 1000
+    });
 });
