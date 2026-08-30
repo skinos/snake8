@@ -230,10 +230,21 @@ $.i18n().load( page.lang('device') ).then( function () {
   $('#mac').text(window.machine.mac);
   // bind the hostname modify
   $('#name_modify').on(ace.click_event, function () {
-      page.prompt( { message: $.i18n('Input new device name'), value:window.machine.name, callback:function(result){
+      page.prompt( { 
+        message: $.i18n('Input new device name'), 
+        value:window.machine.name, 
+        callback:function(result){
           if ( result )
           { 
-          	  var name = result.replace(/"/g, '\\"');
+          	  var name = $.trim(result);
+              // 只允许英文、数字、下划线、短横线
+              // 不允许空格、特殊字符、中文
+              if (!/^[A-Za-z0-9_-]+$/.test(name)) {
+                page.hint2warning($.i18n('Only letters, numbers, underscore and hyphen are allowed'));
+                return;
+              }
+              name = name.replace(/"/g, '\\"');
+                
               he.exec( [ "land@machine:name="+name ] ).then( function(v){
                   var ret = v[0];
                   if ( ret == true )
