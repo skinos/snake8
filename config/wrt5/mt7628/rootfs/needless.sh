@@ -85,8 +85,8 @@ rm -fr ./usr/sbin/ubirmvol
 rm -fr ./usr/sbin/ubirsvol
 rm -fr ./usr/sbin/ubiupdatevol
 # libstdcpp: selected by iperf DEPENDS, but iperf links -static-libstdc++
-rm -fr ./usr/lib/libstdc++.so
-rm -fr ./usr/lib/libstdc++.so.*
+#rm -fr ./usr/lib/libstdc++.so
+#rm -fr ./usr/lib/libstdc++.so.*
 rm -fr ./usr/bin/ucode
 rm -fr ./usr/bin/wireguard_watchdog
 rm -fr ./usr//bin/jshn

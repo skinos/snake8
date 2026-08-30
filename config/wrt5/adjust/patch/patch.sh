@@ -117,12 +117,18 @@ done
 # package
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/base-files-Makefile" "${gSDK_DIR}/package/base-files/Makefile"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/wifi-scripts-Makefile" "${gSDK_DIR}/package/network/config/wifi-scripts/Makefile"
+# iperf already uses -static-libstdc++; drop unused libstdcpp package depend
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iperf-Makefile" "${gSDK_DIR}/feeds/packages/net/iperf/Makefile"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/perl-111-glibc-GNU_SOURCE-cloexec-prototypes.patch" "${gSDK_DIR}/feeds/packages/lang/perl/patches/111-glibc-GNU_SOURCE-cloexec-prototypes.patch"
 
 # patch to busybox for udhcpc support ifnameid and exit when renewip failed
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/udhcpc-defconfig-ifnameid-renewexit.patch" "${gSDK_DIR}/package/utils/busybox/patches/900-udhcpc-defconfig-ifnameid-renewexit.patch"
 # do not syslog "password for 'user' changed" from chpasswd
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/chpasswd-no-changed-syslog.patch" "${gSDK_DIR}/package/utils/busybox/patches/901-chpasswd-no-changed-syslog.patch"
+# auto exec HE component commands via he when argv[0] contains '@'
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/902-ash-he-autoexec.patch" "${gSDK_DIR}/package/utils/busybox/patches/902-ash-he-autoexec.patch"
+# merge HE tab completion from hetab into ash lineedit
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/903-ash-he-tab-completion.patch" "${gSDK_DIR}/package/utils/busybox/patches/903-ash-he-tab-completion.patch"
 
 # patch to mt7613 cannot connect to 160M AP
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/010-mt7663-disable-vht160-sta-compat.patch" "${gSDK_DIR}/package/kernel/mt76/patches/010-mt7663-disable-vht160-sta-compat.patch"
@@ -131,6 +137,21 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/010-mt7663-disable-vht160-st
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/020-mt76-dma-cleanup-disable-rx-napi.patch" "${gSDK_DIR}/package/kernel/mt76/patches/020-mt76-dma-cleanup-disable-rx-napi.patch"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/021-mt7603-unregister-stop-irq-before-dma-cleanup.patch" "${gSDK_DIR}/package/kernel/mt76/patches/021-mt7603-unregister-stop-irq-before-dma-cleanup.patch"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/022-mt7603-mcu-reload-recovery.patch" "${gSDK_DIR}/package/kernel/mt76/patches/022-mt7603-mcu-reload-recovery.patch"
+# MT7663/MT7613: enable DFS CAC so channel 52-64 can start (openwrt/mt76#925)
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/023-mt7663-enable-dfs.patch" "${gSDK_DIR}/package/kernel/mt76/patches/023-mt7663-enable-dfs.patch"
+# MT7663/MT7613: temperature is in the second THERMAL_CTRL dword (openwrt/mt76#514)
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/024-mt7663-thermal-offset.patch" "${gSDK_DIR}/package/kernel/mt76/patches/024-mt7663-thermal-offset.patch"
+# MT7603/MT7628: thermal ADC via TOP remap, expose hwmon temp1_input
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/025-mt7603-hwmon-thermal.patch" "${gSDK_DIR}/package/kernel/mt76/patches/025-mt7603-hwmon-thermal.patch"
+# mt7603 hwmon needs CONFIG_HWMON (kmod-hwmon-core already on d218)
+if [ -f "${gSDK_DIR}/package/kernel/mt76/Makefile" ]; then
+    if grep -q 'DEPENDS+=@PCI_SUPPORT +kmod-mt76-core$' "${gSDK_DIR}/package/kernel/mt76/Makefile"; then
+        patch -N -p1 -d "${gSDK_DIR}/package/kernel/mt76" \
+            < "${gPLATFORM_DIR}/adjust/patch/package/025-mt7603-hwmon-makefile.patch"
+    fi
+fi
+# CN: drop DFS on 5250-5350 so channel 52-64 can AP without CAC
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/900-cn-no-dfs-5250-5350.patch" "${gSDK_DIR}/package/firmware/wireless-regdb/patches/900-cn-no-dfs-5250-5350.patch"
 
 # proftpd
 if [ ! -e ${gSDK_DIR}/package/network/services/proftpd ]; then
@@ -141,6 +162,7 @@ fi
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/hostapd-Makefile" "${gSDK_DIR}/package/network/services/hostapd/Makefile"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/linux-modules-netfilter.mk" "${gSDK_DIR}/package/kernel/linux/modules/netfilter.mk"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-600-shared-libext.patch" "${gSDK_DIR}/package/network/utils/iptables/patches/600-shared-libext.patch"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-610-list-short-table.patch" "${gSDK_DIR}/package/network/utils/iptables/patches/610-list-short-table.patch"
 # xtables-nft: always depend on libiptext6 (needed when IPV6 is disabled)
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-Makefile" "${gSDK_DIR}/package/network/utils/iptables/Makefile"
 

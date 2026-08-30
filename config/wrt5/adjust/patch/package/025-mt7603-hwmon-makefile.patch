@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -140,7 +140,7 @@
+ define KernelPackage/mt7603
+   $(KernelPackage/mt76-default)
+   TITLE:=MediaTek MT7603 wireless driver
+-  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core
++  DEPENDS+=@PCI_SUPPORT +kmod-mt76-core +kmod-hwmon-core
+   FILES:=\
+ 	$(PKG_BUILD_DIR)/mt7603/mt7603e.ko
+   AUTOLOAD:=$(call AutoProbe,mt7603e)

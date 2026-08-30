@@ -1,0 +1,118 @@
+--- a/mt7603/init.c
++++ b/mt7603/init.c
+@@ -1,6 +1,8 @@
+ // SPDX-License-Identifier: BSD-3-Clause-Clear
+ 
+ #include <linux/etherdevice.h>
++#include <linux/hwmon.h>
++#include <linux/hwmon-sysfs.h>
+ #include "mt7603.h"
+ #include "mac.h"
+ #include "eeprom.h"
+@@ -492,6 +494,94 @@
+ 	}
+ }
+ 
++/* add by dimmalex: MT7603/MT7628 thermal ADC at TOP 0x80022000 bits[14:8] */
++static ssize_t
++mt7603_thermal_show_temp(struct device *dev, struct device_attribute *attr,
++			 char *buf)
++{
++	struct mt7603_dev *mdev = dev_get_drvdata(dev);
++	u8 *eeprom;
++	u32 restore;
++	u32 mac_val;
++	int adc;
++	int ref_adc;
++	int slope;
++	int ref_off;
++	int temperature;
++	int milli;
++
++	(void)attr;
++
++	if (!test_bit(MT76_STATE_INITIALIZED, &mdev->mphy.state))
++		return 0;
++
++	eeprom = (u8 *)mdev->mt76.eeprom.data;
++	if (!eeprom)
++		return 0;
++
++	mutex_lock(&mdev->mt76.mutex);
++	restore = mt76_rr(mdev, MT_MCU_PCIE_REMAP_2);
++	mt76_wr(mdev, MT_MCU_PCIE_REMAP_2, 0x80000000);
++	mac_val = mt76_rr(mdev, 0xa2000);
++	mt76_wr(mdev, MT_MCU_PCIE_REMAP_2, restore);
++	mutex_unlock(&mdev->mt76.mutex);
++
++	adc = (mac_val & 0x00007f00) >> 8;
++
++	if (eeprom[MT_EE_TEMP_SENSOR_CAL] & 0x80)
++		ref_adc = eeprom[MT_EE_TEMP_SENSOR_CAL] & 0x7f;
++	else
++		ref_adc = 52;
++
++	if (eeprom[0x53] & 0x80) {
++		slope = eeprom[0x54] & 0x1f;
++		if (slope > 16)
++			slope -= 32;
++	} else {
++		slope = 0;
++	}
++
++	ref_off = eeprom[0xf8] + 28;
++	temperature = (((adc - ref_adc) * (56 + slope)) / 30) + ref_off;
++	milli = temperature * 1000;
++
++	return sprintf(buf, "%d\n", milli);
++}
++
++static SENSOR_DEVICE_ATTR(temp1_input, 0444, mt7603_thermal_show_temp,
++			  NULL, 0);
++
++static struct attribute *mt7603_hwmon_attrs[] = {
++	&sensor_dev_attr_temp1_input.dev_attr.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(mt7603_hwmon);
++
++static int mt7603_thermal_init(struct mt7603_dev *dev)
++{
++	struct ieee80211_hw *hw;
++	struct wiphy *wiphy;
++	struct device *hwmon;
++	const char *phy_name;
++	const char *name;
++	int err;
++
++	if (!IS_REACHABLE(CONFIG_HWMON))
++		return 0;
++
++	hw = mt76_hw(dev);
++	wiphy = hw->wiphy;
++	phy_name = wiphy_name(wiphy);
++	name = devm_kasprintf(&wiphy->dev, GFP_KERNEL, "mt7603_%s", phy_name);
++	if (!name)
++		return -ENOMEM;
++
++	hwmon = devm_hwmon_device_register_with_groups(&wiphy->dev, name, dev,
++						       mt7603_hwmon_groups);
++	err = PTR_ERR_OR_ZERO(hwmon);
++	return err;
++}
++
+ int mt7603_register_device(struct mt7603_dev *dev)
+ {
+ 	struct mt76_bus_ops *bus_ops;
+@@ -558,6 +648,11 @@
+ 	mt7603_init_debugfs(dev);
+ 	mt7603_init_txpower(dev, &dev->mphy.sband_2g.sband);
+ 
++	/* add by dimmalex: expose MT7603/MT7628 WiFi temperature via hwmon */
++	ret = mt7603_thermal_init(dev);
++	if (ret)
++		return ret;
++
+ 	return 0;
+ }
+ 

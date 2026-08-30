@@ -1,0 +1,218 @@
+#!/bin/bash
+# Sync build-relevant bits from an internal platform (s*) to its public twin.
+#
+# Internal platforms start with "s"; public name is the same without the leading s:
+#   swrt5 -> wrt5
+#   srock -> rock
+#
+# Rules:
+#   - Skip: arch / cdriver / pdriver / tools / adjust/origin / .claude / dl / .git
+#   - Skip customer scopes under each product except "wrt"
+#     (gas jrzh wlinkr320 pelcod oled udeer3v …)
+#   - Skip docs that do not affect firmware build (*.md, README, adjust/readme, **/doc/**)
+#   - Do not delete files that exist only on the public side
+#   - sdk.config: copy as-is (no rewrite)
+#
+# Usage:
+#   ./tools/sync-platform <platform>           # e.g. swrt5 / srock
+#   ./tools/sync-platform <platform> --dry-run
+#   ./tools/sync-platform --dry-run <platform>
+
+set -e
+TOPDIR=`cd "$(dirname "$0")/.." && pwd`
+DRY=0
+PLATFORM=""
+
+usage()
+{
+	code="$1"
+	if [ -z "${code}" ]; then
+		code=1
+	fi
+	echo "sync-platform — sync internal config/<s*> to public config/<without-s>"
+	echo ""
+	echo "Usage:"
+	echo "  ./tools/sync-platform <platform>           # apply"
+	echo "  ./tools/sync-platform <platform> --dry-run # list only"
+	echo ""
+	echo "Platform must start with 's' (internal). Public target drops the leading s:"
+	echo "  swrt5  ->  config/swrt5  =>  config/wrt5"
+	echo "  srock  ->  config/srock  =>  config/rock"
+	echo ""
+	echo "Any platform not starting with 's' prints this help."
+	exit "${code}"
+}
+
+for arg in "$@"; do
+	case "${arg}" in
+		--dry-run)
+			DRY=1
+			;;
+		-h|--help|help)
+			usage 0
+			;;
+		*)
+			if [ -n "${PLATFORM}" ]; then
+				usage 1
+			fi
+			PLATFORM="${arg}"
+			;;
+	esac
+done
+
+if [ -z "${PLATFORM}" ]; then
+	usage 0
+fi
+
+# must be internal s* name
+case "${PLATFORM}" in
+	s*)
+		;;
+	*)
+		usage 1
+		;;
+esac
+
+PUBLIC=`echo "${PLATFORM}" | sed 's/^s//'`
+if [ -z "${PUBLIC}" ] || [ "${PUBLIC}" = "${PLATFORM}" ]; then
+	usage 1
+fi
+
+SRC="${TOPDIR}/config/${PLATFORM}"
+DST="${TOPDIR}/config/${PUBLIC}"
+
+if [ ! -d "${SRC}" ]; then
+	echo "missing source: ${SRC}"
+	exit 1
+fi
+if [ ! -d "${DST}" ]; then
+	echo "missing public target: ${DST}"
+	echo "(create config/${PUBLIC} first, or check the platform name)"
+	exit 1
+fi
+
+echo "sync ${PLATFORM} -> ${PUBLIC}  (config/${PLATFORM} => config/${PUBLIC})"
+
+# product-level customer dirs never synced (wrt is allowed)
+SKIP_CUSTOM='gas|jrzh|wlinkr320|pelcod|oled|udeer3v'
+
+should_skip_rel()
+{
+	rel="$1"
+	# top skip (FPK / internal trees / host tools)
+	case "${rel}" in
+		arch|arch/*|cdriver|cdriver/*|pdriver|pdriver/*|tools|tools/*|dl|dl/*|.git|.git/*|.claude|.claude/*)
+			return 0
+			;;
+		adjust/origin|adjust/origin/*)
+			return 0
+			;;
+	esac
+	# do not invent chip trees missing on the public side (e.g. swrt5 rk3568 -> wrt5)
+	first=`echo "${rel}" | cut -d/ -f1`
+	case "${first}" in
+		mt*|rk*)
+			if [ ! -d "${DST}/${first}" ]; then
+				return 0
+			fi
+			;;
+	esac
+	# docs
+	case "${rel}" in
+		*.md|*/README|*/README.*|*/doc|*/doc/*|adjust/readme|readme|README)
+			return 0
+			;;
+	esac
+	# customer under chip/product/<customer>/
+	echo "${rel}" | grep -qE "^[^/]+/[^/]+/(${SKIP_CUSTOM})(/|\$)" && return 0
+	return 1
+}
+
+sync_one()
+{
+	rel="$1"
+	src="${SRC}/${rel}"
+	dst="${DST}/${rel}"
+	if [ ! -e "${src}" ]; then
+		return
+	fi
+	if should_skip_rel "${rel}"; then
+		return
+	fi
+
+	# directory: ensure exists, no delete
+	if [ -d "${src}" ]; then
+		if [ "${DRY}" = "1" ]; then
+			[ -d "${dst}" ] || echo "MKDIR ${rel}"
+		else
+			mkdir -p "${dst}"
+		fi
+		return
+	fi
+
+	# symlink: replicate relative link when missing or different
+	if [ -L "${src}" ]; then
+		target=`readlink "${src}"`
+		if [ -L "${dst}" ]; then
+			cur=`readlink "${dst}"`
+			if [ "${cur}" = "${target}" ]; then
+				return
+			fi
+		fi
+		if [ "${DRY}" = "1" ]; then
+			echo "LINK ${rel} -> ${target}"
+		else
+			mkdir -p "`dirname "${dst}"`"
+			ln -sfn "${target}" "${dst}"
+			echo "LINK ${rel} -> ${target}"
+		fi
+		return
+	fi
+
+	if [ ! -f "${src}" ]; then
+		return
+	fi
+
+	if [ -f "${dst}" ] && cmp -s "${src}" "${dst}"; then
+		return
+	fi
+	if [ "${DRY}" = "1" ]; then
+		if [ -f "${dst}" ]; then
+			echo "COPY ${rel}"
+		else
+			echo "ADD  ${rel}"
+		fi
+	else
+		mkdir -p "`dirname "${dst}"`"
+		cp -a "${src}" "${dst}"
+		echo "COPY ${rel}"
+	fi
+}
+
+walk_list=`mktemp`
+(
+	cd "${SRC}"
+	find . -mindepth 1 \( \
+		-path './.git' -o -path './.git/*' -o \
+		-path './.claude' -o -path './.claude/*' -o \
+		-path './arch' -o -path './arch/*' -o \
+		-path './cdriver' -o -path './cdriver/*' -o \
+		-path './pdriver' -o -path './pdriver/*' -o \
+		-path './tools' -o -path './tools/*' -o \
+		-path './dl' -o -path './dl/*' -o \
+		-path './adjust/origin' -o -path './adjust/origin/*' \
+	\) -prune -o \( -type f -o -type l \) -print
+) | sed 's|^\./||' | sort > "${walk_list}"
+
+count=0
+while IFS= read -r rel; do
+	[ -n "${rel}" ] || continue
+	if should_skip_rel "${rel}"; then
+		continue
+	fi
+	sync_one "${rel}"
+	count=$((count + 1))
+done < "${walk_list}"
+
+rm -f "${walk_list}"
+echo "==== sync ${PLATFORM} -> ${PUBLIC} done (scanned ${count} paths, dry=${DRY}) ===="

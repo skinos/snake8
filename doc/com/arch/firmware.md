@@ -6,10 +6,11 @@
 
 - **`fpk`** installs a single local FPK package; **`zz`** applies a vendor **`.tar.gz`** upgrade archive built for this product
 - **`tftp_upgrade`** and **`online_upgrade`** download firmware then delegate to **`fpk`** or **`zz`** as appropriate
+- **`store_upgrade`** calls **`online_check`** for the newest store release, then **`online_upgrade`** with that download URL
 - upgrade is blocked when **`arch@lock`** **`upgrade`** is **`enable`**, when another upgrade is in progress, or when device identity register keys are missing
     > **`fpk`**, **`zz`**, and upgrade paths that call them return **`Function locked`**; **`online_check`** is not affected by the upgrade lock
     > only one upgrade runs at a time; concurrent calls receive **`Update busy`**
-- OTA URL, download credentials, and post-upgrade restart hint are **not** stored on **`arch@firmware`**; **`online_check`**, **`online_upgrade`**, and successful **`zz`** responses read them from **`arch@custom`** (see **Configuration reference ( arch@custom )** below)
+- OTA URL, download credentials, and post-upgrade restart hint are **not** stored on **`arch@firmware`**; **`online_check`**, **`online_upgrade`**, **`store_upgrade`**, and successful **`zz`** responses read them from **`arch@custom`** (see **Configuration reference ( arch@custom )** below)
 - upgrade lock is stored on **`arch@lock`** (see **Configuration reference ( arch@lock )** below)
 - during upgrade the component updates **`machine_state`** in the land register, invokes **`machine/status`**, and drives **`gpio@action`** for upgrade indication
 
@@ -229,6 +230,25 @@ ttrue
     Example, OTA upgrade from a specific URL
     ```shell
     arch@firmware.online_upgrade[ ftp://firmware.example.com/releases/device.tar.gz, dl:password@example.com, 10 ]
+    ttrue
+    ```
+
++ `store_upgrade[ cmd ]` **check the firmware store and upgrade to the newest release**
+    - cmd ---------------- [ string ], optional, post-success action passed to **`online_upgrade`**: **`restart`** for restart after 5 seconds, or a positive integer string for that many seconds
+    - failed return tfalse
+    - succeed return ttrue
+    - Calls **`online_check`** using the same store path and credentials, then **`online_upgrade`** with the returned download **`url`**.
+    - On failure **`errno`** may be **`ENOENT`** when no newer release is available, or the same values as **`online_check`** / **`online_upgrade`**.
+
+    Example, upgrade to the newest store release and restart
+    ```shell
+    arch@firmware.store_upgrade[ restart ]
+    ttrue
+    ```
+
+    Example, upgrade to the newest store release without automatic restart
+    ```shell
+    arch@firmware.store_upgrade
     ttrue
     ```
 

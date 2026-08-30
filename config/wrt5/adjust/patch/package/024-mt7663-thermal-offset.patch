@@ -1,0 +1,13 @@
+--- a/mt7615/mcu.c
++++ b/mt7615/mcu.c
+@@ -152,7 +152,10 @@
+ 		skb_pull(skb, sizeof(*rxd) - 4);
+ 		ret = *skb->data;
+ 	} else if (cmd == MCU_EXT_CMD(THERMAL_CTRL)) {
+ 		skb_pull(skb, sizeof(*rxd));
++		/* add by dimmalex: MT7663 reports temp in the second dword */
++		if (is_mt7663(mdev))
++			skb_pull(skb, 4);
+ 		ret = le32_to_cpu(*(__le32 *)skb->data);
+ 	} else if (cmd == MCU_EXT_QUERY(RF_REG_ACCESS)) {
+ 		skb_pull(skb, sizeof(*rxd));

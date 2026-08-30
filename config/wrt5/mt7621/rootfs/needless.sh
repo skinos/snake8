@@ -85,8 +85,8 @@ rm -fr ./usr/sbin/ubirmvol
 rm -fr ./usr/sbin/ubirsvol
 rm -fr ./usr/sbin/ubiupdatevol
 # libstdcpp: selected by iperf DEPENDS, but iperf links -static-libstdc++
-rm -fr ./usr/lib/libstdc++.so
-rm -fr ./usr/lib/libstdc++.so.*
+#rm -fr ./usr/lib/libstdc++.so
+#rm -fr ./usr/lib/libstdc++.so.*
 rm -fr ./usr/bin/ucode
 rm -fr ./usr/bin/wireguard_watchdog
 rm -fr ./usr//bin/jshn
@@ -104,6 +104,23 @@ rm -fr ./usr/lib/ossl-modules
 rm -fr ./usr/share/acl.d
 rm -fr ./usr/share/ucode
 rm -fr ./usr/share/dnsmasq
+
+# VPN: keep IPv4/WG .ko; drop kmodloader autoload (landos insmod on enable)
+for name in gre l2tp l2tp-eth l2tp-ip ipsec ipsec4 tun wireguard pptp pppol2tp iptunnel iptunnel4 udptunnel4 udptunnel6
+do
+    rm -f ./etc/modules.d/${name} ./etc/modules.d/*-${name}
+    rm -f ./etc/modules-boot.d/${name} ./etc/modules-boot.d/*-${name}
+done
+# IPv6 IPsec/tunnel6 unused by IPv4 IPsec; drop .ko so they cannot load
+rm -f ./lib/modules/*/ah6.ko
+rm -f ./lib/modules/*/esp6.ko
+rm -f ./lib/modules/*/ipcomp6.ko
+rm -f ./lib/modules/*/xfrm6_tunnel.ko
+rm -f ./lib/modules/*/tunnel6.ko
+rm -f ./etc/modules.d/ipsec6 ./etc/modules.d/*-ipsec6
+rm -f ./etc/modules.d/iptunnel6 ./etc/modules.d/*-iptunnel6
+rm -f ./etc/modules-boot.d/ipsec6 ./etc/modules-boot.d/*-ipsec6
+rm -f ./etc/modules-boot.d/iptunnel6 ./etc/modules-boot.d/*-iptunnel6
 
 
 # delete self

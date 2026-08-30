@@ -13,8 +13,7 @@
 	};
 
 	chosen {
-		/* No console= on ttyS0: keep UART for application (see uart/tty.cfg) */
-		bootargs = "rootfstype=squashfs,jffs2";
+		bootargs = "console=ttyS0,57600";
 	};
 
 	leds {

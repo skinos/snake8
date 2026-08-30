@@ -34,6 +34,7 @@ install:
 ifneq ($(strip $(HDS)),)
 	cp $(HDS) ${gINSTALL_DIR}/include/${BINS}
 endif
+	install -d ${gINSTALL_DIR}/lib
 	cp ${DYNAMIC_LIB} ${gINSTALL_DIR}/lib
 	ln -sf ${DYNAMIC_LIB} ${gINSTALL_DIR}/lib/${DYNAMIC_LIB}.${DYNAMIC_LIB_VERSION}
 clean distclean:

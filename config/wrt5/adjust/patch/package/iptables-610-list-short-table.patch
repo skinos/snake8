@@ -1,0 +1,23 @@
+--- a/iptables/xshared.c
++++ b/iptables/xshared.c
+@@ -1809,6 +1809,20 @@
+ 		invert = false;
+ 	}
+ 
++	/* add by dimmalex: -L listing requires -t m / -t n for mangle / nat */
++	if (p->command & CMD_LIST) {
++		if (strcmp(p->table, "mangle") == 0)
++			xtables_error(PARAMETER_PROBLEM,
++				"listing requires abbreviated table name, use -t m instead of -t mangle");
++		if (strcmp(p->table, "nat") == 0)
++			xtables_error(PARAMETER_PROBLEM,
++				"listing requires abbreviated table name, use -t n instead of -t nat");
++		if (strcmp(p->table, "m") == 0)
++			p->table = "mangle";
++		else if (strcmp(p->table, "n") == 0)
++			p->table = "nat";
++	}
++
+ 	if (strcmp(p->table, "nat") == 0 &&
+ 	    ((p->policy != NULL && strcmp(p->policy, "DROP") == 0) ||
+ 	    (cs->jumpto != NULL && strcmp(cs->jumpto, "DROP") == 0)))

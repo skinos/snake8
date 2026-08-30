@@ -1,0 +1,50 @@
+--- a/mt7615/init.c
++++ b/mt7615/init.c
+@@ -258,16 +258,6 @@
+ 	}
+ };
+ 
+-static const struct ieee80211_iface_combination if_comb[] = {
+-	{
+-		.limits = if_limits,
+-		.n_limits = ARRAY_SIZE(if_limits),
+-		.max_interfaces = MT7615_MAX_INTERFACES,
+-		.num_different_channels = 1,
+-		.beacon_int_infra_match = true,
+-	}
+-};
+-
+ void mt7615_init_txpower(struct mt7615_dev *dev,
+ 			 struct ieee80211_supported_band *sband)
+ {
+@@ -375,13 +365,9 @@
+ 	hw->sta_data_size = sizeof(struct mt7615_sta);
+ 	hw->vif_data_size = sizeof(struct mt7615_vif);
+ 
+-	if (is_mt7663(&phy->dev->mt76)) {
+-		wiphy->iface_combinations = if_comb;
+-		wiphy->n_iface_combinations = ARRAY_SIZE(if_comb);
+-	} else {
+-		wiphy->iface_combinations = if_comb_radar;
+-		wiphy->n_iface_combinations = ARRAY_SIZE(if_comb_radar);
+-	}
++	/* add by dimmalex: advertise radar widths so hostapd can CAC on 52-64 */
++	wiphy->iface_combinations = if_comb_radar;
++	wiphy->n_iface_combinations = ARRAY_SIZE(if_comb_radar);
+ 	wiphy->reg_notifier = mt7615_regd_notifier;
+ 
+ 	wiphy->max_sched_scan_plan_interval =
+--- a/mt7615/mac.c
++++ b/mt7615/mac.c
+@@ -2204,9 +2204,8 @@
+ 	enum mt76_dfs_state dfs_state, prev_state;
+ 	int err;
+ 
+-	if (is_mt7663(&dev->mt76))
+-		return 0;
+-
++	/* add by dimmalex: run RDD/CAC on MT7663/MT7613 (openwrt/mt76#925) */
++
+ 	prev_state = phy->mt76->dfs_state;
+ 	dfs_state = mt76_phy_dfs_state(phy->mt76);
+ 	if ((chandef->chan->flags & IEEE80211_CHAN_RADAR) &&

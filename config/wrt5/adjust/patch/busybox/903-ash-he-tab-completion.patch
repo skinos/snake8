@@ -1,0 +1,261 @@
+--- a/libbb/lineedit.c
++++ b/libbb/lineedit.c
+@@ -699,6 +699,31 @@
+ //Also, perhaps "foo b<TAB> needs to complete to "foo bar" <cursor>,
+ //not "foo bar <cursor>...
+ 
++#if ENABLE_FEATURE_TAB_COMPLETION
++/* add by dimmalex for HE tab completion via hetab */
++static char **he_matches;
++static unsigned he_num_matches;
++
++static void free_he_match_data(void)
++{
++	while (he_num_matches)
++		free(he_matches[--he_num_matches]);
++	free(he_matches);
++	he_matches = NULL;
++}
++
++static int match_from_hetab(const char *s)
++{
++	unsigned i;
++
++	for (i = 0; i < he_num_matches; i++) {
++		if (strcmp(he_matches[i], s) == 0)
++			return 1;
++	}
++	return 0;
++}
++#endif
++
+ static void free_tab_completion_data(void)
+ {
+ 	if (matches) {
+@@ -707,6 +732,9 @@
+ 		free(matches);
+ 		matches = NULL;
+ 	}
++#if ENABLE_FEATURE_TAB_COMPLETION
++	free_he_match_data();
++#endif
+ }
+ 
+ static void add_match(char *matched)
+@@ -728,6 +756,23 @@
+ 	num_matches++;
+ }
+ 
++#if ENABLE_FEATURE_TAB_COMPLETION
++static void add_he_match(char *matched)
++{
++	unsigned n = num_matches;
++	char *copy;
++
++	add_match(matched);
++	if (num_matches == n)
++		return;
++	/* own copy: matches[] may free duplicates during dedup */
++	copy = xstrdup(matched);
++	he_matches = xrealloc_vector(he_matches, 4, he_num_matches);
++	he_matches[he_num_matches] = copy;
++	he_num_matches++;
++}
++#endif
++
+ # if ENABLE_FEATURE_USERNAME_COMPLETION
+ /* Replace "~user/..." with "/homedir/...".
+  * The parameter is malloced, free it or return it
+@@ -832,6 +877,96 @@
+ 	return npth + 1;
+ }
+ 
++#if ENABLE_FEATURE_TAB_COMPLETION
++static int he_arg_line(const char *line)
++{
++	const char *p;
++
++	if (line == NULL)
++		return 0;
++	p = line;
++	while (*p == ' ' || *p == '\t')
++		p++;
++	if (p[0] != 'h' || p[1] != 'e')
++		return 0;
++	p += 2;
++	if (*p != ' ' && *p != '\t')
++		return 0;
++	return 1;
++}
++
++static void complete_hetab(const char *basecmd, unsigned baselen)
++{
++	int pfd[2];
++	pid_t pid;
++	char buf[4096];
++	char he_cmd[512];
++	char *line;
++	char *nl;
++	char *hetab_argv[3];
++	char *he_argv[3];
++	size_t pos;
++	ssize_t nr;
++	int wstatus;
++	int devnull;
++
++	if (pipe(pfd) != 0)
++		return;
++
++	pid = fork();
++	if (pid < 0) {
++		close(pfd[0]);
++		close(pfd[1]);
++		return;
++	}
++	if (pid == 0) {
++		close(pfd[0]);
++		xmove_fd(pfd[1], STDOUT_FILENO);
++		devnull = open("/dev/null", O_WRONLY);
++		if (devnull >= 0)
++			xmove_fd(devnull, STDERR_FILENO);
++		hetab_argv[0] = (char *)"hetab";
++		hetab_argv[1] = (char *)basecmd;
++		hetab_argv[2] = NULL;
++		execv("/usr/bin/hetab", hetab_argv);
++		execvp("hetab", hetab_argv);
++		snprintf(he_cmd, sizeof(he_cmd), "?%s", basecmd);
++		he_argv[0] = (char *)"he";
++		he_argv[1] = he_cmd;
++		he_argv[2] = NULL;
++		execv("/usr/bin/he", he_argv);
++		execvp("he", he_argv);
++		_exit(127);
++	}
++	close(pfd[1]);
++	pos = 0;
++	buf[0] = '\0';
++	for (;;) {
++		nr = safe_read(pfd[0], buf + pos, sizeof(buf) - 1 - pos);
++		if (nr <= 0)
++			break;
++		pos += (size_t)nr;
++		buf[pos] = '\0';
++		line = buf;
++		for (;;) {
++			nl = strchr(line, '\n');
++			if (nl == NULL)
++				break;
++			*nl = '\0';
++			if (line[0] != '\0' && strncmp(line, basecmd, baselen) == 0)
++				add_he_match(xstrdup(line));
++			line = nl + 1;
++		}
++		pos = strlen(line);
++		memmove(buf, line, pos + 1);
++	}
++	close(pfd[0]);
++	waitpid(pid, &wstatus, 0);
++	if (buf[0] != '\0' && strncmp(buf, basecmd, baselen) == 0)
++		add_he_match(xstrdup(buf));
++}
++#endif
++
+ /* Complete command, directory or file name.
+  * Return the length of the prefix used for matching.
+  */
+@@ -888,6 +1023,9 @@
+ 			}
+ 		}
+ # endif
++#if ENABLE_FEATURE_TAB_COMPLETION
++		complete_hetab(basecmd, baselen);
++#endif
+ 	}
+ 
+ 	for (i = 0; i < npaths; i++) {
+@@ -1213,6 +1351,9 @@
+ 	/* Length of string used for matching */
+ 	unsigned match_pfx_len = match_pfx_len;
+ 	int find_type;
++# if ENABLE_FEATURE_TAB_COMPLETION
++	char *he_line = NULL;
++# endif
+ # if ENABLE_UNICODE_SUPPORT
+ 	/* cursor pos in command converted to multibyte form */
+ 	int cursor_mb;
+@@ -1245,6 +1386,9 @@
+ 	match_buf = xmalloc(MAX_LINELEN * sizeof(int16_t));
+ # if !ENABLE_UNICODE_SUPPORT
+ 	save_string(match_buf, cursor + 1); /* +1 for NUL */
++# if ENABLE_FEATURE_TAB_COMPLETION
++	he_line = xstrdup(match_buf);
++# endif
+ # else
+ 	{
+ 		CHAR_T wc = command_ps[cursor];
+@@ -1252,6 +1396,9 @@
+ 		save_string(match_buf, MAX_LINELEN);
+ 		command_ps[cursor] = wc;
+ 		cursor_mb = strlen(match_buf);
++# if ENABLE_FEATURE_TAB_COMPLETION
++		he_line = xstrdup(match_buf);
++# endif
+ 	}
+ # endif
+ 	find_type = build_match_prefix(match_buf);
+@@ -1259,6 +1406,13 @@
+ 	/* Free up any memory already allocated */
+ 	free_tab_completion_data();
+ 
++#if ENABLE_FEATURE_TAB_COMPLETION
++	if (he_line != NULL && he_arg_line(he_line)) {
++		match_pfx_len = strlen(match_buf);
++		complete_hetab(match_buf, match_pfx_len);
++	} else
++#endif
++	{
+ # if ENABLE_FEATURE_USERNAME_COMPLETION
+ 	/* If the word starts with ~ and there is no slash in the word,
+ 	 * then try completing this word as a username. */
+@@ -1270,6 +1424,11 @@
+ 	 * try to match a command in $PATH, or a directory, or a file */
+ 	if (!matches)
+ 		match_pfx_len = complete_cmd_dir_file(match_buf, find_type);
++	}
++#if ENABLE_FEATURE_TAB_COMPLETION
++	free(he_line);
++	he_line = NULL;
++#endif
+ 
+ 	/* Account for backslashes which will be inserted
+ 	 * by quote_special_chars() later */
+@@ -1328,11 +1487,24 @@
+ 		/* Next <tab> is not a double-tab */
+ 		*lastWasTab = 0;
+ 
+-		chosen_match = quote_special_chars(matches[0]);
+-		len_found = strlen(chosen_match);
+-		if (chosen_match[len_found-1] != '/') {
+-			chosen_match[len_found] = ' ';
+-			chosen_match[++len_found] = '\0';
++		{
++#if ENABLE_FEATURE_TAB_COMPLETION
++			int no_space = match_from_hetab(matches[0]);
++			if (no_space)
++				chosen_match = xstrdup(matches[0]);
++			else
++				chosen_match = quote_special_chars(matches[0]);
++#else
++			int no_space = 0;
++			chosen_match = quote_special_chars(matches[0]);
++#endif
++			len_found = strlen(chosen_match);
++			if (chosen_match[len_found-1] != '/') {
++				if (!no_space) {
++					chosen_match[len_found] = ' ';
++					chosen_match[++len_found] = '\0';
++				}
++			}
+ 		}
+ 	}
+ 
