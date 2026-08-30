@@ -18,6 +18,16 @@
         </div>
       </div>
 
+       <!-- 通用延迟 -->
+      <div class="form-group" id="control_delay">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay (sec)"></label>
+        <div class="col-sm-9">
+          <div class="clearfix">
+            <input type="text" id="delay" class="col-xs-10 col-sm-5" maxlength="128" />
+          </div>
+        </div>
+      </div>
+
       <div id="idleSets">
         <!-- 最小运行时长 -->
         <div class="form-group">
@@ -52,16 +62,6 @@
             <div class="clearfix">
               <input type="text" id="idle_age" class="col-xs-10 col-sm-5" maxlength="128" />
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 通用延迟 -->
-      <div class="form-group">
-        <label class="col-sm-3 control-label no-padding-right" data-i18n="Delay (sec)"></label>
-        <div class="col-sm-9">
-          <div class="clearfix">
-            <input type="text" id="delay" class="col-xs-10 col-sm-5" maxlength="128" />
           </div>
         </div>
       </div>
@@ -164,6 +164,7 @@
                         $('#idleSets').hide();
                         $('#age').closest('.form-group').hide();
                         $('#pointSets').hide();
+                        $('#control_delay').hide();
                         break;
                 }
             }).trigger('change');
