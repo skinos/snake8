@@ -58,6 +58,10 @@ Documentation uses **angle-bracket placeholders** instead of fixed paths. They c
 | **`⟨PRJ_ROOT⟩`** | Root directory of **installed** projects (FPK payloads) | **`PROJECT_DIR`** |
 | **`⟨PRJ_NAME⟩`** | One project's subdirectory (same as `prj.json` → `name`) | — |
 | **`⟨PRJ_ROOT⟩/⟨PRJ_NAME⟩/`** | That project's install prefix on the device | — |
+| **`⟨VAR_ROOT⟩`** | Runtime variable / IPC directory for projects | **`PROJECT_VAR_DIR`** |
+| **`⟨VAR_ROOT⟩/⟨PRJ_NAME⟩/`** | That project's variable directory (created if missing) | — |
+| **`⟨INT_ROOT⟩`** | Persistent internal storage root for projects | **`PROJECT_INT_DIR`** |
+| **`⟨INT_ROOT⟩/⟨PRJ_NAME⟩/`** | That project's internal directory (created if missing) | — |
 | **`⟨LIB_DIR⟩`** | Global shared-library directory used for symlinks | **`PROJECT_LIB_DIR`** |
 | **`⟨BIN_DIR⟩`** | Global command directory used for symlinks | **`PROJECT_BIN_DIR`** |
 | **`⟨SYS_ROOT⟩`** | Running system root (for merged `rootfs/` trees, `/etc`, …) | — |
@@ -285,6 +289,42 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     ```shell
     land@fpk.path[ land ]
     ⟨PRJ_ROOT⟩/land
+    ```
+
++ `var2path[ name, variable ]` **get a runtime variable path under a project**   
+    - name ----------- [ string ], the project name
+    - variable ------- [ string ], optional, relative file or subdirectory name under the project variable directory
+    - failed return NULL
+    - succeed return [ string ], when variable omitted: `⟨VAR_ROOT⟩/⟨PRJ_NAME⟩/`; when provided: that directory plus variable
+
+    Example, get the variable directory of project modem
+    ```shell
+    land@fpk.var2path[ modem ]
+    ⟨VAR_ROOT⟩/modem/
+    ```
+
+    Example, get a named variable path under project modem
+    ```shell
+    land@fpk.var2path[ modem, modem@sms.outgoing ]
+    ⟨VAR_ROOT⟩/modem/modem@sms.outgoing
+    ```
+
++ `internal2path[ name, variable ]` **get a persistent internal storage path under a project**   
+    - name ----------- [ string ], the project name
+    - variable ------- [ string ], optional, relative file or subdirectory name under the project internal directory
+    - failed return NULL
+    - succeed return [ string ], when variable omitted: `⟨INT_ROOT⟩/⟨PRJ_NAME⟩/`; when provided: that directory plus variable
+
+    Example, get the internal directory of project modem
+    ```shell
+    land@fpk.internal2path[ modem ]
+    ⟨INT_ROOT⟩/modem/
+    ```
+
+    Example, get a named internal path under project modem
+    ```shell
+    land@fpk.internal2path[ modem, modem@sms.incoming ]
+    ⟨INT_ROOT⟩/modem/modem@sms.incoming
     ```
 
 + `list[ project ]` **list all installed projects or get details of a specific project**   

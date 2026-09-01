@@ -26,6 +26,8 @@ talk_t  modem_operator( talk_t state );
 int     rsrp2rssi( int rsrp );
 /* rsrp rssi 2 sinr */
 void    rsrprssi2sinr( talk_t state );
+/* Prefer RSRP bars when present; else RSSI. Writes signal/signal2. */
+boole   rssirsrp2signal( talk_t state );
 
 
 

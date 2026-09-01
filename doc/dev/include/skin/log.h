@@ -77,6 +77,7 @@
 #define LANDLOG_LAND_INIT           (0x02)
 #define LANDLOG_LAND_SERVICE        (0x03)
 #define LANDLOG_LAND_FPK            (0x04)
+#define LANDLOG_LAND_AI             (0x05)
 
 /// arch
 #define LANDLOG_ARCH                (0x02)
@@ -317,6 +318,14 @@ void landlog( unsigned int flags, const char *filename, int line, const char *fo
 #define fpk_warning( ... )       landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_FPK<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 #define fpk_fault( ... )         landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_FPK<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
 #define fpk_faulting( ... )      landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_FPK<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+/* land ai type log function */
+#define ai_verbose( ... )        landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_VERBOSE), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define ai_debug( ... )          landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_DEBUG), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define ai_info( ... )           landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_INFO), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define ai_warn( ... )           landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define ai_warning( ... )        landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_WARN|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
+#define ai_fault( ... )          landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT), (__FILE__), (__LINE__), __VA_ARGS__ )
+#define ai_faulting( ... )       landlog( ((LANDLOG_LAND<<LANDLOG_TYPE_OFFSET)|(LANDLOG_LAND_AI<<LANDLOG_SUBTYPE_OFFSET)|LANDLOG_FAULT|LANDLOG_ERRNO), (__FILE__), ( __LINE__ ), __VA_ARGS__ )
 
 
 

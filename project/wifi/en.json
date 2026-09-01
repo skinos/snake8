@@ -1,6 +1,7 @@
 {
     "disable": "Disable",
-    "nodevice": "No Setup",
+    "nodevice": "No Device",
+    "nosetup": "Not Setup",
     "down": "Down",
     "scanning": "Scanning",
     "uping": "Connecting",

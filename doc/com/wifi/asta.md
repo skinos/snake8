@@ -127,13 +127,15 @@ ttrue
     - succeed return [ json ], station status information
     ```json
     {
-        "status":"Current status",        // [ "nodevice", "uping", "down", "up" ]
+        "status":"Current status",        // [ "nodevice", "nosetup", "uping", "down", "up" ]
                                              // "nodevice" means the network device does not exist
+                                             // "nosetup" means configured but the vif is not created yet
                                              // "uping" for connecting
                                              // "down" for the network is down
                                              // "up" for the network is connect succeed
         "peer":"Peer SSID",              // [ string ]
         "peermac":"Peer BSSID",          // [ mac address ]
+        "mac":"Station interface MAC",   // [ mac address ], Optional when netdev exists
         "channel":"Peer channel",        // [ number ], 0-165
         "rate":"connect rate",           // [ number ], the unit is M
         "rssi":"Peer RSSI",              // [ number ], the unit is dBm
