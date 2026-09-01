@@ -87,13 +87,14 @@ function status_load()
       if ( info.status )
       {
           $(id+"_status").text( $.i18n(info.status) );
-          if ( info.status == "down" )
+          if ( info.status == "up" || info.status == "uping" || info.status == "connect" ||
+               info.status == "connecting" || info.status == "block" || info.status == "failed" )
           {
-              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           }
           else
           {
-			  $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
       }
       else
@@ -665,11 +666,45 @@ function config_save() {
         }
 
         var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
-        page.confirm({ message: msg }).then(function(result) {
-            if (!result) return location.reload();
-            he.exec([object + "=" + JSON.stringify(config)]).then(function() {
-                page.hint2succeed($.i18n('Modified successfully'));
-                config_load();
+        var modemName = window.modem;
+        var checkSms = false;
+        if ( config.mode !== "dhcpc" && modemName && config.status !== "disable" )
+        {
+            checkSms = true;
+        }
+
+        var smsCheck = Promise.resolve(false);
+        if ( checkSms )
+        {
+            smsCheck = he.load([ modemName ]).then(function(v) {
+                var mcfg = v[0];
+                if ( mcfg && mcfg.sms !== "disable" && mcfg.sms )
+                {
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        smsCheck.then(function(disableSms) {
+            var confirmMsg = msg;
+            if ( disableSms )
+            {
+                confirmMsg = msg + " " + $.i18n('Current IPv4 mode conflicts with SMS; SMS will be disabled.');
+                // only non-dhcpc mode may disable sms (ifname _set forwards to modem)
+                config.sms = "disable";
+            }
+            else
+            {
+                // mode is dhcpc or sms already off: do not touch modem sms
+                delete config.sms;
+            }
+            page.confirm({ message: confirmMsg }).then(function(result) {
+                if (!result) return location.reload();
+                he.exec([ object + "=" + JSON.stringify(config) ]).then(function() {
+                    page.hint2succeed($.i18n('Modified successfully'));
+                    config_load();
+                });
             });
         });
 
@@ -693,7 +728,8 @@ $.i18n().load( page.lang('lte') ).then( function () {
 
     /* bind the button */
     $('#lte_btn').on(ace.click_event, function () {
-        if ( state.status == "up" || state.status == "uping" )
+        if ( state.status == "up" || state.status == "uping" || state.status == "connect" ||
+             state.status == "connecting" || state.status == "block" || state.status == "failed" )
         {
             he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
         }

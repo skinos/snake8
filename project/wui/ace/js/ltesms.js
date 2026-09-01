@@ -1,4 +1,5 @@
 var lte;
+var ifcfg;
 var modem = page.param('modem', location.hash);   
 var ifname = page.param('object', location.hash);
 
@@ -9,6 +10,7 @@ var smslist_pager = '#smslist-grid-pager';
 function lte_sms() {
     window.LteConfigManager.loadSettings(modem, ifname, true).then(function(v) {
     lte = v[0];
+    ifcfg = v[1] || {};
     $("#button_sms").show();
     $('#sms').prop('checked', lte.sms === "enable");  
 
@@ -107,7 +109,8 @@ function sms_save()
   {
     return;
   }
-  var ltecopy = JSON.parse(JSON.stringify(lte));;
+  var ltecopy = JSON.parse(JSON.stringify(lte));
+  var switchMode = false;
 
   lte.sms = boole2able( $('#sms').prop('checked') );
   if ( lte.sms == "enable" )
@@ -134,18 +137,36 @@ function sms_save()
             return;
         }
       }
+
+      // SMS requires dhcpc: switch ifname mode when not dhcpc
+      // ifcfg comes from ifname _get (merged with modem); do not write full ifcfg
+      // back or old sms/gnss fields would overwrite modem via ltecon _set
+      if ( ifcfg && ifcfg.mode != "dhcpc" )
+      {
+        ifcfg.mode = "dhcpc";
+        switchMode = true;
+      }
   }
-  if ( ocompare( lte, ltecopy ) )
+  if ( ocompare( lte, ltecopy ) && !switchMode )
   {
       page.alert( { message: $.i18n('No changes to apply') } );
       return;
   }
 
   var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
+  if ( switchMode )
+  {
+    msg = msg + " " + $.i18n('SMS requires DHCP mode; IPv4 mode will be changed to DHCP.');
+  }
   page.confirm( { message: msg } ).then( function(result){
     if (!result) return location.reload();
     
-    var cmds = [ modem+"="+JSON.stringify(lte) ];
+    var cmds = [];
+    if ( switchMode )
+    {
+      cmds.push( ifname+":mode=dhcpc" );
+    }
+    cmds.push( modem+"="+JSON.stringify(lte) );
     he.exec(cmds).then( function(){
       page.hint2succeed( $.i18n('Modified successfully') );
       lte_sms();
