@@ -134,6 +134,8 @@ const chartManager = {
         if( value.status === "up"){
             // 显示图表
             this.showChart(ifname);
+            this.drawChart(ifname);
+            return true;
         }
         // 如果图表之前已经可见，直接绘制
         if (wasVisible) {
