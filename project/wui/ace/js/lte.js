@@ -248,6 +248,15 @@ function lte_basic(v)
         }
     }
 
+    var smsTabLi = $('#lteTabs a[href="#ltesms"]').parent();
+    he.load([ '.modem@smsd' ]).then(function(sv) {
+        if (sv[0] === true) {
+            smsTabLi.show();
+        } else {
+            smsTabLi.hide();
+        }
+    });
+
     /* init the network mode select */
     $("#mode").empty();
     $("#mode").append("<option value=''>"+$.i18n('Auto (Modem Default)')+"</option>");
