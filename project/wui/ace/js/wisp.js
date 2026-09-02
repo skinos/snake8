@@ -774,6 +774,16 @@ function config_save()
     }
   }
 
+  if ( $('#status').prop('checked') )
+  {
+    if ( !config.peer && !config.peer2 && !config.peer3
+         && !config.peermac && !config.peermac2 && !config.peermac3 )
+    {
+      page.alert( { message: $.i18n('Peer SSID')+"/"+$.i18n('Peer BSSID')+" "+$.i18n('Cannot be empty') } );
+      return;
+    }
+  }
+
   config.secure = $('#secure').val();
   if ( config.secure != 'disable')
   {
