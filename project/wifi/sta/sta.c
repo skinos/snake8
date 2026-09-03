@@ -615,6 +615,7 @@ boole_t _down( obj_t this, param_t param )
 {
 	const char *object;
 	const char *netdev;
+	const char *radio;
 
 	object = obj_name( this );
 	/* get the netdev */
@@ -646,6 +647,15 @@ boole_t _down( obj_t this, param_t param )
 	{
 		wifi_debug( "%s(%s) down", object, netdev );
 		ifconfig( "%s down", netdev );
+	}
+
+	/* drop STA-forced radio overrides so next hostapd uses config channel */
+	radio = reg_oget_str( this, "radio" );
+	if ( radio != NULL && *radio != '\0' )
+	{
+		reg_sput_str( radio, "channel", "" );
+		reg_sput_str( radio, "bandwidth", "" );
+		reg_sput_str( radio, "beacon", "" );
 	}
 
 	reg_ounlock( this, "netdev" );

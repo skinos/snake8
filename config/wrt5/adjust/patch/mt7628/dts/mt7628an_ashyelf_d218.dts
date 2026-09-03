@@ -153,7 +153,8 @@
 
 &state_default {
 	gpio {
-		groups = "i2c", "refclk", "wdt";
+		/* wled_an = GPIO 44 */
+		groups = "i2c", "refclk", "wdt", "wled_an";
 		function = "gpio";
 	};
 
