@@ -29,6 +29,16 @@ If the command returns a JSON **object** instead of a scalar string, **`camera@o
 
 Use **`camera@osd2he.signal2flag[ <he> ]`** when a placeholder should show LTE-style bar glyphs instead of a raw number. The inner HE command must return a plain string or number in the range **0–5** (for example **`ifname@lte.status:signal`**). Level **0** or a failed resolve is shown as **`✕`** (no signal); levels **1–5** map to **`▂`**, **`▂▄`**, **`▂▄▆`**, **`▂▄▆█`**.
 
+**Language translation**
+
+Use **`camera@osd2he.lang[ <text> ]`** to translate a literal string, or
+**`camera@osd2he.lang[ ,<he> ]`** when the first parameter is empty: the second
+parameter is executed as HE, and its string result is translated. Translation uses
+the camera project language JSON (`cn.json` / `en.json`), selected by
+**`land@machine:language`**. Keys are English source strings; values are the
+localized text. Missing keys or a missing language file return the original string
+unchanged.
+
 
 ### Configuration reference ( camera@osd2he )
 
@@ -114,5 +124,29 @@ ttrue
     Example, use in osd2he mapping (default in osd2he.cfg)
     ```shell
     camera@osd2he:$L-S$=camera@osd2he.signal2flag[ifname@lte.status:signal]
+    ttrue
+    ```
+
++ `lang[ text ]` / `lang[ , he ]` **translate a string with project i18n (cn/en)**
+    - text ------------- [ string ], language key (English source text in `cn.json` / `en.json`); when empty, use **he**
+    - he --------------- [ string ], HE command whose string result is used as the language key (only when **text** is empty)
+    - failed return NULL
+    - succeed return [ string ], translated text for the current system language; original text when the key or language file is missing
+
+    Example, translate a literal key
+    ```shell
+    camera@osd2he.lang[offline]
+    离线
+    ```
+
+    Example, translate the result of an HE command
+    ```shell
+    camera@osd2he.lang[,camera@gsuni.gb28281]
+    离线
+    ```
+
+    Example, use in osd2he mapping
+    ```shell
+    camera@osd2he:$GB$=camera@osd2he.lang[,camera@gsuni.gb28281]
     ttrue
     ```

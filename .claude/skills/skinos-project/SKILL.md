@@ -239,7 +239,7 @@ chmod +x project/myproj/myshell
 Rules:
 
 1. Register under **`exe`**, never **`cmd`**.
-2. Nested `he` must use `env -u cpipe he …` before a final `creturn` (avoids reply-pipe pollution).
+2. Nested `he` can be called directly (e.g. `he …` / `$(he …)`); then one final `creturn`.
 3. Optional factory: `<project_root>/<key>.cfg`.
 4. **Mandatory — interface doc:** **skinos-component-doc** → English `<key>.md`.
 5. Build: `./mkdel` → `make obj=<proj>`.

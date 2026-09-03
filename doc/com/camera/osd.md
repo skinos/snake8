@@ -121,7 +121,7 @@ Match **`camera`** values containing **`hikvision`**. Bootstrap GETs `/ISAPI/Sys
 
 **Univision notes**
 
-Univision requires an RPC login (`sha256(sha256(password)+MZH3XS)`, cookie + session) before OSD calls. Overlay custom / channelTitle `data` fields are Base64; the driver decodes them, replaces `$keyword$`, then re-encodes before `setOSDConfig`. Match **`camera`** values containing **`uni`** (for example **`univision`** or **`uni`**).
+Univision requires an RPC login (`md5(md5(password)+MZH3XS)`, `encryptType:0`, cookie + session) before OSD calls. `camera@gsuni.gb28281` reuses the same cookie/session under `/tmp/.camera.osd.uni.*` so replace and set share one login per cycle. Overlay custom / channelTitle `data` fields are Base64; the driver decodes them, replaces `$keyword$`, then re-encodes before `setOSDConfig`. Match **`camera`** values containing **`uni`** (for example **`univision`** or **`uni`**).
 
 **ViewSheen notes**
 
@@ -137,7 +137,7 @@ When **`status`** is **`enable`**, the background **`service`** repeatedly: ensu
 
 **HE value requirement**
 
-Each mapping in **`camera@osd2he`** must resolve to a plain string (or empty string). If the HE command returns a JSON object, that keyword is not replaced and a warning is logged.
+Each mapping in **`camera@osd2he`** must resolve to a plain string (or empty string). If the HE command returns a JSON object, that keyword is not replaced and a warning is logged. If the HE command fails or returns **NULL**, the placeholder is replaced with an empty string and a warning is logged.
 
 
 
