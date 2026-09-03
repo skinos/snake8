@@ -8,11 +8,14 @@ Listen for gateway **portc** reverse-proxy connections, and map public TCP/UDP p
 - Standby keeplive: client pings with `k`, server echoes `k`; idle timeout is `nomate_timeout`
 - Client ping interval is `(nomate_timeout-1)/3`; heport pushes to **`agent@portc`**: `mode`, `active_pond`, `idle_pond`, `nomate_timeout`, `connect_timeout=(mating_timeout-1)`, `mate_timeout`
 - Those values are published by `center@pport`: `status` in `_setup`, `mode`/`active_pond`/`idle_pond`/`nomate_timeout`/`mating_timeout`/`mate_timeout` in `_service` (defaults apply when unset); `heport_pport_config` reads them via `reg_sintv` / `reg_sstring`
+- Register is created with **`PPORT_REG_SLOTS` (8192)** so per-user mesh relay counts can use the username as the key (`reg_sint(center@pport, username)`). Default object register is only 128 keys. Size applies when the register file is first created; an already-small file is not resized
 - **`mode`**: `pond` (default, one proxy TCP per session) or `mux` (future multiplex; not implemented — service refuses to start). Hard cutover later; center does not run both data planes.
 - **UDP map framing** on the proxy TCP (after mate): each datagram is `[u16be length][payload]` (`length` 0..65535). TCP/serial maps stay raw byte streams. Requires matching **`agent@portc`** version.
 - Map rules can be persistent (`timeout` 0) or idle-expired; optional source-IP lock
 - Persistent maps reload from heport user `tcpmap` / `udpmap` files at service start
 - Pair with device-side **`agent@portc`** for the client pond
+- Two public ranges (defaults): `[dynamic_port, static_port)` = 20006–24999, center on demand (`dynamic_port[]` TCP, mesh WireGuard UDP relay). `[static_port, …)` = 25000+, user `tcpmap` / `udpmap`
+- Mesh relay UDP lives in `pport_udp_relay[]` (`relay_map` / `relay_unmap` / `relay_list` / `relay_dump`), not in user `tcp_map` / `udp_map` or `<user>/udpmap`
 
 
 
@@ -24,8 +27,10 @@ Listen for gateway **portc** reverse-proxy connections, and map public TCP/UDP p
     "status":"enable the port proxy service",                         // [ "disable", "enable" ], default be "enable" when unset
 
     "port":"TCP listen port for gateway portc connections",           // [ number ], default be 20005
-    "dynamic_port":"start of dynamic TCP port pool",                  // [ number ], default be 20006, used by dynamic_port[]
-    "static_port":"base of mapped public TCP/UDP ports",              // [ number ], default be 25000, map index = port - static_port
+    "dynamic_port":"start of center on-demand port pool",             // [ number ], default be 20006
+                                                                          // range is [dynamic_port, static_port): TCP via dynamic_port[], mesh UDP relay
+    "static_port":"base of user-mapped public TCP/UDP ports",         // [ number ], default be 25000, map index = port - static_port
+                                                                          // tcpmap / udpmap and empty-port tcp_map / udp_map allocate from here
     "mode":"proxy transport mode",                                    // [ "pond", "mux" ], default be "pond", pushed to agent@portc
                                                                           // "pond": current one-TCP-per-session; "mux": future, not implemented (service exits)
     "active_pond":"active standby pond size on gateway (maps present)", // [ number ], default be 6, pushed to agent@portc
@@ -52,8 +57,8 @@ center@pport
 {
     "status":"enable",                    # port proxy enabled
     "port":"20005",                       # gateway portc connect port
-    "dynamic_port":"20006",               # dynamic port pool start
-    "static_port":"25000",                # mapped public port base
+    "dynamic_port":"20006",               # center on-demand pool start
+    "static_port":"25000",                # user map public port base
     "mode":"pond",                        # pond now; mux reserved
     "active_pond":"6",                    # gateway active standby pool
     "idle_pond":"1",                      # gateway idle standby pool
@@ -87,6 +92,18 @@ center@pport|{"nomate_timeout":"46","mating_timeout":"15","mate_timeout":"180"}
 ttrue
 ```
 
+
+
+### Concepts
+
+**Two public port ranges**
+
+| Range | Default | Who | Typical use |
+|-------|---------|-----|-------------|
+| `[dynamic_port, static_port)` | 20006–24999 | Center | ttyd TCP via `dynamic_port[]`; mesh UDP via `relay_map` |
+| `[static_port, …)` | 25000+ | User | `tcpmap` / `udpmap` and `tcp_map` / `udp_map` with empty port |
+
+Mesh relay is a separate table (`pport_udp_relay[PPORT_RELAY_NUMBER]`, default 3000), indexed from `dynamic_port`. **`relay_map` / `relay_unmap` / `relay_list` / `relay_dump`** match the user UDP APIs, but listen in `[dynamic_port, static_port)` and do not share `pport_udp_server[]`. Same mac + hand reuses the existing listen. `timeout > 0` needs the device online and idle-unmaps the slot. `udp_map` / `udp_unmap` / `udp_list` / `udp_dump` do not see these ports. `dynamic_port[]` is a TCP number counter only. Per-user how many listens may exist is `<user>/config` **`relay_max`** (enforced by nport before it calls `relay_map`, not by this table size). Live count per username may live in the `center@pport` register (key = username); that store is sized with `PPORT_REG_SLOTS`.
 
 
 ### API Reference
@@ -171,7 +188,7 @@ ttrue
 
 + `udp_list[]` **list all active UDP map rules**
     - failed return NULL
-    - succeed return [ json ]
+    - succeed return [ json ], user maps from `static_port` only
     ```json
     {
         "udp port":                         // [ string ]: { json }, public map port as key
@@ -212,16 +229,50 @@ ttrue
     }
     ```
 
-+ `dynamic_port[]` **allocate next dynamic TCP port from the dynamic pool**
-    - failed return NULL
-    - succeed return [ number ], next port in `[dynamic_port, static_port)`
-    - Counter wraps back to `dynamic_port` when it reaches `static_port`
 
-    Example, get a dynamic port
-    ```shell
-    center@pport.dynamic_port
-    20006
++ `relay_list[]` **list live mesh relay UDP maps**
+    - failed return NULL
+    - succeed return [ json ]
+    ```json
+    {
+        "udp port":                         // [ string ]: { json }, public relay port as key
+        {
+            "fd":"listen file descriptor",       // [ number ]
+            "macid":"gateway mac identify",      // [ string ]
+            "hand_ip":"local target IP",         // [ string ]
+            "hand_port":"local target port",     // [ string ]
+            "hand_proto":"local protocol",       // [ string ], always "udp"
+            "total_read":"bytes from public clients",   // [ number ]
+            "total_write":"bytes to public clients",    // [ number ]
+            "total_accept":"accepted sessions",  // [ number ]
+            "timeout":"idle unmap timeout",      // [ number ]
+            "lock":"source IP lock",             // [ number ], optional, present when lock > 0
+            "last_time":"last activity uptime"   // [ number ], the unit is second
+        }
+        // "...":{}  How many relay maps show how many properties
+    }
     ```
+
+    Example, list mesh relay maps
+    ```shell
+    center@pport.relay_list
+    {
+        "20006":
+        {
+            "fd":"13",
+            "macid":"00037f122340",
+            "hand_ip":"127.0.0.1",
+            "hand_port":"10005",
+            "hand_proto":"udp",
+            "total_read":"0",
+            "total_write":"0",
+            "total_accept":"0",
+            "timeout":"180",
+            "last_time":"12345"
+        }
+    }
+    ```
+
 
 + `device_dump[ macid ]` **dump standby proxies and waiting clients for one gateway**
     - macid -------------- [ string ], 12-hex mac identify
@@ -324,7 +375,7 @@ ttrue
     ```
 
 + `udp_dump[ port ]` **dump one UDP map and its active sessions**
-    - port --------------- [ number ], public map port
+    - port --------------- [ number ], public user map port
     - failed return NULL
     - succeed return [ json ]
     ```json
@@ -366,6 +417,60 @@ ttrue
         "macid":"00037f122340",
         "hand_ip":"192.168.8.1",
         "hand_port":"5000",
+        "hand_proto":"udp",
+        "total_read":"0",
+        "total_write":"0",
+        "total_accept":"0",
+        "timeout":"0",
+        "client_lock":"0",
+        "last_time":"12345"
+    }
+    ```
+
++ `relay_dump[ port ]` **dump one mesh relay UDP map and its active sessions**
+    - port --------------- [ number ], public relay port
+    - failed return NULL
+    - succeed return [ json ]
+    - Same fields as `udp_dump`. Looks up `pport_udp_relay[]` from `dynamic_port`, not user `udp_dump`
+    ```json
+    {
+        "fd":"listen file descriptor",            // [ number ]
+        "port":"public relay port",               // [ number ]
+        "macid":"gateway mac identify",           // [ string ]
+        "hand_ip":"local target IP",              // [ string ]
+        "hand_port":"local target",               // [ string ]
+        "hand_proto":"local protocol",            // [ string ]
+        "total_read":"bytes from clients",        // [ number ]
+        "total_write":"bytes to clients",         // [ number ]
+        "total_accept":"accepted sessions",       // [ number ]
+        "timeout":"idle unmap timeout",           // [ number ]
+        "client_lock":"source IP lock flag",      // [ number ]
+        "client_addr":"locked client IP",         // [ string ], optional
+        "last_time":"last activity uptime",       // [ number ]
+        "ip:port":                                // [ string ]: { json }, active client session
+        {
+            "fd":"client socket",                      // [ number ]
+            "last_time":"last activity",               // [ number ]
+            "create_time":"create uptime",             // [ number ]
+            "total_read":"bytes read",                 // [ number ]
+            "total_write":"bytes written",             // [ number ]
+            "proxy_addr":"mated gateway peer",         // [ string ], optional
+            "proxy_fd":"proxy socket",                 // [ number ], optional
+            "proxy_last_time":"proxy last activity"    // [ number ], optional
+        }
+        // "...":{}  How many sessions show how many properties
+    }
+    ```
+
+    Example, dump relay port 20006
+    ```shell
+    center@pport.relay_dump[ 20006 ]
+    {
+        "fd":"13",
+        "port":"20006",
+        "macid":"00037f122340",
+        "hand_ip":"127.0.0.1",
+        "hand_port":"10005",
         "hand_proto":"udp",
         "total_read":"0",
         "total_write":"0",
@@ -446,7 +551,7 @@ ttrue
     ```
 
 + `udp_map[ port, macid, hand_ip, hand_port, hand_proto, timeout, lock ]` **add a UDP public map to a gateway local target**
-    - port --------------- [ number ], optional, public port; 0 or empty allocates the next free port from `static_port`
+    - port --------------- [ number ], optional, public port; 0 or empty allocates the next free port from `static_port` (user maps). Mesh relay uses `relay_map`, not this API
     - macid -------------- [ string ], 12-hex gateway mac identify
     - hand_ip ------------ [ string ], local IP on the gateway
     - hand_port ---------- [ string ], local port, or uart object id when `hand_proto` is `dev`
@@ -480,13 +585,86 @@ ttrue
 
 + `udp_unmap[ port, macid ]` **remove UDP map rule(s)**
     - port --------------- [ number ], optional, public port to unmap
-    - macid -------------- [ string ], optional, 12-hex mac; with port empty, unmap all UDP maps for this macid
+    - macid -------------- [ string ], optional, 12-hex mac; with port empty, unmap all user UDP maps for this macid
     - At least one of port or macid is required
     - failed return tfalse
     - succeed return ttrue
+    - Does not touch mesh relay ports (`relay_map`)
 
     Example, unmap one UDP port
     ```shell
     center@pport.udp_unmap[ 25001, ]
     ttrue
     ```
+`
+
++ `relay_map[ port, macid, hand_ip, hand_port, hand_proto, timeout, lock ]` **add a mesh relay UDP in the dynamic range**
+    - port --------------- [ number ], optional, public port; 0 or empty allocates the next free port from `dynamic_port`
+    - macid -------------- [ string ], 12-hex gateway mac identify
+    - hand_ip ------------ [ string ], local IP on the gateway (mesh uses `127.0.0.1`)
+    - hand_port ---------- [ string ], local WireGuard/raw listen on the gateway
+    - hand_proto --------- [ "tcp", "udp", "dev" ], optional, default be `udp`
+    - timeout ------------ [ number ], optional, idle seconds then unmap; 0 or empty means persistent; when > 0 the gateway must already be online
+    - lock --------------- [ number ], optional, > 0 locks the first public client source IP
+    - failed return NULL
+    - succeed return [ json ]
+    - Own table `pport_udp_relay[]`. Not a user `udpmap` rule. Not written to disk
+    - Listens in `[dynamic_port, static_port)`. Same mac + hand_ip + hand_port + hand_proto returns the existing map
+    ```json
+    {
+        "port":"public map port",                  // [ number ]
+        "macid":"gateway mac identify",            // [ string ]
+        "hand_ip":"local target IP",               // [ string ]
+        "hand_port":"local target",                // [ string ]
+        "hand_proto":"local protocol",             // [ "tcp", "udp", "dev" ]
+        "lock":"source IP lock"                    // [ number ], optional, present when lock > 0
+    }
+    ```
+
+    Example, borrow a public UDP for a NAT member
+    ```shell
+    center@pport.relay_map[ ,00037f122340,127.0.0.1,10005,udp,0,0 ]
+    {
+        "port":"20006",
+        "macid":"00037f122340",
+        "hand_ip":"127.0.0.1",
+        "hand_port":"10005",
+        "hand_proto":"udp"
+    }
+    ```
+
++ `relay_unmap[ port, macid ]` **remove mesh relay UDP map(s)**
+    - port --------------- [ number ], optional, public relay port to unmap
+    - macid -------------- [ string ], optional, 12-hex mac; with port empty, unmap all relay maps for this macid
+    - At least one of port or macid is required
+    - failed return tfalse
+    - succeed return ttrue
+    - Does not touch user UDP maps (`udp_map`)
+
+    Example, unmap one relay port
+    ```shell
+    center@pport.relay_unmap[ 20006, ]
+    ttrue
+    ```
+
+    Example, unmap all relay maps for a gateway
+    ```shell
+    center@pport.relay_unmap[ ,00037f122340 ]
+    ttrue
+    ```
+
+
+
+
+
++ `dynamic_port[]` **allocate next dynamic TCP port from the dynamic pool**
+    - failed return NULL
+    - succeed return [ number ], next port in `[dynamic_port, static_port)`
+    - Counter wraps back to `dynamic_port` when it reaches `static_port`
+    - TCP number only (ttyd). Mesh UDP relay uses `relay_map`, not this API
+
+    Example, get a dynamic port
+    ```shell
+    center@pport.dynamic_port
+    20006
+    ``

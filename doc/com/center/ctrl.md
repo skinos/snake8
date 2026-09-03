@@ -21,12 +21,13 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 **User**
 
-+ `user_add[ user, key, [vcode], [lang], [comment] ]` **create a user (create only)**
-    - user ------- [ string ], required; only `A-Z` `a-z` `0-9` `_` `-` (reject `/` `.` space `;` etc.)
++ `user_add[ user, key, [vcode], [lang], [comment], [relay_max] ]` **create a user (create only)**
+    - user ------- [ string ], required; only `A-Z` `a-z` `0-9` `_` `-`; length `< 32` bytes (reject `/` `.` space `;` etc.)
     - key -------- [ string ], required plaintext password (stored via `simple_encode`)
     - vcode ------ [ string ], optional device register code
     - lang ------- [ "en", "cn", … ], optional; empty follows system
     - comment ---- [ string ], optional
+    - relay_max -- [ number ], optional live mesh relay UDP cap; omit = unlimited; `0` = none; `N` = at most N
     - fails if user already exists, key missing, username has illegal characters, or password encode fails
     - failed return tfalse
     - succeed return ttrue
@@ -38,17 +39,21 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     dimmalex@CLS:~/snake8$
     ```
 
-+ `user_modify[ user, [vcode], [lang], [comment] ]` **change non-password fields**
++ `user_modify[ user, [vcode], [lang], [comment], [relay_max] ]` **change non-password fields**
     - user ------- [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
     - omitted parameters leave that field unchanged
-    - explicit empty string clears `vcode` / `comment`; empty `lang` follows system
+    - explicit empty string clears `vcode` / `comment` / `relay_max` (cleared `relay_max` = unlimited); empty `lang` follows system
+    - relay_max -- [ number ], optional; `0` = none; `N` = at most N live mesh relay UDP listens
     - does not change password
+    - shrinking the cap does not drop listens already up; new `relay_map` is refused until some are returned
     - failed return tfalse
     - succeed return ttrue
 
     Example
     ```shell
     dimmalex@CLS:~/snake8$ he center@ctrl.user_modify[ ashyelf,sssss,en, TestUser ]
+    ttrue
+    dimmalex@CLS:~/snake8$ he center@ctrl.user_modify[ ashyelf,,,,2 ]
     ttrue
     dimmalex@CLS:~/snake8$
     ```
@@ -67,7 +72,8 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
         "ashyelf":
         {
             "lang":"en",
-            "comment":"TestUser"
+            "comment":"TestUser",
+            "relay_max":"2"
         }
     }
     dimmalex@CLS:~/snake8$
@@ -75,7 +81,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 + `user_delete[ user ]` **delete a user tree**
     - user ------ [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
-    - first deletes each gateway via `center@api.delete` (maps, mesh membership, heport knock)
+    - first deletes each gateway via `center@api.delete` (maps, mesh membership and any mesh relay UDP, heport knock)
     - then deletes remaining networks via `center@api.network_delete` and leftover TCP/UDP maps
     - then removes `{device_path}/<user>/` entirely
     - cleanup is best-effort; the user tree is still removed
@@ -145,3 +151,4 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 - Related self-service APIs: `center@api.user_profile`, `user_modify`, `user_passwd`
 - `center@userwui` config: `auth_object=center@ctrl`, `auth_api=user_match`
 - On-disk layout: `userdir/README.md`, `userdir/config.md`
+- Mesh relay listen cap: `<user>/config` `relay_max` (this component). Wish field `relay` stays on the net file and is only for a NAT master (`userdir/net/mynet.md`)
