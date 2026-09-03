@@ -259,15 +259,15 @@ function lte_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
-        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block") {
-            // 状态正常
+            info.status === "block" ||
+            info.status === "failed") {
+            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
         }
@@ -555,22 +555,23 @@ function wan_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
-        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block") {
+            info.status === "block" ||
+            info.status === "failed") {
+            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
-        } else if (info.status === "down") {
-            if (info.step && info.step !== "online") {
-                $(id + "_status").text($.i18n(info.step));
-            }
+        } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+            if (info.status === "down" && info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
         }
         
         if (info.error) {
@@ -752,22 +753,23 @@ function wisp_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
-        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block") {
+            info.status === "block" ||
+            info.status === "failed") {
+            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
-        } else if (info.status === "down") {
-            if (info.step && info.step !== "online") {
-                $(id + "_status").text($.i18n(info.step));
-            }
+        } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
+            if (info.status === "down" && info.step && info.step !== "online") {
+                $(id + "_status").text($.i18n(info.step));
+            }
         }
         
         if (info.error) {
@@ -1198,12 +1200,13 @@ function bindButtonEvents() {
 function toggleLteInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect") && status !== $.i18n("block")) {
-        he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
+    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
+        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+        he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     }
@@ -1213,12 +1216,13 @@ function toggleLteInterface(type) {
 function toggleWanInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status === $.i18n("down")) {
-        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
+        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     }
@@ -1228,12 +1232,13 @@ function toggleWanInterface(type) {
 function toggleWispInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status === $.i18n("down")) {
-        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
+        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     }

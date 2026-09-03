@@ -8,6 +8,7 @@
     "connected": "Connected",
     "up": "Online",
     "nodevice": "No modem",
+    "nosetup": "Not Setup",
     "noimei": "Invalid IMEI",
     "noimsi": "Invalid IMSI",
     "pin": "Need PIN",

@@ -121,16 +121,16 @@ To greet from `glue.cfg`, edit the **whole script**. Keep `#!/bin/bash`, `. $che
 
 setup()
 {
-    name=$(env -u cpipe he ${PROJECT}@${COM}:name)
+    name=$(he ${PROJECT}@${COM}:name)
     echo "hello, ${name}"
-    env -u cpipe he log.info[ "hello, ${name}" ]
+    he log.info[ "hello, ${name}" ]
     creturn ttrue
 }
 
 shut()
 {
     echo "the ${PROJECT}@${COM} shut has be called"
-    env -u cpipe he log.info[ "the ${PROJECT}@${COM} shut has be called" ]
+    he log.info[ "the ${PROJECT}@${COM} shut has be called" ]
     creturn ttrue
 }
 
@@ -140,7 +140,7 @@ service()
     while :
     do
         number=$[number+1]
-        env -u cpipe he log.info[ "hello world ( $number ) times" ]
+        he log.info[ "hello world ( $number ) times" ]
         sleep 1
     done
     creturn tfalse
@@ -155,7 +155,7 @@ list()
 cend
 ```
 
-**Nested `he`:** always `env -u cpipe he …` so nested calls do not write this component’s reply pipe; then one `creturn`.
+**Nested `he`:** call `he …` directly; then one `creturn`.
 
 Call `setup` again; you should see `hello, hello`.
 
@@ -223,7 +223,7 @@ Environment (set by the framework):
 | `service` | `myproj@glue.service` | Long-running loop (supervisor restarts on exit) |
 | `list` | `myproj@glue.list` | Example that returns JSON |
 
-`creturn ttrue` / `tfalse` match HE sentinels. `list` already returns a JSON string from `PARAM1` / `PARAM2`. Call other HE lines with `env -u cpipe he …` (quote when the shell would eat `|`, `{`, `[`).
+`creturn ttrue` / `tfalse` match HE sentinels. `list` already returns a JSON string from `PARAM1` / `PARAM2`. Call other HE lines with `he …` (quote when the shell would eat `|`, `{`, `[`).
 
 ---
 

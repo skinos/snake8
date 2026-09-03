@@ -305,6 +305,7 @@
 <!-- page specific plugin scripts -->
 <script type="text/javascript">
   var sta;
+  var state;
   var securelist;
   var object = "wifi@xsta";
   var currentActiveRow = 1;
@@ -320,15 +321,20 @@
   {
     he.bkload( [ object+".status" ] ).then( function(v){
       var info = v[0];
+      state = info;
       if ( !info )
       {
           return;
       }
       if ( info.status )
       {
-          $("#status_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           $("#status_status").text( $.i18n(info.status) );
-          if ( info.status == "down" )
+          if ( info.status == "up" || info.status == "uping" || info.status == "connect" ||
+               info.status == "connecting" || info.status == "block" || info.status == "failed" )
+          {
+              $("#status_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
+          }
+          else
           {
               $("#status_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
@@ -851,13 +857,14 @@
       });
 
       $('#status_btn').on(ace.click_event, function () {
-          if ( $('#status_status').text() == $.i18n('down') )
+          if ( state && ( state.status == "up" || state.status == "uping" || state.status == "connect" ||
+               state.status == "connecting" || state.status == "block" || state.status == "failed" ) )
           {
-              he.exec( [ object+'.up' ] ).then( function(result){status_load();} );
+              he.exec( [ object+'.down' ] ).then( function(result){status_load();} );
           }
           else
           {
-              he.exec( [ object+'.down' ] ).then( function(result){status_load();} );
+              he.exec( [ object+'.up' ] ).then( function(result){status_load();} );
           }
       });
 

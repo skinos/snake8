@@ -32,6 +32,7 @@
     "connected": "正在连接",
     "up": "连接成功",
     "nodevice": "无基带",
+    "nosetup": "未启动",
     "noimei": "IMEI错误",
     "noimsi": "IMSI错误",
     "pin": "PIN码",

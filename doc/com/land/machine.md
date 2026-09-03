@@ -279,7 +279,7 @@ ttrue
     45
     ```
 
-+ `fsinfo[]` **get filesystem usage information from df**
++ `fsinfo[]` **get filesystem usage information**
     - failed return NULL
     - succeed return [ json ], a map of mount point to filesystem information
     ```json
@@ -287,10 +287,12 @@ ttrue
         "mount point":                           // [ string ]: { json }, filesystem mount point
         {                                             // filesystem usage information
             "filesystem": "device path",         // [ string ], the device or filesystem path
+            "fstype": "filesystem type",         // [ string ], type from mounts, squashfs/overlay/tmpfs/...
             "size": "total size",                // [ string ], total size
             "used": "used size",                 // [ string ], used size
             "available": "available size",       // [ string ], available size
-            "use": "usage percentage"            // [ string ], usage percentage
+            "use": "usage percentage",           // [ string ], usage percentage
+            "mode": "rw or ro"                   // [ string ], mount flag, "rw" or "ro"
         }
         // "...":{...}  How many filesystems show how many properties
     }
@@ -303,10 +305,12 @@ ttrue
         "/":
         {
             "filesystem":"/dev/root",            # device path
+            "fstype":"squashfs",                 # filesystem type
             "size":"256M",                       # total size
             "used":"128M",                       # used size
             "available":"128M",                  # available size
-            "use":"50%"                          # usage percentage
+            "use":"50%",                         # usage percentage
+            "mode":"rw"                          # mount flag, rw or ro
         }
     }
     ```
@@ -319,10 +323,12 @@ ttrue
         "device name":                           // [ string ]: { json }, storage device name (config, sd0, etc.)
         {                                             // storage device information
             "path": "mount path",                // [ string ], mount path of the storage device
+            "fstype": "filesystem type",         // [ string ], type from mounts, squashfs/overlay/tmpfs/...
             "size": "total size",                // [ string ], total size
             "used": "used size",                 // [ string ], used size
             "available": "available size",       // [ string ], available size
-            "use": "usage percentage"            // [ string ], usage percentage
+            "use": "usage percentage",           // [ string ], usage percentage
+            "mode": "rw or ro"                   // [ string ], mount flag, "rw" or "ro"
         }
         // "...":{...}  How many storage devices show how many properties
     }
@@ -335,10 +341,12 @@ ttrue
         "config":
         {
             "path":"/skinos/cfg",                # config partition mount path
+            "fstype":"ubifs",                    # filesystem type
             "size":"16M",                        # total size
             "used":"4M",                         # used size
             "available":"12M",                   # available size
-            "use":"25%"                          # usage percentage
+            "use":"25%",                         # usage percentage
+            "mode":"rw"                          # mount flag, rw or ro
         }
     }
     ```
@@ -351,10 +359,12 @@ ttrue
         "device name":                           // [ string ]: { json }, external storage device name (sd0, sd1, etc.)
         {                                             // storage device information
             "path": "mount path",                // [ string ], mount path of the storage device
+            "fstype": "filesystem type",         // [ string ], type from mounts, squashfs/overlay/tmpfs/...
             "size": "total size",                // [ string ], total size with unit
             "used": "used size",                 // [ string ], used size with unit
             "available": "available size",       // [ string ], available size with unit
-            "use": "usage percentage"            // [ string ], usage percentage
+            "use": "usage percentage",           // [ string ], usage percentage
+            "mode": "rw or ro"                   // [ string ], mount flag, "rw" or "ro"
         }
         // "...":{...}  How many external storage devices show how many properties
     }
@@ -367,10 +377,12 @@ ttrue
         "sd0":
         {
             "path":"/mnt/sd0",                   # SD card mount path
+            "fstype":"vfat",                     # filesystem type
             "size":"7G",                         # total size
             "used":"2G",                         # used size
             "available":"5G",                    # available size
-            "use":"28%"                          # usage percentage
+            "use":"28%",                         # usage percentage
+            "mode":"rw"                          # mount flag, rw or ro
         }
     }
     ```

@@ -22,13 +22,14 @@ function status_load()
       if ( info.status )
       {
           $(id+"_status").text( $.i18n(info.status) );
-          if ( info.status == "down" )
+          if ( info.status == "up" || info.status == "uping" || info.status == "connect" ||
+               info.status == "connecting" || info.status == "block" || info.status == "failed" )
           {
-              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           }
           else
           {
-			  $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
       }
       else
@@ -574,13 +575,14 @@ $.i18n().load( page.lang('wan') ).then( function () {
 
     /* bind the button */
     $('#wan_btn').on(ace.click_event, function () {
-        if ( state.status == "down" )
+        if ( state.status == "up" || state.status == "uping" || state.status == "connect" ||
+             state.status == "connecting" || state.status == "block" || state.status == "failed" )
         {
-            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
         }
         else
         {
-            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
         }
     });
 

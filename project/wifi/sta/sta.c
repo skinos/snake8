@@ -704,6 +704,7 @@ talk_t _status( obj_t this, param_t param )
 	talk_t ret;
 	talk_t cfg;
 	const char *netdev;
+	const char *status;
 	char mac[NAME_MAX];
     char path[PATH_MAX];
 
@@ -723,7 +724,16 @@ talk_t _status( obj_t this, param_t param )
 	/* get the state */
 	if ( netdev_flags( netdev, IFF_BROADCAST ) <= 0 )
 	{
-		json_set_string( ret, "status", "nodevice" );
+		/* delay-create: vif not built yet is nosetup, not missing hardware */
+		status = json_string( cfg, "status" );
+		if ( status != NULL && 0 == strcmp( status, "disable" ) )
+		{
+			json_set_string( ret, "status", "down" );
+		}
+		else
+		{
+			json_set_string( ret, "status", "nosetup" );
+		}
 		talk_free( cfg );
 		return ret;
 	}

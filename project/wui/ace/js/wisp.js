@@ -26,13 +26,14 @@ function status_load()
       if ( info.status )
       {
           $(id+"_status").text( $.i18n(info.status) );
-          if ( info.status == "down" )
+          if ( info.status == "up" || info.status == "uping" || info.status == "connect" ||
+               info.status == "connecting" || info.status == "block" || info.status == "failed" )
           {
-              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
           }
           else
           {
-			  $(id+"_btn").html( '<i class="ace-icon fa fa-pause"></i>' );
+              $(id+"_btn").html( '<i class="ace-icon fa fa-play"></i>' );
           }
       }
       else
@@ -773,6 +774,16 @@ function config_save()
     }
   }
 
+  if ( $('#status').prop('checked') )
+  {
+    if ( !config.peer && !config.peer2 && !config.peer3
+         && !config.peermac && !config.peermac2 && !config.peermac3 )
+    {
+      page.alert( { message: $.i18n('Peer SSID')+"/"+$.i18n('Peer BSSID')+" "+$.i18n('Cannot be empty') } );
+      return;
+    }
+  }
+
   config.secure = $('#secure').val();
   if ( config.secure != 'disable')
   {
@@ -977,13 +988,14 @@ $.i18n().load( page.lang('wisp') ).then( function () {
 
     /* bind the button */
     $('#wisp_btn').on(ace.click_event, function () {
-        if ( state.status == "down" )
+        if ( state.status == "up" || state.status == "uping" || state.status == "connect" ||
+             state.status == "connecting" || state.status == "block" || state.status == "failed" )
         {
-            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
         }
         else
         {
-            he.exec( [ object+'.shut' ] ).then( function(result){status_load();} );
+            he.exec( [ object+'.setup' ] ).then( function(result){status_load();} );
         }
     });
 

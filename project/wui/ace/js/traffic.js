@@ -120,7 +120,7 @@ const chartManager = {
         if (!config) return false;
         
         // 检查接口状态
-        if (!value || value.status === "down" || value.status === "nodevice" || value.status === "register") {
+        if (!value || value.status === "down" || value.status === "nodevice" || value.status === "nosetup" || value.status === "register") {
             this.hideChart(ifname);
             return false;
         }

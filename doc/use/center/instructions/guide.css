@@ -1,0 +1,152 @@
+:root {
+  --text: #1a1a1a;
+  --muted: #555;
+  --border: #e5e7eb;
+  --bg: #fafafa;
+  --accent: #2563eb;
+  --code-bg: #f3f4f6;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.65;
+  color: var(--text);
+  background: #fff;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+  line-height: 1.25;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.6rem;
+}
+
+h2 {
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin: 2.2rem 0 0.75rem;
+  color: #111;
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.5rem;
+  color: #222;
+}
+
+p {
+  margin: 0.75rem 0;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+ul, ol {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.4rem;
+}
+
+li {
+  margin: 0.25rem 0;
+}
+
+blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--bg);
+  color: var(--muted);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.25rem;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--bg);
+  font-weight: 600;
+}
+
+code {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--code-bg);
+  padding: 0.12em 0.35em;
+  border-radius: 4px;
+}
+
+pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem 1.1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 1rem 0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem auto 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+@media print {
+  body {
+    max-width: none;
+    padding: 0;
+  }
+
+  img {
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  h2, h3 {
+    page-break-after: avoid;
+  }
+}

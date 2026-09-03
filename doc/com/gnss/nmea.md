@@ -154,26 +154,24 @@ ttrue
     - gnss_object ------- [ string ], instance name (e.g. gnss@nmea)
     - failed return NULL when the driver process is not running
     - succeed return [ json ]
-    - `pos` is absent until the first complete NMEA cycle has been parsed
+    - position fields (`utc` / `lat` / `lon` / …) are absent until the first complete NMEA cycle has been parsed
     - raw NMEA `time` / `date` are converted into `utc` only; they are not returned
     ```json
     {
-        "pos":                                   // [ json ], latest parsed position (absent until first cycle)
-        {
-            "utc":"UTC date-time",               // [ string ], HH:MM:SS:mm:dd:YYYY, same form as land@machine.status current
+        "utc":"UTC date-time",                   // [ string ], HH:MM:SS:mm:dd:YYYY, same form as land@machine.status current
                                                     // built from GGA/RMC time and RMC date; missing date fills 00/0000
-            "lat":"latitude",                    // [ string ], decimal degrees, 4 fractional digits; north positive, south negative
-            "lon":"longitude",                   // [ string ], decimal degrees, 4 fractional digits; east positive, west negative
-            "alt":"altitude",                    // [ string ], metres above mean sea level (GGA)
-            "geoid":"geoid separation",          // [ string ], metres (GGA)
-            "valid":"fix validity",              // [ "0", "1" ], usable fix flag from quality_code
+        "lat":"latitude",                        // [ string ], decimal degrees, 4 fractional digits; north positive, south negative
+        "lon":"longitude",                       // [ string ], decimal degrees, 4 fractional digits; east positive, west negative
+        "alt":"altitude",                        // [ string ], metres above mean sea level (GGA)
+        "geoid":"geoid separation",              // [ string ], metres (GGA)
+        "valid":"fix validity",                  // [ "0", "1" ], usable fix flag from quality_code
                                                     // "0": no usable fix (quality_code is 0 or missing)
                                                     // "1": fix considered valid (quality_code > 0)
-            "quality_code":"GGA quality",        // [ number ], NMEA GGA quality indicator (field 6)
+        "quality_code":"GGA quality",            // [ number ], NMEA GGA quality indicator (field 6)
                                                     // 0: invalid, 1: GPS(SPS), 2: DGPS, 3: PPS
                                                     // 4: RTK-Fixed, 5: RTK-Float, 6: DeadReckoning
                                                     // other: vendor-specific
-            "quality":"fix quality text",       // [ string ], mapped from quality_code
+        "quality":"fix quality text",           // [ string ], mapped from quality_code
                                                     // "invalid": code 0
                                                     // "GPS": code 1
                                                     // "DGPS": code 2
@@ -182,17 +180,16 @@ ttrue
                                                     // "RTK-Float": code 5
                                                     // "DeadReckoning": code 6
                                                     // other: decimal text of the code
-            "fix_mode":"GSA fix type",          // [ "1", "2", "3" ], NMEA GSA field 2
+        "fix_mode":"GSA fix type",              // [ "1", "2", "3" ], NMEA GSA field 2
                                                     // "1": no fix
                                                     // "2": 2D fix (lat/lon only)
                                                     // "3": 3D fix (lat/lon/alt)
-            "sats":"satellites in use",          // [ number ], GGA satellites used in the solution (not in view)
-            "hdop":"HDOP",                       // [ string ], horizontal dilution of precision (GGA or GSA); smaller is better
-            "pdop":"PDOP",                       // [ string ], position dilution of precision (GSA)
-            "vdop":"VDOP",                       // [ string ], vertical dilution of precision (GSA)
-            "speed":"speed over ground",         // [ string ], knots (RMC)
-            "course":"course over ground"        // [ string ], degrees true (RMC)
-        },
+        "sats":"satellites in use",              // [ number ], GGA satellites used in the solution (not in view)
+        "hdop":"HDOP",                           // [ string ], horizontal dilution of precision (GGA or GSA); smaller is better
+        "pdop":"PDOP",                           // [ string ], position dilution of precision (GSA)
+        "vdop":"VDOP",                           // [ string ], vertical dilution of precision (GSA)
+        "speed":"speed over ground",             // [ string ], knots (RMC)
+        "course":"course over ground",           // [ string ], degrees true (RMC)
         "cycle_count":"parsed cycles",           // [ number ], completed parse/forward cycles since this driver process started
         "fix_age":"seconds since last fix",     // [ number ], uptime seconds since last cycle commit; -1 if never fixed
         "nmea_sock":"local unix path",           // [ string ], present only when nmea_sock is enable
@@ -217,24 +214,21 @@ ttrue
     ```shell
     gnssdrv@nmea.status[ gnss@nmea ]
     {
-        "pos":
-        {
-            "utc":"11:11:44:07:23:2026",    # UTC 11:11:44 on 2026-07-23
-            "lat":"22.5432",                # latitude 22.5432° N
-            "lon":"114.0581",               # longitude 114.0581° E
-            "alt":"50.0",                   # altitude 50.0 m above MSL
-            "geoid":"0.0",                  # geoid separation 0.0 m
-            "valid":"1",                    # usable fix (quality_code > 0)
-            "quality_code":"1",             # GGA quality 1 = GPS(SPS)
-            "quality":"GPS",                # text for quality_code 1
-            "fix_mode":"3",                # GSA 3D fix
-            "sats":"12",                    # 12 satellites used in solution
-            "hdop":"0.9",                   # HDOP 0.9 (good)
-            "pdop":"1.2",                   # PDOP 1.2
-            "vdop":"0.8",                   # VDOP 0.8
-            "speed":"0.50",                 # 0.50 knots over ground
-            "course":"145.00"               # course 145° true
-        },
+        "utc":"11:11:44:07:23:2026",        # UTC 11:11:44 on 2026-07-23
+        "lat":"22.5432",                    # latitude 22.5432° N
+        "lon":"114.0581",                   # longitude 114.0581° E
+        "alt":"50.0",                       # altitude 50.0 m above MSL
+        "geoid":"0.0",                      # geoid separation 0.0 m
+        "valid":"1",                        # usable fix (quality_code > 0)
+        "quality_code":"1",                 # GGA quality 1 = GPS(SPS)
+        "quality":"GPS",                    # text for quality_code 1
+        "fix_mode":"3",                    # GSA 3D fix
+        "sats":"12",                        # 12 satellites used in solution
+        "hdop":"0.9",                       # HDOP 0.9 (good)
+        "pdop":"1.2",                       # PDOP 1.2
+        "vdop":"0.8",                       # VDOP 0.8
+        "speed":"0.50",                     # 0.50 knots over ground
+        "course":"145.00",                  # course 145° true
         "cycle_count":"2",                  # 2 parse cycles since driver start
         "nmea_sock":"/var/gnss/gnss@nmea.nmea",  # local NMEA unix forward path
         "fix_age":"0",                     # last fix committed 0 seconds ago
