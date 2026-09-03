@@ -113,6 +113,8 @@ Each project under `project/<name>/`, `rice/<name>/`, or `config/<platform>/<nam
 
 **Skill:** `.claude/skills/skinos-he/` — operate a live device with HE / eline / `ashy` (from `he.md` + `eline.md`).
 
+**Cloud / center (users, gateways, hh, pport penetrate, mesh, firmware OTA):** `.claude/skills/skinos-center/` — manage devices **through** the center cloud (`center@ctrl` / `center@api` / `hh`), not direct device login alone. Before cloud OTA or FPK: match device model or stop.
+
 **`eline`** — interactive terminal UI (prompt `$ `), type HE lines directly  
 **`he`** — run one HE line from shell: **always single-quote**: `he 'land@machine.status'`
 

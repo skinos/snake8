@@ -37,6 +37,7 @@ UDP coordinator for gateway-to-gateway mesh (register, NAT probe, keeplive, topo
                                                                     // built-in; not shown on nport.html / not for customer edit
                                                                     // must match agent@net*.key
     "timeout": "endpoint idle timeout on server"                // [ number ], default be 60, the unit is second
+                                                                    // also the clock that returns a mesh relay UDP
 }
 ```
 
@@ -95,6 +96,19 @@ ttrue
 
 **All online mesh members** send raw UDP keeplive to nport (including LEAF that already has a master) so hole timeout and `seq` delivery work.
 
+**Center UDP relay**
+
+**`relay` is only for the master of a mesh that has no public-address hub.** Ordinary endpoints stay `disable`. A NAT master cannot receive WireGuard UDP on its hole; peers need a center UDP. New members default to **`disable`** (omit / empty is disable). When the durable wish is `auto` + LIMIT, or `enable`, nport calls **`center@pport.relay_map[ ,mac,127.0.0.1,listen_port,udp,0,0 ]`** after the device reports `b` / `l`. Push JSON keeps the real hole in `ip`/`port` and adds **`relay_port`**. `relay_ip` is reserved and omitted; the device uses `agent@portc` / `agent@heclient` `server` as the center address.
+
+- Adding a member does not reserve a port. The listen exists only while the device is online
+- Same mac + same hand (`listen_port`, typically `127.0.0.1`) reuses the existing listen; no second public port for the same target
+- Not a user `udpmap` (those start at `static_port` and persist under `<user>/udpmap`)
+- Do not use `center@pport.dynamic_port[]` (that API only increments a TCP counter)
+- The listen is on `pport_udp_relay[]`. `timeout=0` so idle does not unmap. Offline / delete uses `relay_unmap`
+- `nattype` stays FREE / LIMIT. Peers treat `relay_port` as a reachable hub (`branch`). ICMP still pings the tunnel `point`
+- Operators do not pick the port. Live hole stays in dump `ip`/`port`; borrowed UDP is dump / push `relay_port`
+- Per-user cap: `{device_path}/<user>/config` **`relay_max`**, counted in nport `nport_relay_quota` (`max` / `current`). Unset = unlimited. `0` = do not `relay_map`. `N` = at most N live listens (same mac + hand = 1). Over the cap the member stays a leaf. Lowering the cap does not unmap listens already up
+
 
 
 ### API Reference
@@ -119,8 +133,8 @@ ttrue
 |------|------------|
 | Reload one network + sync online members | `center@api.network_knock[ user, netid ]` |
 | Reload one endpoint + register/sync | `center@api.endpoint_knock[ user, netid, macid ]` |
-| Durable + live hole dump (whole net) | `center@api.network_dump[ user, netid ]` |
-| Durable + live hole dump (one peer) | `center@api.endpoint_dump[ user, netid, macid ]` |
+| Durable + live hole / relay dump (whole net) | `center@api.network_dump[ user, netid ]` |
+| Durable + live hole / relay dump (one peer) | `center@api.endpoint_dump[ user, netid, macid ]` |
 | Topology CRUD | `center@api.network_*` / `center@api.endpoint_*` (they knock nport after save) |
 
 Example

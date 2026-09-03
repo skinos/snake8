@@ -33,7 +33,8 @@ Cloud-user self-service profile/password. Admin account CRUD and login `user_mat
     {
         "lang":"language type",                 // [ string ]
         "vcode":"device register vcode",        // [ string ], optional
-        "comment":"comment string"              // [ string ]
+        "comment":"comment string",             // [ string ]
+        "relay_max":"live mesh relay UDP cap"   // [ number ], optional; omitted = unlimited; 0 = none
     }
     ```
 
@@ -51,7 +52,7 @@ Cloud-user self-service profile/password. Admin account CRUD and login `user_mat
     - vcode ------ [ string ], optional; omit = leave unchanged; empty string clears
     - lang ------- [ string ], optional; omit = leave unchanged; empty = follow system
     - comment ---- [ string ], optional; omit = leave unchanged; empty string clears
-    - does not change password (`key`)
+    - does not change password (`key`) or `relay_max` (admin only, `center@ctrl.user_modify`)
     - failed return tfalse
     - succeed return ttrue
 
@@ -800,6 +801,10 @@ the API can manage port proxy
 
 Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.md`). Runtime UDP / push is **`center@nport`**. After add/delete/knock, api calls nport knock so live mesh converges (one member at a time; new joiner full `endpoint`, peers small `branch`/`leaf`).
 
+**`relay` is only for the master of a mesh that has no public-address hub.** Do not turn it on for ordinary endpoints. A NAT master can still be reached if you set that master's `relay` to `auto` or `enable`. New members default to **`disable`** (omit / empty is disable). The center opens a public UDP only while that device is online. The port is not saved in the net file. Dump `ip`/`port` stay the hole (or static override); the borrowed UDP is `relay_port`. This is not a user `udpmap`.
+
+How many of those listens a username may hold at once is `<user>/config` **`relay_max`** (admin `center@ctrl` only). Omit the key = unlimited. `0` = none (even `enable` stays a leaf). A number `N` = at most N live listens (same mac + hand counts as one). Over the cap, nport does not `relay_map`. Shrinking the cap does not drop listens already up.
+
 
 + `network_add[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout] ]` **add a network**
     - user --------------- [ string ], username
@@ -847,6 +852,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     - netid --------- [ string ], network identify; basename only (no `/`)
     - failed return tfalse
     - succeed return ttrue
+    - Releases any mesh relay UDP borrowed for members of this network
 
 + `network_list[ [user] ]` **list networks**
     - user ---------- [ string ], optional; omit to list all users
@@ -900,19 +906,25 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
 
 
 
-+ `endpoint_add[ user, netid, macid, [point], [extend], [pref], [ip], [port], [listen_port] ]` **add a endpoint to network**
++ `endpoint_add[ user, netid, macid, [point], [extend], [pref], [ip], [port], [listen_port], [relay] ]` **add a endpoint to network**
     - user --------------- [ string ], username
     - netid -------------- [ string ], network identify
     - mac identify ------- [ string ], mac identify for gateway    
     - point -------------- [ ip address ], optional VPN address; auto-allocated in network CIDR when omitted
     - extend ------------- [ network address ], optional, local network of endpoint, 192.168.0.0/24
-    - pref --------------- [ number ], optional, branch priority among FREE peers
+    - pref --------------- [ number ], optional, branch priority among reachable hubs
     - ip ----------------- [ ip address ], optional static public IP override
     - port --------------- [ number ], optional static public port override
     - listen_port -------- [ number ], optional device local WireGuard/raw listen; pushed via `agent@gtog.register`
+    - relay -------------- [ string ], optional, `auto` / `enable` / `disable`; default `disable` when omitted
     - failed return tfalse
     - succeed return ttrue
-    - Live hole ip/port are learned at UDP register time when static overrides are omitted
+    - For the NAT master of a mesh with no public hub only; ordinary endpoints stay `disable`
+    - Does not pick a public port. `disable` never opens a center UDP; `auto` opens one when the device is online and behind NAT; `enable` always does
+    - Opening still needs a free slot under that user's `relay_max` (see Mesh intro)
+    - Live hole / relay `ip`/`port` appear in dump APIs only while the device is online
+    - Static `ip`/`port` overrides stay admin hole overrides; they are not overwritten with the borrowed port
+    - To change `relay` later, edit the net file (or delete and add again) then `endpoint_knock`
 
     Example, add endpoint with explicit point
     ```shell
@@ -924,9 +936,14 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     center@api.endpoint_add[ ashyelf, mynet, 00037f120001, , 192.168.8.0/24 ]
     ttrue
     ```
-    Example, set pref=100 and listen_port=10005 (no static hole override)
+    Example, set pref=100 and listen_port=10005 (no static hole override; relay stays disable)
     ```shell
     center@api.endpoint_add[ ashyelf, mynet, 00037f120000, 172.16.0.1, , 100, , , 10005 ]
+    ttrue
+    ```
+    Example, always use a center UDP for this member
+    ```shell
+    center@api.endpoint_add[ ashyelf, mynet, 00037f120000, 172.16.0.1, , 100, , , 10005, enable ]
     ttrue
     ```
 
@@ -936,7 +953,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     - mac identify -- [ string ], mac identify for gateway    
     - failed return tfalse
     - succeed return ttrue
-    - Removes durable membership and knocks nport so neighbors drop the peer
+    - Removes durable membership, returns any mesh relay UDP, and knocks nport so neighbors drop the peer
 
     Example
     ```shell
@@ -960,6 +977,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
             "ip":"optional static public ip override",
             "port":"optional static public udp port override",
             "listen_port":"optional device WireGuard listen port",
+            "relay":"optional auto / enable / disable; omitted means disable",
             "comment":"from device config when present",
             "name":"from device reg when present",
             "type":"from device reg when present"
@@ -971,7 +989,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     ```shell
     center@api.endpoint_list[ ashyelf, mynet ]
     {
-        "00037f120000": { "point":"172.16.0.1", "extend":"192.168.8.0/24", "pref":"100", "listen_port":"10005" },
+        "00037f120000": { "point":"172.16.0.1", "extend":"192.168.8.0/24", "pref":"100", "listen_port":"10005", "relay":"enable" },
         "00037f120001": { "point":"172.16.0.2" }
     }
     ```  
@@ -990,7 +1008,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     ttrue
     ```  
 
-+ `network_dump[ user, netid ]` **dump durable topology merged with live hole / pubkey / online**
++ `network_dump[ user, netid ]` **dump durable topology merged with live hole / relay / pubkey / online**
     - user ---------- [ string ], username
     - netid --------- [ string ], network identify
     - error return NULL
@@ -1010,10 +1028,12 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
                 "point": "172.16.0.1",
                 "extend": "192.168.8.0/24",
                 "pref": "100",
+                "relay": "auto / enable / disable from the net file",
                 "pubkey": "WireGuard pubkey when registered",
-                "nattype": "1=FREE branch, 2=LIMIT leaf",
-                "ip": "hole or static public ip",
-                "port": "hole or static public udp port",
+                "nattype": "1=FREE, 2=LIMIT (NAT probe only)",
+                "ip": "live hole or static public IP override",
+                "port": "live hole or static public port override",
+                "relay_port": "borrowed center UDP when mapped; omitted if none",
                 "listen_port": "device listen when set",
                 "online": "true or false",
                 "acked": "last hh-acked seq"
@@ -1027,7 +1047,7 @@ Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.m
     center@api.network_dump[ ashyelf, mynet ]
     ```
 
-+ `endpoint_dump[ user, netid, macid ]` **dump one endpoint durable + live fields**
++ `endpoint_dump[ user, netid, macid ]` **dump one endpoint durable + live hole / relay fields**
     - user ---------- [ string ], username
     - netid --------- [ string ], network identify
     - mac identify -- [ string ], mac identify for gateway
