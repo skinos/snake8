@@ -1,0 +1,112 @@
+--- a/mt76x2/pci_init.c
++++ b/mt76x2/pci_init.c
+@@ -4,6 +4,8 @@
+  */
+ 
+ #include <linux/delay.h>
++#include <linux/hwmon.h>
++#include <linux/hwmon-sysfs.h>
+ #include "mt76x2.h"
+ #include "eeprom.h"
+ #include "mcu.h"
+@@ -287,6 +289,88 @@
+ 	mt76x02_mcu_cleanup(dev);
+ }
+ 
++/* add by dimmalex: MT7612E thermal ADC at 0x1d000 bits[6:0], official 1.8 C/count */
++static ssize_t
++mt7612_thermal_show_temp(struct device *dev, struct device_attribute *attr,
++			 char *buf)
++{
++	struct mt76x02_dev *mdev = dev_get_drvdata(dev);
++	u32 mac_val;
++	int adc;
++	int ref;
++	int val;
++	int delta;
++	int temperature;
++	int milli;
++
++	(void)attr;
++
++	if (!test_bit(MT76_STATE_INITIALIZED, &mdev->mphy.state))
++		return 0;
++
++	mutex_lock(&mdev->mt76.mutex);
++	mac_val = mt76_rr(mdev, MT_TEMP_SENSOR);
++	mutex_unlock(&mdev->mt76.mutex);
++
++	adc = mac_val & 0x7f;
++
++	val = mt76x02_eeprom_get(mdev, MT_EE_TX_POWER_EXT_PA_5G);
++	if (val < 0)
++		ref = 0;
++	else
++		ref = (val >> 8) & 0x7f;
++
++	if (ref == 0 || ref == 0x7f) {
++		temperature = 25;
++	} else if (adc > ref) {
++		delta = adc - ref;
++		temperature = (delta * 18 / 10) + 25;
++	} else if (adc < ref) {
++		delta = ref - adc;
++		temperature = 25 - (delta * 18 / 10);
++	} else {
++		temperature = 25;
++	}
++
++	milli = temperature * 1000;
++
++	return sprintf(buf, "%d\n", milli);
++}
++
++static SENSOR_DEVICE_ATTR(temp1_input, 0444, mt7612_thermal_show_temp,
++			  NULL, 0);
++
++static struct attribute *mt7612_hwmon_attrs[] = {
++	&sensor_dev_attr_temp1_input.dev_attr.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(mt7612_hwmon);
++
++static int mt7612_thermal_init(struct mt76x02_dev *dev)
++{
++	struct ieee80211_hw *hw;
++	struct wiphy *wiphy;
++	struct device *hwmon;
++	const char *phy_name;
++	const char *name;
++	int err;
++
++	if (!IS_REACHABLE(CONFIG_HWMON))
++		return 0;
++
++	hw = mt76_hw(dev);
++	wiphy = hw->wiphy;
++	phy_name = wiphy_name(wiphy);
++	name = devm_kasprintf(&wiphy->dev, GFP_KERNEL, "mt7612_%s", phy_name);
++	if (!name)
++		return -ENOMEM;
++
++	hwmon = devm_hwmon_device_register_with_groups(&wiphy->dev, name, dev,
++						       mt7612_hwmon_groups);
++	err = PTR_ERR_OR_ZERO(hwmon);
++	return err;
++}
++
+ int mt76x2_register_device(struct mt76x02_dev *dev)
+ {
+ 	int ret;
+@@ -311,6 +395,11 @@
+ 	mt76x2_init_txpower(dev, &dev->mphy.sband_2g.sband);
+ 	mt76x2_init_txpower(dev, &dev->mphy.sband_5g.sband);
+ 
++	/* add by dimmalex: expose MT7612E WiFi temperature via hwmon */
++	ret = mt7612_thermal_init(dev);
++	if (ret)
++		return ret;
++
+ 	return 0;
+ 
+ fail:

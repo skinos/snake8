@@ -150,6 +150,14 @@ if [ -f "${gSDK_DIR}/package/kernel/mt76/Makefile" ]; then
             < "${gPLATFORM_DIR}/adjust/patch/package/025-mt7603-hwmon-makefile.patch"
     fi
 fi
+# MT7612E: thermal ADC at 0x1d000, official 1.8 C/count, expose hwmon temp1_input
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/026-mt7612-hwmon-thermal.patch" "${gSDK_DIR}/package/kernel/mt76/patches/026-mt7612-hwmon-thermal.patch"
+if [ -f "${gSDK_DIR}/package/kernel/mt76/Makefile" ]; then
+    if grep -q 'DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common$' "${gSDK_DIR}/package/kernel/mt76/Makefile"; then
+        patch -N -p1 -d "${gSDK_DIR}/package/kernel/mt76" \
+            < "${gPLATFORM_DIR}/adjust/patch/package/026-mt7612-hwmon-makefile.patch"
+    fi
+fi
 # CN: drop DFS on 5250-5350 so channel 52-64 can AP without CAC
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/900-cn-no-dfs-5250-5350.patch" "${gSDK_DIR}/package/firmware/wireless-regdb/patches/900-cn-no-dfs-5250-5350.patch"
 
