@@ -15,22 +15,16 @@ preset:
 	git config --global http.sslVerify false
 .PHONY: preset
 
-gCLANGD_GEN := ${gTOP_DIR}/tools/clangd_sym.py
-gCLANGD_DIRS := ${gTOP_DIR}/project ${gTOP_DIR}/core ${gTOP_DIR}/config/slave ${gTOP_DIR}/config/swrt5
-clangd:
-	@set -e; \
-	gen="${gCLANGD_GEN}"; \
-	for root in ${gCLANGD_DIRS}; do \
-		[ -d "$$root" ] || continue; \
-		for d1 in "$$root"/*; do \
-			[ -d "$$d1" ] || continue; \
-			if [ -f "$$d1/${gPROJECT_INF}" ]; then \
-				echo "[clangd] $$d1"; \
-				python3 "$$gen" "$$d1"; \
-			fi; \
-		done; \
-	done
-.PHONY: clangd
+gCLANGD_GEN := ${gTOP_DIR}/tools/clangd_all.py
+# IDE jump index: all intermediate files under .map/ (+ tiny root .clangd)
+# Delete anytime: make map-clean   or   rm -rf .map .clangd
+map:
+	@echo "[map] generating .map/ compile databases + .clangd ..."
+	@python3 "${gCLANGD_GEN}" "${gTOP_DIR}"
+map-clean:
+	@rm -rf "${gTOP_DIR}/.map" "${gTOP_DIR}/.clangd" "${gTOP_DIR}/compile_commands.json"
+	@echo "[map] removed .map/ .clangd compile_commands.json"
+.PHONY: map map-clean
 
 # SDK Download
 update:
