@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -131,7 +131,7 @@
+ define KernelPackage/mt76x2
+   $(KernelPackage/mt76-default)
+   TITLE:=MediaTek MT76x2 wireless driver
+-  DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common
++  DEPENDS+=@PCI_SUPPORT +kmod-mt76x2-common +kmod-hwmon-core
+   FILES:=\
+ 	$(PKG_BUILD_DIR)/mt76x2/mt76x2e.ko
+   AUTOLOAD:=$(call AutoProbe,mt76x2e)

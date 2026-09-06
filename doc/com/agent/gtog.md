@@ -89,7 +89,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
 
 **Topology APIs** (from coordinator over heclient)
 
-- **`endpoint`**: full replace + optional **`seq`**; program WG; elect role; store **`%s.endpoint`**; unix **`reload`**.
+- **`endpoint`**: full replace + optional **`seq`**; program WG; elect role; store **`%s.endpoint`**; unix **`reload`**. Prefer **`relay_port`** for the WG endpoint (with **`relay_ip`**, or `agent@portc` / `agent@heclient` `server` when `relay_ip` is omitted). Center `relay` is only for the master of a mesh with no public hub; a peer with `relay_port` is still treated as a hub even if `nattype` is LIMIT.
 - **`branch`** / **`leaf`**: incremental add/update + optional **`seq`** when **`role != none`**; full **`endpoint`** still required to drop peers.
 - Dual call style: **`agent@gtog.<api>[ netid, … ]`** or **`agent@net*.<api>[ … ]`**.
 
@@ -232,11 +232,13 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     {
         "endpoint mac identify":                    // [ string ]: { json }
         {
-            "ip":"public internet ip",              // [ ip address ]
-            "port":"public internet port",          // [ number ]
+            "ip":"public internet ip",              // [ ip address ], live hole
+            "port":"public internet port",          // [ number ], live hole
+            "relay_port":"center UDP relay",        // [ number ], optional; prefer this for WG endpoint
+            "relay_ip":"center public IP",          // [ ip address ], optional reserved; omit → portc/heclient server
             "pubkey":"WireGuard public key",        // [ string ]
-            "nattype":"NAT class",                  // [ number ]: [ 1, 2 ], 1=FREE (relay-capable), 2=LIMIT (leaf)
-            "pref":"master preference",             // [ number ], higher wins among FREE peers
+            "nattype":"NAT class",                  // [ number ]: [ 1, 2 ], 1=FREE, 2=LIMIT
+            "pref":"master preference",             // [ number ], higher wins among FREE or relay_port peers
             "point":"VPN tunnel ip",                // [ ip address ]
             "extend":"local networks via this peer" // [ string ], optional, e.g. "192.168.1.0/24"
         }
@@ -259,8 +261,10 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ```json
     {
         "macid":"device mac identify",              // [ string ]
-        "ip":"public internet ip",                  // [ ip address ]
-        "port":"public internet port",              // [ number ]
+        "ip":"public internet ip",                  // [ ip address ], live hole
+        "port":"public internet port",              // [ number ], live hole
+        "relay_port":"center UDP relay",            // [ number ], optional; prefer for WG endpoint
+        "relay_ip":"center public IP",              // [ ip address ], optional reserved; omit → portc/heclient server
         "pubkey":"WireGuard public key",            // [ string ]
         "nattype":"NAT class",                      // [ number ], usually 1 (FREE)
         "pref":"master preference",                 // [ number ]

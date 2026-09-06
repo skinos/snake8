@@ -576,6 +576,15 @@ boole_t _up( obj_t this, param_t param )
 		}
 	}
 
+	/* hold radio before wpa starts so concurrent AP up cannot restart hostapd */
+	reg_sput_int( radio, "stop_hostapd", 1 );
+	wifi_info( "stop %s hostapd by %s up", radio, object );
+	scall( radio, "stop_hostapd", NULL );
+
+	/* bounce STA iface to clear leftover nl80211/driver state */
+	ifconfig( "%s down", netdev );
+	ifconfig( "%s up", netdev );
+
 	/* up the device */
 	cstart( this, "wpa", NULL, "%s-wpa", netdev );
 	sleep( 1 );
@@ -656,6 +665,7 @@ boole_t _down( obj_t this, param_t param )
 		reg_sput_str( radio, "channel", "" );
 		reg_sput_str( radio, "bandwidth", "" );
 		reg_sput_str( radio, "beacon", "" );
+		reg_sput_int( radio, "stop_hostapd", 0 );
 	}
 
 	reg_ounlock( this, "netdev" );
@@ -992,21 +1002,18 @@ boole_t _offline( obj_t this, param_t param )
 
 talk_t _aplist( obj_t this, param_t param )
 {
-	int i;
-	pid_t hapd_pid;
 	talk_t ret;
-	talk_t cfg;
 	talk_t create_ret;
 	boole have_create;
 	boole hapd_on;
-    const char *radio;
+	pid_t hapd_pid;
+	const char *radio;
 	const char *object;
 	const char *netdev;
 	const char *peer;
 	const char *peer2;
 	const char *peer3;
 	const char *peermac;
-	char ssidobj[NAME_MAX];
 
 	object = obj_name( this );
 	radio = reg_oget_str( this, "radio" );
@@ -1020,44 +1027,20 @@ talk_t _aplist( obj_t this, param_t param )
 		return NULL;
 	}
 
-	/* get the parameter */
 	peer = param_string( param, 1 );
 	peermac = param_string( param, 2 );
 	peer2 = param_string( param, 3 );
 	peer3 = param_string( param, 4 );
 
+	/* pause AP while scanning; keep station iface */
+	hapd_on = false;
 	hapd_pid = spid( "%s-hostapd", radio );
 	if ( hapd_pid > 0 )
 	{
 		hapd_on = true;
-	}
-	else
-	{
-		hapd_on = false;
-	}
-
-	/* stop AP beaconing only when hostapd was running; keep the station iface */
-	if ( hapd_on )
-	{
-		sstop( "%s-hostapd", radio );
-		for ( i = 0; i < 4; i++ )
-		{
-			if ( i == 0 )
-			{
-				snprintf( ssidobj, sizeof(ssidobj), "%s%s", radio, "ssid" );
-			}
-			else
-			{
-				snprintf( ssidobj, sizeof(ssidobj), "%s%s%d", radio, "ssid", i + 1 );
-			}
-			cfg = config_sget( ssidobj, NULL );
-			if ( cfg == NULL )
-			{
-				continue;
-			}
-			scall( ssidobj, "down", NULL );
-			talk_free( cfg );
-		}
+		reg_sput_int( radio, "stop_hostapd", 1 );
+		wifi_info( "stop %s hostapd by %s scan", radio, object );
+		scall( radio, "stop_hostapd", NULL );
 	}
 
 	have_create = com_have( radio, "create" );
@@ -1068,6 +1051,7 @@ talk_t _aplist( obj_t this, param_t param )
 		{
 			if ( hapd_on )
 			{
+				reg_sput_int( radio, "stop_hostapd", 0 );
 				scall( radio, "start_hostapd", NULL );
 			}
 			return NULL;
@@ -1079,6 +1063,7 @@ talk_t _aplist( obj_t this, param_t param )
 
 	if ( hapd_on )
 	{
+		reg_sput_int( radio, "stop_hostapd", 0 );
 		scall( radio, "start_hostapd", NULL );
 	}
 
@@ -1156,7 +1141,8 @@ boole_t _wpa( obj_t this, param_t param )
     fprintf( fp, "ap_scan=1\n" );
     fprintf( fp, "fast_reauth=1\n" );
 
-	/* stop the hostapd to update the channel */
+	/* stop hostapd and hold so AP up cannot restart it while STA connects */
+	reg_sput_int( radio, "stop_hostapd", 1 );
 	scall( radio, "stop_hostapd", NULL );
 	//hostapdctl = reg_sget_str( radio, "ctl" );
 
@@ -1437,6 +1423,7 @@ boole_t _keeplive( obj_t this, param_t param )
 	if ( nossid == NULL || 0 != strcmp( nossid, "enable" ) )
 	{
 		sleep( 2 );
+		reg_sput_int( radio, "stop_hostapd", 0 );
 		scall( radio, "start_hostapd", NULL );
 	}
 

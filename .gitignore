@@ -23,6 +23,9 @@
 /var/
 /shell/
 /build/
+/compile_commands.json
+/.map/
+/.clangd
 /gBOARDID
 
 /config/slave/dl/

@@ -66,6 +66,7 @@ talk_t _netdev( obj_t this, param_t param )
 }
 boole_t _up( obj_t this, param_t param )
 {
+	int stop;
 	talk_t ret;
 	talk_t cfg;
 	talk_t create_ret;
@@ -105,6 +106,7 @@ boole_t _up( obj_t this, param_t param )
 	}
 
 	wifi_info( "%s(%s) up", object, netdev );
+	stop = reg_sget_int( radio, "stop_hostapd", 0 );
 
 	ret = tfalse;
 	/* status */
@@ -130,16 +132,21 @@ boole_t _up( obj_t this, param_t param )
 				return tfalse;
 			}
 		}
-		if ( netdev_flags( netdev, IFF_UP ) <= 0 )
+		if ( stop == 0 )
 		{
-			ifconfig( "%s up", netdev );
+			if ( netdev_flags( netdev, IFF_UP ) <= 0 )
+			{
+				ifconfig( "%s up", netdev );
+			}		
 		}
 	}
-	/* start the hostapd */
-	sreset( radio, "hostapd", NULL, "%s-hostapd", radio );
+	/* start the hostapd unless STA holds radio for connect */
+	if ( stop == 0 )
+	{
+		sreset( radio, "hostapd", NULL, "%s-hostapd", radio );
+	}
 
 	reg_ounlock( this, "netdev" );
-
 	talk_free( cfg );
 	return ret;
 }
