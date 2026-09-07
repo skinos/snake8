@@ -248,6 +248,74 @@ function showChart(id) {
     adjustBoxLayout();
 }
 
+// 将信号signal转换为电量样式的外框架+内填充+中间数字显示
+function signalMeasure($box, opt) {
+    opt = opt || {};
+
+    if (!$box || !$box.length) {
+        return;
+    }
+
+    var value = Number(opt.value);
+    if (isNaN(value)) {
+        value = 0;
+    }
+
+    var min = (opt.min != null) ? Number(opt.min) : 0;
+    var max = (opt.max != null) ? Number(opt.max) : 100;
+    var text = (opt.text != null) ? opt.text : String(opt.value != null ? opt.value : "");
+
+    var percent = 0;
+    var color = "#f0ad4e"; // 默认橙色
+
+    if (value > max) {
+        percent = 100;
+        color = "#9CCC65"; // 绿色：满格
+    } else if (value <= min) {
+        percent = 5;
+        color = "#d9534f"; // 红色：最低也要露出来
+    } else {
+        percent = ((value - min) / (max - min)) * 100;
+
+        if (percent >= 80) {
+            color = "#9CCC65"; // 绿色
+        } else if (percent >= 40) {
+            color = "#f0ad4e"; // 橙色
+        } else {
+            color = "#d9534f"; // 红色
+        }
+    }
+
+    $box.show();
+
+    $box.find(".signal-measure-bar").css({
+        width: percent + "%",
+        backgroundColor: color
+    });
+
+    var $text = $box.find(".signal-measure-text");
+    var $span = $text.find("span").first();
+    if ($span.length) {
+        $span.text(text);
+    } else {
+        $text.text(text);
+    }
+}
+
+// 外框架加内填充样式 部分窗口大小要换行显示
+function updateSignalLayout() {
+    var win_size = $(window).width() < 700;
+    var change_style = win_size ? "normal" : "nowrap";
+
+    $("[id$='_rssi4_head'], [id$='_rssi5_head'], [id$='_rsrq4_head'], [id$='_rsrq5_head']").css({
+        "white-space": change_style
+    });
+
+    $(".signal-row").css({
+        "white-space": change_style
+    });
+}
+
 function lte_show(info, id) {
     if (!info) {
         $(id).hide().attr('or-online', 'false'); // 隐藏并标记非在线;
@@ -259,15 +327,15 @@ function lte_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block" ||
-            info.status === "failed") {
-            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+            info.status === "block") {
+            // 状态正常
         } else {
             $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
         }
@@ -306,50 +374,129 @@ function lte_show(info, id) {
     } else {
         $(id + "_rssiimg5").attr("src", "/assets/css/images/signal_0.png");
     }
-    
+
     // RSSI/RSRP - 4G
-    if (info.rssi) {
-        $(id + "_rssi").text(info.rssi + "dBm");
-    } else {
-        $(id + "_rssi").text("");
+    if (!info.rssi && !info.rsrp && !info.rsrp2) {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi4_status").text($.i18n("nosignal")).show();
+
+        $(id + "_rssi_box").hide();
+        $(id + "_rsrp_box").hide();
     }
-    
-    if (info.rsrp) {
-        $(id + "_rsrp").text("RSRP:" + info.rsrp + "dBm");
-    } else {
-        $(id + "_rsrp").text("");
+    else {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi4_status").hide().text("");
+
+        if (info.rssi != null && info.rssi !== "") {
+            $(id + "_rssi_box").show();
+            signalMeasure($(id + "_rssi_box"), {
+                value: info.rssi,
+                min: -120,
+                max: -50,
+                text: "RSSI:" + info.rssi + "dBm"
+            });
+            $(id + "_rssi").text("RSSI:" + info.rssi + "dBm");
+        } else {
+            $(id + "_rssi_box").hide();
+            $(id + "_rssi").text("");
+        }
+
+        if (info.rsrp != null && info.rsrp !== "") {
+            $(id + "_rsrp_box").show();
+            signalMeasure($(id + "_rsrp_box"), {
+                value: info.rsrp,
+                min: -140,
+                max: -80,
+                text: "RSRP:" + info.rsrp + "dBm"
+            });
+            $(id + "_rsrp").text("RSRP:" + info.rsrp + "dBm");
+        } else {
+            $(id + "_rsrp_box").hide();
+            $(id + "_rsrp").text("");
+        }
+
+        if (info.rsrp2 != null && info.rsrp2 !== "") {
+            $(id + "_rssi5_head").show();
+            $(id + "_rsrp5_box").show();
+            signalMeasure($(id + "_rsrp5_box"), {
+                value: info.rsrp2,
+                min: -140,
+                max: -80,
+                text: "RSRP:" + info.rsrp2 + "dBm"
+            });
+            $(id + "_rsrp5").text("RSRP:" + info.rsrp2 + "dBm");
+        } else {
+            $(id + "_rssi5_head").hide();
+            $(id + "_rsrp5_box").hide();
+            $(id + "_rsrp5").text("");
+        }
     }
-    
-    // RSRP - 5G
-    if (info.rsrp2) {
-        $(id + "_rsrp5").text(info.rsrp2 + "dBm");
-    } else {
-        $(id + "_rsrp5").text("");
-    }
-    
+
     // RSRQ/SINR - 4G
-    if (info.rsrq) {
+    var hasRsrq4 = (info.rsrq != null && info.rsrq !== "") || (info.sinr != null && info.sinr !== "");
+    if (hasRsrq4) {
+        $(id + "_rsrq4_head").show();
+    } else {
+        $(id + "_rsrq4_head").hide();
+    }
+
+    if (info.rsrq != null && info.rsrq !== "") {
+        signalMeasure($(id + "_rsrq_box"), {
+            value: info.rsrq,
+            min: -20,
+            max: 0,
+            text: "RSRQ:" + info.rsrq + "dB"
+        });
         $(id + "_rsrq").text("RSRQ:" + info.rsrq + "dB");
     } else {
+        $(id + "_rsrq_box").hide();
         $(id + "_rsrq").text("");
     }
-    
-    if (info.sinr) {
+
+    if (info.sinr != null && info.sinr !== "") {
+        signalMeasure($(id + "_sinr_box"), {
+            value: info.sinr,
+            min: 0,
+            max: 30,
+            text: "SINR:" + info.sinr + "dB"
+        });
         $(id + "_sinr").text("SINR:" + info.sinr + "dB");
     } else {
+        $(id + "_sinr_box").hide();
         $(id + "_sinr").text("");
     }
-    
+
     // RSRQ/SINR - 5G
-    if (info.rsrq2) {
+    var hasRsrq5 = (info.rsrq2 != null && info.rsrq2 !== "") || (info.sinr2 != null && info.sinr2 !== "");
+    if (hasRsrq5) {
+        $(id + "_rsrq5_head").show();
+    } else {
+        $(id + "_rsrq5_head").hide();
+    }
+
+    if (info.rsrq2 != null && info.rsrq2 !== "") {
+        signalMeasure($(id + "_rsrq5_box"), {
+            value: info.rsrq2,
+            min: -20,
+            max: 0,
+            text: "RSRQ:" + info.rsrq2 + "dB"
+        });
         $(id + "_rsrq5").text("RSRQ:" + info.rsrq2 + "dB");
     } else {
+        $(id + "_rsrq5_box").hide();
         $(id + "_rsrq5").text("");
     }
-    
-    if (info.sinr2) {
+
+    if (info.sinr2 != null && info.sinr2 !== "") {
+        signalMeasure($(id + "_sinr5_box"), {
+            value: info.sinr2,
+            min: 0,
+            max: 20,
+            text: "SINR:" + info.sinr2 + "dB"
+        });
         $(id + "_sinr5").text("SINR:" + info.sinr2 + "dB");
     } else {
+        $(id + "_sinr5_box").hide();
         $(id + "_sinr5").text("");
     }
 
@@ -474,44 +621,6 @@ function lte_show(info, id) {
     if (!info.nettype2 && !info.signal && !info.signal2) {
         $(id + "_4g_head").show();
     }
-    
-    // RSSI行显示控制 - 4G
-    var hasRssi4 = info.rssi || info.rsrp;
-    if (hasRssi4) {
-        $(id + "_rssi4_head").show();
-    } else {
-        $(id + "_rssi4_head").hide();
-    }
-    
-    // RSSI行显示控制 - 5G
-    var hasRssi5 = info.rsrp2;
-    if (hasRssi5) {
-        $(id + "_rssi5_head").show();
-    } else {
-        $(id + "_rssi5_head").hide();
-    }
-    
-    // 无信号时显示"No Signal"
-    if (!info.rssi && !info.rsrp && !info.rsrp2) {
-        $(id + "_rssi4_head").show();
-        $(id + "_rssi").text($.i18n("nosignal"));
-    }
-    
-    //RSRQ行控制显示 - 4G
-    var hasRsrq4 = info.rsrq || info.sinr;
-    if (hasRsrq4) {
-        $(id + "_rsrq4_head").show();
-    } else {
-        $(id + "_rsrq4_head").hide();
-    }
-
-    //RSRQ行控制显示 - 5G
-    var hasRsrq5 = info.rsrq2 || info.sinr2;
-    if (hasRsrq5) {
-        $(id + "_rsrq5_head").show();
-    } else {
-        $(id + "_rsrq5_head").hide();
-    }
 
     //Band行控制显示 - 4G
     if(info.band){
@@ -555,23 +664,22 @@ function wan_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block" ||
-            info.status === "failed") {
-            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+            info.status === "block") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
-        } else {
-            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
-            if (info.status === "down" && info.step && info.step !== "online") {
+        } else if (info.status === "down") {
+            if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
+            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
         }
         
         if (info.error) {
@@ -753,23 +861,22 @@ function wisp_show(info, id) {
     // 状态和按钮
     if (info.status) {
         showChart(id);
+        $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
         $(id + "_status").text($.i18n(info.status));
         
         if (info.status === "up" || 
             info.status === "uping" || 
             info.status === "connect" || 
             info.status === "connecting" ||
-            info.status === "block" ||
-            info.status === "failed") {
-            $(id + "_btn").html('<i class="ace-icon fa fa-pause"></i>');
+            info.status === "block") {
             if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
-        } else {
-            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
-            if (info.status === "down" && info.step && info.step !== "online") {
+        } else if (info.status === "down") {
+            if (info.step && info.step !== "online") {
                 $(id + "_status").text($.i18n(info.step));
             }
+            $(id + "_btn").html('<i class="ace-icon fa fa-play"></i>');
         }
         
         if (info.error) {
@@ -800,11 +907,29 @@ function wisp_show(info, id) {
     $(id + "_channel").text(info.channel || ' ');
     
     // 信号
-    if (info.sig) {
-        $(id + "_rssi").text(info.sig + "%");
-    } else if (info.rssi) {
-        $(id + "_rssi").text(info.rssi + "dBm");
+    if (info.sig != null && info.sig !== "") {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi_box").show();
+        signalMeasure($(id + "_rssi_box"), {
+            value: info.sig,
+            min: 0,
+            max: 100,
+            text: "RSSI:" + info.sig + "%"
+        });
+        $(id + "_rssi").text("RSSI:" + info.sig + "%");
+    } else if (info.rssi != null && info.rssi !== "") {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi_box").show();
+        signalMeasure($(id + "_rssi_box"), {
+            value: info.rssi,
+            min: -120,
+            max: -50,
+            text: "RSSI:" + info.rssi + "dBm"
+        });
+        $(id + "_rssi").text("RSSI:" + info.rssi + "dBm");
     } else {
+        $(id + "_rssi4_head").hide();
+        $(id + "_rssi_box").hide();
         $(id + "_rssi").text("");
     }
     
@@ -1200,13 +1325,12 @@ function bindButtonEvents() {
 function toggleLteInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
-        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+    if (status !== $.i18n("up") && status !== $.i18n("uping") && status !== $.i18n("connect") && status !== $.i18n("block")) {
+        he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['wui@admin.ttyd_kill', 'ifname@' + type + '.setup']).then(function(result) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     }
@@ -1216,13 +1340,12 @@ function toggleLteInterface(type) {
 function toggleWanInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
-        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+    if (status === $.i18n("down")) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     }
@@ -1232,13 +1355,12 @@ function toggleWanInterface(type) {
 function toggleWispInterface(type) {
     var status = $('#' + type + '_status').text();
     
-    if (status === $.i18n("up") || status === $.i18n("uping") || status === $.i18n("connect") ||
-        status === $.i18n("connecting") || status === $.i18n("block") || status === $.i18n("failed")) {
-        he.exec(['ifname@' + type + '.shut']).then(function(result) {
+    if (status === $.i18n("down")) {
+        he.exec(['ifname@' + type + '.setup']).then(function(result) {
             interface_load();
         });
     } else {
-        he.exec(['ifname@' + type + '.setup']).then(function(result) {
+        he.exec(['ifname@' + type + '.shut']).then(function(result) {
             interface_load();
         });
     }
@@ -1257,6 +1379,9 @@ $.i18n().load(page.lang('dashboard')).then(function() {
     setupWifiRadioLinks();
 
     preloadCompactPortIcons();
+
+    updateSignalLayout();
+    $(window).on("resize", updateSignalLayout);
 
     function refresh_dashboard()
     {

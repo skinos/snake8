@@ -191,8 +191,6 @@ function byte2readable( size )
     return size; 
 }
 
-
-
 /**
 *
 *  page runtime infomation here
@@ -518,7 +516,6 @@ var page =
         });
         return timer;
     }
-    
 }
 
 

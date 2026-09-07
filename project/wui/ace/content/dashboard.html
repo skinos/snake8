@@ -48,13 +48,29 @@
 
                     <td data-i18n="RSSI"></td>
                     <td>
-                        <div id="lte_rssi4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte_rssi"></span>&nbsp;
-                            <span id="lte_rsrp"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte_rssi4_head" style="white-space: nowrap; display: none;">
+                                <span id="lte_rssi4_status"></span>
+
+                                <div id="lte_rssi_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_rssi"></span></div>
+                                </div>
+
+                                <div id="lte_rsrp_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_rsrp"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte_rssi5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte_rsrp5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte_rssi5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte_rsrp5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_rsrp5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -62,14 +78,32 @@
                 <tr>
                     <td data-i18n="RSRQ/SINR"></td>
                     <td>
-                        <div id="lte_rsrq4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte_rsrq"></span>&nbsp;
-                            <span id="lte_sinr"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte_rsrq4_head" style="white-space: nowrap; display: none;">
+                                <div id="lte_rsrq_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_rsrq"></span></div>
+                                </div>
+
+                                <div id="lte_sinr_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_sinr"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte_rsrq5_head" style="white-space: nowrap; display: none;">
-                            <!-- 两个span之间的空格不能被删除 美化显示 在这里使用&nbsp;会被换行 -->
-                            <span id="lte_rsrq5"></span> <span id="lte_sinr5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte_rsrq5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte_rsrq5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_rsrq5"></span></div>
+                                </div>
+
+                                <div id="lte_sinr5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte_sinr5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
 
@@ -212,13 +246,29 @@
 
                     <td data-i18n="RSSI"></td>
                     <td>
-                        <div id="lte2_rssi4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte2_rssi"></span>&nbsp;
-                            <span id="lte2_rsrp"></span>
+                       <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte2_rssi4_head" style="white-space: nowrap; display: none;">
+                                <span id="lte2_rssi4_status"></span>
+
+                                <div id="lte2_rssi_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_rssi"></span></div>
+                                </div>
+
+                                <div id="lte2_rsrp_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_rsrp"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte2_rssi5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte2_rsrp5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte2_rssi5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte2_rsrp5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_rsrp5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -226,13 +276,32 @@
                 <tr>
                     <td data-i18n="RSRQ/SINR"></td>
                     <td>
-                       <div id="lte2_rsrq4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte2_rsrq"></span>&nbsp;
-                            <span id="lte2_sinr"></span>
+                      <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte2_rsrq4_head" style="white-space: nowrap; display: none;">
+                                <div id="lte2_rsrq_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_rsrq"></span></div>
+                                </div>
+
+                                <div id="lte2_sinr_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_sinr"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte2_rsrq5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte2_rsrq5"></span> <span id="lte2_sinr5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte2_rsrq5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte2_rsrq5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_rsrq5"></span></div>
+                                </div>
+
+                                <div id="lte2_sinr5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte2_sinr5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
 
@@ -374,13 +443,29 @@
 
                     <td data-i18n="RSSI"></td>
                     <td>
-                        <div id="lte3_rssi4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte3_rssi"></span>&nbsp;
-                            <span id="lte3_rsrp"></span>
+                       <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte3_rssi4_head" style="white-space: nowrap; display: none;">
+                                <span id="lte3_rssi4_status"></span>
+
+                                <div id="lte3_rssi_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_rssi"></span></div>
+                                </div>
+
+                                <div id="lte3_rsrp_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_rsrp"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte3_rssi5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte3_rsrp5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte3_rssi5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte3_rsrp5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_rsrp5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -388,13 +473,32 @@
                 <tr>
                     <td data-i18n="RSRQ/SINR"></td>
                     <td>
-                        <div id="lte3_rsrq4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte3_rsrq"></span>&nbsp;
-                            <span id="lte3_sinr"></span>
+                       <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte3_rsrq4_head" style="white-space: nowrap; display: none;">
+                                <div id="lte3_rsrq_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_rsrq"></span></div>
+                                </div>
+
+                                <div id="lte3_sinr_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_sinr"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte3_rsrq5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte3_rsrq5"></span> <span id="lte3_sinr5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte3_rsrq5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte3_rsrq5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_rsrq5"></span></div>
+                                </div>
+
+                                <div id="lte3_sinr5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte3_sinr5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
 
@@ -536,13 +640,29 @@
 
                     <td data-i18n="RSSI"></td>
                     <td>
-                        <div id="lte4_rssi4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte4_rssi"></span>&nbsp;
-                            <span id="lte4_rsrp"></span>
+                       <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte4_rssi4_head" style="white-space: nowrap; display: none;">
+                                <span id="lte4_rssi4_status"></span>
+
+                                <div id="lte4_rssi_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_rssi"></span></div>
+                                </div>
+
+                                <div id="lte4_rsrp_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_rsrp"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte4_rssi5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte4_rsrp5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte4_rssi5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte4_rsrp5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_rsrp5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -550,13 +670,32 @@
                 <tr>
                     <td data-i18n="RSRQ/SINR"></td>
                     <td>
-                        <div id="lte4_rsrq4_head" style="white-space: nowrap; display: none;">
-                            <span id="lte4_rsrq"></span>&nbsp;
-                            <span id="lte4_sinr"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte4_rsrq4_head" style="white-space: nowrap; display: none;">
+                                <div id="lte4_rsrq_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_rsrq"></span></div>
+                                </div>
+
+                                <div id="lte4_sinr_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_sinr"></span></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="lte4_rsrq5_head" style="white-space: nowrap; display: none;">
-                            <span id="lte4_rsrq5"></span> <span id="lte4_sinr5"></span>
+                        <div class="signal-row" style="white-space: nowrap;">
+                            <div id="lte4_rsrq5_head" style="white-space: nowrap; display: none;">
+                                <div id="lte4_rsrq5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_rsrq5"></span></div>
+                                </div>
+
+                                <div id="lte4_sinr5_box" class="signal-measure-box">
+                                    <div class="signal-measure-bar"></div>
+                                    <div class="signal-measure-text"><span id="lte4_sinr5"></span></div>
+                                </div>
+                            </div>
                         </div>
                     </td>
 
@@ -685,7 +824,16 @@
                         <td>
                             <span id="wisp_peer"></span>
                             <span><img src="/assets/css/images/signal_0.png" id="wisp_rssiimg" class="line-signal"></img></span>
-                            <span id="wisp_rssi"></span>
+
+                            <div class="signal-row">
+                                <div id="wisp_rssi4_head" style="display: none;">
+                                    <div id="wisp_rssi_box" class="signal-measure-box">
+                                        <div class="signal-measure-bar"></div>
+                                        <div class="signal-measure-text"><span id="wisp_rssi"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </td>
                         <td data-i18n="Channel"></td><td id="wisp_channel"></td>
                     </tr>
@@ -792,7 +940,15 @@
                         <td>
                             <span id="wisp2_peer"></span>
                             <span><img src="/assets/css/images/signal_0.png" id="wisp2_rssiimg" class="line-signal"></img></span>
-                            <span id="wisp2_rssi"></span>
+                       
+                             <div class="signal-row">
+                                <div id="wisp2_rssi4_head" style="display: none;">
+                                    <div id="wisp2_rssi_box" class="signal-measure-box">
+                                        <div class="signal-measure-bar"></div>
+                                        <div class="signal-measure-text"><span id="wisp2_rssi"></span></div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                         <td data-i18n="Channel"></td><td id="wisp2_channel"></td>
                     </tr>
@@ -1968,5 +2124,51 @@
     margin: 0 !important;
 }
 
+.signal-row {
+    display: block;
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.signal-measure-box {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 22px;
+    margin-right: 6px;
+    border: 1px solid #f3f5f7;
+    overflow: hidden;
+    background: #f3f5f7;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.signal-measure-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: #f0ad4e;
+    transition: width 0.25s ease, background-color 0.25s ease;
+    z-index: 1;
+}
+
+.signal-measure-text {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 12px;
+    line-height: 1;
+    color: #222;
+    white-space: nowrap;
+    pointer-events: none;
+    box-sizing: border-box;
+}
 </style>
+
 

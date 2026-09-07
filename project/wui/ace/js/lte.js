@@ -139,27 +139,47 @@ function status_load()
       {
           $(id+"_csq").text( "" );
       }
-      /* signal */
-      if ( info.rssi )
-      {
-          $(id+"_rssi").text( info.rssi+"dBm" );
-      }
-      else
-      {
-          $(id+"_rssi").text( "" );
-      }
-      if ( info.rsrp )
-      {
-          $(id+"_rsrp").text( "RSRP:"+info.rsrp+"dBm" );
-      }
-      else
-      {
-          $(id+"_rsrp").text( "" );
-      }
-      if ( !info.rssi && !info.rsrp )
-      {
-          $(id+"_rssi").text( $.i18n("nosignal") );
-      }
+    /* signal */
+    if (!info.rssi && !info.rsrp) {
+    $(id + "_rssi4_head").show();
+    $(id + "_rssi4_status").text($.i18n("nosignal")).show();
+
+    $(id + "_rssi_box").hide();
+    $(id + "_rsrp_box").hide();
+    }
+    else {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi4_status").hide().text("");
+
+        if (info.rssi != null && info.rssi !== "") {
+            $(id + "_rssi_box").show();
+            signalMeasure($(id + "_rssi_box"), {
+                value: info.rssi,
+                min: -120,
+                max: -50,
+                text: "RSSI:" + info.rssi + "dBm"
+            });
+            $(id + "_rssi").text("RSSI:" + info.rssi + "dBm");
+        } else {
+            $(id + "_rssi_box").hide();
+            $(id + "_rssi").text("");
+        }
+
+        if (info.rsrp != null && info.rsrp !== "") {
+            $(id + "_rsrp_box").show();
+            signalMeasure($(id + "_rsrp_box"), {
+                value: info.rsrp,
+                min: -140,
+                max: -80,
+                text: "RSRP:" + info.rsrp + "dBm"
+            });
+            $(id + "_rsrp").text("RSRP:" + info.rsrp + "dBm");
+        } else {
+            $(id + "_rsrp_box").hide();
+            $(id + "_rsrp").text("");
+        }
+    }
+
       /* device info */
       if ( info.imei == "noimei" )
       {
@@ -202,6 +222,74 @@ function status_load()
 	  $(id+"_livetime").text( info.livetime||' ' );
     })
   }
+
+  // 将信号signal转换为电量样式的外框架+内填充+中间数字显示
+function signalMeasure($box, opt) {
+    opt = opt || {};
+
+    if (!$box || !$box.length) {
+        return;
+    }
+
+    var value = Number(opt.value);
+    if (isNaN(value)) {
+        value = 0;
+    }
+
+    var min = (opt.min != null) ? Number(opt.min) : 0;
+    var max = (opt.max != null) ? Number(opt.max) : 100;
+    var text = (opt.text != null) ? opt.text : String(opt.value != null ? opt.value : "");
+
+    var percent = 0;
+    var color = "#f0ad4e"; // 默认橙色
+
+    if (value > max) {
+        percent = 100;
+        color = "#9CCC65"; // 绿色：满格
+    } else if (value <= min) {
+        percent = 5;
+        color = "#d9534f"; // 红色：最低也要露出来
+    } else {
+        percent = ((value - min) / (max - min)) * 100;
+
+        if (percent >= 80) {
+            color = "#9CCC65"; // 绿色
+        } else if (percent >= 40) {
+            color = "#f0ad4e"; // 橙色
+        } else {
+            color = "#d9534f"; // 红色
+        }
+    }
+
+    $box.show();
+
+    $box.find(".signal-measure-bar").css({
+        width: percent + "%",
+        backgroundColor: color
+    });
+
+    var $text = $box.find(".signal-measure-text");
+    var $span = $text.find("span").first();
+    if ($span.length) {
+        $span.text(text);
+    } else {
+        $text.text(text);
+    }
+}
+
+// 外框架加内填充样式 部分窗口大小要换行显示
+function updateSignalLayout() {
+    var win_size = $(window).width() < 700;
+    var change_style = win_size ? "normal" : "nowrap";
+
+    $("[id$='_rssi4_head']").css({
+        "white-space": change_style
+    });
+
+    $(".signal-row").css({
+        "white-space": change_style
+    });
+}
 
 /* load the configure on the input */
 function lte_basic(v)

@@ -49,14 +49,35 @@ function status_load()
       $(id+"_peer").text( info.peer||' ' );
       $(id+"_peermac").text( info.peermac||' ' );
       $(id+"_channel").text( info.channel||' ' );
-      if ( info.sig )
-      {
-          $(id+"_rssi").text( info.sig+"%" );
-      }
-      else if ( info.rssi )
-      {
-          $(id+"_rssi").text( info.rssi+"dBm" );
-      }
+      
+
+    // 信号
+    if (info.sig != null && info.sig !== "") {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi_box").show();
+        signalMeasure($(id + "_rssi_box"), {
+            value: info.sig,
+            min: 0,
+            max: 100,
+            text: "RSSI:" + info.sig + "%"
+        });
+        $(id + "_rssi").text("RSSI:" + info.sig + "%");
+    } else if (info.rssi != null && info.rssi !== "") {
+        $(id + "_rssi4_head").show();
+        $(id + "_rssi_box").show();
+        signalMeasure($(id + "_rssi_box"), {
+            value: info.rssi,
+            min: -120,
+            max: -50,
+            text: "RSSI:" + info.rssi + "dBm"
+        });
+        $(id + "_rssi").text("RSSI:" + info.rssi + "dBm");
+    } else {
+        $(id + "_rssi4_head").hide();
+        $(id + "_rssi_box").hide();
+        $(id + "_rssi").text("");
+    }
+
       if ( info.signal )
       {
           $(id+"_rssiimg").attr( "src", "/assets/css/images/signal_"+info.signal+".png" );            
@@ -85,6 +106,60 @@ function status_load()
 	  $(id+"_rxtx").text( byte2readable( (info.rx_bytes||"0") ) + " / " + byte2readable( (info.tx_bytes||"0") ) );
 	  $(id+"_livetime").text( info.livetime||' ' );
   })
+}
+
+// 将信号signal转换为电量样式的外框架+内填充+中间数字显示
+function signalMeasure($box, opt) {
+    opt = opt || {};
+
+    if (!$box || !$box.length) {
+        return;
+    }
+
+    var value = Number(opt.value);
+    if (isNaN(value)) {
+        value = 0;
+    }
+
+    var min = (opt.min != null) ? Number(opt.min) : 0;
+    var max = (opt.max != null) ? Number(opt.max) : 100;
+    var text = (opt.text != null) ? opt.text : String(opt.value != null ? opt.value : "");
+
+    var percent = 0;
+    var color = "#f0ad4e"; // 默认橙色
+
+    if (value > max) {
+        percent = 100;
+        color = "#9CCC65"; // 绿色：满格
+    } else if (value <= min) {
+        percent = 5;
+        color = "#d9534f"; // 红色：最低也要露出来
+    } else {
+        percent = ((value - min) / (max - min)) * 100;
+
+        if (percent >= 80) {
+            color = "#9CCC65"; // 绿色
+        } else if (percent >= 40) {
+            color = "#f0ad4e"; // 橙色
+        } else {
+            color = "#d9534f"; // 红色
+        }
+    }
+
+    $box.show();
+
+    $box.find(".signal-measure-bar").css({
+        width: percent + "%",
+        backgroundColor: color
+    });
+
+    var $text = $box.find(".signal-measure-text");
+    var $span = $text.find("span").first();
+    if ($span.length) {
+        $span.text(text);
+    } else {
+        $text.text(text);
+    }
 }
 
 /* load the configure on the input */

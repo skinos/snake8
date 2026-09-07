@@ -29,7 +29,15 @@
                 <th data-i18n="RSSI"></th>
                 <td>
                     <span><img src="/assets/css/images/signal_0.png" id="wisp_rssiimg" style="display: none;" class="line-signal"></img></span>
-                    <span id="wisp_rssi"></span>
+                    <div class="signal-row">
+                        <div id="wisp_rssi4_head" style="display: none;">
+                            <div id="wisp_rssi_box" class="signal-measure-box">
+                                <div class="signal-measure-bar"></div>
+                                <div class="signal-measure-text"><span id="wisp_rssi"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
                 </td>
                 <th data-i18n="Channel"></th><td id="wisp_channel"></td>
             </tr>
@@ -649,6 +657,54 @@
 </div><!-- /.row -->
 
 <script src="/js/wisp.js"></script>
+
+<style>
+.signal-row {
+  display: block;
+  white-space: nowrap;
+  margin-bottom: 2px;
+}
+
+.signal-measure-box {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 22px;
+    margin-right: 6px;
+    border: 1px solid #f3f5f7;
+    overflow: hidden;
+    background: #f3f5f7;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.signal-measure-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: #f0ad4e;
+    transition: width 0.25s ease, background-color 0.25s ease;
+    z-index: 1;
+}
+
+.signal-measure-text {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    font-size: 12px;
+    line-height: 1;
+    color: #222;
+    white-space: nowrap;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+</style>
 
 
 
