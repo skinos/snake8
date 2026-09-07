@@ -14,6 +14,8 @@ Load and unload ALG (Application Layer Gateway) kernel helpers. Prefer the **Com
 ```json
 // Attributes introduction 
 {
+    "nft":"attach CT helper via nftables",     // [ "disable", "enable" ], default enable when omitted
+
     "amanda":"amanda ALG function",            // [ "disable", "enable" ]
     "ftp":"ftp ALG function",                  // [ "disable", "enable" ]
     "h323":"h323 ALG function",                // [ "disable", "enable" ]
@@ -39,6 +41,7 @@ forward@alg
     "ftp":"enable",
     "h323":"disable",
     "irc":"disable",
+    "nft":"enable",
     "pptp":"enable",
     "gre":"enable",
     "rtsp":"enable",
@@ -54,6 +57,13 @@ Example, disable the FTP ALG
 
 ```shell
 forward@alg:ftp=disable
+ttrue
+```
+
+Example, use legacy iptables raw CT --helper instead of nft
+
+```shell
+forward@alg:nft=disable
 ttrue
 ```
 
