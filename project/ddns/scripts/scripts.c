@@ -78,15 +78,13 @@ talk_t _service( obj_t this, param_t param )
         {
             default_warn( "%s cannot find extern interface", COM_IDPATH );
             talk_free( cfg );
-            sleep( 5 );
-            return tfalse;
+            return ttrue;
         }
         if ( netdev_info( ptr, connect_ip, sizeof(connect_ip), NULL, 0, NULL, 0, NULL, 0 ) != 0 )
         {
             default_warn( "%s cannot find ip address on %s", COM_IDPATH, ptr );
             talk_free( cfg );
-            sleep( 5 );
-            return tfalse;
+            return ttrue;
         }
     }
     else
@@ -95,15 +93,13 @@ talk_t _service( obj_t this, param_t param )
         {
             default_warn( "%s cannot find gateway route", COM_IDPATH );
             talk_free( cfg );
-            sleep( 5 );
-            return tfalse;
+            return ttrue;
         }
         if ( netdev_info( connect_interface, connect_ip, sizeof(connect_ip), NULL, 0, NULL, 0, NULL, 0 ) != 0 )
         {
             default_warn( "%s cannot find gateway ip address", COM_IDPATH );
             talk_free( cfg );
-            sleep( 5 );
-            return tfalse;
+            return ttrue;
         }
     }
 

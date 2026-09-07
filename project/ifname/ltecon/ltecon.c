@@ -49,6 +49,7 @@
 boole_t _setup( obj_t this, param_t param )
 {
 	int tid;
+	int need;
     talk_t cfg;
     const char *ptr;
     const char *obj;
@@ -70,6 +71,13 @@ boole_t _setup( obj_t this, param_t param )
         talk_free( cfg );
 		return ttrue;
     }
+	need = 1;
+	ptr = json_string( cfg, "need_simcard" );
+	if ( ptr != NULL && 0 == strcmp( ptr, "disable" ) )
+	{
+		need = 0;
+	}
+	reg_set_int( this, "need_simcard", need );
 	/* set the tid */
 	ptr = json_string( cfg, "tid" );
 	if ( ptr != NULL && *ptr != '\0' )
@@ -1597,6 +1605,7 @@ talk_t _state( obj_t this, param_t param )
 }
 talk_t _status( obj_t this, param_t param )
 {
+	int need;
 	talk_t v;
 	talk_t ret;
 	talk_t axp;
@@ -1633,6 +1642,27 @@ talk_t _status( obj_t this, param_t param )
 			talk_free( axp );
             json_sync( v, ret );
             talk_free( v );
+			/* Hide camped RF when SIM is required and not usable. */
+			need = reg_oget_int( this, "need_simcard", 1 );
+			if ( need != 0 )
+			{
+				ptr = json_string( ret, "iccid" );
+				if ( ptr == NULL || *ptr == '\0'
+					|| 0 == strcmp( ptr, "nosim" )
+					|| 0 == strcmp( ptr, "pin" )
+					|| 0 == strcmp( ptr, "puk" ) )
+				{
+					json_delete_axp( ret, "operator" );
+					json_delete_axp( ret, "plmn" );
+					json_delete_axp( ret, "signal" );
+					json_delete_axp( ret, "signal2" );
+					json_delete_axp( ret, "csq" );
+					json_delete_axp( ret, "rssi" );
+					json_delete_axp( ret, "rsrp" );
+					json_delete_axp( ret, "rsrq" );
+					json_delete_axp( ret, "sinr" );
+				}
+			}
         }
     }
 	else

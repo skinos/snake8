@@ -84,7 +84,11 @@ ttrue
     ```json
     {
         "sec":"The number of seconds since 1970.01.01:00:00:00",  // [ number ]
-        "usec":"current microsecond",                             // [ number ] 
+        "usec":"current microsecond",                             // [ number ]
+        "hour":"local hour of day",                               // [ number ], 0-23
+        "minute":"local minute",                                  // [ number ], 0-59
+        "second":"local second",                                  // [ number ], 0-59
+        "ms":"local millisecond",                                 // [ number ], 0-999, from usec/1000
         "minuteswest":"Minutes west of Greenwich",                // [ number ]
         "dsttime":"type of DST correction"                        // [ number ]
     }
@@ -106,6 +110,10 @@ ttrue
     {
         "sec":"1747327771",
         "usec":"803417",
+        "hour":"14",
+        "minute":"48",
+        "second":"31",
+        "ms":"803",
         "minuteswest":"-480",
         "dsttime":"0"
     }
