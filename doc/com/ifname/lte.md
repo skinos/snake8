@@ -395,6 +395,9 @@ ttrue
                                             // "nosim" means no SIM card detected
                                             // "pin" for the simcard need PIN code
                                             // "puk" for the simcard pin error
+                                            // when need_simcard is not "disable" and iccid is
+                                            // missing, "nosim", "pin", or "puk", status omits
+                                            // operator, plmn, and RF fields below
         "plmn":"MCC and MNC",           // [ string, "noreg", "unreg", "dereg" ]
                                             // string for MCC and MNC
                                             // "noreg" means cannot register to operator

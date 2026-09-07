@@ -39,6 +39,14 @@ the camera project language JSON (`cn.json` / `en.json`), selected by
 localized text. Missing keys or a missing language file return the original string
 unchanged.
 
+**LTE operator**
+
+Use **`camera@osd2he.operator[ <object> ]`** with an LTE interface object
+(for example **`ifname@lte`**, **`ifname@lte2`**). The helper reads **`<object>.status`**,
+checks **`iccid`** / **`operator`**, and returns a translated OSD string: SIM errors
+(**`nosim`** / **`pin`** / **`puk`** / missing) become the localized error text;
+a usable SIM returns the localized operator name.
+
 
 ### Configuration reference ( camera@osd2he )
 
@@ -49,6 +57,7 @@ unchanged.
     "$L-P$":"LTE IP address",                                  // [ string ], HE for LTE IP field
     "$L-G$":"LTE gateway",                                     // [ string ], HE for LTE gateway field
     "$L-O$":"LTE operator name",                               // [ string ], HE for LTE operator field
+    "$L-OL$":"LTE operator or SIM error (translated)",           // [ string ], camera@osd2he.operator[ifname@lte]
     "$G-LAT$":"GNSS latitude",                                  // [ string ], HE for latitude (decimal degrees)
     "$G-LON$":"GNSS longitude",                                 // [ string ], HE for longitude (decimal degrees)
     "$G-ALT$":"GNSS altitude",                                  // [ string ], HE for altitude in metres (GGA)
@@ -148,5 +157,28 @@ ttrue
     Example, use in osd2he mapping
     ```shell
     camera@osd2he:$GB$=camera@osd2he.lang[,camera@gsuni.gb28281]
+    ttrue
+    ```
+
++ `operator[ object ]` **LTE operator or SIM error for OSD (translated)**
+    - object ----------- [ string ], LTE interface object (e.g. `ifname@lte`, `ifname@lte2`, `ifname@lte3`)
+    - failed return NULL
+    - succeed return [ string ], translated SIM error (`nosim` / `pin` / `puk`) when the card is missing or locked; otherwise translated `operator` from `<object>.status`
+
+    Example, first LTE with SIM
+    ```shell
+    camera@osd2he.operator[ifname@lte]
+    中国联通
+    ```
+
+    Example, no SIM
+    ```shell
+    camera@osd2he.operator[ifname@lte]
+    无卡
+    ```
+
+    Example, use in osd2he mapping (default `$L-OL$`)
+    ```shell
+    camera@osd2he:$L-OL$=camera@osd2he.operator[ifname@lte]
     ttrue
     ```
