@@ -372,15 +372,26 @@ boole_t _current( obj_t this, param_t param )
 	}
 	else
 	{
-        struct timeval tv;
-        struct timezone tz;
-        if ( gettimeofday( &tv, &tz ) == 0 )
+		int ms;
+		struct tm tm;
+		struct timeval tv;
+		struct timezone tz;
+
+		if ( gettimeofday( &tv, &tz ) == 0 )
 		{
-			ret = json_create( NULL );
-			json_set_number( ret, "sec", tv.tv_sec );
-			json_set_number( ret, "usec", tv.tv_usec );
-			json_set_number( ret, "minuteswest", tz.tz_minuteswest );
-			json_set_number( ret, "dsttime", tz.tz_dsttime );
+			ms = (int)( tv.tv_usec / 1000 );
+			if ( localtime_r( &tv.tv_sec, &tm ) != NULL )
+			{
+				ret = json_create( NULL );
+				json_set_number( ret, "sec", tv.tv_sec );
+				json_set_number( ret, "usec", tv.tv_usec );
+				json_set_number( ret, "hour", tm.tm_hour );
+				json_set_number( ret, "minute", tm.tm_min );
+				json_set_number( ret, "second", tm.tm_sec );
+				json_set_number( ret, "ms", ms );
+				json_set_number( ret, "minuteswest", tz.tz_minuteswest );
+				json_set_number( ret, "dsttime", tz.tz_dsttime );
+			}
 		}
 	}
 	return ret;
