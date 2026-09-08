@@ -6,9 +6,11 @@ PLAT_LIST=`ls ./config`
 for plat in $PLAT_LIST
 do
     if [ ${plat} == "srkw" ] || [ ${plat} == "rkw" ]; then
-        DIR_ROOT=${plat}/openwrt/build_dir
+        SDK_ROOT=${plat}/openwrt
+        DIR_ROOT=${SDK_ROOT}/build_dir
     else
-        DIR_ROOT=${plat}/build_dir
+        SDK_ROOT=${plat}
+        DIR_ROOT=${SDK_ROOT}/build_dir
     fi
     if [ -d ${DIR_ROOT} ]
     then
@@ -28,5 +30,18 @@ do
                 rm -fr ${DIR_ROOT}/${dir}/root*
             fi
         done
+    fi
+    # Full clean only: drop shared package feeds.
+    # Same CPU arch (e.g. mipsel_24kc) with different libc (musl/glibc)
+    # overwrite the same busybox-*.apk path; leftover apks mix into the next image.
+    if [ $# -eq 0 ]; then
+        if [ -d ${SDK_ROOT}/staging_dir/packages ]; then
+            echo "rm -fr ${SDK_ROOT}/staging_dir/packages"
+            rm -fr ${SDK_ROOT}/staging_dir/packages
+        fi
+        if [ -d ${SDK_ROOT}/bin/packages ]; then
+            echo "rm -fr ${SDK_ROOT}/bin/packages"
+            rm -fr ${SDK_ROOT}/bin/packages
+        fi
     fi
 done
