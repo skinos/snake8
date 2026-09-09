@@ -11,40 +11,55 @@
  *
  * reset_times  | simcard   | signal/PLMN | attach    | connect_failed
  * --------------|-----------|-------------|-----------|---------------
- *  0 (1st)     |  60s      |  120s       |  60s      |  3 cycles
- *  1 (2nd)     | 180s      |  300s       | 180s      |  7 cycles
- *  2 (3rd)     | 300s      |  600s       | 300s      | 15 cycles
+ *  0 (1st)     |  30s      |  120s       | 120s      |  2 cycles
+ *  1 (2nd)     | 180s      |  300s       | 300s      |  5 cycles
+ *  2 (3rd)     | 300s      |  600s       | 600s      | 15 cycles
  *  3+          | 1800s     | 1800s       | 1800s     | 37 cycles
+ *
+ * Tuned for industrial power dips: first SIM failure recovers faster;
+ * signal/attach ladders are smoother; connect fails earlier then backs off.
+ * When a stage recovers, reset_reason is cleared and reset_times is zeroed.
+ *
+ * _service return (daemon):
+ *   tfalse — START kept, this service is rerun (wait ifdev fun, ~5s).
+ *   terror — START cleared, this service is not rerun.
+ *            Ladder timeout does scall(ifdev, "reset") then return terror.
+ *            reset[] power-cycles the module and bumps ifdev reset_times.
+ *            The next _service starts only when ifname setup / sstart runs
+ *            again (USB rematch → frame add, or READY watch sreset).
  *
  * Stage 1 — SIM card not detected:
  *   Default need_simcard is enabled. Each check sleeps 1s.
- *   1st reset after 60 failed checks (60s), 2nd after 180s, 3rd after 300s,
- *   subsequent after 1800s (30min). Returns terror → _service exits and
- *   restarts, incrementing reset_times.
+ *   1st reset after 30s, 2nd after 180s, 3rd after 300s,
+ *   subsequent after 1800s (30min). Then ifdev reset + terror as above.
  *
  * Stage 2 — Signal or PLMN not acquired:
  *   Default need_plmn and need_signal are enabled (both required).
  *   1st reset after 120s, 2nd after 300s, 3rd after 600s, then 1800s.
+ *   Same ifdev reset + terror as Stage 1.
  *
  * Stage 3 — Network attach failed (non-PPP mode only):
  *   Default need_attach is enabled.
- *   1st reset after 60s, 2nd after 180s, 3rd after 300s, then 1800s.
+ *   1st reset after 120s (slower than SIM), 2nd after 300s, 3rd after 600s, then 1800s.
+ *   Same ifdev reset + terror as Stage 1.
  *
  * Stage 4 — Connect failed (consecutive _service cycle failures):
- *   A per-cycle counter (connect_failed) accumulates across restarts.
- *   Resets the module when the counter hits 3, 7, 15, or every 37 cycles.
- *   Each cycle includes stages 1-3, so one cycle ≈ 60+120+60 = 240s minimum.
- *   First connect-failure reset ≈ 3 * 240s = 12min.
+ *   A per-cycle counter (connect_failed) accumulates across _service cycles.
+ *   Resets the module when the counter hits 2, 5, 15, or every 37 cycles.
+ *   Same ifdev reset + terror as Stage 1.
  *
- * Worst case (all checks maxed out):
- *   A single _service cycle can take up to 60+120+60 = 240s before
- *   reaching the connect-failed counter. With failed_everytime=37,
- *   the longest interval between resets is 37 * 240s ≈ 2.5 hours.
+ * On stage recovery (sim/signal/attach OK after that reason reset):
+ *   clear reset_reason and reset_clear (times=0).
+ *
+ * con_service on ifdev: _setup publishes the sstart name before sstart.
+ * Cleared in _shut before sdelete. After WAN is up, READY watch sresets
+ * the service (3 min debounce) to redial.
  */
 
 #include "skin/skin.h"
 #include "skinnet/skinnet.h"
 #include <ifaddrs.h>
+#include <unistd.h>
 
 boole_t _setup( obj_t this, param_t param )
 {
@@ -107,6 +122,7 @@ boole_t _setup( obj_t this, param_t param )
 
     /* run the app connection */
     ifname_info( obj, "%s setup", object );
+	reg_sset_string( ifdev, "con_service", object );
 	sstart( object, "service", NULL, object );
     talk_free( cfg );
     return ttrue;
@@ -114,6 +130,8 @@ boole_t _setup( obj_t this, param_t param )
 boole_t _shut( obj_t this, param_t param )
 {
 	talk_t cfg;
+	talk_t profile;
+	const char *ptr;
     const char *obj;
 	const char *ifdev;
     const char *object;
@@ -127,6 +145,12 @@ boole_t _shut( obj_t this, param_t param )
     cfg = config_get( this, NULL ); 
     /* call the offline */
     scalls( NETWORK_COM, "offline", object );
+	/* drop name first so atd will not sreset during sdelete */
+	ifdev = reg_string( this, "ifdev" );
+	if ( ifdev != NULL && *ifdev != '\0' )
+	{
+		reg_sset_string( ifdev, "con_service", NULL );
+	}
     /* stop the automatic service */
     sdelete( "%s-automatic", object );
     /* stop the service */
@@ -140,11 +164,8 @@ boole_t _shut( obj_t this, param_t param )
     unlink( path );
 
     /* down the ifdev */
-	ifdev = reg_string( this, "ifdev" );
     if ( ifdev != NULL && *ifdev != '\0' )
     {
-    	talk_t profile;
-    	const char *ptr;
     	profile = NULL;
 		ptr = json_string( cfg, "profile" );
 		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
@@ -522,7 +543,7 @@ boole_t _service( obj_t this, param_t param )
 	/**** testing simcard for the ifdev ******/
 	/*****************************************/
     ifname_info( obj, "%s simcard detection", object );
-	failed_threshold = 60;       // 60
+	failed_threshold = 30;       // 30
 	failed_threshold2 = 180;     // 180
 	failed_threshold3 = 300;     // 300
 	failed_everytime = 1800;     // 1800
@@ -709,10 +730,10 @@ simagain:
 	/*****************************************/
 	plmn_string[0] = signal_string[0] = '\0';
     ifname_info( obj, "%s plmn or signal detection", object );
-	failed_threshold = 120;      // 120
-	failed_threshold2 = 300;     // 300
-	failed_threshold3 = 600;     // 600
-	failed_everytime = 1800;     // 1800
+	failed_threshold = 120;      // 120  (2min)
+	failed_threshold2 = 300;     // 300  (5min)
+	failed_threshold3 = 600;     // 600  (10min)
+	failed_everytime = 1800;     // 1800 (30min)
 	ptr = json_string( cfg, "signal_failed_threshold" );
 	if ( ptr != NULL && *ptr != '\0' )
 	{
@@ -998,8 +1019,8 @@ simagain:
 	if ( 0 != strcmp( mode, "ppp" ) )
 	{
 	    ifname_info( obj, "%s attach", object );
-		failed_threshold = 60;       // 60
-		failed_threshold2 = 180;     // 180
+		failed_threshold = 120;      // 120 (slower than SIM first round)
+		failed_threshold2 = 300;     // 300
 		failed_threshold3 = 600;     // 600
 		failed_everytime = 1800;     // 1800
 		ptr = json_string( cfg, "attach_failed_threshold" );
@@ -1097,10 +1118,10 @@ simagain:
 	/*****************************************/
 	/******** connect failed process *********/
 	/*****************************************/
-	failed_threshold = 3;       // 3*48 = 144
-	failed_threshold2 = 7;      // 7*48 = 336
-	failed_threshold3 = 15;     // 15*48 = 720
-	failed_everytime = 37;      // 37*48 = 1800
+	failed_threshold = 2;       // 2 cycles
+	failed_threshold2 = 5;      // 5
+	failed_threshold3 = 15;     // 15
+	failed_everytime = 37;      // 37 — keep long tail for locked/no-heal cases
 	ptr = json_string( cfg, "failed_threshold" );
 	if ( ptr != NULL && *ptr != '\0' )
 	{

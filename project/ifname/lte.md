@@ -8,6 +8,7 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
 - manages LTE/NR interface lifecycle: setup, shutdown, status query
 - supports PPP and DHCP client IPv4 addressing
 - provides SIM card detection, PLMN registration, signal strength monitoring
+- after the WAN is up without keeplive, a long modem watch failure restarts this ifname service so ltecon redials (the module is not power-cycled on that path)
 - supports backup SIM card failover with configurable thresholds
 - proxies modem-specific APIs: operator, reset, lock_imei, lock_imsi, custom_set, custom_watch
 - provides unified configuration view: modem-side configs (sms, gnss, ims, atport, lock_*, custom_*, watch_interval) are accessible through ifname@lte and automatically forwarded to modem@lte, allowing users to manage the entire LTE device from a single interface
@@ -64,10 +65,10 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
         "attach_failed_threshold2":"second failed time to switch",  // [ number ], default 180 seconds
         "attach_failed_threshold3":"third failed time to switch",   // [ number ], default 600 seconds
         "attach_failed_everytime":"every failed time to switch",    // [ number ], default 1800 seconds
-        "failed_threshold":"first failed time to switch",           // [ number ]
-        "failed_threshold2":"second failed time to switch",         // [ number ]
-        "failed_threshold3":"third failed time to switch",          // [ number ]
-        "failed_everytime":"every failed time to switch",           // [ number ]
+        "failed_threshold":"first failed time to switch",           // [ number ], default 3 cycles
+        "failed_threshold2":"second failed time to switch",         // [ number ], default 7 cycles
+        "failed_threshold3":"third failed time to switch",          // [ number ], default 15 cycles
+        "failed_everytime":"every failed time to switch",           // [ number ], default 37 cycles
         "failover":"backup simcard usage duration",                 // [ number ], the unit is second
         "keeplive_switch":"keeplive failed to switch",              // [ "disable", "enable" ]
         "pin":"simcard pin",                                        // [ string ]
@@ -86,7 +87,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // SIM card detection attributes
     "need_simcard":"SIMcard must be detected",                   // [ "enable", "disable" ]
-    "simcard_failed_threshold":"first failed to reset time",     // [ number ], default 60 seconds
+    "simcard_failed_threshold":"first failed to reset time",     // [ number ], default 30 seconds
     "simcard_failed_threshold2":"second failed to reset time",   // [ number ], default 180 seconds
     "simcard_failed_threshold3":"third failed to reset time",    // [ number ], default 300 seconds
     "simcard_failed_everytime":"every failed to reset time",     // [ number ], default 1800 seconds
@@ -101,8 +102,8 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // Attach detection attributes
     "need_attach":"must attach succeed",                         // [ "enable", "disable" ]
-    "attach_failed_threshold":"first failed to reset time",      // [ number ], default 60 seconds
-    "attach_failed_threshold2":"second failed to reset time",    // [ number ], default 180 seconds
+    "attach_failed_threshold":"first failed to reset time",      // [ number ], default 120 seconds
+    "attach_failed_threshold2":"second failed to reset time",    // [ number ], default 300 seconds
     "attach_failed_threshold3":"third failed to reset time",     // [ number ], default 600 seconds
     "attach_failed_everytime":"every failed to reset time",      // [ number ], default 1800 seconds
 
@@ -110,6 +111,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     "tid":"table identify number",            // [ number ], exclusive route table ID, only for multiple WAN
     "metric":"default route metric",          // [ number ]
     "mode":"IPV4 address mode",               // [ "dhcpc", "static", "ppp" ]
+                                                   // omit: dhcpc when the modem register na is set, else ppp
                                                    // "dhcpc" for DHCP client
                                                    // "static" for manual setting
                                                    // "ppp" for PPP dial
@@ -198,10 +200,10 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     },
 
     // Configure connect failed to action
-    "failed_threshold":"first failed to reset time",                                   // [ number ]
-    "failed_threshold2":"second failed to reset time",                                 // [ number ]
-    "failed_threshold3":"third failed to reset time",                                  // [ number ]
-    "failed_everytime":"every failed to reset time",                                   // [ number ]
+    "failed_threshold":"first failed to reset time",                                   // [ number ], default 2 cycles
+    "failed_threshold2":"second failed to reset time",                                 // [ number ], default 5 cycles
+    "failed_threshold3":"third failed to reset time",                                  // [ number ], default 15 cycles
+    "failed_everytime":"every failed to reset time",                                   // [ number ], default 37 cycles
 
     // Modem-side configuration (forwarded to modem@lte for unified management)
     // These fields belong to modem@lte but are accessible through ifname@lte
@@ -327,6 +329,24 @@ Example, set custom AT commands to execute on modem setup
 ifname@lte:custom_set|{"1":"AT+COPS=3,2","2":"AT+CPIN=1234"}
 ttrue
 ```
+
+
+
+### Concepts
+
+**Dial recovery**
+
+`ifname@ltecon` calls `ifdev.reset` when SIM, signal/PLMN, attach, or connect-failed hit the thresholds in this document (and in `lte.cfg`). Those counts live on the modem as `reset_times` / `reset_uptime`. Stage recovery calls `ifdev.reset_clear`, which zeros only that ladder.
+
+Default first-round waits: SIM 30 s, signal/PLMN 120 s, attach 120 s; then 180/300/1800 s (SIM) or 300/600/1800 s (signal and attach). Connect-failed resets at 2, 5, 15, then every 37 connection cycles. Backup SIM (`bsim_cfg`) first-round waits differ: SIM 60 s, signal/PLMN 120 s, attach 60 s; then 180/300/1800 s (SIM), 300/600/1800 s (signal), 180/600/1800 s (attach). Connect-failed switches at 3, 7, 15, then every 37 cycles.
+
+When **`mode`** is omitted, IPv4 is **`dhcpc`** if the modem register **`na`** is set (typical 5G), otherwise **`ppp`**. A missing **`netdev`** forces **`ppp`** for that cycle only (not written to config). A USB composition rematch (`arch@usb.search`) does not increment `reset_times`.
+
+After the WAN is up, this service stays in DHCP/PPP and does not re-check RF unless **keeplive** is enabled. If modem watch then fails for 3 minutes, `modem@lte` **sreset**s this ifname service (register `con_service` on the ifdev) so dialing runs again from `fun` / SIM / signal / attach. The module is not power-cycled for that case.
+
+`setup` writes `con_service` on the ifdev before `sstart`. `shut` clears `con_service` before `sdelete` so the modem will not restart this service while ifname is going down.
+
+While the modem is still registering and this service is live, the modem skips its 5/10/20/60 minute never-registered watch reset; ltecon owns that recovery.
 
 
 

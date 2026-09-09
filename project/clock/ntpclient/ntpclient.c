@@ -501,19 +501,21 @@ static void primary_loop(int usd, struct ntp_control *ntpc)
 		FD_ZERO(&fds);
 		FD_SET(usd,&fds);
 		i=select(usd+1,&fds,NULL,NULL,&to);  /* Wait on read or error */
-		if ((i!=1)||(!FD_ISSET(usd,&fds))) {
-			if (i<0) {
-				if (errno != EINTR) perror("select");
-				continue;
-			}
-			if (to.tv_sec == 0) {
-				if (probes_sent >= ntpc->probe_count &&
-					ntpc->probe_count != 0) break;
-				send_packet(usd,ntpc->time_of_send);
-				++probes_sent;
-				to.tv_sec=ntpc->cycle_time;
-				to.tv_usec=0;
-			}
+		if (i<0) {
+			if (errno != EINTR) perror("select");
+			continue;
+		}
+		/* Timeout: some platforms leave timeval unchanged; key off i==0 */
+		if (i==0) {
+			if (probes_sent >= ntpc->probe_count &&
+				ntpc->probe_count != 0) break;
+			send_packet(usd,ntpc->time_of_send);
+			++probes_sent;
+			to.tv_sec=ntpc->cycle_time;
+			to.tv_usec=0;
+			continue;
+		}
+		if (!FD_ISSET(usd,&fds)) {
 			continue;
 		}
 		pack_len=recvfrom(usd,incoming,sizeof_incoming,0,

@@ -19,7 +19,11 @@
     "init":
     {
         "app":"clock@restart.setup",
-        "general":"clock@ntps.setup"
+        "general":
+        {
+            "clock@ntps.setup":"",
+            "clock@date.online":""
+        }
     },
     "joint":
     {

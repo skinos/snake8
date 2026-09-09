@@ -108,37 +108,42 @@ static boole time_setting( const char *tt, const char *zone, const char *src )
 
     return ret;
 }
-/* sync the time use ntp */
-static boole ntpclient_sync( const char* server, const char* zone )
+/* sync the time use ntp; adjust_interval>0: -s then stay in -l lock */
+static boole ntpclient_sync( const char* server, const char* zone, int adjust_interval )
 {
+    int r;
     boole ret;
+    reg_t wr;
     char path[PATH_MAX];
 
+    (void)zone;
     if ( server == NULL || *server == '\0' )
     {
         return false;
     }
     ret = false;
     project_osc_path( path, sizeof(path), PROJECT_ID, "ntpclient" );
-    /* sync the time */
-    if ( 0 == execute( 60, true, "%s -h %s -s" , path, server ) )
+    /* hard set clock once */
+    r = execute( 60, true, "%s -h %s -s", path, server );
+    if ( r != 0 )
     {
-        ret = true;
-        default_info( COM_IDPATH" sync the system time from %s succeed", server );
-        shell( "hwclock -w" );
-		/* record time source */
-		{
-			reg_t wr;
-
-			wr = wreg_attach( NULL, 0, 0 );
-			if ( wr != NULL )
-			{
-				reg_put_str( wr, "date_src", "ntp" );
-				wreg_detach( wr );
-			}
-		}
-		/* cast joint event */
-        joint_calls( "date/modify", "ntp" );
+        return false;
+    }
+    ret = true;
+    default_info( COM_IDPATH" sync the system time from %s succeed", server );
+    shell( "hwclock -w" );
+    wr = wreg_attach( NULL, 0, 0 );
+    if ( wr != NULL )
+    {
+        reg_put_str( wr, "date_src", "ntp" );
+        wreg_detach( wr );
+    }
+    joint_calls( "date/modify", "ntp" );
+    /* keep highest precision: -s each probe + -l frequency lock until killed */
+    if ( adjust_interval > 0 )
+    {
+        default_info( COM_IDPATH" ntp adjust lock on %s interval %d", server, adjust_interval );
+        execute( 0, true, "%s -h %s -s -l -i %d -q 500", path, server, adjust_interval );
     }
     return ret;
 }
@@ -226,27 +231,35 @@ boole_t _service( obj_t this, param_t param )
     boole ret;
     talk_t cfg;
     int interval;
+    int adjust_iv;
     const char *ptr;
     const char *zone;
+    const char *adjust;
     const char *server[10];
     char key[NAME_MAX];
 
-    /* wait the online */
-	if ( gateway_info( NULL, NULL ) == false )
-	{
-		default_warn( COM_IDPATH" no gateway route" );
-		return ttrue;
-	}
 	default_info( COM_IDPATH" start for ntp time" );
     /* get the configure */
     ret = false;
     interval = 0;
+    adjust_iv = 0;
     cfg = config_get( this, NULL );
     zone = json_string( cfg, "timezone" );
+    adjust = json_string( cfg, "adjust" );
     ptr = json_string( cfg, "ntpinterval" );
     if ( ptr != NULL )
     {
         interval = atoi( ptr );
+    }
+    /* adjust=enable: lock mode, ntpinterval is probe period (15..600s) */
+    if ( adjust != NULL && strcmp( adjust, "enable" ) == 0 )
+    {
+        adjust_iv = interval;
+        if ( adjust_iv < 15 || adjust_iv > 600 )
+        {
+            default_warn( COM_IDPATH" adjust interval %d invalid, use 15", adjust_iv );
+            adjust_iv = 15;
+        }
     }
     for ( t=0; t<10; t++ )
     {
@@ -275,7 +288,7 @@ boole_t _service( obj_t this, param_t param )
         /* sync every server util succeed */
         for ( t=0; t<10; t++ )
         {
-            ret = ntpclient_sync( server[t], zone );
+            ret = ntpclient_sync( server[t], zone, adjust_iv );
             if ( ret == true )
             {
                 break;
@@ -284,6 +297,12 @@ boole_t _service( obj_t this, param_t param )
         if ( ret == true )
         {
             shell( "hwclock -w >/dev/null 2>&1" );
+            /* adjust lock returns only when ntpclient exits; retry soon */
+            if ( adjust_iv > 0 )
+            {
+                sleep( 10 );
+                continue;
+            }
             /* wait interval time */
             if ( interval <= 0 )
             {
@@ -411,7 +430,7 @@ boole_t _ntpsync( obj_t this, param_t param )
     zone = json_string( cfg, "timezone" );
     if ( ptr != NULL )
     {
-        ret = ntpclient_sync( ptr, zone );
+        ret = ntpclient_sync( ptr, zone, 0 );
     }
     else
     {
@@ -430,7 +449,7 @@ boole_t _ntpsync( obj_t this, param_t param )
             {
                 continue;
             }
-            ret = ntpclient_sync( ptr, zone );
+            ret = ntpclient_sync( ptr, zone, 0 );
             if ( ret == true )
             {
                 break;

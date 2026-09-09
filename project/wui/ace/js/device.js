@@ -77,12 +77,61 @@ function date_load()
         }
         if ( date )
         {
+            var i;
+            var key;
+            var label;
+            var fields;
+            var val;
             $('#time_panel').show();
             $('#timezone').val(date.timezone || '');
             $('#ntpclient').prop('checked', able2boole(date.ntpclient));
-            $('#ntpserver').val(date.ntpserver || '');
-            $('#ntpserver2').val(date.ntpserver2 || '');
-            $('#ntpserver3').val(date.ntpserver3 || '');
+            $('#adjust').prop('checked', able2boole(date.adjust));
+            $('#ntpinterval').val(date.ntpinterval || '');
+            fields = '';
+            for ( i = 1; i <= 10; i++ )
+            {
+                if ( i == 1 )
+                {
+                    key = 'ntpserver';
+                    label = 'NTP Server';
+                }
+                else
+                {
+                    key = 'ntpserver' + i;
+                    label = 'NTP Server' + i;
+                }
+                if ( !Object.prototype.hasOwnProperty.call(date, key) )
+                {
+                    continue;
+                }
+                fields += '<div class="form-group">';
+                fields += '<label class="col-sm-3 control-label no-padding-right" data-i18n="' + label + '"></label>';
+                fields += '<div class="col-sm-9">';
+                fields += '<input type="text" id="' + key + '" class="col-xs-10 col-sm-5" maxlength="128" />';
+                fields += '</div></div>';
+            }
+            $('#ntpserver_fields').html(fields).i18n();
+            for ( i = 1; i <= 10; i++ )
+            {
+                if ( i == 1 )
+                {
+                    key = 'ntpserver';
+                }
+                else
+                {
+                    key = 'ntpserver' + i;
+                }
+                if ( !Object.prototype.hasOwnProperty.call(date, key) )
+                {
+                    continue;
+                }
+                val = date[key];
+                if ( val == null )
+                {
+                    val = '';
+                }
+                $('#' + key).val(val);
+            }
             $('#ntpc_panel').show();
             $('#apply_panel').show();
         }
@@ -161,11 +210,33 @@ function date_save()
         datecopy = JSON.parse(JSON.stringify(date));
         date.timezone = $('#timezone').val();
         date.ntpclient = boole2able( $('#ntpclient').prop('checked') );
+        date.adjust = boole2able( $('#adjust').prop('checked') );
+        date.ntpinterval = $('#ntpinterval').val();
+        if ( date.ntpinterval && check.number(date.ntpinterval) == false )
+        {
+            page.alert( { message: $.i18n('NTP Interval (sec)')+" "+$.i18n('must be a valid number') } );
+            return;
+        }
         if ( date.ntpclient == "enable" )
         {
-            date.ntpserver = $('#ntpserver').val();
-            date.ntpserver2 = $('#ntpserver2').val();
-            date.ntpserver3 = $('#ntpserver3').val();
+            var i;
+            var key;
+            for ( i = 1; i <= 10; i++ )
+            {
+                if ( i == 1 )
+                {
+                    key = 'ntpserver';
+                }
+                else
+                {
+                    key = 'ntpserver' + i;
+                }
+                if ( !Object.prototype.hasOwnProperty.call(datecopy, key) )
+                {
+                    continue;
+                }
+                date[key] = $('#' + key).val();
+            }
         }
         if ( !ocompare( date, datecopy ) )
         {
