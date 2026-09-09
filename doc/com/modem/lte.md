@@ -246,7 +246,7 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
     ```
 
 + `tty[ type ]` **get modem tty devices**
-    - type ------------- [ string ], optional, tty type: "stty", "mtty", "gtty", "dtty"
+    - type ------------- [ string ], optional, register name: "stty", "mtty", "gtty", "dtty", "netdev"
     - failed return NULL
     - succeed return [ json ] when no type specified, [ string ] when type specified
     ```json
@@ -254,7 +254,8 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
         "stty":"status tty device",             // [ string ], AT/status channel
         "mtty":"misc tty device",               // [ string ], data/PPP or secondary AT channel
         "gtty":"GNSS tty device",               // [ string ], GNSS/NMEA channel (if available)
-        "dtty":"diag tty device"                // [ string ], DIAG/DM log port (if available)
+        "dtty":"diag tty device",               // [ string ], DIAG/DM log port (if available)
+        "netdev":"network device name"          // [ string ], ECM/NCM/RmNet iface (if available)
     }
     ```
 
@@ -265,7 +266,8 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
         "stty":"/dev/ttyUSB2",
         "mtty":"/dev/ttyUSB3",
         "gtty":"/dev/ttyUSB1",
-        "dtty":"/dev/ttyUSB0"
+        "dtty":"/dev/ttyUSB0",
+        "netdev":"usb0"
     }
     ```
 
