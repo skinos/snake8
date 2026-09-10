@@ -9,15 +9,16 @@
  * Each check runs once per _service cycle with 1-second sleep between retries.
  * After a successful check, the reset counter for that stage is cleared.
  *
- * reset_times  | simcard   | signal/PLMN | attach    | connect_failed
- * --------------|-----------|-------------|-----------|---------------
- *  0 (1st)     |  30s      |  120s       | 120s      |  2 cycles
- *  1 (2nd)     | 180s      |  300s       | 300s      |  5 cycles
- *  2 (3rd)     | 300s      |  600s       | 600s      | 15 cycles
- *  3+          | 1800s     | 1800s       | 1800s     | 37 cycles
+ * reset_times  | simcard                    | signal/PLMN | attach    | connect_failed
+ * --------------|----------------------------|-------------|-----------|---------------
+ *  0 (1st)     |  30s                       |  120s       | 120s      |  2 cycles
+ *  1..5        | 180s each (~15min @ 3min)  |  300s(*)    | 300s(*)   |  5 cycles(*)
+ *  6..8        | 300s each (~15min @ 5min)  |  600s(*)    | 600s(*)   | 15 cycles(*)
+ *  9+          | 1800s                      | 1800s(*)    | 1800s(*)  | 37 cycles(*)
  *
- * Tuned for industrial power dips: first SIM failure recovers faster;
- * signal/attach ladders are smoother; connect fails earlier then backs off.
+ * (*) signal/attach/connect still map only reset_times 0 / 1 / 2 / 3+.
+ * SIM stays on threshold2 for reset_times 1..5 and threshold3 for 6..8,
+ * then everytime — card-swap friendly without lengthening each wait.
  * When a stage recovers, reset_reason is cleared and reset_times is zeroed.
  *
  * _service return (daemon):
@@ -30,8 +31,9 @@
  *
  * Stage 1 — SIM card not detected:
  *   Default need_simcard is enabled. Each check sleeps 1s.
- *   1st reset after 30s, 2nd after 180s, 3rd after 300s,
- *   subsequent after 1800s (30min). Then ifdev reset + terror as above.
+ *   1st reset after 30s; then five times at 180s (15min, every ~3min);
+ *   then three times at 300s (15min); then every 1800s (30min).
+ *   Then ifdev reset + terror as above.
  *
  * Stage 2 — Signal or PLMN not acquired:
  *   Default need_plmn and need_signal are enabled (both required).
@@ -544,8 +546,8 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
     ifname_info( obj, "%s simcard detection", object );
 	failed_threshold = 30;       // 30
-	failed_threshold2 = 180;     // 180
-	failed_threshold3 = 300;     // 300
+	failed_threshold2 = 180;     // 180 (~3min)
+	failed_threshold3 = 300;     // 300 (~5min)
 	failed_everytime = 1800;     // 1800
 	ptr = json_string( cfg, "simcard_failed_threshold" );
 	if ( ptr != NULL && *ptr != '\0' )
@@ -625,12 +627,14 @@ simagain:
 		{
 			failed_timeout = failed_threshold;
 		}
-		else if ( reset_times == 1 )
+		else if ( reset_times >= 1 && reset_times <= 5 )
 		{
+			/* threshold2: 5 x ~3min ~= 15min before threshold3 */
 			failed_timeout = failed_threshold2;
 		}
-		else if ( reset_times == 2 )
+		else if ( reset_times >= 6 && reset_times <= 8 )
 		{
+			/* threshold3: 3 x ~5min ~= 15min before everytime */
 			failed_timeout = failed_threshold3;
 		}
 		else
@@ -1787,8 +1791,20 @@ boole_t _online( obj_t this, param_t param )
 		}
 	}
 	reg_set_string( this, "dns2", dns2 );
-	/* set the gateway */
-	netdev_info( netdev, ipaddr, sizeof(ipaddr), NULL, 0, NULL, 0, NULL, 0 );
+	/* local IPv4 from online event, else read netdev */
+	ptr = json_string( v, "ip" );
+	ipaddr[0] = '\0';
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		strncpy( ipaddr, ptr, sizeof(ipaddr)-1 );
+		ipaddr[sizeof(ipaddr)-1] = '\0';
+	}
+	else
+	{
+		netdev_info( netdev, ipaddr, sizeof(ipaddr), NULL, 0, NULL, 0, NULL, 0 );
+	}
+	json_set_string( v, "ip", ipaddr );
+	reg_set_string( this, "ip", ipaddr );
 	if ( gateway != NULL && *gateway != '\0' )
 	{
 		ifname_info( obj, "%s(%s) %s online[ %s, %s ]", object, netdev, ipaddr, gateway?:"", dns?:"" );

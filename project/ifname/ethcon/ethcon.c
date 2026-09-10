@@ -1045,8 +1045,20 @@ boole_t _online( obj_t this, param_t param )
 		}
 	}
 	reg_set_string( this, "dns2", dns2 );
-	/* set the gateway */
-	netdev_info( netdev, ipaddr, sizeof(ipaddr), NULL, 0, NULL, 0, NULL, 0 );
+	/* local IPv4 from online event, else read netdev */
+	ptr = json_string( v, "ip" );
+	ipaddr[0] = '\0';
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		strncpy( ipaddr, ptr, sizeof(ipaddr)-1 );
+		ipaddr[sizeof(ipaddr)-1] = '\0';
+	}
+	else
+	{
+		netdev_info( netdev, ipaddr, sizeof(ipaddr), NULL, 0, NULL, 0, NULL, 0 );
+	}
+	json_set_string( v, "ip", ipaddr );
+	reg_set_string( this, "ip", ipaddr );
 	if ( gateway != NULL && *gateway != '\0' )
 	{
 		ifname_info( obj, "%s(%s) %s online[ %s, %s ]", object, netdev, ipaddr, gateway?:"", dns?:"" );
