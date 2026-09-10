@@ -26,6 +26,7 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 {
     "status":"client status",                                  // [ "disable", "enable" ]
     "extern":"extern ifname dependency",                       // [ "disable", "default", "ifname@wan", "ifname@lte", ... ]
+                                                                    // empty / omitted is treated as "default" (same as agent@heclient)
                                                                     // "disable" for no extern dependency
                                                                     // "default" to use the system default gateway
                                                                     // "ifname@wan", "ifname@lte", ... for a specific extern interface
@@ -200,6 +201,7 @@ ttrue
 
 + `reset[]` **restart the PPTP client**
     - succeed return ttrue
-    - behavior depends on the `extern` setting:
-        - "default": restarts immediately
-        - specific ifname: restarts only when the specified extern interface comes online
+    - behavior depends on the `extern` setting (same as agent@heclient):
+        - "default": restarts only on `network/online`
+        - specific ifname: restarts only when event ifname matches
+        - empty / "disable": no restart
