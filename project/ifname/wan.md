@@ -99,11 +99,16 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     "keeplive":
     {
         "type":"keeplive mode",   // [ "disable", "icmp", "dns", "recv", "auto" ]
-                                      // "disable" for disable the keeplive
-                                      // "icmp" for ping keeplive
-                                      // "dns" for test the dns response
-                                      // "recv" for count receive packet to keeplive
-                                      // "auto" for count receive packet to keeplive when test the dns response failed
+                                      // "disable" — no keeplive service
+                                      // "icmp" — ping dest[]; after failed consecutive fails, run action (keepoff)
+                                      // "dns" — resolve via ifname DNS (reg dns/dns2); after failed consecutive
+                                      //         fails (whether or not a probe ever succeeded), run action (keepoff)
+                                      // "recv" — count RX packets; interface up with traffic counts as success;
+                                      //          after failed consecutive quiet periods, run action (keepoff)
+                                      // "auto" — try DNS first (same probe as "dns", params under "auto");
+                                      //          if DNS never succeeds once, fall back to "recv" for this run;
+                                      //          if DNS succeeded before then fails, run action (keepoff), no recv fallback;
+                                      //          if dns/dns2 missing, keeplive exits (cannot run)
         "action":"action when keeplive fails",  // [ "reboot", "reset", "redial" ]
                                                     // "reboot" for reboot the system
                                                     // "reset" for reset the interface device
@@ -125,7 +130,13 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
             "failed":"Number of detection failures",                                   // [ number ], If the number of detection failures exceeds this threshold, the link is deactivated
             "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
         },
-        "recv":                                                  // detail configuration for "type" is "recv"
+        "auto":                                                  // DNS-phase params when "type" is "auto" (probe uses ifname dns/dns2)
+        {
+            "timeout":"Maximum time to wait for the return of a dns resolve packet",   // [ number ], The unit is in seconds
+            "failed":"Number of detection failures before DNS phase ends",             // [ number ]
+            "interval":"Interval of each Successful detection"                         // [ number ], The unit is in seconds
+        },
+        "recv":                                                  // detail for "type" is "recv", and for "auto" after DNS never succeeded
         {
             "timeout":"How many seconds did not receive a packet considered a failure",// [ number ], The unit is in seconds
             "packets":"How many packets",                                              // [ number ]
