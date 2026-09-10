@@ -168,10 +168,11 @@ load_all_config_options()
 	export ip_network=""
 	export ip_source="interface"
 	i=`he "ddns@scripts:$2/extern"`
-	if [ "X$i" != "X" ]; then
-		export ip_interface=`he "$i.netdev"`
-	else
+	# empty/default/disable -> default gateway netdev (heclient-style)
+	if [ "X$i" = "X" -o "X$i" = "Xdefault" -o "X$i" = "Xdisable" ]; then
 		export ip_interface=`he "network@frame.default:netdev"`
+	else
+		export ip_interface=`he "$i.netdev"`
 	fi
 	return 0
 }
