@@ -10,9 +10,9 @@
     {
         "scripts":"misc ddns isp client management"
     },
-    "joint":
+    "init":
     {
-        "network/online":
+        "app":
         {
             "ddns@scripts.setup":""
         }

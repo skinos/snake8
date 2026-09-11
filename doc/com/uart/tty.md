@@ -29,7 +29,8 @@ Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@
     "devcom": "device component name",                   // [ string ], the component that provides the ttydev path (e.g. usb@tty-2-3)
     "ttydev": "serial device path",                      // [ string ], Linux serial device path (e.g. /dev/ttyS1), used when devcom is not set
     "drvcom": "driver component name",                   // [ string ], the driver object to bind (e.g. uartdrv@dtu, uartdrv@tui)
-    "extern": "reset trigger on network event",          // [ "disable", "default", "<ifname>" ], default be "disable"
+    "extern": "reset trigger on network event",          // [ "disable", "default", "<ifname>" ], default be "default"
+                                                              // empty string is treated as "default"
                                                               // "disable": no reset on network event
                                                               // "default": reset when gateway comes online
                                                               // "ifname@wan", "ifname@lte", etc.: reset when that interface comes online
@@ -69,6 +70,7 @@ Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@
         {
             "status": "client enable or disable",        // [ "disable", "enable" ]
             "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
             "proto": "protocol",                         // [ "tcp", "udp" ]
             "server": "server address",                  // [ string ], domain name or IPv4 address
             "port": "server port",                       // [ number ]
@@ -99,6 +101,7 @@ Each serial port is a configuration object named `uart@tty`, `uart@tty2`, `uart@
         {
             "status": "MQTT enable or disable",          // [ "disable", "enable" ]
             "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
             "server": "MQTT broker address",             // [ string ], domain name or IPv4 address
             "port": "MQTT broker port",                  // [ number ]
             "mqtt_id": "MQTT client ID",                 // [ string ]
@@ -344,6 +347,7 @@ ttrue
 + `reset[ event, ifname ]` **trigger an event-driven reset on the driver**
     - event ------------ [ string ], the event name (e.g. network/online, network/onextern)
     - ifname ----------- [ string ], JSON object with "ifname" field specifying the interface name
+    - empty `extern` is treated as `default` (same as agent@heclient); `disable` does not reset
     - failed return tfalse
     - succeed return ttrue
 

@@ -1,0 +1,329 @@
+#!/bin/bash
+# Scan config/<platform> product models, build firmware, upload via sdk_ftp / sdk_repo.
+#
+# Rules:
+#   - First arg is platform (e.g. swrt5) → scan config/<platform>
+#   - Skip every gSCOPE named "wrt"
+#   - Standard edition (no scope / std): make → sdk_ftp → sdk_repo
+#   - Other customer scopes: make → sdk_ftp only
+#   - Each board: ./mkdel, then make (no make clean on chip/product switch)
+#
+# Usage:
+#   ./tools/build-ftp-repo <platform>                 # scan + build + upload
+#   ./tools/build-ftp-repo <platform> --list          # print plan only
+#   ./tools/build-ftp-repo <platform> --dry-run
+#   ./tools/build-ftp-repo <platform> --stash DIR     # copy .zz after each build
+#   ./tools/build-ftp-repo --boards ID [ID...]        # build given gBOARDIDs only
+#
+# Log: /tmp/build-ftp-repo-<platform>.log
+
+set -euo pipefail
+
+TOPDIR=$(cd "$(dirname "$0")/.." && pwd)
+cd "${TOPDIR}"
+
+PLATFORM=""
+LIST_ONLY=0
+STASH=""
+BOARDS_MODE=0
+BOARD_ARGS=()
+SKIP_CHIP='^(adjust|arch|config|rootfs|kernel|tools|dl|center|mac|patch|odm|pdriver|cdriver|\.)$'
+SKIP_CUST='^(adjust|arch|config|rootfs|kernel|tools|dl|center|mac|patch|odm|pdriver|cdriver|std|wrt|\.)$'
+
+usage()
+{
+	code="$1"
+	if [ -z "${code}" ]; then
+		code=1
+	fi
+	echo "build-ftp-repo — scan config/<platform>, build and upload firmware"
+	echo ""
+	echo "Usage:"
+	echo "  ./tools/build-ftp-repo <platform>              # e.g. swrt5"
+	echo "  ./tools/build-ftp-repo <platform> --list       # show boards only"
+	echo "  ./tools/build-ftp-repo <platform> --dry-run"
+	echo "  ./tools/build-ftp-repo <platform> --stash DIR  # copy .zz after each build"
+	echo "  ./tools/build-ftp-repo --boards ID [ID...]     # explicit gBOARDID list"
+	echo ""
+	echo "Upload:"
+	echo "  std (empty scope) → make sdk_ftp + make sdk_repo"
+	echo "  other scopes      → make sdk_ftp only"
+	echo "  skip              → gSCOPE=wrt (scan mode)"
+	exit "${code}"
+}
+
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		-h|--help)
+			usage 0
+			;;
+		--list|--dry-run)
+			LIST_ONLY=1
+			shift
+			;;
+		--stash)
+			shift
+			if [ "$#" -lt 1 ]; then
+				echo "--stash needs a directory"
+				usage 1
+			fi
+			STASH="$1"
+			shift
+			;;
+		--stash=*)
+			STASH="${1#--stash=}"
+			shift
+			;;
+		--boards)
+			BOARDS_MODE=1
+			shift
+			while [ "$#" -gt 0 ]; do
+				case "$1" in
+					-*)
+						break
+						;;
+					*)
+						BOARD_ARGS+=("$1")
+						shift
+						;;
+				esac
+			done
+			;;
+		-*)
+			echo "Unknown option: $1"
+			usage 1
+			;;
+		*)
+			if [ -z "${PLATFORM}" ]; then
+				PLATFORM="$1"
+			else
+				echo "Unexpected argument: $1"
+				usage 1
+			fi
+			shift
+			;;
+	esac
+done
+
+plan_from_board()
+{
+	local bid="$1"
+	local IFS='-'
+	local -a p
+	local scope
+
+	read -r -a p <<< "${bid}"
+	if [ "${#p[@]}" -le 3 ]; then
+		echo "${bid}|std|1"
+		return 0
+	fi
+	scope="${p[3]}"
+	if [ "${scope}" = "wrt" ]; then
+		echo "skip wrt: ${bid}" >&2
+		return 0
+	fi
+	if [ "${scope}" = "std" ] || [ -z "${scope}" ]; then
+		echo "${bid}|std|1"
+	else
+		echo "${bid}|${scope}|0"
+	fi
+}
+
+is_product_dir()
+{
+	local pdir="$1"
+	local chip_dir="$2"
+
+	if [ -e "${pdir}/makefile.config" ] || [ -e "${pdir}/sdk.config" ] || [ -e "${pdir}/dts" ]; then
+		return 0
+	fi
+	if [ -d "${pdir}/config" ] || [ -d "${pdir}/rootfs" ] || [ -d "${pdir}/kernel" ]; then
+		return 0
+	fi
+	if [ -e "${chip_dir}/makefile.config" ]; then
+		return 0
+	fi
+	return 1
+}
+
+is_scope_dir()
+{
+	local cdir="$1"
+
+	if [ -e "${cdir}/makefile.config" ] || [ -e "${cdir}/sdk.config" ]; then
+		return 0
+	fi
+	if [ -d "${cdir}/config" ] || [ -d "${cdir}/rootfs" ] || [ -d "${cdir}/kernel" ]; then
+		return 0
+	fi
+	return 1
+}
+
+scan_boards()
+{
+	local chip prod pdir cust cdir base cfg
+
+	cfg="${TOPDIR}/config/${PLATFORM}"
+	for chip in $(ls -1 "${cfg}" 2>/dev/null); do
+		[ -d "${cfg}/${chip}" ] || continue
+		echo "${chip}" | grep -Eq "${SKIP_CHIP}" && continue
+
+		for prod in $(ls -1 "${cfg}/${chip}" 2>/dev/null); do
+			pdir="${cfg}/${chip}/${prod}"
+			[ -d "${pdir}" ] || continue
+			echo "${prod}" | grep -Eq "${SKIP_CHIP}" && continue
+			if ! is_product_dir "${pdir}" "${cfg}/${chip}"; then
+				continue
+			fi
+
+			base="${PLATFORM}-${chip}-${prod}"
+			echo "${base}|std|1"
+
+			for cust in $(ls -1 "${pdir}" 2>/dev/null); do
+				cdir="${pdir}/${cust}"
+				[ -d "${cdir}" ] || continue
+				echo "${cust}" | grep -Eq "${SKIP_CUST}" && continue
+				if ! is_scope_dir "${cdir}"; then
+					continue
+				fi
+				echo "${base}-${cust}|${cust}|0"
+			done
+		done
+	done
+}
+
+hw_of()
+{
+	local bid="$1"
+	local rest="${bid#*-}"
+	echo "${rest%%-*}"
+}
+
+collect_fw()
+{
+	local bid="$1"
+	local dest zz
+
+	if [ -z "${STASH}" ]; then
+		return 0
+	fi
+	dest="${STASH}/${bid}"
+	mkdir -p "${dest}"
+	zz=$(ls -1 "${TOPDIR}"/build/*.zz 2>/dev/null | head -1 || true)
+	if [ -z "${zz}" ]; then
+		echo "---- WARN: no .zz for ${bid} ----" | tee -a "${LOG}"
+		return 1
+	fi
+	cp -f "${zz}" "${dest}/"
+	cp -f "${zz}" "${STASH}/"
+	echo "---- collected $(basename "${zz}") -> ${dest} ----" | tee -a "${LOG}"
+}
+
+build_one()
+{
+	local bid="$1"
+	local scope="$2"
+	local do_repo="$3"
+	local hw
+
+	hw=$(hw_of "${bid}")
+
+	echo "" | tee -a "${LOG}"
+	echo "######## $(date) BOARD=${bid} hw=${hw} scope=${scope} repo=${do_repo} ########" | tee -a "${LOG}"
+
+	echo "---- mkdel ----" | tee -a "${LOG}"
+	./mkdel 2>&1 | tee -a "${LOG}" || true
+
+	echo "---- make ----" | tee -a "${LOG}"
+	make gBOARDID="${bid}" 2>&1 | tee -a "${LOG}"
+
+	collect_fw "${bid}" || true
+
+	echo "---- sdk_ftp ${bid} ----" | tee -a "${LOG}"
+	make sdk_ftp gBOARDID="${bid}" 2>&1 | tee -a "${LOG}"
+
+	if [ "${do_repo}" = "1" ]; then
+		echo "---- sdk_repo ${bid} ----" | tee -a "${LOG}"
+		make sdk_repo gBOARDID="${bid}" 2>&1 | tee -a "${LOG}"
+	else
+		echo "---- skip sdk_repo (scope=${scope}) ----" | tee -a "${LOG}"
+	fi
+
+	echo "######## DONE ${bid} $(date) ########" | tee -a "${LOG}"
+}
+
+PLAN=""
+if [ "${BOARDS_MODE}" = "1" ]; then
+	if [ "${#BOARD_ARGS[@]}" -eq 0 ]; then
+		echo "--boards needs at least one gBOARDID"
+		usage 1
+	fi
+	if [ -z "${PLATFORM}" ]; then
+		PLATFORM="${BOARD_ARGS[0]%%-*}"
+	fi
+	for bid in "${BOARD_ARGS[@]}"; do
+		line=$(plan_from_board "${bid}")
+		if [ -n "${line}" ]; then
+			PLAN="${PLAN}${line}"$'\n'
+		fi
+	done
+else
+	if [ -z "${PLATFORM}" ]; then
+		usage 1
+	fi
+	CFG_DIR="${TOPDIR}/config/${PLATFORM}"
+	if [ ! -d "${CFG_DIR}" ]; then
+		echo "Missing config dir: ${CFG_DIR}"
+		exit 1
+	fi
+	PLAN=$(scan_boards)
+fi
+
+PLAN=$(printf '%s' "${PLAN}" | sed '/^$/d')
+if [ -z "${PLAN}" ]; then
+	echo "No boards to build"
+	exit 1
+fi
+
+LOG="/tmp/build-ftp-repo-${PLATFORM}.log"
+if [ -n "${STASH}" ]; then
+	mkdir -p "${STASH}"
+fi
+
+echo "Platform: ${PLATFORM}"
+if [ "${BOARDS_MODE}" = "1" ]; then
+	echo "Mode:     --boards"
+else
+	echo "Config:   ${TOPDIR}/config/${PLATFORM}"
+fi
+echo ""
+echo "Plan:"
+printf '%s\n' "${PLAN}" | while IFS='|' read -r bid scope do_repo; do
+	if [ "${do_repo}" = "1" ]; then
+		echo "  ${bid}  [sdk_ftp + sdk_repo]"
+	else
+		echo "  ${bid}  [sdk_ftp]"
+	fi
+done
+echo ""
+
+if [ "${LIST_ONLY}" = "1" ]; then
+	exit 0
+fi
+
+: > "${LOG}"
+echo "=== START $(date) platform=${PLATFORM} stash=${STASH:-none} ===" | tee -a "${LOG}"
+
+while IFS='|' read -r bid scope do_repo; do
+	[ -n "${bid}" ] || continue
+	build_one "${bid}" "${scope}" "${do_repo}"
+done <<EOF
+${PLAN}
+EOF
+
+echo "=== ALL DONE $(date) ===" | tee -a "${LOG}"
+if [ -n "${STASH}" ]; then
+	echo "=== stash ===" | tee -a "${LOG}"
+	find "${STASH}" -type f -name '*.zz' | sort | tee -a "${LOG}"
+fi
+echo "Log: ${LOG}"

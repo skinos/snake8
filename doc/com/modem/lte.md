@@ -11,6 +11,7 @@ Manage LTE/NR modem baseband services. This component handles the modem-side ope
 - exposes modem status including signal, PLMN, network type, and operator information
 - when **`up`/`profile`** applies an operator that differs from the last saved copy under `var` (`%s.profile` for the modem object), writes the profile to the module, returns **`tfalse`** to the caller (so **`ifname@lte` / ltecon** aborts this dial round and retries after `fun`), calls driver **`modem_off`** in-process (no atd exit), saves the file only after that succeeds, then continues FSM from CFUN/SETUP (only when `up` carries a non-NULL profile argument; auto `up` with no profile skips this sync). Unchanged profile returns **`ttrue`** after profile AT.
 - applies IMS policy from **`ims`** (`auto` / `enable` / `disable`) during setup on drivers that support it; independent of **`sms`**
+- keeps **ifname** module resets (`reset[]`) off the modem-internal CFUN/watch/tty ladder; after the WAN is up, a long watch failure **sreset**s the ifname connection service instead of power-cycling the module
 
 
 
@@ -134,6 +135,35 @@ ttrue
 
 
 
+### Concepts
+
+**Two reset ladders**
+
+Module power-cycle is counted on two independent ladders:
+
+* **Ifname / ltecon ladder** — registers `reset_times` and `reset_uptime`. Incremented by **`reset[]`** (SIM / signal / attach / connect_failed from `ifname@ltecon`). **`reset_clear[]`** zeros only this ladder. A successful WAN **`online`** zeros both ladders.
+* **Modem-internal ladder** — registers `atd_reset_times`, `atd_reset_uptime`, and `atd_reset_reason` (`cfun` / `watch` / `tty` / `panic`). Used when CFUN, UART open, UART panic, or watch fails. Cleared when that cause recovers, on **`online`**, and after **`reset[]`** / **`bsim_back[]`** / **`bsim_main[]`** (those power-cycles also start the internal ladder from zero).
+* **USB composition (no GPIO)** — Fibocom **GTUSBMODE** (and similar) call **`arch@usb.search`**. ATD exits; the bus scan rematches. This does not increment `reset_times` or `atd_reset_times`. Quectel **usbnet** / **ims** still use **`reset[]`** (GPIO).
+
+**Watch vs connection**
+
+`fun[]` is **ttrue** only while status is register (`WATCH`) or up (`READY`). Other states return **tfalse** so ltecon waits and retries instead of spinning SIM/AT against a resetting module.
+
+Default watch interval is 8 s while registered; consecutive watch failures use a 1 s retry.
+
+* **Never registered** — after 5 / 10 / 20 / 60 minutes of failed watch, the modem power-cycles (backup when there is no ifname). If register `con_service` names a live ifname service, this backup is skipped; ltecon already power-cycles on SIM / signal / attach.
+* **Was up, then watch fails** — after 3 minutes, the modem returns to register. If `con_service` is live, it **`sreset`**s that service so ltecon redials. The module is not power-cycled on this path.
+
+`ifname@ltecon` writes `con_service` (the `sstart` name) on this modem object in **`setup`** before starting the service, and clears it in **`shut`** before **`sdelete`**.
+
+**Other internal ladders (not `reset[]`)**
+
+* CFUN fail: 8 / 15 / 20 / 30 / 60 / 120 / 300 s, then machine restart after 600 s
+* TTY open fail: same except first wait is 5 s; last tier machine restart (`tty_failed`)
+* UART panic: first reset immediate, then 15 / 20 / 30 / 60 / 120 / 300 s, then machine restart
+
+
+
 ### API Reference
 
 #### Management APIs
@@ -216,7 +246,7 @@ ttrue
     ```
 
 + `tty[ type ]` **get modem tty devices**
-    - type ------------- [ string ], optional, tty type: "stty", "mtty", "gtty", "dtty"
+    - type ------------- [ string ], optional, register name: "stty", "mtty", "gtty", "dtty", "netdev"
     - failed return NULL
     - succeed return [ json ] when no type specified, [ string ] when type specified
     ```json
@@ -224,7 +254,8 @@ ttrue
         "stty":"status tty device",             // [ string ], AT/status channel
         "mtty":"misc tty device",               // [ string ], data/PPP or secondary AT channel
         "gtty":"GNSS tty device",               // [ string ], GNSS/NMEA channel (if available)
-        "dtty":"diag tty device"                // [ string ], DIAG/DM log port (if available)
+        "dtty":"diag tty device",               // [ string ], DIAG/DM log port (if available)
+        "netdev":"network device name"          // [ string ], ECM/NCM/RmNet iface (if available)
     }
     ```
 
@@ -235,7 +266,8 @@ ttrue
         "stty":"/dev/ttyUSB2",
         "mtty":"/dev/ttyUSB3",
         "gtty":"/dev/ttyUSB1",
-        "dtty":"/dev/ttyUSB0"
+        "dtty":"/dev/ttyUSB0",
+        "netdev":"usb0"
     }
     ```
 
@@ -361,7 +393,7 @@ ttrue
 
 + `fun[]` **check if modem is functional**
     - succeed return ttrue when modem is in functional state (ATD_WATCH or ATD_READY)
-    - failed return tfalse when modem is in non-functional state (ATD_NONE, ATD_CFUN, ATD_SETUP)
+    - failed return tfalse when modem is in non-functional state (ATD_NONE, ATD_CFUN, ATD_SETUP, ATD_EXIT, ATD_RESET, ATD_IDLE, ATD_NOIMEI, ATD_NOIMSI)
 
     Example, check if first LTE modem is functional
     ```shell
@@ -462,6 +494,7 @@ ttrue
     - failed return tfalse (when devbus is missing)
     - succeed return ttrue
     - triggers modem reset workflow and service restart sequence
+    - increments `reset_times` / `reset_uptime` (ifname ladder) and zeros the modem-internal `atd_reset_*` counters after the power cycle
 
     Example, reset the first LTE modem
     ```shell
@@ -469,9 +502,10 @@ ttrue
     ttrue
     ```
 
-+ `reset_clear[]` **clear modem reset counter**
++ `reset_clear[]` **clear the ifname/ltecon reset counter**
     - succeed return ttrue
-    - resets internal reset_times and reset_uptime counters to zero
+    - zeros `reset_times` and `reset_uptime` only (the ifname ladder)
+    - does not clear modem-internal `atd_reset_times` / `atd_reset_uptime` / `atd_reset_reason`
 
     Example, clear reset counter
     ```shell
@@ -530,6 +564,7 @@ ttrue
     - failed return tfalse (when devbus is missing)
     - succeed return ttrue
     - deletes services, switches GPIO to backup SIM, resets modem
+    - power-cycle also zeros modem-internal `atd_reset_*` (same as `reset[]`)
 
     Example, switch to backup SIM
     ```shell
@@ -541,6 +576,7 @@ ttrue
     - failed return tfalse (when devbus is missing)
     - succeed return ttrue
     - deletes services, switches GPIO to main SIM, resets modem
+    - power-cycle also zeros modem-internal `atd_reset_*` (same as `reset[]`)
 
     Example, switch to main SIM
     ```shell

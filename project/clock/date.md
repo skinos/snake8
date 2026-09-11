@@ -1,109 +1,163 @@
 ## clock@date — System date and time
 
-Manage system date and time, including timezone, manual set, NTP client sync, and status reporting (`clock@date`).
+### Overview
 
-### Configuration ( `clock@date` )
+Manage system wall clock, timezone, and NTP client synchronization for `clock@date`.
+- Prefer the APIs below for status, manual time set, and one-shot NTP sync
+- When `ntpclient` is `enable`, a supervised service starts after WAN **online** (or after config set)
+- Optional `adjust` mode runs continuous `-s -l` for higher precision after the first hard set
+
+
+### Configuration reference ( clock@date )
+
 ```json
-// Attributes introduction
+// Attributes introduction 
 {
-    "timezone":"time zone",                             // [ number ], -12 to 12, West 12 to East 12, support half time zone like 3:30, -3:30
-    "ntpclient":"whether to start the NTP client",      // [ "disable", "enable" ]
-    "ntpserver":"NTP Server",                           // [ string ]
-    "ntpserver2":"NTP Server 2",                        // [ string ]
-    "ntpserver3":"NTP Server 3",                        // [ string ]
-    "ntpinterval":"NTP Synchronization interval"        // [ number ], interval (in seconds) for time synchronization with the NTP server
+    "inittime":"boot fallback wall time",                 // [ string ], hour:minute:second:month:day:year, applied in setup with timezone
+    "timezone":"time zone",                               // [ string ], -12 to 12, West 12 to East 12, half zones like 3:30 / -3:30
+    "ntpclient":"start NTP client service",               // [ "disable","enable" ], default be "enable" in package cfg
+    "adjust":"NTP high-precision lock mode",              // [ "disable","enable" ], default be "disable"
+                                                                // "disable": periodic one-shot hard sync (-s) using ntpinterval
+                                                                // "enable": one-shot -s on first reachable server, then stay in -s -l
+                                                                //           (hard set + frequency lock each probe)
+    "ntpserver":"NTP server",                             // [ string ], tried first
+    "ntpserver2":"NTP server 2",                          // [ string ], optional fallback
+    "ntpserver3":"NTP server 3",                          // [ string ], optional fallback
+    // "ntpserverN":"..."  How many servers show how many properties (N from 2 upward)
+    "ntpinterval":"NTP interval in seconds"               // [ number ]
+                                                                // adjust=disable: seconds between one-shot -s syncs; <=0 means pause after first success
+                                                                // adjust=enable: -s -l probe period; valid 15..600, otherwise clamped to 15 with a warning
 }
-```   
+```
+
+#### Configuration example
 
 Example, show all the configure
 ```shell
 clock@date
 {
-    "timezone":"8",                   # time zone is East 8, china
-    "ntpclient":"enable",             # enable the NTP client to synchronize with NTP server
-    "ntpserver":"ntp1.aliyun.com",    # ntp1.aliyun.com, ntp2.aliyun.com, ntp3.aliyun.com, Try in turn until you succeed
+    "timezone":"8",                   # East 8
+    "ntpclient":"enable",             # start NTP client service
+    "adjust":"disable",               # periodic one-shot sync
+    "ntpserver":"ntp1.aliyun.com",    # try in order until one succeeds
     "ntpserver2":"ntp2.aliyun.com",
     "ntpserver3":"ntp3.aliyun.com",
-    "ntpinterval":"86400"             # synchronization every 86400 seconds
+    "ntpinterval":"86400"             # one-shot sync every 86400 seconds
 }
-```  
-Example, modify the time zone to West 5
+```
+
+#### Configuration settings example
+
+Example, set time zone to West 5
 ```shell
 clock@date:timezone=-5
 ttrue
-```  
-Example, disable the NTP client time synchronization
+```
+
+Example, disable the NTP client
 ```shell
 clock@date:ntpclient=disable
 ttrue
-```  
-Examples, change several attributes at once (**merge** — only listed fields are updated; **`|`** plus JSON object)
+```
+
+Example, enable high-precision adjust lock with 15s probe interval
+```shell
+clock@date|{"ntpclient":"enable","adjust":"enable","ntpinterval":"15","ntpserver":"192.168.32.230"}
+ttrue
+```
+
+Example, merge set timezone and NTP client( include "timezone" "ntpclient" "ntpserver" )
 ```shell
 clock@date|{"timezone":"8","ntpclient":"enable","ntpserver":"pool.ntp.org"}
 ttrue
 ```
 
 
-### Component API
-+ `status[]` **get the date information**
-    - return NULL when failed
-    - return terror when error
-    - return json to describe date information when succeed
+
+### Concepts
+
+NTP service behavior when `ntpclient` is `enable`:
+- Servers are tried in order: `ntpserver`, `ntpserver2`, …
+- First server that completes a successful one-shot sync is used
+- `adjust=disable`: sleep `ntpinterval` (or `pause` if <=0), then sync again
+- `adjust=enable`: after the first successful `-s`, stay on that server with continuous `-s -l` at probe period `ntpinterval` (clamped to 15..600); each probe hard-sets the clock and adjusts frequency; the process runs until killed; if it exits, wait about 10 seconds and retry from the server list
+- Manual `ntpsync[]` always performs one-shot sync only (does not enter adjust lock)
+
+
+### Joint Events Hook
+
+| Joint key | Invokes |
+|-----------|---------|
+| `network/online` | `clock@date.online` |
+
+When WAN is marked online, `online[]` starts the NTP client service if `ntpclient` is `enable`.
+
+
+
+### API Reference
+
+#### Management APIs
+
++ `setup[]` **apply saved timezone and optional inittime**
+    - failed return tfalse
+    - succeed return ttrue
+    - Not run automatically during `init` in the default clock package; call from integration if timezone must be applied early
+
++ `shut[]` **stop the NTP client service and kill ntpclient**
+    - failed return tfalse
+    - succeed return ttrue
+    - Not run automatically on `uninit` in the default integration; call explicitly if needed on shutdown
+
++ `online[]` **start NTP client service when ntpclient is enable**
+    - failed return tfalse
+    - succeed return ttrue
+    - Invoked by joint `network/online`
+
+
+#### Query APIs
+
++ `status[]` **get date information**
+    - failed return NULL
+    - error return terror
+    - succeed return [ json ], date information
+
     ```json
-    // Attributes introduction of json by the API return
     {
-        "source":"The source of the time",                // [ "ntp", "set", "lte", "gps" ]
-                                                             // ntp: indicates that it originated from NTP, which has the highest NTP priority, and NTP synchronization success covers all other times
-                                                             // set: indicates time set by manually
-                                                             // rtc: indicates source RTC time  
-                                                             // lte: indicates source LTE time 
-                                                             // gps: indicates source GPS time 
-                                                             // An empty or none of this node indicates that it has not been set
-        "current":"current date",                         // [ string ], format is hour:minute:second:month:day:year
-        "livetime":"system live time",                    // [ string ], format is hour:minute:second:day
-        "uptime":"system uptime in second"                // [ number ]
-    }    
-    ```   
-    Example, get the current date   
+        "source":"time source tag",                       // [ "ntp", "set", "lte", "gps", "rtc" ], empty if unset
+                                                                // ntp has highest priority among sync sources
+        "current":"current date",                         // [ string ], hour:minute:second:month:day:year
+        "livetime":"system live time",                    // [ string ], hour:minute:second:day
+        "uptime":"system uptime in seconds"               // [ number ]
+    }
+    ```
+
+    Example, get the current date status
     ```shell
     clock@date.status
     {
-        "current":"12:29:41:05:10:2022",         # current is 12:29:41 on May 10, 2022
-        "livetime":"00:01:58:0",                 # system run 1 minute and 58 second
-        "uptime":"118"                           # system run 118 second
+        "current":"12:29:41:05:10:2022",         # 12:29:41 on May 10, 2022
+        "livetime":"00:01:58:0",                 # live 1 minute 58 seconds
+        "uptime":"118"                           # uptime 118 seconds
     }
-    ```   
+    ```
 
-+ `current[ [current date], [time zone] ]` **set current date or get current time**
-    - [current date] ------ [ string ], format is hour:minute:second:month:day:year
-    - [time zone] --------- [ number ], -12 to 12, West 12 to East 12, support half time zone like 3:30, -3:30
-    - return ttrue for succeed when set the current date or time zone
-    - return tfalse for failed when set the current date or time zone 
-    - return json to describes current time when no argument and succeed
-    - return NULL when no argument and failed to get current time
++ `current[]` **get current time fields**
+    - failed return NULL
+    - succeed return [ json ], current time
+
     ```json
     {
-        "sec":"The number of seconds since 1970.01.01:00:00:00",  // [ number ]
-        "usec":"current microsecond",                             // [ number ]
-        "hour":"local hour of day",                               // [ number ], 0-23
-        "minute":"local minute",                                  // [ number ], 0-59
-        "second":"local second",                                  // [ number ], 0-59
-        "ms":"local millisecond",                                 // [ number ], 0-999, from usec/1000
-        "minuteswest":"Minutes west of Greenwich",                // [ number ]
-        "dsttime":"type of DST correction"                        // [ number ]
+        "sec":"seconds since 1970-01-01 00:00:00",        // [ number ]
+        "usec":"current microsecond",                     // [ number ]
+        "hour":"local hour of day",                       // [ number ], 0-23
+        "minute":"local minute",                          // [ number ], 0-59
+        "second":"local second",                          // [ number ], 0-59
+        "ms":"local millisecond",                         // [ number ], 0-999
+        "minuteswest":"minutes west of Greenwich",        // [ number ]
+        "dsttime":"type of DST correction"                // [ number ]
     }
-    ```   
+    ```
 
-    Example, set current date 11:12:23, On July 8th, in 2019   
-    ```shell
-    clock@date.current[ 11:12:23:07:08:2019 ]
-    ttrue
-    ```   
-    Example, set time zone to china   
-    ```shell
-    clock@date.current[ , 8 ]
-    ttrue
-    ```   
     Example, get current time
     ```shell
     clock@date.current
@@ -117,72 +171,55 @@ ttrue
         "minuteswest":"-480",
         "dsttime":"0"
     }
-    ```   
+    ```
 
 
-+ `ntpsync[ [NTP server] ]` **sync the time with NTP server**
-    - [NTP server] ------ [ string ], NTP server   
-    - return ttrue for succeed
-    - return tfalse for failed
-    - return terror for error
+#### Control APIs
 
-    Example, sync the time with time.window.com
++ `current[ current date, time zone ]` **set current date and/or time zone**
+    - current date ------- [ string ], optional, hour:minute:second:month:day:year
+    - time zone ---------- [ string ], optional, -12 to 12 including half zones
+    - failed return tfalse
+    - succeed return ttrue
+    - Omitting both arguments is the query form under Query APIs
+
+    Example, set current date 11:12:23 on July 8, 2019
     ```shell
-    clock@date.ntpsync[ time.window.com ]
+    clock@date.current[ 11:12:23:07:08:2019 ]
     ttrue
-    ```   
-    Example, sync the time with NTP server in the configure
+    ```
+
+    Example, set time zone to China East 8
+    ```shell
+    clock@date.current[ , 8 ]
+    ttrue
+    ```
+
++ `ntpsync[ NTP server ]` **one-shot sync with NTP server**
+    - NTP server --------- [ string ], optional, use configured servers in order when omitted
+    - failed return tfalse
+    - succeed return ttrue
+    - error return terror
+    - Always one-shot hard sync; does not start adjust lock mode
+
+    Example, sync with an explicit server
+    ```shell
+    clock@date.ntpsync[ time.windows.com ]
+    ttrue
+    ```
+
+    Example, sync using configured servers
     ```shell
     clock@date.ntpsync
     ttrue
     ```
 
 
-### Lifecycle API
-+ `setup[]` **apply saved timezone and related boot-time state**, *succeed return ttrue*
-    - **Not** run automatically during **`init`** in the default clock package; call **`setup[]`** from your integration if the timezone must be applied before other services.
-
-+ `shut[]` **stop this component’s supervised child (NTP client service)**, *succeed return ttrue*
-    - **Not** run automatically on **`uninit`** in the default integration; call explicitly if you need it on shutdown.
-
-### Joint Handlers
-| Joint key | Invokes |
-|-----------|---------|
-| `network/online` | `clock@date.online` |
-
-Registered as a **joint** handler in the default clock package. When the stack marks the WAN path **online**, **`online[]`** starts the embedded NTP client **`service`** if configuration has **`ntpclient`** = **`enable`**.
-
 
 ### Published Joint Events
-+ **`date/modify`** — emitted when the wall clock is changed. Second argument is a short source tag, e.g. **`set`** (manual `current[…]`) or **`ntp`** (successful NTP sync).
 
-### C Code Example
-**Read and update configuration**
+The following joint events are published when the wall clock is changed. Other components can subscribe at runtime (joint registration / **land@joint**).
 
-```c
-#include "skin/skin.h"
-
-static int example_config_clock_date(void)
-{
-    char buf[128];
-    boole ok;
-    if (sgets_string(buf, sizeof(buf), "clock@date", "timezone") == NULL)
-        return -1;
-    ok = ssets_string("clock@date", "8", "timezone");
-    return ok ? 0 : -1;
-}
-```
-
-**Call component methods**
-
-```c
-#include "skin/skin.h"
-
-static void print_call_error(const char *api, talk_t ret)
-{
-    if (ret == tfalse || ret == terror || ret == tpanic)
-        printf("%s failed, errno=%d\n", api, errno);
-}
-
-/* Example: scall("clock@date", "status", NULL); then talk_free if JSON */
-```
+| Event | Description |
+|-------|-------------|
+| `date/modify` | Sent after a successful wall-clock change. Argument is a short source tag such as `set` (manual `current[…]`) or `ntp` (successful NTP one-shot sync). |

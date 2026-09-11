@@ -6,7 +6,8 @@ Manage Dynamic DNS client slots backed by OpenWrt **ddns-scripts**. Prefer the *
 - up to three fixed client slots: **client**, **client2**, **client3**
 - each enabled slot runs an independent updater process
 - provider list comes from bundled service definitions under the project install tree
-- started on **network/online** via **setup[]** (no boot **init** level)
+- **`extern`** follows **agent@heclient** (per enabled slot, aggregated like uart DTU): empty → `default`; `disable` skips joint; `default` → `network/online`; specific ifname → `network/onextern`
+- boot **`init/app`** calls **setup[]**; network events call **reset[]** for matching slots
 
 
 ### Configuration reference ( ddns@scripts )
@@ -17,7 +18,11 @@ Manage Dynamic DNS client slots backed by OpenWrt **ddns-scripts**. Prefer the *
     "client":                                    // [ json ], first DDNS client slot
     {
         "status":"client status",                // [ "disable", "enable" ], default "disable"
-        "extern":"extern ifname object",         // [ string ], optional interface object (e.g. ifname@wan); empty uses default gateway netdev
+        "extern":"outbound / IP source interface", // [ "disable", "default", "<ifname>" ], default "default"
+                                                      // empty string is treated as "default"
+                                                      // "disable": no network joint for this slot; updater still uses default gateway netdev for IP
+                                                      // "default": joint on network/online; wait gateway; IP from default gateway netdev
+                                                      // "ifname@wan", ...: joint on network/onextern when ifname matches; wait that iface; IP from its netdev
         "isp":"DDNS service provider name",      // [ string ], must match a name from isplist[] (e.g. "oray.com")
         "domain":"domain name",                  // [ string ], hostname / FQDN to update
         "username":"username",                   // [ string ], provider username or API key id
@@ -28,7 +33,7 @@ Manage Dynamic DNS client slots backed by OpenWrt **ddns-scripts**. Prefer the *
     "client2":                                   // [ json ], second DDNS client slot (same fields as client)
     {
         "status":"client status",                // [ "disable", "enable" ]
-        "extern":"extern ifname object",         // [ string ]
+        "extern":"outbound / IP source interface", // [ "disable", "default", "<ifname>" ]
         "isp":"DDNS service provider name",      // [ string ]
         "domain":"domain name",                  // [ string ]
         "username":"username",                   // [ string ]
@@ -39,7 +44,7 @@ Manage Dynamic DNS client slots backed by OpenWrt **ddns-scripts**. Prefer the *
     "client3":                                   // [ json ], third DDNS client slot (same fields as client)
     {
         "status":"client status",                // [ "disable", "enable" ]
-        "extern":"extern ifname object",         // [ string ]
+        "extern":"outbound / IP source interface", // [ "disable", "default", "<ifname>" ]
         "isp":"DDNS service provider name",      // [ string ]
         "domain":"domain name",                  // [ string ]
         "username":"username",                   // [ string ]
@@ -59,6 +64,7 @@ ddns@scripts
     "client":
     {
         "status":"enable",
+        "extern":"default",
         "isp":"oray.com",
         "domain":"example.oray.net",
         "username":"user",
@@ -67,6 +73,7 @@ ddns@scripts
     "client2":
     {
         "status":"disable",
+        "extern":"default",
         "isp":"dyn.com",
         "domain":"",
         "username":"",
@@ -83,6 +90,12 @@ ddns@scripts:client/status=disable
 ttrue
 ```
 
+Example, bind client to LTE
+```shell
+ddns@scripts:client/extern=ifname@lte
+ttrue
+```
+
 Example, change the password of client
 ```shell
 ddns@scripts:client/password=12345678
@@ -95,16 +108,22 @@ ttrue
 
 #### Management APIs
 
-+ `setup[]` **start enabled DDNS client slots**   
++ `setup[]` **register network joints and start enabled DDNS client slots**   
     - failed return tfalse
     - succeed return ttrue
-    - Starts a supervised **service** for each slot whose **status** is **enable**
-    - Called automatically on **network/online**; also runs after a successful configuration save
+    - Aggregates **extern** from enabled **client\*** (status≠enable ignored); registers **network/online** and/or **network/onextern** to **ddns@scripts.reset**
+    - Starts a supervised **service** for each enabled slot
+    - Called from **init/app** and after a successful configuration save
 
-+ `shut[]` **stop all DDNS client slots**   
++ `shut[]` **unregister joints and stop all DDNS client slots**   
     - failed return tfalse
     - succeed return ttrue
     - Stops supervised processes and clears status files for **client** / **client2** / **client3**
+
++ `reset[ event, event data ]` **restart matching client slot services on network event**   
+    - event ------------ [ string ], e.g. `network/online` or `network/onextern`
+    - event data ------- [ json ], object with `"ifname"`
+    - For each enabled **client\***: empty → `default`; `disable` skips; `default` only on `network/online`; specific ifname must match — then **sreset** that slot service
 
 
 #### Query APIs
@@ -167,4 +186,5 @@ ttrue
     - id ---------------- [ string ], slot name: **client**, **client2**, or **client3**
     - failed return tfalse / terror
     - succeed does not return (process is replaced by the updater)
+    - Waits for gateway / interface IP when **extern** is not **disable** (same as heclient); returns **ttrue** to wait for **reset** if not ready
     - Not intended for manual invocation; use **setup[]** after enabling the slot

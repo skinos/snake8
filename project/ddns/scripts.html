@@ -323,12 +323,7 @@
 
     function extern_from_ui( sel_id )
     {
-        var v = $( '#' + sel_id ).val() || 'default';
-        if ( v === 'default' || v === 'disable' )
-        {
-            return '';
-        }
-        return v;
+        return $( '#' + sel_id ).val() || 'default';
     }
 
     function load_options()
@@ -349,9 +344,9 @@
             $('#client_isp').html(str);
             $('#client2_isp').html(str);
             $('#client3_isp').html(str);
-            build_extern_select( 'client_extern', '' );
-            build_extern_select( 'client2_extern', '' );
-            build_extern_select( 'client3_extern', '' );
+            build_extern_select( 'client_extern', 'default' );
+            build_extern_select( 'client2_extern', 'default' );
+            build_extern_select( 'client3_extern', 'default' );
         });
     }
     function load_cfg()
@@ -368,7 +363,7 @@
             $('#client').unbind('change').change(function () {
                 if ($(this).prop('checked'))
                 {
-                    build_extern_select( 'client_extern', client.extern || '' );
+                    build_extern_select( 'client_extern', client.extern || 'default' );
                     $('#client_isp').val( client.isp || '' );
                     $('#client_domain').val( client.domain || '' );
                     $('#client_username').val( client.username || '' );
@@ -390,7 +385,7 @@
             $('#client2').unbind('change').change(function () {
                 if ($(this).prop('checked'))
                 {
-                    build_extern_select( 'client2_extern', client2.extern || '' );
+                    build_extern_select( 'client2_extern', client2.extern || 'default' );
                     $('#client2_isp').val( client2.isp || '' );
                     $('#client2_domain').val( client2.domain || '' );
                     $('#client2_username').val( client2.username || '' );
@@ -412,7 +407,7 @@
             $('#client3').unbind('change').change(function () {
                 if ($(this).prop('checked'))
                 {
-                    build_extern_select( 'client3_extern', client3.extern || '' );
+                    build_extern_select( 'client3_extern', client3.extern || 'default' );
                     $('#client3_isp').val( client3.isp || '' );
                     $('#client3_domain').val( client3.domain || '' );
                     $('#client3_username').val( client3.username || '' );

@@ -90,26 +90,48 @@ typedef atcmd_st* atcmd_t;
 
 
 
-/* checking completeness the ack of at command */
+/* Intact: ack is complete (parser runs). Failed → wait for more UART. */
 #define INTACT_FAILED      0x00
 #define INTACT_SUCCEED     0x01
+/* Last +C*REG status for PARSE_COPS when COPS has no PLMN: 1 ok, 2 noreg, 3 dereg, 4 unreg. */
 extern int PARSE_creg_code;
+/* "OK" or "ERROR" in any line. */
 int INTACT_OK( void *ctx, talk_t state, talk_t cfg );
+/* expect[] token or "ERROR". Empty expect → succeed now. */
 int INTACT_LINE( void *ctx, talk_t state, talk_t cfg );
+/* Same as INTACT_LINE after at least 2 ack lines. */
 int INTACT_LINE2( void *ctx, talk_t state, talk_t cfg );
+/* Same as INTACT_LINE after at least 3 ack lines. */
 int INTACT_LINE3( void *ctx, talk_t state, talk_t cfg );
-/* parse the ack of at command */
+/*
+ * Parsers. ERROR / no OK → tfalse or NULL (retry, stay in this ATD).
+ * OK2* return an ATD session verb, not a boolean.
+ */
+/* OK → ttrue, continue AT queue. */
 talk_t PARSE_OK( void *ctx, talk_t state, talk_t cfg );
+/* OK → terror / ATD_EXIT; _service tfalse, daemon reruns same tty. */
 talk_t PARSE_OK2EXIT( void *ctx, talk_t state, talk_t cfg );
+/* OK → state["exit"]="search" / ATD_EXIT; devbus.search, _service terror. */
+talk_t PARSE_OK2SEARCH( void *ctx, talk_t state, talk_t cfg );
+/* OK → tpanic / ATD_RESET; GPIO usb.reset, _service terror. */
 talk_t PARSE_OK2RESET( void *ctx, talk_t state, talk_t cfg );
+/* AT+CGSN. Writes state["imei"]. */
 talk_t PARSE_CGNS( void *ctx, talk_t state, talk_t cfg );
+/* AT+CPIN?. READY → ttrue; PIN/PUK → "pin"/"puk"; ERROR → iccid "nosim". */
 talk_t PARSE_CARD( void *ctx, talk_t state, talk_t cfg );
+/* PIN set ack. OK → ttrue, ERROR → tfalse. */
 talk_t PARSE_PIN( void *ctx, talk_t state, talk_t cfg );
+/* AT+CIMI. Writes state["imsi"]. */
 talk_t PARSE_CIMI( void *ctx, talk_t state, talk_t cfg );
+/* AT+CCID. Writes state["iccid"]. */
 talk_t PARSE_CCID( void *ctx, talk_t state, talk_t cfg );
+/* AT+C*REG?. Sets PARSE_creg_code; lac/ci when registered (not all-F). */
 talk_t PARSE_CREG( void *ctx, talk_t state, talk_t cfg );
+/* AT+COPS?. Writes state["plmn"], or noreg/dereg/unreg from PARSE_creg_code. */
 talk_t PARSE_COPS( void *ctx, talk_t state, talk_t cfg );
+/* AT+CSQ. Writes state["csq"]; 99 (unknown) is ignored. */
 talk_t PARSE_CSQ( void *ctx, talk_t state, talk_t cfg );
+/* AT+CCLK?. Sets system time and timezone from the module clock. */
 talk_t PARSE_CCLK( void *ctx, talk_t state, talk_t cfg );
 /* send a at command in atd or in modem driver */
 extern atcmd_create_t atd_register;
@@ -128,4 +150,3 @@ typedef int (*modem_urc_t)( int line, char *ack[] );
 
 
 #endif   /* ----- #ifndef H_MODEM_SKINMODEM_H  ----- */
-

@@ -40,7 +40,8 @@ When `drvcom` is `uartdrv@dtu`, the following configuration fields are read from
     "ttydev": "serial device path",                      // [ string ], Linux serial device path (e.g. /dev/ttyS1)
     "devcom": "device component name",                   // [ string ], the component that provides ttydev path
     "drvcom": "driver component name",                   // [ string ], must be "uartdrv@dtu" for this driver
-    "extern": "reset trigger on network event",          // [ "disable", "default", "<ifname>" ], default be "disable"
+    "extern": "reset trigger on network event",          // [ "disable", "default", "<ifname>" ], default be "default"
+                                                              // empty string is treated as "default"
                                                               // "disable": no reset on network event
                                                               // "default": reset when gateway comes online
                                                               // "ifname@wan", "ifname@lte", etc.: reset when that interface comes online
@@ -68,6 +69,7 @@ When `drvcom` is `uartdrv@dtu`, the following configuration fields are read from
         {
             "status": "client enable or disable",        // [ "disable", "enable" ]
             "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
             "proto": "protocol",                         // [ "tcp", "udp" ]
             "server": "server address",                  // [ string ], domain name or IPv4 address
             "port": "server port",                       // [ number ]
@@ -98,6 +100,7 @@ When `drvcom` is `uartdrv@dtu`, the following configuration fields are read from
         {
             "status": "MQTT enable or disable",          // [ "disable", "enable" ]
             "extern": "reset trigger on network event",  // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
             "server": "MQTT broker address",             // [ string ], domain name or IPv4 address
             "port": "MQTT broker port",                  // [ number ]
             "mqtt_id": "MQTT client ID",                 // [ string ]
@@ -288,7 +291,9 @@ ttrue
 + `reset[ uart_object, ifname ]` **reconnect selected TCP/UDP/MQTT clients on network event**
     - uart_object ------- [ string ], the instance name (e.g. uart@tty)
     - ifname ------------ [ string ], JSON object with "ifname" field specifying the network interface that came online
-    - For each client/mqtt slot in the `dtu` configuration: if `extern` is "default" (and event is network/online) or `extern` matches the ifname value, closes and reopens that connection
+    - For each enabled (`status=enable`) `client*` / `mqtt*` slot in `dtu` (server* ignored): empty `extern` → `default`; `disable` skips; `default` only on `network/online`; specific ifname must match — then close and reopen that connection
+    - Disabled slots ignore `extern` for both joint registration and reset
+    - Joints are registered by `uart@frame` from the same client/mqtt aggregation
     - Server listeners are not affected by reset
     - failed return tfalse, process not running or no matching clients
     - succeed return ttrue

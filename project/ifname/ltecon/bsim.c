@@ -54,18 +54,19 @@ boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, 
 	{
 		method = "disable";
 	}
-	/* 5g default dhcp and 4g default ppp */
-	i = reg_sint( ifdev, "na" );
-    if ( i > 0 )
-    {
-		if ( mode == NULL || *mode == '\0' )
+	/* na(5G) or eth(RmNet): default dhcpc; else default ppp */
+	if ( mode == NULL || *mode == '\0' )
+	{
+		i = reg_sint( ifdev, "na" );
+		if ( i <= 0 )
+		{
+			i = reg_sint( ifdev, "eth" );
+		}
+		if ( i > 0 )
 		{
 			mode = "dhcpc";
 		}
-    }
-	else
-	{
-		if ( mode == NULL || *mode == '\0' )
+		else
 		{
 			mode = "ppp";
 		}

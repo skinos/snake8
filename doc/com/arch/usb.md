@@ -2,7 +2,7 @@
 
 ### Overview
 
-**`arch@usb`** scans **`/sys/bus/usb/devices`**, matches devices to **`usbdrv@*`** drivers, persists the binding under **`var/usbdevice`**, and powers modem USB ports through **`arch@gpio`** **`<object>_reset`**. Prefer the **Component API** for list / reset; edit the **`match`** table when the USB path or expected object changes.
+**`arch@usb`** scans **`/sys/bus/usb/devices`**, matches devices to **`usbdrv@*`** drivers, persists the binding under **`var/usbdevice`**, and powers modem USB ports through **`arch@gpio`** **`<object>_reset`**. Prefer the **Component API** for list / reset / search; edit the **`match`** table when the USB path or expected object changes.
 
 - **`setup`** starts **`service`** unless **`status`** is **`disable`**
 - each **`service`** cycle: GPIO power on → scan about **120 s** (40 × 3 s) → GPIO power off unmatched objects → decide retry / exit / reboot
@@ -81,6 +81,11 @@ ttrue
 * Device count dropped: after **`disappear_reset2reboot`** cycles, reboot (**`usb_lost`**).
 * Devices present but not all matched: after **`miss_reset2exit`** cycles, exit (no reboot).
 * Driver **`usb_match`** returns **`terror`**: reboot after 180 s (**`usb_crack`**).
+
+**Search versus reset**
+* **`reset`** / **`resetd`**: stop the scan, shut that object's driver, GPIO power off, start **`service`** again.
+* **`search`** / **`searchd`**: same shut + restart, no GPIO. Use when the module re-enumerates itself (USB composition change).
+* Same sysfs port with a different **vid/pid** is treated as gone, then matched again. **`keepup`** only **`setup`**s when vid/pid are unchanged.
 
 
 ### API Reference
@@ -221,3 +226,23 @@ ttrue
     - succeed return ttrue
     - Stops **`service`**, calls **`usb_shutdown`** on the bound **`usbdrv@*`**, GPIO power off, then starts **`service`** again
     - Started by **`reset`**; not intended for manual invocation
+
++ `search[ object ]` **restart USB search for one bound object**
+    - object ------------- [ string ], bound object such as **`modem@lte`**
+    - failed return tfalse
+    - succeed return ttrue
+    - Spawns **`searchd`** as **`<object>-searchd`** so the caller is not killed with the service
+    - No GPIO; use **`reset`** when a power cycle is required
+
+    Example, restart USB search for the first LTE modem
+    ```shell
+    arch@usb.search[ modem@lte ]
+    ttrue
+    ```
+
++ `searchd[ object ]` **search worker: shut driver, restart search**
+    - object ------------- [ string ], bound object
+    - failed return terror
+    - succeed return ttrue
+    - Stops **`service`**, calls **`usb_shutdown`** on the bound **`usbdrv@*`**, then starts **`service`** again
+    - Started by **`search`**; not intended for manual invocation
