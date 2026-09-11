@@ -124,6 +124,7 @@ ttrue
 + `on[]` **refresh inbound firewall rules for an external ifname**
     - succeed return ttrue
     - parameter **2** carries **`ifname`**; the firewall for that ifname is rebuilt from saved configuration
+    - `firewall_setup` / `firewall_shut` take **`reg_slock(COM_IDPATH, "busy")`** so concurrent handlers do not interleave iptables mutation
     - skipped in **default** / **parasite** network modes
 
 + `off[]` **tear down firewall for an ifname**

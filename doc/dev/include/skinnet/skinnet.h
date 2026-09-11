@@ -347,7 +347,7 @@ boole pmtu_clear_ifname( const char *object, const char *netdev, int mtu );
  * @return Success or failure
  * @retval true Success
  * @retval false Failure
- * @note Create shunts and assign chains, set connection mark save and restore rules
+ * @note PREROUTING CONNMARK only; local stick uses route_local_switch
  */
 boole shunts_create( talk_t list );
 
@@ -367,9 +367,18 @@ boole shunts_disable( boole force );
  * @return Success or failure
  * @retval true Success
  * @retval false Failure
- * @note Mark all new connections with the routing mark of the specified interface
+ * @note Mark LAN NEW (PREROUTING -i local) with the interface tid
  */
 boole shunts_fix_ifname( boole force, const char *ifname );
+
+/**
+ * @brief Disable balancing/fix jumps and flush chains; keep CONNMARK
+ * @return Success or failure
+ * @retval true Success
+ * @retval false Failure
+ * @note Used when dbdc falls to one uplink: stop NEW marking, keep sticky restore
+ */
+boole shunts_balancing_disable( void );
 
 /**
  * @brief Load balancing between two interfaces
@@ -379,7 +388,7 @@ boole shunts_fix_ifname( boole force, const char *ifname );
  * @return Success or failure
  * @retval true Success
  * @retval false Failure
- * @note Use statistic module to distribute traffic in round-robin manner
+ * @note Round-robin NEW marks on LAN (PREROUTING); local stick uses route_local_switch
  */
 boole shunts_balancing_2ifname( boole force, const char *ifname, const char *ifname2 );
 
@@ -436,26 +445,6 @@ boole shunts_balancing_5ifname( boole force, const char *ifname, const char *ifn
  * @retval false Failure
  */
 boole shunts_balancing_6ifname( boole force, const char *ifname, const char *ifname2, const char *ifname3, const char *ifname4, const char *ifname5, const char *ifname6 );
-
-/**
- * @brief Add bind rule (bind traffic matching condition to specified interface)
- * @param[in] condition iptables match condition string
- * @param[in] ifname Interface name
- * @return Success or failure
- * @retval true Success
- * @retval false Failure
- */
-boole shunts_bind_add( const char *condition, const char *ifname );
-
-/**
- * @brief Delete bind rule
- * @param[in] condition iptables match condition string
- * @param[in] ifname Interface name
- * @return Success or failure
- * @retval true Success
- * @retval false Failure
- */
-boole shunts_bind_delete( const char *condition, const char *ifname );
 
 /** @} */ /* ShuntsConfig */
 

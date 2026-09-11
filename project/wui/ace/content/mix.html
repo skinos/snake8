@@ -261,7 +261,6 @@
         </div>
       </div>
 
-
       <!-- 主连接 -->
       <div class="form-group">
         <label class="col-sm-3 control-label no-padding-right" id="first" data-i18n="First Connection"></label>
@@ -336,6 +335,23 @@
         </div>
     
     </div>
+
+      <div id="sticky-sets" style="display:none;">
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Sticky Routing"></label>
+          <div class="col-sm-9">
+            <select class="col-xs-10 col-sm-5" id="sticky"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <div class="grey col-xs-10 col-sm-5" style="white-space: pre-wrap;" data-i18n="sticky tip"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
 
     <div id="interval-sets" style="display:none;">
@@ -552,6 +568,12 @@
         options += '<option value="enable">' + $.i18n( "Enable" ) + '</option>';
 
         $("#custom_dns").html( options );
+    }
+    function sticky_html()
+    {
+        var options = '<option value="disable">' + $.i18n( "Disable" ) + '</option>';
+        options += '<option value="enable">' + $.i18n( "Enable" ) + '</option>';
+        $( "#sticky" ).html( options );
     }
     /* fill delay_count select: 0 (Disable) .. 60 (keeplive delay_buf size) */
     function delay_count_html()
@@ -893,7 +915,9 @@
             $('#reserve3').val( frame['6'] );
 
             dns_html();
+            sticky_html();
             $('#custom_dns').val( frame.custom_dns||"disable" );
+            $('#sticky').val( frame.sticky||"disable" );
             $('#cdns').val( frame.dns );
             $('#cdns2').val( frame.dns2 );
             delay_count_html();
@@ -920,12 +944,21 @@
                   $('#dns-sets').hide();
                   $('#delay-sets').hide();
                   $('#interval-sets').hide();
+                  $('#sticky-sets').hide();
               }
               else if ( type.indexOf("dbdc") === 0 || type.indexOf("hot") === 0 || type.indexOf("lazy") === 0 )
               {
                 $('#dns-sets').show();
                 $('#interval-sets').show();
                 $('#delay-sets').show();
+                if ( type.indexOf("hot") === 0 || type.indexOf("lazy") === 0 )
+                {
+                    $('#sticky-sets').show();
+                }
+                else
+                {
+                    $('#sticky-sets').hide();
+                }
                 delay_tip_update( type );
                 delay_detail_update();
               }
@@ -934,6 +967,7 @@
                 $('#dns-sets').show();
                 $('#interval-sets').show();
                 $('#delay-sets').hide();
+                $('#sticky-sets').hide();
 			  }
             }).trigger('change');
             $('#delay_count').unbind('change').change(function () {
@@ -978,6 +1012,10 @@
             frame.delay_count = $('#delay_count').val();
             frame.delay_divide = $('#delay_divide').val();
             frame.delay_diff = $('#delay_diff').val();
+        }
+        if ( frame.type.indexOf("hot") === 0 || frame.type.indexOf("lazy") === 0 )
+        {
+            frame.sticky = $('#sticky').val();
         }
         if ( frame.type != "default" )
         {

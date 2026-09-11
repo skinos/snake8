@@ -88,6 +88,7 @@ ttrue
 + `on[]` **refresh destination-NAT proxy rules for a LAN ifname**
     - succeed return ttrue
     - parameter **2** carries **`ifname`**; rules for that ifname are rebuilt from saved configuration
+    - `dnat_setup` / `dnat_shut` take **`reg_slock(COM_IDPATH, "busy")`** so concurrent handlers do not interleave iptables mutation
     - skipped in **default** / **parasite** network modes
 
 + `off[]` **tear down DNAT rules for an ifname**

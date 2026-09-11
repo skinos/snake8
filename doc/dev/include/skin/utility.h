@@ -560,6 +560,9 @@ boole lsmod( const char *module );
 #define MAIN_TABLE_PREF       32766
 // ifname mark rule
 #define IFNAME_TABLE_PREF     35000
+// local / forward dest policy rules
+#define LOCAL_RULE_PREF       34800
+#define FORWARD_RULE_PREF     34900
 // dns table
 #define DNS_TABLE_ID          252
 #define DNS_TABLE_NAME        "252"
@@ -791,6 +794,28 @@ boole        routes_switch5( int tid, const char *dest, const char *mask, const 
  *		@retval false for failed
  */
 boole        routes_switch6( int tid, const char *dest, const char *mask, const char *metric, talk_t v, talk_t v2, talk_t v3, talk_t v4, talk_t v5, talk_t v6, boole clear );
+/**
+ * @brief switch a local dest rule (iif lo to dest table tid)
+ * @param[in] dest destination IP or prefix
+ * @param[in] mask network mask (NULL to use dest as-is)
+ * @param[in] v talk_t with tid or ifname; NULL to delete only
+ * @param[in] clear delete matching rules first if true
+ * @return succeed or failed
+ *		@retval true for succeed
+ *		@retval false for failed
+ */
+boole        route_local_switch( const char *dest, const char *mask, talk_t v, boole clear );
+/**
+ * @brief switch a forwarded dest rule (to dest table tid)
+ * @param[in] dest destination IP or prefix
+ * @param[in] mask network mask (NULL to use dest as-is)
+ * @param[in] v talk_t with tid or ifname; NULL to delete only
+ * @param[in] clear delete matching rules first if true
+ * @return succeed or failed
+ *		@retval true for succeed
+ *		@retval false for failed
+ */
+boole        route_forward_switch( const char *dest, const char *mask, talk_t v, boole clear );
 /**
  * @brief create the extern route table for ifname
  * @param[in] tid route id

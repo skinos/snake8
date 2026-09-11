@@ -10,7 +10,7 @@
  * Internal mmap layout (implementation details; not for external callers).
  */
 #define REG_MAGIC            0x53475602u
-#define REG_VERSION          3u
+#define REG_VERSION          4u
 #define REG_NIL              0xFFFFFFFFu
 #define REG_SLOT_USED        1u
 #define REG_SLOT_FREE        2u
@@ -55,6 +55,7 @@ typedef struct reg_slot_st
 	uint32_t val_size;
 	uint32_t val_cap;
 	uint32_t lock_owner;  /* pid while LOCKED; else 0 */
+	uint64_t lock_birth;  /* /proc starttime; with lock_owner fights pid reuse */
 	char     name[REG_NAME_MAX];
 } reg_slot_t;
 typedef struct reg_chunk_st
@@ -114,9 +115,10 @@ int         reg_len( reg_t r, const char *name );
 int         reg_cap( reg_t r, const char *name );
 boole       reg_del( reg_t r, const char *name );
 boole       reg_del_noblock( reg_t r, const char *name );
-/* Cooperative per-variable write lock: slot LOCKED flag + lock_owner pid
- * (under brief flock EX). Stable across value relocate. Kill/exit does not
- * auto-clear; waiters reclaim if owner pid is dead (ESRCH).
+/* Cooperative per-variable write lock: slot LOCKED + lock_owner pid +
+ * lock_birth (/proc starttime) under brief flock EX. Stable across relocate.
+ * Kill/exit does not auto-clear; waiters reclaim if owner is dead (ESRCH)
+ * or pid was reused (birth mismatch). Same pid+birth is reentrant.
  * Success → mmap value pointer (like reg_ptr; valid while lock held / map live);
  * fail → NULL + errno. reg_lock waits; reg_lock_noblock → EBUSY if held.
  * RO handles → EROFS. */
