@@ -3,7 +3,7 @@ name: skinos-he
 description: |
   Operate a running landos/skinos device via HE grammar on eline ($), BusyBox ash
   (he '…'), or the classic HE loop (#). Covers login, prompt rules, config get/set,
-  method calls, set mode, ashy, discovery (@ / com.), and return codes.
+  method calls, set mode, ashy, discovery (@ / .com / ?com), and return codes.
   Use when the user says "he 命令", "eline", "ashy", "在设备上查一下", "telnet/SSH
   操作", "调一下组件", "land@machine.status", or asks how to query/change config
   or call APIs on a live gateway.
@@ -43,9 +43,10 @@ $ land@machine.status
 
 # enter BusyBox (replaces eline — exit usually ends the login)
 $ ashy
+$ shell
 
 # ash
-~ # he 'land@machine.status'
+admin@host:~# he 'land@machine.status'
 ~ # he 'land@machine:name=DemoGateway'
 ~ # exit          # often disconnects; reconnect for a new eline
 ```
@@ -57,8 +58,8 @@ $ ashy
 
 Telnet / SSH / serial (Command Line UART, typically 57600 8N1). After login, use the prompt you actually see.
 
-Leave eline: `exit` or Ctrl+D at `$ `.  
-`ashy` → `/bin/ash --login`. Leaving ash usually **kills the whole session** (eline was replaced). Open a second session for risky tests.
+Leave eline: type **`exit`**. Ctrl+D at the top-level prompt **stays** in eline.  
+`ashy` / `shell` → `/bin/ash -i`. Leaving ash usually **kills the whole session** (eline was replaced). Open a second session for risky tests.
 
 ## HE grammar (payload)
 
@@ -82,9 +83,14 @@ Discovery (from banner / practice):
 
 | Line | Meaning |
 |------|---------|
-| `@` | List components |
-| `component.` | List methods/interfaces for that object |
-| `*project` | Filter components by project (when supported) |
+| `@` | List all components |
+| `*prefix` | Filter by **object-name** prefix (`*uartdrv` → names `uartdrv@…`) |
+| `@project` | Filter by **project install dir** (`@uart` → path `…/uart/…`; not the same as name prefix) |
+| `.component` | List methods/interfaces for that object (**leading** `.`, e.g. `.land@machine`) |
+| `?component` | Probe whether the component exists (`ttrue` / `tfalse`) |
+| `?component.method` | Probe whether that API exists (`ttrue` / `tfalse`) |
+
+`*` and `@` are different filters — do not swap them (e.g. `@uartdrv` is empty if there is no project dir `uartdrv`). Do not use a leading **`.`** as an existence probe. In ash, quote `?` / `*` (`he '?wifi@n'`). WUI `POST /he` sends the HE string in JSON, so `?` is not a URL query. Tab completion uses **`hetab`** (not `he '?…'`).
 
 ## Returns
 
@@ -92,9 +98,10 @@ Discovery (from banner / practice):
 |--------|---------|
 | JSON `{…}` | Structured data |
 | Plain string | Scalar value |
-| `ttrue` / `tfalse` | Success / failure |
-| Empty | No data (`NULL`) |
-| `terror` / `tpanic` | Error / panic (see component docs / errno hints) |
+| `ttrue` / `tfalse` | Success / logical failure (probes use these; `?com.badapi` → `tfalse, Function not implemented`) |
+| Empty | No printable payload (`NULL`, or `.` on a missing object) |
+| `tpanic` | Dispatch failure (missing API often **`tpanic, Function not implemented`**) |
+| `terror` | Parse / peer error (bare `?` → **`terror, Invalid argument`**) |
 
 Next prompt returns after each command.
 
@@ -112,19 +119,17 @@ land@machine: e          # abandon without save
 
 Paths after `object:` are **relative** (no repeated `land@machine:`). Ctrl+D in set = abandon like `e`.
 
-### Passthrough OS lines
+### OS lines vs HE
 
-Matched by **prefix** → `shell()`, not HE. Common: `ping `, `ip `, `ifconfig`, `route`, `ls /…`, `curl `, `reboot…`.  
-`ls` / `cd` alone (no space) are **HE**, not shell — use `ls /` / `cd /tmp`.
-
-Full list: [reference.md](reference.md).
+First token: leading `* @ ? : .` → HE (not `/` `./` `../` `..`; ash keeps bare `.` / `:`). Else only `/tmp/he.shell` (exact or name + `. : = | [`). **`he …`** is the PATH binary. **`cd`** is in-process `chdir`. Bare **`set`** prints `set <object>`.
 
 ### Built-ins
 
 | Input | Action |
 |-------|--------|
 | `exit` | Quit eline |
-| `ashy` | Replace with BusyBox ash |
+| `ashy` / `shell` | Replace with `/bin/ash -i` |
+| `cd` / `cd …` | In-process directory change |
 | `set <object>` | Interactive config mode |
 
 ## How to operate from a component doc
@@ -162,8 +167,8 @@ $ land@fpk.path[ gnss ]
 
 | Skill / doc | Use for |
 |-------------|---------|
-| [reference.md](reference.md) | Passthrough list, `he` `+/=/-` modes, troubleshooting |
+| [reference.md](reference.md) | Routing, `he` `+/=/-` modes, troubleshooting |
 | **device-upgrade** | Web `/auth` `/he` `/upload`, firmware/FPK |
 | `doc/com/land/he.md` | Full HE examples |
-| `doc/com/land/eline.md` | Full eline / set / passthrough |
+| `doc/com/land/eline.md` | Full eline / set / HE vs shell routing |
 | `doc/com/land/README.md` | Land overview + component index |

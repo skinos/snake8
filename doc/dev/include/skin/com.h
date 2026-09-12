@@ -524,9 +524,9 @@ void   com_close( com_t com );
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
- * @note LIB: dlsym("_"+api). EXE: probe via MAIN2COM "exist" —
- *       com_exist → execute_ccall(com, NULL, "exist"); com_have → execute_scall(com, object, "exist").
- *       Peer exist only checks the API table (object unused). Only ttrue → true; tfalse/tpanic → false.
+ * @note LIB: dlsym("_"+api). EXE: com_exist probes MAIN2COM "exist";
+ *       com_have uses api_list() (same source as leading ".") so shell
+ *       components without exist[] still match listed APIs.
  * @see com_have to check by object string without keeping a handle open
  * @see ccall, scall to invoke an API on an object
  */

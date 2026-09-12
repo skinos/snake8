@@ -249,7 +249,7 @@ function lte_basic(v)
     }
 
     var smsTabLi = $('#lteTabs a[href="#ltesms"]').parent();
-    he.load([ '.modem@smsd' ]).then(function(sv) {
+    he.load([ '?modem@smsd' ]).then(function(sv) {
         if (sv[0] === true) {
             smsTabLi.show();
         } else {

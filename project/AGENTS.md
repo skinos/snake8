@@ -349,7 +349,13 @@ he 'project@component.api'
 
 # 列出组件（HE 元命令；不是 land@component.list）
 he '@'
-# 或按工程过滤: he '*land'
+# 按对象名前缀: he '*land' / he '*uartdrv'
+# 按工程安装目录: he '@land' / he '@uart'（* 与 @ 不可互换）
+# 列出某组件 API（前导 . ）
+he '.project@component'
+# 探测组件/接口是否存在（前导 ? ；不要用前导 . ）
+he '?project@component'
+he '?project@component.api'
 
 # 查看日志文件列表
 he 'land@syslog.list'

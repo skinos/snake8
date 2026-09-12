@@ -1,11 +1,11 @@
 ## Use eline on the terminal to interact with HE commands
 
-**Eline** is an interactive command-line front-end on the gateway. It uses GNU **readline** (line editing, command history) and passes most input to the same HE interpreter as the classic shell (`line_he_command`). The prompt is **`$ `** instead of **`# `**. HE syntax—querying and changing component configuration, calling methods, JSON rules—is the same as in **[he.md](he.md)**; this document repeats the essentials and describes what **eline adds** (built-in commands, **`set`** mode, and passthrough OS lines).
+**Eline** is an interactive command-line front-end on the gateway. It uses GNU **readline** (line editing, command history) and passes most input to the same HE interpreter as the classic shell (`line_he_command`). The prompt is **`$ `** instead of **`# `**. HE syntax—querying and changing component configuration, calling methods, JSON rules—is the same as in **[he.md](he.md)**; this document repeats the essentials and describes what **eline adds** (built-in commands, **`set`** mode, and OS lines). Canonical text: **`doc/com/land/eline.md`**.
 
 > **Start here**
 > - **You see `$ `** — type HE **exactly as in [he.md](he.md)** (no `he` prefix).  
 > - **Need BusyBox `ash` or normal shell tools?** Type **`ashy`**. After that you are at **`~ #`** and must run **`he '…'`**; see **he.md** → *How the `he` program joins arguments* (why one quoted argument matters).  
-> - **Leave eline without entering shell:** **`exit`** or Ctrl+D at **`$ `**.
+> - **Leave eline:** type **`exit`**. **Ctrl+D** at the top-level prompt **does not quit** — eline stays and reprints the prompt. Use **`ashy`** or **`shell`** for **`/bin/ash -i`**.
 
 ---
 
@@ -31,7 +31,7 @@ If **`/etc/banner.he`** exists, eline runs **`cat /etc/banner.he`** once before 
 | Prompt | `# ` | `$ ` |
 | HE commands | Yes | Yes (same formats as **he.md**) |
 | Interactive **`set`** session | No | **`set <object>`** (see below) |
-| Selected OS commands | Varies by product | Fixed **passthrough** list via **`shell()`** |
+| OS commands | Varies by product | First token is **not** HE → **`shell()`** (not a fixed whitelist) |
 
 ---
 
@@ -88,6 +88,34 @@ The samples below use **`$ `** as the eline prompt. Lines you type have **`$ `**
 ```shell
 $ @
 { ... }                                           # component index (shape depends on firmware)
+$ 
+```
+
+Filter by **object-name prefix** (`*prefix` → names `prefix@…`) or by **project install directory** (`@project` → path `…/<project>/…`). They are not the same: e.g. `*uartdrv` lists `uartdrv@…` aliases; `@uart` lists whatever is installed under project `uart` (may include those aliases). `@uartdrv` is empty if there is no project directory named `uartdrv`. In **ash** after **`ashy`/`shell`**, quote discovery lines: **`he '*uartdrv'`** — bare `*uartdrv` is a shell glob.
+
+### Probe whether a component or API exists
+
+```shell
+$ ?land@machine
+ttrue
+$ ?land@machine.status
+ttrue
+$ ?wifi@n
+tfalse
+$ ?no_such@com
+tfalse, Invalid argument
+$ 
+```
+
+**`?`** is the existence probe (**`ttrue`** / **`tfalse`**; unknown names may add **, strerror**). A leading **`.`** only **lists** APIs (`.land@machine` → JSON map, or **empty** if the object cannot be listed)—it is not an existence probe and will not print **`tfalse`**. Calling a missing method (e.g. `land@machine.no_such`) prints **`tpanic`** / **Function not implemented**, not **`tfalse`**.
+
+### List APIs of one component
+
+```shell
+$ .land@machine
+{ ... }                                           # method / interface name list
+$ .no_such@com
+                                                  # often empty — use ?no_such@com to probe
 $ 
 ```
 
@@ -254,7 +282,7 @@ Pressing **Ctrl+D** at the **`object:`** prompt releases the in-memory config an
 
 ---
 
-## Worked examples — built-ins, passthrough, and session control
+## Worked examples — built-ins, OS lines, and session control
 
 ### Exit eline
 
@@ -262,7 +290,7 @@ Pressing **Ctrl+D** at the **`object:`** prompt releases the in-memory config an
 $ exit
 ```
 
-(End of session. **Ctrl+D** at **`$ `** also exits.)
+(End of session. Top-level **Ctrl+D** does **not** exit.)
 
 ### Full login shell (`ash`)
 
@@ -270,9 +298,9 @@ $ exit
 $ ashy
 ```
 
-Eline is replaced by **`/bin/ash --login`**. When you leave that shell, the remote session often ends because the original eline process is gone—plan accordingly (e.g. open a second session for tests).
+Eline is replaced by **`/bin/ash -i`**. When you leave that shell, the remote session often ends because the original eline process is gone—plan accordingly (e.g. open a second session for tests).
 
-### Network / system commands (passthrough)
+### Network / system commands (not a fixed whitelist)
 
 These run via the device shell, not HE:
 
@@ -308,10 +336,10 @@ Handled by eline before HE parsing:
 | Input | Action |
 |---|---|
 | **`exit`** | Quit eline (exact match; e.g. `exita` is not treated as exit). |
-| **`ashy`** | Replace this process with **`/bin/ash --login`**. On failure, an error is printed and the process exits. |
+| **`ashy`** / **`shell`** | Replace this process with **`/bin/ash -i`**. On failure, an error is printed and the process exits. |
 | **`set <object>`** | Enter **interactive configuration mode** for the HE object name (e.g. **`set land@machine`**). See next section. |
 
-**Ctrl+D (EOF):** at the top-level **`$ `** prompt, eline exits. Inside **`set`** mode, EOF leaves **set** mode and returns to **`$ `** (in-memory config is released).
+**Ctrl+D (EOF):** at the top-level prompt, eline **stays**. Inside **`set`**, EOF leaves **set** (same as **`e`**). Canonical routing and the frozen contract: **`doc/com/land/eline.md`**.
 
 ---
 
@@ -365,14 +393,14 @@ All **other** lines go to **`line_he_command`** (same entry point as **`he`** wi
 ## Tips
 
 - Use **Up/Down** to recall previous lines (readline **history**).  
-- **Blank line** or a line whose first byte is not printable is skipped (no HE call, no passthrough); it does not go into history.  
+- **Blank line** or a line whose first byte is not printable is skipped (no HE call, no shell); it does not go into history.  
 - Full HE grammar, **`he` argv joining**, return types, and **`+` / `=` / `-`** modes are in **[he.md](he.md)**.
 
 ---
 
 ## Use component documentation to manage any module (same idea as **he.md**)
 
-You manage the gateway through **component names**, **configuration paths**, and **methods** exactly as described in each component’s markdown. Eline only changes the **prompt** (`$ `) and adds **`set`** / passthrough; the mapping from documentation to input lines is unchanged.
+You manage the gateway through **component names**, **configuration paths**, and **methods** exactly as described in each component’s markdown. Eline adds the prompt, **`set`**, **`cd`**, and HE/shell routing; the mapping from documentation to HE lines is unchanged.
 
 ### Where to find component docs
 

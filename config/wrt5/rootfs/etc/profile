@@ -1,0 +1,49 @@
+unset FAILSAFE
+[ -e /tmp/.failsafe ] && export FAILSAFE=1
+
+[ -f /etc/banner ] && cat /etc/banner
+[ -n "$FAILSAFE" ] && [ -f /etc/banner.failsafe ] && cat /etc/banner.failsafe
+
+if grep -Fsq '/ overlay ro,' /proc/mounts ; then
+cat << EOF
+
+ === WARNING! ======================================
+ Your JFFS2-partition seems full and overlayfs is
+ mounted as READ-ONLY!
+ Please try to remove files from /overlay/upper/...
+ and reboot!
+ ---------------------------------------------------
+
+EOF
+fi
+
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+HOME=$(grep -E "^${USER:-root}:" /etc/passwd | cut -d ":" -f 6)
+HOME=${HOME:-/root}
+export HOME
+# Refresh BusyBox ash HE whitelist (one name per line)
+he 'land@fpk.he_shell' >/dev/null 2>&1
+# root (uid 0 / user root) shows as admin; other users keep \u
+if [ "${USER:-}" = "root" ] || [ "$(id -u 2>/dev/null)" = "0" ]; then
+	export PS1='admin@\h:\w\$ '
+	_ps1_user=admin
+else
+	export PS1='\u@\h:\w\$ '
+	_ps1_user='\u'
+fi
+export ENV=/etc/shinit
+
+case "$TERM" in
+	xterm*|rxvt*)
+		export PS1='\[\e]0;'"${_ps1_user}"'@\h: \w\a\]'"$PS1"
+	;;
+esac
+unset _ps1_user
+
+if [ -z "$FAILSAFE" ] ; then
+	for FILE in /etc/profile.d/*.sh ; do
+		[ -f "${FILE%.sh}.hush" ] && continue
+		[ -f "$FILE" ] && . "$FILE"
+	done
+	unset FILE
+fi

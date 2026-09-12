@@ -1,16 +1,96 @@
 --- a/shell/ash.c
 +++ b/shell/ash.c
-@@ -10369,6 +10369,9 @@
+@@ -10346,6 +10346,81 @@
+ 	 * as POSIX mandates */
+ 	return back_exitstatus;
+ }
++
++/* add by dimmalex for HE auto-exec: /tmp/he.shell whitelist (land@fpk.he_shell) */
++#define HE_SHELL_LIST "/tmp/he.shell"
++
++static int he_shell_listed(const char *cmd)
++{
++	FILE *fp;
++	char *p;
++	size_t n;
++	char c;
++	char line[256];
++
++	if (cmd == NULL || *cmd == '\0')
++		return 0;
++	fp = fopen(HE_SHELL_LIST, "r");
++	if (fp == NULL)
++		return 0;
++	while (fgets(line, sizeof(line), fp)) {
++		p = line;
++		while (*p == ' ' || *p == '\t')
++			p++;
++		n = strlen(p);
++		while (n > 0 && (p[n - 1] == '\n' || p[n - 1] == '\r'
++			|| p[n - 1] == ' ' || p[n - 1] == '\t'))
++			n--;
++		p[n] = '\0';
++		if (n == 0)
++			continue;
++		if (strcmp(cmd, p) == 0) {
++			fclose(fp);
++			return 1;
++		}
++		if (strncmp(cmd, p, n) == 0) {
++			c = cmd[n];
++			if (c == '.' || c == ':' || c == '=' || c == '|' || c == '[') {
++				fclose(fp);
++				return 1;
++			}
++		}
++	}
++	fclose(fp);
++	return 0;
++}
++
++/*
++ * First-token HE vs shell (ash). Same as eline except bare "." / ":"
++ * stay ash builtins (source / null).
++ *   shell: "he", /..., ./..., ../..., "..", ".", ":"
++ *   HE:    leading * @ ? : .  (after the path/builtin exceptions)
++ *   else:  /tmp/he.shell (exact, or name + . : = | [)
++ */
++static int he_ash_need(const char *cmd)
++{
++	char c0;
++
++	if (cmd == NULL || *cmd == '\0')
++		return 0;
++	if (strcmp(cmd, "he") == 0)
++		return 0;
++	c0 = cmd[0];
++	if (c0 == '/')
++		return 0;
++	if (c0 == '.' && cmd[1] == '/')
++		return 0;
++	if (c0 == '.' && cmd[1] == '.' && (cmd[2] == '/' || cmd[2] == '\0'))
++		return 0;
++	if (c0 == '.' && cmd[1] == '\0')
++		return 0;
++	if (c0 == ':' && cmd[1] == '\0')
++		return 0;
++	if (c0 == '*' || c0 == '@' || c0 == '?' || c0 == ':' || c0 == '.')
++		return 1;
++	return he_shell_listed(cmd);
++}
++
+ static int
+ evalcommand(union node *cmd, int flags)
+ {
+@@ -10369,6 +10444,7 @@
  	int spclbltin;
  	int cmd_flag;
  	int status;
-+	char *he_cmd;
-+	char *he_at;
 +	int he_i;
  	char **nargv;
  	smallint cmd_is_exec;
  	int vflags;
-@@ -10446,7 +10449,8 @@
+@@ -10446,7 +10522,8 @@
  	localvar_stop = pushlocalvars(vlocal);
  
  	/* Reserve one extra spot at the front for shellexec. */
@@ -20,59 +100,18 @@
  	argv = ++nargv;
  	for (sp = arglist.list; sp; sp = sp->next) {
  		TRACE(("evalcommand arg: %s\n", sp->text));
-@@ -10537,11 +10541,55 @@
+@@ -10537,6 +10614,14 @@
  		safe_write(preverrout_fd, "\n", 1);
  	}
  
-+	/* add by dimmalex for HE component command auto exec via he */
-+	if (argc >= 1
-+	 && argv[0] != NULL
-+	 && argv[0][0] != '\0'
-+	 && strcmp(argv[0], "he") != 0
-+	 && strchr(argv[0], '@') != NULL
-+	 && argv[0][0] != '/'
-+	 && !(argv[0][0] == '.' && argv[0][1] == '/')
-+	 && !(argv[0][0] == '.' && argv[0][1] == '.' && argv[0][2] == '/')
-+	) {
-+		he_cmd = strchr(argv[0], '/');
-+		he_at = strchr(argv[0], '@');
-+		/* '/' before '@' => filesystem path; '/' after '@' may be URL params */
-+		if (he_cmd == NULL || he_cmd > he_at) {
-+			for (he_i = argc; he_i >= 0; he_i--)
-+				argv[he_i + 1] = argv[he_i];
-+			argv[0] = (char *)"he";
-+			argc++;
-+		}
++	/* add by dimmalex for HE component / special / whitelist -> he */
++	if (argc >= 1 && argv[0] != NULL && he_ash_need(argv[0])) {
++		for (he_i = argc; he_i >= 0; he_i--)
++			argv[he_i + 1] = argv[he_i];
++		argv[0] = (char *)"he";
++		argc++;
 +	}
 +
  	/* Now locate the command. */
  	if (cmdentry.cmdtype != CMDBUILTIN
  	 || !(IS_BUILTIN_REGULAR(cmdentry.u.cmd))
- 	) {
- 		path = path ? path : pathval();
-+		find_command(argv[0], &cmdentry, cmd_flag, path);
-+	}
-+
-+	/* short HE name without '@' (machine, service, machine.status, ...) */
-+	if (cmdentry.cmdtype == CMDUNKNOWN
-+	 && argc == 1
-+	 && argv[0] != NULL
-+	 && argv[0][0] != '\0'
-+	 && strcmp(argv[0], "he") != 0
-+	 && argv[0][0] != '/'
-+	 && !(argv[0][0] == '.' && argv[0][1] == '/')
-+	 && !(argv[0][0] == '.' && argv[0][1] == '.' && argv[0][2] == '/')
-+	 && strchr(argv[0], '/') == NULL
-+	) {
-+		he_cmd = argv[0];
-+		argv[0] = (char *)"he";
-+		argv[1] = he_cmd;
-+		argv[2] = NULL;
-+		argc = 2;
-+		find_command(argv[0], &cmdentry, cmd_flag, path);
-+	}
-+
-+	if (cmdentry.cmdtype == CMDUNKNOWN) {
- 		find_command(argv[0], &cmdentry, cmd_flag | DO_ERR, path);
- 	}
- 

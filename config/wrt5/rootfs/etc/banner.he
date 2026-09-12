@@ -10,9 +10,12 @@
  -----------------------------------------------------------
  Command Help
  -----------------------------------------------------------
- @ ----------------------- List all the project
- @? ---------------------- List all the static component
- @@ ---------------------- List all the dynamic component
+ @ ----------------------- List all the component
+ @<project> -------------- List components by project directory
+ *<prefix> --------------- List components by object-name prefix
+ .<com> ------------------ List all component interface
+ ?<com> ------------------ Probe whether component exists
+ ?<com>.<api> ------------ Probe whether API exists
  <com> ------------------- Show component configure
  <com>:<config> ---------- Get component configure attribute
  <com>:<config>=<value> -- Set component configure attribute

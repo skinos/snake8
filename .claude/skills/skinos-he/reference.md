@@ -21,7 +21,7 @@ Always: `he '<entire HE line>'` when unsure, or when the line has `| { } [ ] : =
 
 ## Advanced `he` prefixes (ash only)
 
-First character of the **combined** string:
+First character of the **combined** string — **`he` program modes** (not used in eline):
 
 | Prefix | Behavior |
 |--------|----------|
@@ -35,34 +35,32 @@ he '=land@machine:name'
 he '-land@machine.status'
 ```
 
-Not normal component commands — avoid unless you intend these modes.
+HE **discovery** prefixes (same in eline or `he '…'`):
+
+| Prefix | Behavior |
+|--------|----------|
+| `*` / `*land` / `*uartdrv` | List by **object-name** prefix (`prefix@…`) |
+| `@` / `@land` / `@uart` | List by **project install directory** (`…/<project>/…`) |
+| `:` / `:land` | List configuration objects |
+| `.land@machine` | List APIs of that component |
+| `?land@machine` / `?land@machine.status` | Existence probe → `ttrue` / `tfalse` |
+
+`*` ≠ `@`: name prefix vs project path segment (aliases like `uartdrv@tui` often live under project `uart`). Do not use a leading `.` as an existence probe. Quote `?` / `*` in ash: `he '?wifi@n'`.
+
+Not normal component commands — avoid `+` / `=` / `-` unless you intend those modes.
 
 ---
 
-## Eline passthrough prefixes
+## Eline routing (HE vs shell)
 
-Whole-line **prefix** match → `shell()`, else HE (`line_he_command`):
+First token → HE if it starts with `* @ ? : .` (not `/` `./` `../` `..`; ash keeps bare `.` / `:`), or matches `/tmp/he.shell`. Else **`shell()`**. Built-ins first: `exit`, `ashy`/`shell`, `cd`, `set` / `set <object>`.
 
-| Prefix / rule | Notes |
-|---------------|-------|
-| `arp ` | space required |
-| `ping ` | |
-| `traceroute` | first 10 chars (`traceroute`, `traceroute6`, …) |
-| `ifconfig` | first 8 chars |
-| `route` | `route` or `route …`; **`router` does not match** |
-| `netstat` | first 7 |
-| `iperf` | first 5 (`iperf3`, …) |
-| `tcpdump` | first 7 |
-| `mkdir ` | |
-| `telnet ` | |
-| `wg ` | |
-| `ip ` | |
-| `tip ` | |
-| `cd ` | **`cd` alone → HE** |
-| `ls ` | **`ls` alone → HE**; use `ls /` |
-| `tftp ` | |
-| `curl ` | |
-| `reboot` | first 6 chars (`reboot`, `reboot -f`, …) |
+| First token | Route |
+|-------------|-------|
+| `*land` / `@` / `?x` / `:land` / `.land@machine` | HE (prefix) |
+| `land@machine` / `land@machine.status` | HE (whitelist) |
+| `ls` / `pwd` / `he` / `foo.sh` / `./x` / `../bin` | shell |
+| unknown word | `sh: … not found` |
 
 ---
 
@@ -78,7 +76,7 @@ After `$ set <object>` → prompt `object:`:
 | `e` | Exit set without save |
 | path only | Print that attribute from in-memory copy |
 
-Ctrl+D in set = abandon (like `e`). Ctrl+D at top-level `$ ` = exit eline.
+Ctrl+D in set = abandon (like `e`). Ctrl+D at top-level prompt = **stay** in eline.
 
 ---
 
@@ -86,12 +84,14 @@ Ctrl+D in set = abandon (like `e`). Ctrl+D at top-level `$ ` = exit eline.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `tfalse` | Bad path/value/validation | Query parent path; check component `.md` |
-| Empty | Missing field / API `NULL` | Query full object or parent |
-| Glued / wrong text | Multiple ash argv | Use `he 'one line'` |
-| JSON parse errors | Broken JSON / bad quoting | Fix JSON; keep single quotes in ash |
-| `ashy` then gone | Expected — eline replaced | Reconnect for `$ ` |
-| Passthrough ignored | Wrong prefix (`ls` without path) | Add space + args (`ls /`) |
+| `tfalse` / `tfalse, Invalid argument` | Probe miss or unknown object | `?component` / fix the object name |
+| `tfalse, Function not implemented` | Probe of a missing API | `.com` to list APIs |
+| `tpanic, Function not implemented` | Missing API on **call** | `?com.api` then `.com` |
+| Empty after `.com` | List miss (not a probe) | Use `?com` |
+| Glued / wrong / silent `he a b` | argv concatenated | `he 'one line'` |
+| `he '+…'` hangs | Loop mode | Do not use `+` interactively |
+| `*prefix` listed files | cwd glob matched before HE | `he '*prefix'` |
+| `ashy`/`shell` then gone | Expected — eline replaced | Reconnect for `$ ` |
 
 ---
 
@@ -100,10 +100,14 @@ Ctrl+D in set = abandon (like `e`). Ctrl+D at top-level `$ ` = exit eline.
 ```
  @ ----------------------- List all the component
  <com> ------------------- Show component configure
- <com>. ------------------ List all component interface
+ .<com> ------------------ List all component interface
+ ?<com> ------------------ Probe whether component exists
+ ?<com>.<api> ------------ Probe whether API exists
  <com>:<config> ---------- Get component configure attribute
  <com>:<config>=<value> -- Set component configure attribute
 ```
+
+List APIs: **leading** `.` (`.land@machine`). Existence: **leading** `?`.
 
 ---
 

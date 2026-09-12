@@ -19,10 +19,14 @@ After login the prompt is **`$ `**. If `/etc/banner.he` exists, a short help ban
 ```
  @ ----------------------- List all the component
  <com> ------------------- Show component configure
- <com>. ------------------ List all component interface
+ .<com> ------------------ List all component interface
+ ?<com> ------------------ Probe whether component exists
+ ?<com>.<api> ------------ Probe whether API exists
  <com>:<config> ---------- Get component configure attribute
  <com>:<config>=<value> -- Set component configure attribute
 ```
+
+List APIs with a **leading** `.` (`.land@machine`). Probe existence with a **leading** `?`.
 
 Leave eline with `exit` or Ctrl+D at `$ `.
 
@@ -38,6 +42,9 @@ Leave eline with `exit` or Ctrl+D at `$ `.
 | Clear one attribute | `component:attr/path=` | `gnss@nmea:client=` |
 | Call a method | `component.method` | `land@machine.status` |
 | Call a method with arguments | `component.method[p1,p2]` | `clock@date.ntpsync[ntp1.aliyun.com]` |
+| Probe whether a component exists | `?component` | `?wifi@n` |
+| Probe whether an API exists | `?component.method` | `?modem@lte.status` |
+| List APIs | `.component` | `.land@machine` |
 | One field from method JSON | `component.method:path` | `land@machine.status:version` |
 
 ```
@@ -63,11 +70,13 @@ $ land@machine.status:version
 ```
 $ @
 { ... }
-$ land@machine.
-{ ... }
+$ .land@machine
+{ ... }                    # API / method name list
+$ ?wifi@n
+ttrue                      # or tfalse
 ```
 
-`@` lists components. `component.` lists that object’s methods.
+`@` / `*prefix` list components. A **leading** `.` lists APIs (`.land@machine`). A **leading** `?` probes existence (`?component` / `?component.method`). Do not use a leading `.` as an existence check.
 
 ### Interactive `set` mode
 

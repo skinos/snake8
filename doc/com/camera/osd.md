@@ -117,7 +117,7 @@ Configure overlay text on the camera web UI with tokens such as `$L-S$` or `$T-O
 
 **Hikvision notes**
 
-Match **`camera`** values containing **`hikvision`**. Bootstrap GETs `/ISAPI/System/Video/inputs/channels/1/overlays` and keeps the XML when it contains `$...$` in overlay text. Updates PUT the replaced XML to the same path.
+Match **`camera`** values containing **`hikvision`**. Bootstrap GETs `/ISAPI/System/Video/inputs/channels/1/overlays` and keeps the XML when it contains `$...$` in overlay text. Updates PUT the replaced XML to the same path. Auth tries HTTP Digest first, then falls back to Basic for older firmwares.
 
 **Univision notes**
 
@@ -129,7 +129,7 @@ ViewSheen uses HTTP Digest against `/cgi-bin/configManager.cgi`. Bootstrap reads
 
 **Dahua notes**
 
-Dahua uses the same Digest CGI family as ViewSheen, but the overlay slot varies by firmware (`CustomTitle[0..3]` or `UserDefinedTitle[0..1]`). Bootstrap scans `getConfig&name=VideoWidget` for the first preferred field whose Text contains `$...$`, then stores a two-part template: CGI field path on line 1, placeholder Text on the following lines. Updates call `setConfig` with `EncodeBlend=true` and that field's Text. Match **`camera`** values containing **`dahua`** or **`ajhua`**.
+Dahua uses HTTP Digest against `/cgi-bin/configManager.cgi` (same family as ViewSheen). Bootstrap runs `getConfig&name=VideoWidget`, keeps every `table.key=value` line whose value contains `$...$` (any field name), and stores them as `key=value` in **`config/camera/dahua`**. Updates replace placeholders in those lines and `setConfig` each field (with `EncodeBlend=true` when the field ends in `.Text`). Match **`camera`** values containing **`dahua`** or **`ajhua`**.
 
 **Update loop**
 

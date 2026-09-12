@@ -7,8 +7,7 @@
 #
 # Rules:
 #   - Skip: arch / cdriver / pdriver / tools / adjust/origin / .claude / dl / .git
-#   - Skip customer scopes under each product except "wrt"
-#     (gas jrzh wlinkr320 pelcod oled udeer3v …)
+#   - Under chip/product/: sync only gSCOPE wrt and std; skip all other customers
 #   - Skip docs that do not affect firmware build (*.md, README, adjust/readme, **/doc/**)
 #   - Do not delete files that exist only on the public side
 #   - sdk.config: copy as-is (no rewrite)
@@ -93,12 +92,21 @@ fi
 
 echo "sync ${PLATFORM} -> ${PUBLIC}  (config/${PLATFORM} => config/${PUBLIC})"
 
-# product-level customer dirs never synced (wrt is allowed)
-SKIP_CUSTOM='gas|jrzh|wlinkr320|pelcod|oled|udeer3v'
+# Under chip/product/<name>/:
+#   - sync product infra dirs (config/rootfs/kernel/…)
+#   - sync public scopes: wrt, std only
+#   - skip every other customer gSCOPE (gas gs jrzh wlinkr320 …)
+PRODUCT_KEEP='config|rootfs|kernel|tools|include|dts'
+PUBLIC_SCOPE='wrt|std'
 
 should_skip_rel()
 {
 	rel="$1"
+	chip=""
+	prod=""
+	scope=""
+	prod_dir=""
+	scope_dir=""
 	# top skip (FPK / internal trees / host tools)
 	case "${rel}" in
 		arch|arch/*|cdriver|cdriver/*|pdriver|pdriver/*|tools|tools/*|dl|dl/*|.git|.git/*|.claude|.claude/*)
@@ -109,10 +117,10 @@ should_skip_rel()
 			;;
 	esac
 	# do not invent chip trees missing on the public side (e.g. swrt5 rk3568 -> wrt5)
-	first=`echo "${rel}" | cut -d/ -f1`
-	case "${first}" in
+	chip=`echo "${rel}" | cut -d/ -f1`
+	case "${chip}" in
 		mt*|rk*)
-			if [ ! -d "${DST}/${first}" ]; then
+			if [ ! -d "${DST}/${chip}" ]; then
 				return 0
 			fi
 			;;
@@ -123,8 +131,33 @@ should_skip_rel()
 			return 0
 			;;
 	esac
-	# customer under chip/product/<customer>/
-	echo "${rel}" | grep -qE "^[^/]+/[^/]+/(${SKIP_CUSTOM})(/|\$)" && return 0
+	# gSCOPE under chip/product/<scope>/... — only wrt and std sync
+	case "${chip}" in
+		mt*|rk*)
+			prod=`echo "${rel}" | cut -d/ -f2`
+			scope=`echo "${rel}" | cut -d/ -f3`
+			if [ -n "${prod}" ] && [ "${prod}" != "${rel}" ] && \
+			   [ -n "${scope}" ] && [ "${scope}" != "${rel}" ] && \
+			   [ "${scope}" != "${prod}" ]; then
+				prod_dir="${SRC}/${chip}/${prod}"
+				scope_dir="${prod_dir}/${scope}"
+				# only when <prod> is a real product and <scope> is a subdirectory
+				if [ -d "${scope_dir}" ]; then
+					if [ -e "${prod_dir}/makefile.config" ] || \
+					   [ -e "${prod_dir}/sdk.config" ] || \
+					   [ -e "${prod_dir}/dts" ]; then
+						if echo "${scope}" | grep -Eq "^(${PRODUCT_KEEP})$"; then
+							return 1
+						fi
+						if echo "${scope}" | grep -Eq "^(${PUBLIC_SCOPE})$"; then
+							return 1
+						fi
+						return 0
+					fi
+				fi
+			fi
+			;;
+	esac
 	return 1
 }
 
