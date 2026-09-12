@@ -104,17 +104,23 @@ int INTACT_LINE2( void *ctx, talk_t state, talk_t cfg );
 /* Same as INTACT_LINE after at least 3 ack lines. */
 int INTACT_LINE3( void *ctx, talk_t state, talk_t cfg );
 /*
- * Parsers. ERROR / no OK → tfalse or NULL (retry, stay in this ATD).
- * OK2* return an ATD session verb, not a boolean.
+ * OK parsers. ERROR / no OK → tfalse (retry, stay on this AT).
+ *
+ *   name              on OK                    atd action
+ *   ---------------   -----------------------  --------------------------------
+ *   PARSE_OK          ttrue                    continue AT queue
+ *   PARSE_OK2EXIT     terror                   ATD_EXIT; daemon reruns same tty
+ *   PARSE_OK2SEARCH   terror + exit="search"   ATD_EXIT; USB search, no ATD rerun
+ *   PARSE_OK2OFF      terror + exit="off"      CFUN=0 (optional modem_off) then ATD_CFUN
+ *   PARSE_OK2RESET    terror + exit="reset"    ATD_RESET; GPIO power cycle
+ * tpanic is reserved for fatal errors, not OK2 session verbs.
  */
-/* OK → ttrue, continue AT queue. */
 talk_t PARSE_OK( void *ctx, talk_t state, talk_t cfg );
-/* OK → terror / ATD_EXIT; _service tfalse, daemon reruns same tty. */
 talk_t PARSE_OK2EXIT( void *ctx, talk_t state, talk_t cfg );
-/* OK → state["exit"]="search" / ATD_EXIT; devbus.search, _service terror. */
 talk_t PARSE_OK2SEARCH( void *ctx, talk_t state, talk_t cfg );
-/* OK → tpanic / ATD_RESET; GPIO usb.reset, _service terror. */
+talk_t PARSE_OK2OFF( void *ctx, talk_t state, talk_t cfg );
 talk_t PARSE_OK2RESET( void *ctx, talk_t state, talk_t cfg );
+
 /* AT+CGSN. Writes state["imei"]. */
 talk_t PARSE_CGNS( void *ctx, talk_t state, talk_t cfg );
 /* AT+CPIN?. READY → ttrue; PIN/PUK → "pin"/"puk"; ERROR → iccid "nosim". */

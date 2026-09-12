@@ -720,7 +720,7 @@ simagain:
 		apn = json_string( profile, "apn" );
 		ifname_info( obj, "%s set the profile APN(%s)", object, apn?:"" );
 		ret = scallt( ifdev, "up", profile );
-		/* tfalse: modem_off in progress; abort this round and wait fun on next _service */
+		/* tfalse: modem_off / back to cfun; abort this round and wait fun on next _service */
 		if ( ret != ttrue )
 		{
 			ifname_info( obj, "%s custom profile modem_off, retry later", object );
