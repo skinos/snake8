@@ -5,11 +5,6 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
 ```json
 {
     "status":"io agent service status",                    // [ "disable", "enable" ]
-    "extern":"outbound interface before client/mqtt connect", // [ string ]: [ "disable","default","ifname@wan",... ]
-                                                              // empty or omit: same as "default"
-                                                              // "disable": no wait / no host route / no reset joint
-                                                              // "default": wait default gateway, reset on network/online
-                                                              // "ifname@wan", "ifname@lte", ...: bind that interface, reset on network/onextern when ifname matches
 
     // GPIO initialization map
     "init":                                                // define initial state for each GPIO
@@ -51,6 +46,11 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
     "client":
     {
         "status":"client status",                          // [ "disable", "enable" ]
+        "extern":"reset on network",                       // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
+                                                              // "disable": no reset on network event
+                                                              // "default": reconnect only on network/online
+                                                              // "ifname@wan", "ifname@lte", etc.: reconnect when that interface comes online
         "proto":"transport protocol",                      // [ "tcp", "udp" ]
         "server":"remote server address",                  // [ string ], domain name or ip address
         "port":"remote server port",                       // [ number ]
@@ -64,6 +64,8 @@ Manage device GPIO input/output, support IO state monitoring, trigger actions on
     "mqtt":
     {
         "status":"mqtt client status",                     // [ "disable", "enable" ]
+        "extern":"reset on network",                       // [ "disable", "default", "<ifname>" ]
+                                                              // empty string is treated as "default"
         "server":"MQTT broker address",                    // [ string ], domain name or ip address
         "port":"MQTT broker port",                         // [ number ], required; typical value 1883 (not defaulted if omitted)
         "mqtt_id":"MQTT client id",                        // [ string ], default is device macid
@@ -100,7 +102,6 @@ Example, show all the configure
 agent@io
 {
     "status":"enable",
-    "extern":"default",                                   # wait for default gateway before client/mqtt connect
     "init":
     {
         "g1":"0b",                                         # gpio1 input both edge
@@ -124,6 +125,7 @@ agent@io
     "client":
     {
         "status":"enable",
+        "extern":"default",
         "proto":"tcp",
         "server":"192.168.8.100",
         "port":"8899"
@@ -131,6 +133,7 @@ agent@io
     "mqtt":
     {
         "status":"enable",
+        "extern":"ifname@lte",
         "server":"mqtt.example.com",
         "port":"1883",
         "mqtt_id":"mydevice001",
@@ -154,19 +157,13 @@ ttrue
 
 Example, configure a TCP client to report IO state
 ```shell
-agent@io:client={"status":"enable","proto":"tcp","server":"192.168.8.100","port":"8899"}
+agent@io:client={"status":"enable","extern":"default","proto":"tcp","server":"192.168.8.100","port":"8899"}
 ttrue
 ```
 
 Example, configure MQTT client
 ```shell
-agent@io:mqtt={"status":"enable","server":"mqtt.example.com","port":"1883","mqtt_publish":"device/io/state","mqtt_subscribe":{"device/io/cmd":"1"}}
-ttrue
-```
-
-Example, set the extern network interface to ifname@lte
-```shell
-agent@io:extern=ifname@lte
+agent@io:mqtt={"status":"enable","extern":"ifname@lte","server":"mqtt.example.com","port":"1883","mqtt_publish":"device/io/state","mqtt_subscribe":{"device/io/cmd":"1"}}
 ttrue
 ```
 
@@ -194,12 +191,13 @@ ttrue
     ttrue
     ```
 
-+ `reset[ event, event data ]` **restart the io background service when the bound extern changes**
-    - event ----------------------- [ string ], joint event name (for example network/online)
++ `reset[ event, event data ]` **reconnect matching TCP/UDP/MQTT clients on network event**
+    - event ----------------------- [ string ], joint event name (e.g. `network/online`, `network/onextern`)
     - event data ------------------ [ json ], event payload; must include **`ifname`**
-    - Used as a joint handler registered by the service when **`extern`** is not **`disable`**
-    - **`extern=default`**: acts only when event is **`network/online`**
-    - **specific interface**: acts when event **`ifname`** equals configured **`extern`**
+    - Joints are registered by `setup` from aggregated enabled `client*` / `mqtt*` `extern` (same as gnssdrv@nmea)
+    - For each enabled `client*` / `mqtt*` slot: empty `extern` → `default`; `disable` skips; `default` only on `network/online`; specific ifname must match
+    - Matching slots are closed and reopened in the running service (no whole-service `sreset`, no `route_local_switch`)
+    - Server listeners are not affected
     - failed return tfalse
     - succeed return ttrue
 
@@ -357,14 +355,13 @@ ttrue
 ### Lifecycle API
 + `setup[]` / `shut[]` — start/stop the component service. Scheduling follows the installed FPK **init** / **uninit** / **joint** manifest.
 
-When **`extern`** is not **`disable`**, the background service also registers at runtime:
+`setup` aggregates enabled **`client*`** / **`mqtt*`** slot **`extern`** and registers:
 
 | Event | Handler | When |
 |-------|---------|------|
-| `network/online` | `agent@io.reset` | **`extern=default`** (or empty) |
-| `network/onextern` | `agent@io.reset` | **`extern`** is a specific interface name |
+| `network/online` | `agent@io.reset` | any enabled slot has **`extern=default`** (or empty) |
+| `network/onextern` | `agent@io.reset` | any enabled slot has a specific interface **`extern`** |
 
-* Service waits for the selected gateway or interface IP before starting peers.
-* Adds host routes to enabled **client** / **mqtt** server addresses via that path.
-* If the interface is not ready yet, the service exits **`ttrue`** (no busy restart); joint **`reset`** restarts it when the path comes up.
+* No host-route stick (`route_local_switch`); peers use normal system routing.
+* `reset` closes/reopens only matching client/mqtt slots.
 

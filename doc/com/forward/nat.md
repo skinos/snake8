@@ -104,9 +104,12 @@ ttrue
 
 #### Management APIs
 
-+ `on[]` **refresh NAT/port mapping for an external ifname**
++ `on[]` **refresh NAT/port mapping**
     - succeed return ttrue
-    - parameter **2** carries **`ifname`**; NAT rules for that external ifname are rebuilt from saved configuration
+    - parameter **2** carries interface info (`ifname`, optional `ifnametype`)
+    - **`ifnametype` = `local`** (LAN `network/on`): rebuild NAT for **all** outer ifnames — SNAT needs LAN IP that may arrive after WAN
+    - otherwise rebuild NAT for that external **`ifname`** only (`network/onextern` / `network/onvpn`)
+    - `nat_setup` / `nat_shut` take **`reg_slock(COM_IDPATH, "busy")`** so concurrent handlers do not interleave the same iptables mutation
     - skipped in **default** / **parasite** network modes
 
 + `off[]` **tear down NAT for an external ifname**
@@ -118,5 +121,6 @@ ttrue
 
 | Joint key | Method |
 |-----------|--------|
+| `network/on` | `forward@nat.on` (LAN up → refresh all outer NAT) |
 | `network/onextern` | `forward@nat.on` |
 | `network/onvpn` | `forward@nat.on` |

@@ -346,3 +346,7 @@ Full syntax: **[`doc/com/land/eline.md`](../../doc/com/land/eline.md)**.
 | Set one path | `component:attr=value` |
 | Call method | `component.method` or `component.method[arg1,arg2]` |
 | Method + pick field | `component.method:field/path` |
+| List APIs | `.component` e.g. `.land@machine` (leading `.`) |
+| Probe exists | `?component` or `?component.method` → `ttrue` / `tfalse` |
+
+WUI often probes with string HE such as **`?ifname@lte`** / **`?modem@smsd`** (POST JSON body; the `?` is not a URL query). If **`helist`** is enabled, allow those lines when needed.

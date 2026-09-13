@@ -346,3 +346,7 @@ Content-Type: text/plain; charset=UTF-8
 | 设置单个路径 | `component:attr=value` |
 | 调用方法 | `component.method` 或 `component.method[arg1,arg2]` |
 | 方法 + 选取字段 | `component.method:field/path` |
+| 列出 API | `.component` 例如 `.land@machine`（前导 `.`） |
+| 探测是否存在 | `?component` 或 `?component.method` → `ttrue` / `tfalse` |
+
+界面常用字符串 HE 探测，例如 **`?ifname@lte`** / **`?modem@smsd`**（在 POST JSON 体里；`?` 不是 URL 查询参数）。若开启了 **`helist`**，需要时放行这些命令行。

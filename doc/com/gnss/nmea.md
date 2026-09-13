@@ -22,7 +22,7 @@ When `drvcom` is `gnssdrv@nmea`, the following fields are read from the `gnss@nm
     "ttydev":"serial device path",           // [ string ], Linux TTY path (e.g. "/dev/ttyUSB0")
     "devcom":"device component",             // [ string ], optional hardware object that provides ttydev
     "drvcom":"driver component",             // [ string ], must be "gnssdrv@nmea" for this driver
-    "extern":"network depend",               // [ "default", ifname object, "" ], used by non-driver reset path
+    "extern":"network depend",               // unused for gnssdrv@nmea joints/reset (use nmea.client*.extern)
     "speed":"serial baud rate",              // [ string ], if empty, fall back to devcom config
     "parity":"parity mode",                  // [ "disable", "even", "odd" ], if empty, fall back to devcom
     "databit":"data bits",                   // [ "5", "6", "7", "8" ], if empty, fall back to devcom
@@ -38,7 +38,11 @@ When `drvcom` is `gnssdrv@nmea`, the following fields are read from the `gnss@nm
         "client":                            // [ json ], TCP/UDP client slot 1
         {
             "status":"client enable",        // [ "disable", "enable" ]
-            "extern":"reset on network",     // [ "default", ifname object, "" ], reconnect when matching online
+            "extern":"reset on network",     // [ "disable", "default", "<ifname>" ]
+                                                  // empty string is treated as "default"
+                                                  // joints: gnss@frame aggregates all client* (same as uart DTU)
+                                                  // "default": reconnect only on network/online
+                                                  // specific ifname: reconnect when that interface comes up
             "proto":"protocol",              // [ "tcp", "udp" ]
             "server":"server address",       // [ string ], IPv4 or hostname
             "port":"server port",            // [ string ]
@@ -71,7 +75,6 @@ gnss@nmea
     "status":"enable",
     "ttydev":"/dev/ttyUSB0",
     "drvcom":"gnssdrv@nmea",
-    "extern":"default",
     "speed":"9600",
     "nmea":
     {
@@ -263,15 +266,17 @@ ttrue
     ttrue
     ```
 
-+ `reset[ gnss_object, ifname ]` **reconnect matching TCP/UDP clients on network event**
++ `reset[ gnss_object, event, ifname ]` **reconnect matching TCP/UDP clients on network event**
     - gnss_object ------- [ string ], instance name
-    - ifname ------------ [ json ], object with `"ifname"` for the interface that came online
-    - For each `client*` slot: if `extern` is `"default"` or matches `ifname`, close and reopen that client
-    - Server listeners are not affected
+    - event ------------- [ string ], e.g. `network/online` or `network/onextern`
+    - ifname ------------ [ string ], interface that came online
+    - Joints are registered by `gnss@frame` from aggregated enabled `nmea.client*.extern` (same as uart DTU)
+    - For each enabled `client*` slot: empty `extern` → `default`; `disable` skips; `default` only on `network/online`; specific ifname must match
+    - Disabled slots ignore `extern`; server listeners are not affected
     - Invoked by `gnss@nmea.reset` when `drvcom` is `gnssdrv@nmea`
 
     Example
     ```shell
-    gnssdrv@nmea.reset[ gnss@nmea, {"ifname":"ifname@wan"} ]
+    gnssdrv@nmea.reset[ gnss@nmea, network/onextern, ifname@wan ]
     ttrue
     ```

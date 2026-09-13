@@ -4,7 +4,7 @@
 
 Manage policy based routing (`ip rule`). Prefer the **Component API** below instead of editing raw configuration when possible.
 
-- select packets by source address, source interface, and/or mark id, then look up a route table (`tid`)
+- select packets by source/destination address, interface, and/or mark id, then look up a route table (`tid`)
 - default rule priority (`pref`) is **40000** when omitted
     > mark packets with `forward@mark`, then match them here with `markid`
 
@@ -27,8 +27,13 @@ Manage policy based routing (`ip rule`). Prefer the **Component API** below inst
                                                                                 // Less than 100 is reserved for the system
                                                                                 // You are advised to use more than 100 for user-defined rules
         "srcifname":"select the packet use source interface",          // [ "ifname@lan", "ifname@lan2", ... ], interface name
+                                                                                // status may keep raw netdev (e.g. "lo") when not in network list
         "src":"select the packet use source ip address",               // [ ip address, network ]
         "srcmask":"select the packet use source mask of ip address",   // [ netmask ], necessary when "src" be network
+        "dstifname":"select the packet use destination interface",     // [ "ifname@wan", ... ], optional (kernel oif)
+                                                                                // status may keep raw netdev when not in network list
+        "dst":"select the packet use destination ip address",          // [ ip address, network ], optional (kernel to)
+        "dstmask":"select the packet use destination mask",            // [ netmask ], necessary when "dst" be network
 
         "tid":"which route table to go to"                             // [ number ], range of 0-255
                                                                                 // 0 for local table
@@ -88,11 +93,14 @@ ttrue
 + `shut[]` **remove saved policy rules from the kernel**
     - succeed return ttrue
 
-+ `add[ name, [src], [srcmask], [srcifname], [markid], tid, [pref] ]` **add policy rule**
++ `add[ name, [src], [srcmask], [srcifname], [dst], [dstmask], [dstifname], [markid], tid, [pref] ]` **add policy rule**
     - name ----------- [ string ], rule name
     - src ------------ [ ip address, network ], optional
     - srcmask -------- [ netmask ], optional
     - srcifname ------ [ "ifname@lan", ... ], optional
+    - dst ------------ [ ip address, network ], optional
+    - dstmask -------- [ netmask ], optional
+    - dstifname ------ [ "ifname@wan", ... ], optional
     - markid --------- [ number ], optional
     - tid ------------ [ number ], route table id
     - pref ----------- [ number ], optional, default 40000
@@ -102,14 +110,21 @@ ttrue
     Example, add a rule named senser, make that source address 192.168.2.12 route to route table 1, priority is 33000
 
     ```shell
-    forward@rule.add[ senser, 192.168.2.12, , , , 1, 33000 ]
+    forward@rule.add[ senser, 192.168.2.12, , , , , , , 1, 33000 ]
     ttrue
     ```
 
     Example, add a rule named video, make all other acess route to route table 2, priority is 33300
 
     ```shell
-    forward@rule.add[ video, , , , , 2, 33000 ]
+    forward@rule.add[ video, , , , , , , , 2, 33000 ]
+    ttrue
+    ```
+
+    Example, match destination 114.132.219.158 via lo into table 1
+
+    ```shell
+    forward@rule.add[ hub, , , lo, 114.132.219.158, , , , 1, 34800 ]
     ttrue
     ```
 
@@ -125,7 +140,7 @@ ttrue
     ttrue
     ```
 
-+ `delete[ , [src], [srcmask], [srcifname], [markid], tid, [pref] ]` **delete kernel rule by fields**
++ `delete[ , [src], [srcmask], [srcifname], [dst], [dstmask], [dstifname], [markid], tid, [pref] ]` **delete kernel rule by fields**
     - used for system rules named `~autoN` from `status`
     - succeed return ttrue
     - failed return tfalse
@@ -138,6 +153,7 @@ ttrue
     - succeed return [ json ]
     - rules present in the kernel are listed; names come from configure when matched, otherwise auto names like `~auto0`
     - remaining configure-only rules (not in kernel yet) are also included
+    - parses kernel `from`/`to`/`iif`/`oif`/`fwmark`/`lookup`; netdev maps to `ifname@…` when known, else keeps raw name (e.g. `lo`)
     ```json
     {
         "rule name":                                                 // [ string ]: { json }, configure name or ~autoN
@@ -145,9 +161,12 @@ ttrue
             "pref":"rule's priority",                                      // [ number ], range of 0-4294967295, The smaller, the higher
                                                                                     // default is 40000
             "markid":"select the packet use markid",                       // [ number ], range of 1-4294967295
-            "srcifname":"select the packet use source interface",          // [ "ifname@lan", "ifname@lan2", ... ], ifname
+            "srcifname":"select the packet use source interface",          // [ "ifname@lan", ... ] or raw netdev
             "src":"select the packet use source ip address",               // [ ip address, network ]
             "srcmask":"select the packet use source mask of ip address",   // [ netmask ], necessary when "src" be network
+            "dstifname":"select the packet use destination interface",     // [ "ifname@wan", ... ] or raw netdev
+            "dst":"select the packet use destination ip address",          // [ ip address, network ]
+            "dstmask":"select the packet use destination mask",            // [ netmask ], necessary when "dst" be network
             "tid":"which route table to go to"                             // [ number ], range of 0-255
         }
         // "...":{ ... }  How many rule show how many properties
@@ -171,8 +190,11 @@ ttrue
         },
         "~auto2":
         {
-            "pref":"32767",
-            "tid":"253"
+            "pref":"34800",
+            "dst":"114.132.219.158",
+            "dstmask":"255.255.255.255",
+            "srcifname":"lo",
+            "tid":"1"
         },
         "myCustom1":
         {

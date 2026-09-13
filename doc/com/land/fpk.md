@@ -100,6 +100,7 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - failed return tfalse
     - succeed return ttrue
     - After files are placed, calls `land@uninit.knock[ name ]` (if replacing) then `land@init.knock[ name ]` so the package's `prj.json` init/uninit hooks run without reboot
+    - After install finishes, refreshes the ash HE whitelist via `he_shell`
 
     Example, install an fpk package
     ```shell
@@ -112,10 +113,24 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - failed return tfalse
     - succeed return ttrue
     - Before removal, calls `land@uninit.knock[ name ]` to run that project's `prj.json` uninit hooks
+    - After uninstall finishes, refreshes the ash HE whitelist via `he_shell`
 
     Example, uninstall the wui project
     ```shell
     land@fpk.uninstall[ wui ]
+    ttrue
+    ```
+
++ `he_shell[]` **rewrite `/tmp/he.shell` for BusyBox ash HE auto-exec**   
+    - no parameters
+    - failed return tfalse
+    - succeed return ttrue
+    - Writes one component or alias name per line (from `com_list`), atomically replacing `/tmp/he.shell`
+    - Used by ash (see BusyBox `902-ash-he-autoexec`) and refreshed on login shell / `ashy` / install / uninstall
+
+    Example, refresh the whitelist
+    ```shell
+    land@fpk.he_shell
     ttrue
     ```
 

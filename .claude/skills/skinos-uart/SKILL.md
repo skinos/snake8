@@ -134,7 +134,7 @@ Hotplug USB serial: `uart@frame.register[…]` / `add[devcom]` / `delete[devcom]
 ### 5. WUI (optional)
 
 Shared page **`uart.html`**: menus `uart`…`uart8` pass `object=uart@ttyN`.  
-Modes come from `@uartdrv`. Unknown drivers can use **custom key/value** panel; known ones may need a dedicated HTML section + `en.json`/`cn.json` labels.
+Modes come from `*uartdrv` (object-name prefix; not `@uartdrv`). Unknown drivers can use **custom key/value** panel; known ones may need a dedicated HTML section + `en.json`/`cn.json` labels.
 
 ### 6. Build & deploy
 

@@ -925,7 +925,7 @@ static void demo_path_all(void)
 ```c
 talk_t com_list(const char *prefix, const char *project);
 ```
-**Description:** List components. `prefix` filters driver-style prefixes (e.g. `"usbdrv"`); `project` filters by project id. Either may be **NULL** for “all”.
+**Description:** List components. `prefix` keeps names that start with `prefix@` (HE `*prefix`). `project` keeps entries whose install path is `…/<project>/<com>` (HE `@project`). Either may be **NULL** for “all”. Name prefix and project id often differ (e.g. alias `uartdrv@tui` under project `uart`).
 **Returns:** JSON list — caller **`talk_free`**.
 
 #### com_register / com_unregister
@@ -3557,7 +3557,7 @@ int line_he_command(const char *cmd);
 talk_t json_he_execute(talk_t cmd);
 talk_t talk_he_command(talk_t cmd);
 ```
-**Description:** Execute HE command
+**Description:** Execute HE command. For **`string_he_execute`** / **`line_he_command`**, the **first character** may be a discovery prefix: **`*`** / **`@`** / **`:`** list components or configs, **`.`** lists APIs of one object (`.land@machine`), **`?`** probes existence (`?land@machine` / `?land@machine.status` → **`ttrue`** / **`tfalse`**). JSON HE (`json_he_execute`) has no meta prefixes — use a string HE line for discovery/probe. The **`he`** program also treats leading **`+`** / **`=`** / **`-`** as loop / parse-only / silent modes (ash only).
 
 **Example:**
 ```c
@@ -3565,6 +3565,12 @@ talk_t talk_he_command(talk_t cmd);
 talk_t result = string_he_execute("land@machine.status");
 if (result > (void *)tpanic && json_check(result)) {
     talk_free(result);
+}
+
+// Existence probe (string HE only)
+result = string_he_execute("?wifi@n");
+if (result == ttrue) {
+    /* component present */
 }
 
 // Execute with parameters

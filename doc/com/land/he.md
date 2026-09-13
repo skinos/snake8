@@ -3,16 +3,16 @@
 The HE command line is used to query and change gateway configuration, call component methods, and perform operations such as restart or reset. The same HE grammar is also available through other control protocols besides the terminal.
 
 > **Start here**
-> - **Prompt is `$ `?** You are in **[eline](eline.md)** — type HE **directly** (no `he`). Use **`ashy`** to open a shell, then run **`he '…'`**.
-> - **Prompt is `# `?** Classic HE loop on some images — type HE directly, or use **`elf`** (if your banner shows it) to reach **`~ #`** shell.
-> - **Already at `~ #`?** Every HE line must be **`he '<full line>'`** (one quoted argument). Details in [Linux shell and `he`](#enter-the-linux-shell-and-run-he-with-the-he-prefix).
-> - **Interactive front-end:** **[eline.md](eline.md)** covers `set`, passthrough commands, `exit`, and Ctrl+D.
+> - **Prompt is `$ `?** You are in **[eline](eline.md)** — type HE **directly** (no `he`). Use **`ashy`** or **`shell`** for BusyBox ash, then **`he '…'`** or ash HE auto-exec.
+> - **Prompt is `# `?** Classic HE loop on some images — type HE directly, or use **`elf`** (if your banner shows it) to reach ash.
+> - **Already in ash?** Prefer **`he '<full line>'`**. Bare HE tokens (`land@…`, `?…`, `*…`) may auto-exec. Details below.
+> - **Interactive front-end:** **[eline.md](eline.md)** covers routing, `set`, `cd`, `ashy`/`shell`, and Ctrl+D.
 
 ### What you see after login (Telnet, SSH, or serial Command Line)
 
-Many products run **eline** as the login shell. You get a **`$ `** prompt with GNU readline (history and line editing). There you type **HE commands directly**—**no `he` prefix**—and may use **`set`**, **`ashy`**, **`exit`**, and passthrough lines as described in **[eline.md](eline.md)**.
+Many products run **eline** as the login shell. You get a **`$ `** prompt with GNU readline (history and line editing). There you type **HE commands directly**—**no `he` prefix**—and may use **`set`**, **`ashy`/`shell`**, **`exit`**, and OS lines as described in **[eline.md](eline.md)**.
 
-To work in a normal **Linux shell** (`ash`), type **`ashy`** at the **`$ `** prompt. Eline is replaced by **`/bin/ash --login`** (the prompt is often **`~ #`** for root). **Inside that shell, every HE command must be run through the `he` utility**, for example **`he 'land@machine'`** or **`he 'land@machine:name=DemoGateway'`**. Wrap the HE text in **single quotes** whenever it contains characters the shell would treat specially (`|`, `{`, `}`, `[`, `]`, `:`, `=`, `,`, spaces inside JSON, and so on).
+To work in a normal **Linux shell** (`ash`), type **`ashy`** or **`shell`** at the eline prompt. Eline is replaced by **`/bin/ash -i`**. Prefer **`he 'land@machine'`** (one quoted argument). Ash can also auto-exec HE-shaped first tokens. Quote `| { } [ ] : = , ? *` and JSON spaces.
 
 Some firmware still uses the classic **HE loop** with a **`# `** prompt (type HE directly, same grammar as eline). The welcome banner text is similar in both cases.
 
@@ -49,13 +49,17 @@ After login, a short ASCII banner may appear, for example:
  Command Help
  -----------------------------------------------------------
  @ ----------------------- List all the component
+ @<project> -------------- List components by project directory
+ *<prefix> --------------- List components by object-name prefix
+ .<com> ------------------ List all component interface
+ ?<com> ------------------ Probe whether component exists
+ ?<com>.<api> ------------ Probe whether API exists
  <com> ------------------- Show component configure
- <com>. ------------------ List all component interface
  <com>:<config> ---------- Get component configure attribute
  <com>:<config>=<value> -- Set component configure attribute
  -----------------------------------------------------------
 ```   
-The active prompt is **`$ `** (eline), **`# `** (classic HE loop), or **`~ #`** (Linux shell after **`ashy`**), depending on image and step—use the prompt your session actually shows.
+The active prompt is **`hostname:cwd$ `** (eline), **`# `** (classic HE loop), or **`admin@host:path# `** (ash after **`ashy`/`shell`**)—use the prompt your session actually shows.
 
 ---
 
@@ -71,6 +75,8 @@ The lines below are what you type in **Linux shell** (`~ #` after **`ashy`**). I
 ~ # he 'land@machine:name=DemoGateway'      # 3) modify one attribute
 ~ # he 'land@machine.status'                  # 4) call a method
 ~ # he 'land@machine.status:version'          # 5) one field from method JSON
+~ # he '.land@machine'                        # 6) list APIs (leading .)
+~ # he '?land@machine'                        # 7) probe component exists (leading ?)
 ```
 
 ### How the `he` program joins arguments
@@ -96,6 +102,11 @@ If the **first character** of that combined string is **`+`**, **`=`**, or **`-`
 | Call method without parameters | `component.method` | Calls a component API method with no parameters. | `he 'client@station.list'` |
 | Call method with parameters | `component.method[param1,param2,...]` | Calls a component API method with one or more parameters. | `he 'clock@date.ntpsync[ntp1.aliyun.com]'` |
 | Return one field from method JSON | `component.method:attr/path` | Calls method and returns only one field from the JSON result. | `he 'ifname@lte.status:ip'` |
+| Probe whether component exists | `?component` | **`ttrue`** / **`tfalse`** (may append `, strerror` when `errno` is set). | `he '?wifi@n'` |
+| Probe whether API exists | `?component.method` | **`ttrue`** / **`tfalse`**. | `he '?modem@lte.status'` |
+| List APIs of one component | `.component` | JSON map of method names, or **empty** if the object cannot be listed. | `he '.land@machine'` |
+| Call missing method | `component.badapi` | **`tpanic`** (often **Function not implemented**), not **`tfalse`**. | `he 'land@machine.no_such'` |
+| List components | `@` / `@project` / `*prefix` | Component index, optionally filtered. | `he '@'` / `he '*land'` |
 
 ### How to choose a format quickly
 
@@ -109,6 +120,9 @@ If the **first character** of that combined string is **`+`**, **`=`**, or **`-`
 | Clear one field | `component:attr/path=` |
 | Call an API | `component.method[...]` |
 | Call API and return only one field | `component.method:attr/path` |
+| Probe existence | `?component` or `?component.method` |
+| List APIs | `.component` |
+| List components | `@` / `*prefix` |
 
 ### HE command types and return values
 
@@ -126,9 +140,13 @@ Return values:
 |--------|---------|
 | **String** | A single text value returned by the method |
 | **`ttrue`** | Operation succeeded |
-| **`tfalse`** | Operation failed |
+| **`tfalse`** | Logical / validation failure (e.g. bad config value, probe says “no”) |
+| **`tpanic`** | Call / dispatch failure (e.g. **missing API**, component open/call error). Terminal often prints **`tpanic, Function not implemented`** when `errno` is **ENOSYS** |
+| **`terror`** | Peer reported an error (when applicable) |
 | **`{JSON}`** | A JSON object with complex information |
-| **Empty** | No data available (method returned NULL) |
+| **Empty** | No printable payload (method returned **NULL**, or some discovery paths print nothing) |
+
+**Call a missing method** (e.g. `land@machine.no_such_api`) returns **`tpanic`** (often with **Function not implemented**), **not** **`tfalse`**. Use **`?component.method`** when you only need a yes/no existence check (**`ttrue`** / **`tfalse`**).
 
 After each output, the next prompt appears: **`~ #`** in Linux shell, **`$ `** in eline, or **`# `** in the classic HE loop.
 
@@ -711,8 +729,8 @@ Refer to the same **Syslog** documentation. Methods described there can be calle
 
 ### Typical path: **eline** → **`ashy`** → **`he`**
 
-1. After Telnet / SSH / serial login you usually see **eline** with **`$ `**. Type HE **without** the `he` wrapper; use **`exit`** or Ctrl+D to leave eline. Details: **[eline.md](eline.md)** (`set`, passthrough OS commands, readline history).  
-2. Type **`ashy`**. This process is replaced by **`/bin/ash --login`** (BusyBox `ash`; prompt is often **`~ #`** for root).  
+1. After Telnet / SSH / serial login you usually see **eline**. Type HE **without** the `he` wrapper; use **`exit`** to leave eline (Ctrl+D at the top-level prompt stays). Details: **[eline.md](eline.md)**.  
+2. Type **`ashy`** or **`shell`**. This process is replaced by **`/bin/ash -i`** (BusyBox `ash`; prompt like **`admin@host:~/path# `**).  
 3. From **`~ #`**, run **`he '<one full HE line>'`**. See **How the `he` program joins arguments** earlier in this document—**one shell argument** is safest.  
 4. **`exit`** from `ash` usually **ends the whole login session**, because eline was replaced. Open a spare SSH/Telnet session before risky tests.
 
@@ -735,17 +753,33 @@ Enter 'help' for a list of built-in commands.
 he '<HE command line>'
 ```
 
-Use **single quotes** whenever the line contains `|`, `{`, `}`, `[`, `]`, `:`, `=`, `,`, or spaces inside JSON.
+Use **single quotes** whenever the line contains `|`, `{`, `}`, `[`, `]`, `:`, `=`, `,`, `?`, `*`, or spaces inside JSON.
 
 ### Advanced `he` prefixes (first character of the combined string)
 
-After all arguments are concatenated:
+After all arguments are concatenated, **`he` program modes** (these are not typed in eline):
 
 | Leading byte | Behavior |
 |---|---|
 | **`+`** | Loop execute (`loop_he`) |
 | **`=`** | Parse and print structure only (`print_he`) |
 | **`-`** | Silent mode (`slient_he` in source—minimal output) |
+
+HE **discovery** prefixes (eline payload or `he '…'`; not URL query strings):
+
+| Leading byte | Behavior |
+|---|---|
+| **`*`** | List by **object-name prefix**: names that start with `prefix@` (`*land` → `land@…`; `*uartdrv` → `uartdrv@…`) |
+| **`@`** | List by **project install directory** (path `…/<project>/<com>`): `@` = all; `@uart` = everything under project `uart` (may include aliases such as `uartdrv@dtu` that still live under `…/uart/…`) |
+| **`:`** | List configuration objects (`:` / `:land`) |
+| **`.`** | List APIs of one component (`.land@machine`). Missing / unlistable object, or bare **`.`**, → often **empty** (no JSON), not a **`tfalse`** line |
+| **`?`** | Probe existence: `?land@machine` / `?land@machine.status` → **`ttrue`** / **`tfalse`**. Unknown object → **`tfalse, Invalid argument`**. Missing API → **`tfalse, Function not implemented`**. Bare **`?`** → **`terror, Invalid argument`**. |
+
+**`*` vs `@` are not interchangeable.** Name prefix and project id often differ (e.g. driver alias `uartdrv@tui` installs under project **`uart`**). `@uartdrv` returns empty when there is no project directory named `uartdrv`; use `*uartdrv` to list those aliases, or `@uart` to list that project’s install tree. In **ash**, always quote: **`he '*uartdrv'`** / **`he '@uart'`** — an unquoted leading **`*`** is a shell **glob** and will not do what you expect.
+
+**`.` vs `?`:** **`.`** is a listing helper (empty or JSON map of API names). **`?`** is the existence probe (**`ttrue`** / **`tfalse`**). Do not use a leading **`.`** to test existence; do not expect **`.`** and **`?`** to share the same error text for a missing component.
+
+Do not use a leading **`.`** to test existence.
 
 Examples (entire payload must still follow the “one logical line” rules):
 
@@ -759,9 +793,16 @@ he '-land@machine.status'
 
 | Symptom | Typical cause | Quick check |
 |---|---|---|
-| `tfalse` | Invalid path, value, or validation | `he 'component:attr/path'` |
-| Empty return | Field missing or API `NULL` | Query parent path with `he '…'` |
+| `tfalse` | Logical failure, validation, or **`?`** probe “does not exist” | `he '?component'` / `he '?component.method'` |
+| `tfalse, Invalid argument` | **`?`** on a name that does not parse / open as a component | Fix the object string; confirm with `he '@'` / `he '*prefix'` |
+| `tfalse, Function not implemented` | **`?component.badapi`** — object exists, API does not | Use `.component` to list APIs; do not **call** the missing name |
+| `tpanic` / `tpanic, Function not implemented` | **Missing API** or dispatch/open failure when **calling** `component.method` | `he '?component.method'` then `.component` to list APIs |
+| Empty return after `.component` | Object missing or no listable APIs (listing path, not probe) | Use `he '?component'`; do not treat empty `.` as **`tfalse`** |
+| Empty return on get/call | Field missing, bad path (including `;` extra text), or API returned **NULL** | Query parent path with `he '…'`; HE is **one** line, not `cmd; cmd` |
 | Wrong / merged text | Multiple `argv` glued without spaces | Use **`he 'single quoted line'`** |
+| `he: Invalid argument` / `he '='` | `he` binary with no payload, or parse-only on empty | Pass a full HE line: `he 'land@machine'` |
+| `*prefix` looks empty or lists files | Unquoted `*` expanded by the shell glob | Use **`he '*prefix'`** |
+| Session hangs after `he '+…'` | Loop execute mode | Do not use **`+`** in interactive admin; Ctrl+C may stop it |
 | JSON errors | Bad JSON in the HE line | Fix JSON; keep shell quoting |
 
 ### Example session (shell)
@@ -804,6 +845,18 @@ Enter 'help' for a list of built-in commands.
 
 ---
 
+## Shipping contract (frozen)
+
+This is the **released** meaning of HE / eline / ash. Later firmware must keep these returns and formats; do not invent new prefixes or swap **`tpanic`** / **`tfalse`** / **`.`** / **`?`**. Full table: **`doc/com/land/he.md`**.
+
+| Topic | Frozen rule |
+|---|---|
+| **How to type HE** | Eline: payload only. Ash: prefer **`he '<one line>'`**. |
+| **`.` vs `?`** | **`.`** lists (JSON or empty). **`?`** probes (`ttrue` / `tfalse`). Bare **`?`** → **`terror, Invalid argument`**. |
+| **Missing call vs probe** | Call `com.badapi` → **`tpanic, Function not implemented`**. Probe `?com.badapi` → **`tfalse, Function not implemented`**. |
+| **Routing** | Mid-token **`.`** (`foo.sh`) is **shell**. **`./`** **`../`** are shell. Explicit **`he`** is the PATH binary. |
+| **Leave eline** | Type **`exit`**. Top-level **Ctrl+D** stays. **`ashy`/`shell`** → **`/bin/ash -i`**. |
+
 ## See also
 
-- **[eline.md](eline.md)** — `$ ` prompt, `set`, `ashy`, passthrough list, and Ctrl+D behavior.
+- **[eline.md](eline.md)** — eline prompt, HE/shell routing, `set`, `cd`, `ashy`/`shell`, and Ctrl+D.

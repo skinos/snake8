@@ -9,7 +9,7 @@ Manage LTE/NR modem baseband services. This component handles the modem-side ope
 - supports dual-SIM failover with configurable thresholds and timed switching
 - executes custom AT commands during setup and periodic watch phases
 - exposes modem status including signal, PLMN, network type, and operator information
-- when **`up`/`profile`** applies an operator that differs from the last saved copy under `var` (`%s.profile` for the modem object), writes the profile to the module, returns **`tfalse`** to the caller (so **`ifname@lte` / ltecon** aborts this dial round and retries after `fun`), calls driver **`modem_off`** in-process (no atd exit), saves the file only after that succeeds, then continues FSM from CFUN/SETUP (only when `up` carries a non-NULL profile argument; auto `up` with no profile skips this sync). Unchanged profile returns **`ttrue`** after profile AT.
+- when **`up`/`profile`** applies an operator that differs from the last saved copy under `var` (`%s.profile` for the modem object), writes the profile to the module, saves the file, returns **`tfalse`** to the caller (so **`ifname@lte` / ltecon** aborts this dial round and retries after `fun`), then radio-off in-process with **`AT+CFUN=0`** (optional driver `modem_off`, else ATD fallback; no atd exit) and continues FSM from CFUN/SETUP (only when `up` carries a non-NULL profile argument; auto `up` with no profile skips this sync). Unchanged profile returns **`ttrue`** after profile AT.
 - applies IMS policy from **`ims`** (`auto` / `enable` / `disable`) during setup on drivers that support it; independent of **`sms`**
 - keeps **ifname** module resets (`reset[]`) off the modem-internal CFUN/watch/tty ladder; after the WAN is up, a long watch failure **sreset**s the ifname connection service instead of power-cycling the module
 
@@ -364,10 +364,10 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
 + `up[ profile ]` **apply dial profile / operator (used by ifname@lte)**
     - profile --------- [ json ], optional operator/APN profile; omit to use current `operator` / auto lookup
     - failed return tfalse when modem is not in watch/ready
-    - succeed return ttrue after profile AT completes when the profile matches the saved file (or no `modem_off`)
-    - when the applied profile differs from the last saved copy in project var (`modem/<object>.profile`), the modem writes APN, returns **tfalse** (ltecon should end this round and wait `fun` before dialing again), then runs driver `modem_off` in the same atd process; the profile file is saved only after `modem_off`/cfun succeeds, then SETUP continues
-    - when the profile matches the saved file, only profile AT is sent (no `modem_off`) and return ttrue
-    - when `up` is called without a profile argument (`v` is NULL / auto operator), profile AT may still run but the file-compare sync and `modem_off` are skipped
+    - succeed return ttrue after profile AT completes when the profile matches the saved file (or no radio off)
+    - when the applied profile differs from the last saved copy in project var (`modem/<object>.profile`), the modem writes APN, saves the file, returns **tfalse** (ltecon should end this round and wait `fun` before dialing again), then radio-off in the same atd process with **AT+CFUN=0** (optional driver `modem_off`, else ATD fallback); SETUP continues from CFUN
+    - when the profile matches the saved file, only profile AT is sent (no radio off) and return ttrue
+    - when `up` is called without a profile argument (`v` is NULL / auto operator), profile AT may still run but the file-compare sync and radio off are skipped
 
     Example, apply custom APN from ifname path (unchanged profile)
     ```shell
@@ -375,7 +375,7 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
     ttrue
     ```
 
-    Example, profile changed (modem_off will run)
+    Example, profile changed (radio off / CFUN=0 will run)
     ```shell
     modem@lte.up[ {"apn":"3gnet","cid":1,"type":"ipv4"} ]
     tfalse

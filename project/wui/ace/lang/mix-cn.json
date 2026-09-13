@@ -86,5 +86,7 @@
     "Delay Boundary (ms)": "延迟分界(毫秒)",
     "Delay Difference (ms)": "延迟差值(毫秒)",
     "The connection will be disconnected due to configuration changes.": "配置变更将导致连接中断并重连",
-    "Offline": "离线"
+    "Offline": "离线",
+    "Sticky Routing": "粘路由",
+    "sticky tip": "默认在仍在线的链路间切换时，局域网已建连接留在原出口，新连接跟新默认。"
 }

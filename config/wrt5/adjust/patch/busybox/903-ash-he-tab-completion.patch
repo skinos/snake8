@@ -173,17 +173,18 @@
  	}
  
  	for (i = 0; i < npaths; i++) {
-@@ -1213,6 +1351,9 @@
+@@ -1213,6 +1351,10 @@
  	/* Length of string used for matching */
  	unsigned match_pfx_len = match_pfx_len;
  	int find_type;
 +# if ENABLE_FEATURE_TAB_COMPLETION
 +	char *he_line = NULL;
++	unsigned raw_match_pfx_len = 0;
 +# endif
  # if ENABLE_UNICODE_SUPPORT
  	/* cursor pos in command converted to multibyte form */
  	int cursor_mb;
-@@ -1245,6 +1386,9 @@
+@@ -1245,6 +1387,9 @@
  	match_buf = xmalloc(MAX_LINELEN * sizeof(int16_t));
  # if !ENABLE_UNICODE_SUPPORT
  	save_string(match_buf, cursor + 1); /* +1 for NUL */
@@ -193,7 +194,7 @@
  # else
  	{
  		CHAR_T wc = command_ps[cursor];
-@@ -1252,6 +1396,9 @@
+@@ -1252,6 +1397,9 @@
  		save_string(match_buf, MAX_LINELEN);
  		command_ps[cursor] = wc;
  		cursor_mb = strlen(match_buf);
@@ -203,7 +204,7 @@
  	}
  # endif
  	find_type = build_match_prefix(match_buf);
-@@ -1259,6 +1406,13 @@
+@@ -1259,6 +1407,13 @@
  	/* Free up any memory already allocated */
  	free_tab_completion_data();
  
@@ -217,7 +218,7 @@
  # if ENABLE_FEATURE_USERNAME_COMPLETION
  	/* If the word starts with ~ and there is no slash in the word,
  	 * then try completing this word as a username. */
-@@ -1270,6 +1424,11 @@
+@@ -1270,6 +1425,12 @@
  	 * try to match a command in $PATH, or a directory, or a file */
  	if (!matches)
  		match_pfx_len = complete_cmd_dir_file(match_buf, find_type);
@@ -225,11 +226,12 @@
 +#if ENABLE_FEATURE_TAB_COMPLETION
 +	free(he_line);
 +	he_line = NULL;
++	raw_match_pfx_len = match_pfx_len;
 +#endif
  
  	/* Account for backslashes which will be inserted
  	 * by quote_special_chars() later */
-@@ -1328,11 +1487,24 @@
+@@ -1328,11 +1489,27 @@
  		/* Next <tab> is not a double-tab */
  		*lastWasTab = 0;
  
@@ -241,9 +243,12 @@
 +		{
 +#if ENABLE_FEATURE_TAB_COMPLETION
 +			int no_space = match_from_hetab(matches[0]);
-+			if (no_space)
++			if (no_space) {
++				/* HE inserts raw text; undo is_special_char pfx inflate
++				 * (e.g. '?' would otherwise skip one match char). */
 +				chosen_match = xstrdup(matches[0]);
-+			else
++				match_pfx_len = raw_match_pfx_len;
++			} else
 +				chosen_match = quote_special_chars(matches[0]);
 +#else
 +			int no_space = 0;

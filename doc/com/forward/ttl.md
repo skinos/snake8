@@ -65,6 +65,7 @@ ttrue
 + `on[]` **re-apply TTL policy after a LAN ifname comes up**
     - succeed return ttrue
     - parameter **2** carries **`ifname`**; TTL settings for that ifname are applied again from saved configuration
+    - `ttl_setup` / `ttl_shut` take **`reg_slock(COM_IDPATH, "busy")`** so concurrent handlers do not interleave iptables mutation
 
 + `off[]` **remove TTL mangling for an ifname**
     - succeed return ttrue

@@ -242,7 +242,7 @@
 
     function load_cfg()
     {
-        he.load( [ "machine", "machine.status", ".ifname@lte", ".ifname@lte2", ".ifname@lte3", ".ifname@lte4","ifname@lte.status", "ifname@lte2.status", "ifname@lte3.status", "ifname@lte4.status","arch@ethernet.status" ] ).then( function( v ){
+        he.load( [ "machine", "machine.status", "?ifname@lte", "?ifname@lte2", "?ifname@lte3", "?ifname@lte4","ifname@lte.status", "ifname@lte2.status", "ifname@lte3.status", "ifname@lte4.status","arch@ethernet.status" ] ).then( function( v ){
             m = v[0]
             ms = v[1];
             lte = v[2];

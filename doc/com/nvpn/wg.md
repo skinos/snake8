@@ -11,6 +11,7 @@ Management of WireGuard Interface
 {
     "status":"client status",                    // [ disable, enable ]
     "extern":"extern ifname",                    // [ "disable", "default", "ifname@wan", "ifname@lte", ... ]
+                                                                // empty / omitted is treated as "default" (same as agent@heclient)
                                                                 // "disable" for none
                                                                 // "default" for default gateway
                                                                 // "ifname@wan", "ifname@lte", ... for specified extern interface

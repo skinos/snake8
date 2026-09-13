@@ -85,7 +85,9 @@ Instance configuration is stored under each `gnss@nmea` … `gnss@nmea8` object 
     "ttydev":"serial device path",           // [ string ], optional Linux TTY path (e.g. "/dev/ttyUSB0")
     "devcom":"device component",             // [ string ], optional hardware object that provides ttydev
     "drvcom":"driver component",             // [ string ], driver object (e.g. "gnssdrv@nmea")
-    "extern":"network depend",               // [ "default", ifname object, "" ], joint reset binding
+    "extern":"network depend",               // [ "disable", "default", "<ifname>" ], default be "default"
+                                                  // used only when drvcom is NOT gnssdrv@nmea
+                                                  // empty string is treated as "default"
     "nmea":                                  // [ json ], driver subtree for gnssdrv@nmea (see gnssdrv@nmea doc)
     {
         "tty_cmd":"startup serial commands", // [ string ], semicolon-separated
@@ -95,7 +97,9 @@ Instance configuration is stored under each `gnss@nmea` … `gnss@nmea8` object 
         "client":                            // [ json ], TCP/UDP client slot 1
         {
             "status":"client enable",        // [ "disable", "enable" ]
-            "extern":"reset on network",     // [ "default", ifname object, "" ]
+            "extern":"reset on network",     // [ "disable", "default", "<ifname>" ]
+                                                  // empty string is treated as "default"
+                                                  // gnssdrv@nmea: joints aggregate all client* extern (same as uart DTU)
             "proto":"protocol",              // [ "tcp", "udp" ]
             "server":"server address",       // [ string ]
             "port":"server port",            // [ string ]
@@ -129,7 +133,6 @@ gnss@nmea
     "ttydev":"",
     "devcom":"",
     "drvcom":"gnssdrv@nmea",
-    "extern":"default",
     "nmea":
     {
         "tty_cmd":"",
@@ -138,6 +141,7 @@ gnss@nmea
         "client":
         {
             "status":"disable",
+            "extern":"default",
             "proto":"tcp",
             "server":"",
             "port":"",
