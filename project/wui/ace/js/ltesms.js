@@ -89,7 +89,7 @@ function delete_smss( indexStr )
         var row = $(smslist_table).jqGrid('getRowData', indexs[index]);
         key = row.sid;
         // 通过sid删除
-        cmds.push( modem+'.smsdel[' + row.sid + ']' );
+        cmds.push( modem+'.sms_delete[' + row.sid + ']' );
     }
     // 执行删除
     he.exec( cmds ).then(function (){
