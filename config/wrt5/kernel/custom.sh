@@ -1,20 +1,43 @@
 #!/bin/bash
 
+# copy only when content differs (avoid mtime churn -> false kernel rebuild)
+copy_if_diff()
+{
+	local src="$1"
+	local dst="$2"
+	local real_dst
+
+	if [ ! -f "${src}" ]; then
+		echo "skip: source file not found: ${src}"
+		return 1
+	fi
+
+	if [ -d "${dst}" ]; then
+		real_dst="${dst%/}/$(basename "${src}")"
+	else
+		real_dst="${dst}"
+		mkdir -p "$(dirname "${real_dst}")"
+	fi
+
+	if [ -f "${real_dst}" ] && cmp -s "${src}" "${real_dst}"; then
+		return 0
+	fi
+
+	cp "${src}" "${real_dst}"
+	echo "copy: ${src} -> ${real_dst}"
+}
+
 src2kernel()
 {
-    if [ -e "${gSCOPE_DIR}/kernel/${1}" ]; then
-        echo "cp ${gSCOPE_DIR}/kernel/${1} ${2}"
-        cp -fr ${gSCOPE_DIR}/kernel/${1} ${2}
-    elif [ -e "${gCUSTOM_DIR}/kernel/${1}" ]; then
-        echo "cp ${gCUSTOM_DIR}/kernel/${1} ${2}"
-        cp -fr ${gCUSTOM_DIR}/kernel/${1} ${2}
-    elif [ -e "${gHARDWARE_DIR}/kernel/${1}" ]; then
-        echo "cp ${gHARDWARE_DIR}/kernel/${1} ${2}"
-        cp -fr ${gHARDWARE_DIR}/kernel/${1} ${2}
-    elif [ -e "${gPLATFORM_DIR}/kernel/${1}" ]; then
-        echo "cp ${gPLATFORM_DIR}/kernel/${1} ${2}"
-        cp -fr ${gPLATFORM_DIR}/kernel/${1} ${2}
-    fi
+	if [ -e "${gSCOPE_DIR}/kernel/${1}" ]; then
+		copy_if_diff "${gSCOPE_DIR}/kernel/${1}" "${2}"
+	elif [ -e "${gCUSTOM_DIR}/kernel/${1}" ]; then
+		copy_if_diff "${gCUSTOM_DIR}/kernel/${1}" "${2}"
+	elif [ -e "${gHARDWARE_DIR}/kernel/${1}" ]; then
+		copy_if_diff "${gHARDWARE_DIR}/kernel/${1}" "${2}"
+	elif [ -e "${gPLATFORM_DIR}/kernel/${1}" ]; then
+		copy_if_diff "${gPLATFORM_DIR}/kernel/${1}" "${2}"
+	fi
 }
 
 # rootfs recuse

@@ -7,14 +7,16 @@
                EE          LL           FF
         Ashy   EEEEEEEEE   LLLLLLLLLL   FF
 
- --------------------------------------------------------------
+ -----------------------------------------------------------
  Command Help
- --------------------------------------------------------------
- eline ---------------------- Enter to HE terminal
- he @ ----------------------- List all the project
- he @? ---------------------- List all the static component
- he @@ ---------------------- List all the dynamic component
- he <com> ------------------- Show component configure
- he <com>:<config> ---------- Get component configure attribute
- he <com>:<config>=<value> -- Set component configure attribute
- --------------------------------------------------------------
+ -----------------------------------------------------------
+ @ ----------------------- List all the component
+ @<project> -------------- List components by project directory
+ *<prefix> --------------- List components by object-name prefix
+ .<com> ------------------ List all component interface
+ ?<com> ------------------ Probe whether component exists
+ ?<com>.<api> ------------ Probe whether API exists
+ <com> ------------------- Show component configure
+ <com>:<config> ---------- Get component configure attribute
+ <com>:<config>=<value> -- Set component configure attribute
+ -----------------------------------------------------------
