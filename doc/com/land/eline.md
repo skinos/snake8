@@ -19,7 +19,7 @@ You can use eline over the same kinds of access as the classic HE terminal:
 
 After authentication, whether you see **`$ `** (eline) or **`# `** (classic HE loop) depends on the user’s **login shell**. If the shell is set to **eline** (for example **`/usr/bin/eline`**), you get the **`$ `** prompt. You can also run **`eline`** from an existing shell when it is on **`PATH`**.
 
-If **`/etc/banner.he`** exists, eline runs **`cat /etc/banner.he`** once before the first prompt (same style of welcome text as the classic terminal; the prompt that follows is **`$ `**).
+If **`/etc/banner`** exists, eline runs **`cat /etc/banner`** once before the first prompt (same style of welcome text as the classic terminal; the prompt that follows is **`$ `**).
 
 ---
 

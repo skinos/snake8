@@ -420,14 +420,17 @@ function update_talkkey(new_key)
 	}
 }
 
-// 静默请求 land@machine.status
+// 静默请求 land@machine.status（始终返回 jQuery promise，勿混用原生 Promise）
 function request_machine_status_silent()
 {
 	var key = get_current_talkkey();
+	var dfd;
 
 	if ( !key )
 	{
-		return Promise.reject( "talkkey is empty" );
+		dfd = $.Deferred();
+		dfd.reject( "talkkey is empty" );
+		return dfd.promise();
 	}
 
 	return $.ajax({
@@ -511,8 +514,9 @@ function start_ill_status_watch()
 
 		window.ill_status_loading = true;
 
+		// use done/fail/always (jQuery); .then().fail breaks on native Promise
 		request_machine_status_silent()
-		.then(function(data){
+		.done(function(data){
 
 			if ( !data )
 			{

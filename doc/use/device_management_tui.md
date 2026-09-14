@@ -14,7 +14,7 @@ A given product only shows the menus whose interfaces and packages are present. 
 - **SSH** — enable SSH Server under System, then connect with a client.
 - **UART** — set the serial port to **Command Line** under Application (typical 57600 8N1).
 
-After login the prompt is **`$ `**. If `/etc/banner.he` exists, a short help banner is printed first:
+After login the prompt is **`$ `**. If `/etc/banner` exists, a short help banner is printed first:
 
 ```
  @ ----------------------- List all the component

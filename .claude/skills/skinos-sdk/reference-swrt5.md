@@ -93,7 +93,7 @@ config/swrt5/mt7981/r607/wrt/rootfs/      # scope=wrt
 
 Copied into `build/rootfs/` then into the OpenWrt rootfs. Examples:
 
-- `etc/banner`, `etc/banner.he`, `etc/inittab`, `etc/shells`
+- `etc/banner`, `etc/inittab`, `etc/shells`
 - `etc/init.d/preland`, `etc/rc.d/S20preland`
 - `etc/fw_env.config`
 

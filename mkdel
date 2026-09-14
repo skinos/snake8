@@ -24,10 +24,13 @@ do
                     rm -fr ${DIR_ROOT}/${dir}/skinos_${name}*
                 done
             else
-                echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
-                rm -fr ${DIR_ROOT}/${dir}/skinos_*
-                echo "rm -fr ${DIR_ROOT}/${dir}/root*"
-                rm -fr ${DIR_ROOT}/${dir}/root*
+                # Full skinos/root wipe only for OpenWrt musl/glibc platforms
+                if [ "${plat}" = "swrt5" ] || [ "${plat}" = "wrt5" ]; then
+                    echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
+                    rm -fr ${DIR_ROOT}/${dir}/skinos_*
+                    echo "rm -fr ${DIR_ROOT}/${dir}/root*"
+                    rm -fr ${DIR_ROOT}/${dir}/root*
+                fi
             fi
         done
     fi
