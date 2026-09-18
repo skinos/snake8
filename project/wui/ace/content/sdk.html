@@ -51,18 +51,6 @@
       he.load( [ 'land@machine.status' ] ).then( function(v){
           var gBOARDID = '';
           var platform = v[0].platform;
-          if ( platform == "smtk" )
-          {
-            platform = "mtk";
-          }
-          else if ( platform == "smtk2" )
-          {
-            platform = "mtk2";
-          }
-          else if ( platform == "srkc" )
-          {
-            platform = "rkc";
-          }
           if ( v[0].scope == "std" )
           {
             gBOARDID = platform + '-' + v[0].hardware + '-' + v[0].custom;
@@ -70,6 +58,10 @@
           else
           {
             gBOARDID = platform + '-' + v[0].hardware + '-' + v[0].custom + '-' + v[0].scope;
+          }
+          if ( gBOARDID.charAt(0) == 's' )
+          {
+            gBOARDID = gBOARDID.substring(1);
           }
           $('#gBOARDID').text(gBOARDID);
       });
