@@ -1,0 +1,222 @@
+<!-- ajax layout which only needs content area -->
+<div class="row" id="page-modes">
+  <div class="col-xs-12">
+    <!-- 标签页导航 -->
+    <ul class="nav nav-tabs" id="lteTabs" role="tablist">
+      <li class="active">
+        <a href="#lte" data-i18n="Basic Info"></a>
+      </li>
+      <li>
+        <a href="#lteat" data-i18n="Custom AT"></a>
+      </li>
+      <li>
+        <a href="#ltesms" data-i18n="SMS Settings"></a>
+      </li>
+      <li>
+        <a href="#ltemodem" data-i18n="Modem Settings"></a>
+      </li>
+      <li style="display: none;">
+        <a href="#atproxy" data-i18n="AT Proxy"></a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane active" id="lte">
+        <!-- PAGE CONTENT BEGINS -->
+        <div class="form-horizontal" role="form" style="margin-top: 20px;">
+          <!-- modem status -->
+          <table class="table table-bordered table-striped">
+        <tbody>
+            <tr>
+                <th data-i18n="Status"></th>
+                <td colspan="3">
+                    <span id="lte_status"></span>&nbsp; &nbsp;
+                    <a class="btn btn-mini btn-warning" id="lte_btn" style="display: none;"><i class="ace-icon fa fa-pause"></i></a>&nbsp;
+                </td>
+            </tr>
+            <tr>
+                <th data-i18n="Network"></th>
+                <td>
+                    <div id="lte_4g_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_operator"></span>&nbsp;
+                        <span id="lte_nettype"></span>&nbsp;
+                        <span><img src="/assets/css/images/signal_0.png" id="lte_rssiimg" style="display: none;" class="line-signal"></img></span>
+                        <span id="lte_csq"></span>&nbsp;
+                    </div>
+                    <div id="lte_5g_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_operator5"></span> <span id="lte_nettype5"></span>
+                        <span><img src="/assets/css/images/signal_0.png" id="lte_rssiimg5" style="display: none;" class="line-signal"></img></span>
+                    </div>
+                </td>
+                <th data-i18n="RSSI"></th>
+                <td>
+                    <div id="lte_rssi4_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_rssi"></span>&nbsp;
+                        <span id="lte_rsrp"></span>
+                    </div>
+                    <div id="lte_rssi5_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_rsrp5"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th data-i18n="RSRQ/SINR"></th>
+                <td>
+                    <div id="lte_rsrq4_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_rsrq"></span>&nbsp;
+                        <span id="lte_sinr"></span>
+                    </div>
+                    <div id="lte_rsrq5_head" style="white-space: nowrap; display: none;">
+                        <span id="lte_rsrq5"></span> <span id="lte_sinr5"></span>
+                    </div>
+                </td>
+                <th data-i18n="Band"></th>
+                <td>
+                    <div id="lte_band4_head" style="display: none;">
+                        <span id="lte_band"></span>
+                    </div>
+                    <div id="lte_band5_head" style="display: none;">
+                        <span id="lte_band5"></span>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th data-i18n="IMEI"></th><td id="lte_imei"></td>
+                <th data-i18n="Modem"></th><td id="lte_name"></td>
+            </tr>
+            <tr>
+                <th data-i18n="ICCID"></th><td id="lte_iccid"></td>
+                <th data-i18n="IMSI"></th><td id="lte_imsi"></td>
+            </tr>
+            <tr>
+                <th data-i18n="LAC/CI"></th>
+                <td>
+                    <span id="lte_lac"></span><span id="lte_separator" style="display: none;"> / </span><span id="lte_ci"></span>
+                </td>
+                <th data-i18n="Channel"></th>
+                <td>
+                    <span id="lte_channel"></span>
+                    <span id="lte_channel2" style="display: block;"></span>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+
+
+
+        <!-- APN自定义 -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="APN Custom"></label>
+          <div class="col-sm-9">
+            <label>
+              <input id="profile" class="ace ace-switch ace-switch-6" type="checkbox" />
+              <span class="lbl"></span>
+            </label>
+          </div>
+        </div>
+        <div id="profile_cfg" style="display: none;">
+          <!-- APN -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="APN"></label>
+            <div class="col-sm-9">
+              <input type="text" id="apn" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+          <!-- 用户名 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Username"></label>
+            <div class="col-sm-9">
+              <input type="text" id="user" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+          <!-- 密码 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+            <div class="col-sm-9">
+              <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+                <input type="password" id="passwd" maxlength="128" autocomplete="new-password" />
+                <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
+              </span>
+            </div>
+          </div>
+          <!-- IP方式 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="IP Type"></label>
+            <div class="col-sm-9">
+              <select class="col-xs-10 col-sm-5" id="type">
+                <option value="ipv4" data-i18n="IP"></option>
+                <option value="ipv4v6" data-i18n="IPv4v6"></option>
+                <option value="ipv6" data-i18n="IPv6"></option>
+              </select>
+            </div>
+          </div>
+          <!-- 鉴权方式 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Authentication"></label>
+            <div class="col-sm-9">
+              <select class="col-xs-10 col-sm-5" id="auth">
+                <option value="" data-i18n="Auto"></option>
+                <option value="disable" data-i18n="None"></option>
+                <option value="pap" data-i18n="PAP"></option>
+                <option value="chap" data-i18n="CHAP"></option>
+                <option value="papchap" data-i18n="PAP&CHAP"></option>
+              </select>
+            </div>
+          </div>
+          <!-- 拨号号码 -->
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Dial Number"></label>
+            <div class="col-sm-9">
+              <input type="text" id="dial" class="col-xs-10 col-sm-5" maxlength="128" />
+            </div>
+          </div>
+        </div>
+
+      <div class="clearfix form-actions" id="button_lte">
+            <div class="col-md-offset-3 col-md-9">
+              <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+              &nbsp; &nbsp; &nbsp;
+              <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+            </div>
+          </div>
+        </div>
+        <!-- PAGE CONTENT ENDS -->
+      </div>
+
+      <div class="tab-pane" id="lteat"></div>
+      
+      <!-- Modem设置标签页（内容通过AJAX加载） -->
+      <div class="tab-pane" id="ltemodem"></div>
+      
+      <!-- SMS设置标签页（内容通过AJAX加载） -->
+      <div class="tab-pane" id="ltesms"></div>
+      
+      <!-- AT代理标签页（内容通过AJAX加载） -->
+      <div class="tab-pane" id="atproxy"></div>
+      
+    </div> <!-- tab-content 结束 -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script src="/js/modem.js"></script>
+
+<style>
+/* 像firewll框架那样 没有边框 只有标签页顶部导航栏 */
+/* 加上标签页自带的框架边框 就可能会导致切换标签页时高度塌陷 导致强烈白光的效果 也就是页面被刷新了几次所导致 */
+/* 每个标签页内容不同 边框高度也就不同 切换时会有高度塌陷的情况 */
+.tab-content {
+    background-color: transparent !important; /* 设为透明 */
+    border: none !important;
+    padding: 0 !important;
+    min-height: 1px;
+}
+
+.tab-pane {
+    background-color: transparent !important;
+}
+
+.tab-pane.fade {
+    opacity: 1 !important;
+    transition: none !important;
+}
+</style>

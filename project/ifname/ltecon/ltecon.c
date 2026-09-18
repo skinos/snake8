@@ -55,7 +55,7 @@
  *
  * con_service on ifdev: _setup publishes the sstart name before sstart.
  * Cleared in _shut before sdelete. After WAN is up, READY watch sresets
- * the service (3 min debounce) to redial.
+ * the service (5 min debounce) to redial.
  */
 
 #include "skin/skin.h"
@@ -1636,6 +1636,7 @@ talk_t _status( obj_t this, param_t param )
 	talk_t ret;
 	talk_t axp;
 	const char *ptr;
+	const char *status;
 	const char *ifdev;
 	const char *object;
 
@@ -1660,11 +1661,27 @@ talk_t _status( obj_t this, param_t param )
         {
 			json_delete_axp( v, "netdev" );
 			axp = json_cut_axp( v, "status" );
-			ptr = axp_string( axp );
-            if ( ptr != NULL && 0 != strcmp( ptr, "up" ) )
-            {
-                json_set_string( ret, "status", ptr );
-            }
+			/* ifname up wins; modem up keeps ifname; else show modem */
+			status = axp_string( axp );
+			ptr = json_string( ret, "status" );
+			if ( ptr != NULL )
+			{
+				if ( 0 == strcmp( ptr, "up" ) )
+				{
+					status = NULL;
+				}
+			}
+			if ( status != NULL )
+			{
+				if ( 0 == strcmp( status, "up" ) )
+				{
+					status = NULL;
+				}
+			}
+			if ( status != NULL )
+			{
+				json_set_string( ret, "status", status );
+			}
 			talk_free( axp );
             json_sync( v, ret );
             talk_free( v );

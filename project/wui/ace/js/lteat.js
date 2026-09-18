@@ -166,7 +166,7 @@ function at_save() {
 	}
 
 	// save
-    var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
+    var msg = $.i18n('Changing this setting will disconnect the LTE/NR connection.');
 	page.confirm( { message: msg } ).then( function(result){
     if ( result )
     {

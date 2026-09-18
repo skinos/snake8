@@ -153,7 +153,7 @@ function sms_save()
       return;
   }
 
-  var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
+  var msg = $.i18n('Changing this setting will disconnect the LTE/NR connection.');
   if ( switchMode )
   {
     msg = msg + " " + $.i18n('SMS requires DHCP mode; IPv4 mode will be changed to DHCP.');

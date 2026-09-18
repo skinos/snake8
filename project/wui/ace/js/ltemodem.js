@@ -5,6 +5,11 @@ var mconfig;
 var iconfig;
 var modem = page.param('modem', location.hash);   
 var ifname = page.param('object', location.hash);
+var isModemObj = false;
+if ( ifname && ifname.indexOf('modem@') === 0 )
+{
+    isModemObj = true;
+}
 
 /* load the configure on the input */
 function lte_modem()
@@ -26,6 +31,14 @@ function lte_modem()
             state = {};
         }
         $("#button_modem").show();
+        if ( isModemObj )
+        {
+            $('#ifname_con_cfg').hide();
+        }
+        else
+        {
+            $('#ifname_con_cfg').show();
+        }
 		// GNSS
         if ( iconfig.gnss == "enable" )
         {
@@ -74,64 +87,60 @@ function lte_modem()
             $('#lock_imsi').text( $.i18n("Unlocked" ) );
             $('#imsi_lock').show();
         }
-		// IMS: empty / missing / auto → Auto (do not write ims)
+		// IMS: missing or auto → Auto; save writes ims=auto so the key stays
         $("#ims").empty();
-        $("#ims").append("<option value=''>" + $.i18n("Auto") + "</option>");
+        $("#ims").append("<option value='auto'>" + $.i18n("Auto") + "</option>");
         $("#ims").append("<option value='enable'>" + $.i18n("Enable") + "</option>");
         $("#ims").append("<option value='disable'>" + $.i18n("Disable") + "</option>");
-        if ( iconfig.ims == "enable" || iconfig.ims == "disable" )
-        {
-            $('#ims').val( iconfig.ims );
-        }
-        else
-        {
-            $('#ims').val( '' );
-        }
+        $('#ims').val( iconfig.ims || 'auto' );
 
 		// watch interval
         $('#watch_interval').val( iconfig.watch_interval||'' );
 
-		// need simcard
-        $('#need_simcard').prop('checked', true );
-        if ( iconfig.need_simcard == "disable" )
+        if ( !isModemObj )
         {
-            $('#need_simcard').prop('checked', false );
+            // need simcard
+            $('#need_simcard').prop('checked', true );
+            if ( iconfig.need_simcard == "disable" )
+            {
+                $('#need_simcard').prop('checked', false );
+            }
+            $('#simcard_failed_threshold').val( iconfig.simcard_failed_threshold||'' );
+            $('#simcard_failed_threshold2').val( iconfig.simcard_failed_threshold2||'' );
+            $('#simcard_failed_threshold3').val( iconfig.simcard_failed_threshold3||'' );
+            $('#simcard_failed_everytime').val( iconfig.simcard_failed_everytime||'' );
+            // need plmn
+            $('#need_plmn').prop('checked', true );
+            if ( iconfig.need_plmn == "disable" )
+            {
+                $('#need_plmn').prop('checked', false );
+            }
+            // need signal
+            $('#need_signal').prop('checked', true );
+            if ( iconfig.need_signal == "disable" )
+            {
+                $('#need_signal').prop('checked', false );
+            }
+            $('#signal_failed_threshold').val( iconfig.signal_failed_threshold||'' );
+            $('#signal_failed_threshold2').val( iconfig.signal_failed_threshold2||'' );
+            $('#signal_failed_threshold3').val( iconfig.signal_failed_threshold3||'' );
+            $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
+            // attach failed
+            $('#need_attach').prop('checked', true );
+            if ( iconfig.need_attach == "disable" )
+            {
+                $('#need_attach').prop('checked', false );
+            }
+            $('#attach_failed_threshold').val( iconfig.attach_failed_threshold||'' );
+            $('#attach_failed_threshold2').val( iconfig.attach_failed_threshold2||'' );
+            $('#attach_failed_threshold3').val( iconfig.attach_failed_threshold3||'' );
+            $('#attach_failed_everytime').val( iconfig.attach_failed_everytime||'' );
+            // dial failed
+            $('#failed_threshold').val( iconfig.failed_threshold||'' );
+            $('#failed_threshold2').val( iconfig.failed_threshold2||'' );
+            $('#failed_threshold3').val( iconfig.failed_threshold3||'' );
+            $('#failed_everytime').val( iconfig.failed_everytime||'' );
         }
-        $('#simcard_failed_threshold').val( iconfig.simcard_failed_threshold||'' );
-        $('#simcard_failed_threshold2').val( iconfig.simcard_failed_threshold2||'' );
-        $('#simcard_failed_threshold3').val( iconfig.simcard_failed_threshold3||'' );
-        $('#simcard_failed_everytime').val( iconfig.simcard_failed_everytime||'' );
-		// need plmn
-        $('#need_plmn').prop('checked', true );
-        if ( iconfig.need_plmn == "disable" )
-        {
-            $('#need_plmn').prop('checked', false );
-        }
-		// need signal
-        $('#need_signal').prop('checked', true );
-        if ( iconfig.need_signal == "disable" )
-        {
-            $('#need_signal').prop('checked', false );
-        }
-        $('#signal_failed_threshold').val( iconfig.signal_failed_threshold||'' );
-        $('#signal_failed_threshold2').val( iconfig.signal_failed_threshold2||'' );
-        $('#signal_failed_threshold3').val( iconfig.signal_failed_threshold3||'' );
-        $('#signal_failed_everytime').val( iconfig.signal_failed_everytime||'' );
-		// attach failed
-        $('#need_attach').prop('checked', true );
-        if ( iconfig.need_attach == "disable" )
-        {
-            $('#need_attach').prop('checked', false );
-        }
-        $('#attach_failed_threshold').val( iconfig.attach_failed_threshold||'' );
-        $('#attach_failed_threshold2').val( iconfig.attach_failed_threshold2||'' );
-        $('#attach_failed_threshold3').val( iconfig.attach_failed_threshold3||'' );
-        $('#attach_failed_everytime').val( iconfig.attach_failed_everytime||'' );
-		// dial failed
-        $('#failed_threshold').val( iconfig.failed_threshold||'' );
-        $('#failed_threshold2').val( iconfig.failed_threshold2||'' );
-        $('#failed_threshold3').val( iconfig.failed_threshold3||'' );
-        $('#failed_everytime').val( iconfig.failed_everytime||'' );
       })
 }
 
@@ -145,18 +154,24 @@ function modem_save() {
     // 定义字段映射
     var fields = {
         checkbox: [
-            'gnss', 'need_simcard', 'need_plmn', 'need_signal', 'need_attach'
+            'gnss'
         ],
         text: [
-            'lock_nettype', 'lock_pin', 'ims', 'watch_interval',
-            'simcard_failed_everytime', 'signal_failed_everytime', 'attach_failed_everytime', 'failed_everytime'
+            'lock_nettype', 'lock_pin', 'ims', 'watch_interval'
         ]
     };
 
-    var categories = ['simcard_failed', 'signal_failed', 'attach_failed', 'failed'];
-    categories.forEach(function(cat) {
-        fields.text.push(cat + '_threshold', cat + '_threshold2', cat + '_threshold3');
-    });
+    if ( !isModemObj )
+    {
+        fields.checkbox.push( 'need_simcard', 'need_plmn', 'need_signal', 'need_attach' );
+        fields.text.push(
+            'simcard_failed_everytime', 'signal_failed_everytime', 'attach_failed_everytime', 'failed_everytime'
+        );
+        var categories = ['simcard_failed', 'signal_failed', 'attach_failed', 'failed'];
+        categories.forEach(function(cat) {
+            fields.text.push(cat + '_threshold', cat + '_threshold2', cat + '_threshold3');
+        });
+    }
 
     // 抓取数据
     fields.checkbox.forEach(function(id) {
@@ -177,7 +192,7 @@ function modem_save() {
         return page.alert({ message: $.i18n('No changes to apply') });
     }
 
-    var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
+    var msg = $.i18n('Changing this setting will disconnect the LTE/NR connection.');
     page.confirm({ message: msg }).then(function(result) {
         if (!result) return location.reload();
 

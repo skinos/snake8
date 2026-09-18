@@ -97,6 +97,8 @@
     "ifname@wan4": "有线宽带4",
     "modem@lte": "4G/5G基带",
     "modem@lte2": "4G/5G基带2",
+    "modem@lte3": "4G/5G基带3",
+    "modem@lte4": "4G/5G基带4",
     "ifname@lan": "本地网络",
     "ifname@lan2": "本地网络2",
     "ifname@lan3": "本地网络3",

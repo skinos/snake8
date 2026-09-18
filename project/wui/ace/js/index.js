@@ -749,7 +749,7 @@ jQuery(function($) {
 			var menus = [];
 			var router = true;
 			var homepage = "dashboard";
-			if ( window.machine.mode == "default" || window.machine.mode == "parasite" )
+			if ( window.machine.mode == "default" || window.machine.mode == "parasite" || window.machine.mode == "mbridge" )
 			{
 				router = false;
 				$('#extern_nav').attr('href','#');
@@ -914,9 +914,41 @@ jQuery(function($) {
 				{
 					menu.addlink( menus, $.i18n( 'Route' ), $.i18n( 'Hosts' ), 'hosts' );
 				}
+				menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
 			}
 			else
 			{
+				if ( window.machine.mode == "mbridge" )
+				{
+					if ( window.ifdev["modem@lte"] )
+					{
+						if ( !wuimenu || wuimenu.lte != "disable" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'modem@lte' ), 'modem?object=modem@lte' );
+						}
+					}
+					if ( window.ifdev["modem@lte2"] )
+					{
+						if ( !wuimenu || wuimenu.lte2 != "disable" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'modem@lte2' ), 'modem?object=modem@lte2' );
+						}
+					}
+					if ( window.ifdev["modem@lte3"] )
+					{
+						if ( !wuimenu || wuimenu.lte3 != "disable" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'modem@lte3' ), 'modem?object=modem@lte3' );
+						}
+					}
+					if ( window.ifdev["modem@lte4"] )
+					{
+						if ( !wuimenu || wuimenu.lte4 != "disable" )
+						{
+							menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'modem@lte4' ), 'modem?object=modem@lte4' );
+						}
+					}
+				}				
 				if ( window.hosts )
 				{
 					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'Hosts' ), 'hosts' );
@@ -951,8 +983,6 @@ jQuery(function($) {
 					menu.addlink( menus, $.i18n( 'Network' ), $.i18n( 'LAN4' ), 'lan?object=ifname@lan4' );
 				}
 			}
-
-			menu.add( false, menus, $.i18n( 'VPN' ), 'vpn', 'menu-icon fa fa-lock' );
 
 			menu.add( false, menus, $.i18n( 'Wireless' ), 'ssid', 'menu-icon fa fa-wifi' );
 

@@ -255,7 +255,7 @@
 
 		port@4 {
 			reg = <4>;
-			label = "lan4";
+			label = "lan0";
 		};
 
 		port@6 {

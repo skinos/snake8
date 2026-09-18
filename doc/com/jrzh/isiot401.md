@@ -15,7 +15,7 @@ Read gas concentration data from ISIOT-401 device via Modbus RTU and report to c
 // Attributes introduction
 {
     "modbus_addr": "1",                                        // [ number ], Modbus device address, default 1, range 1-253
-    "report_interval": "10",                                   // [ number ], report interval in seconds, default 10, minimum 5
+    "report_interval": "10000",                                // [ number ], report interval in milliseconds, default 10000, minimum 100
     "modbus_timeout": "1",                                     // [ number ], Modbus response timeout in seconds, default 1, minimum 1
     "tcp_timeout": "10",                                       // [ number ], TCP connect+send+recv total timeout in seconds, default 10, minimum 1
     "ent_code": "enterprise code from cloud platform",         // [ string ], default "LZ7300300243"
@@ -50,7 +50,7 @@ Example, show all the isiot401 configure
 isiot401
 {
     "modbus_addr":"1",                                         # Modbus device address
-    "report_interval":"10",                                    # report every 10 seconds
+    "report_interval":"10000",                                 # report every 10000 milliseconds
     "modbus_timeout":"1",                                      # Modbus response timeout in seconds
     "tcp_timeout":"10",                                        # TCP timeout in seconds
     "ent_code":"LZ7300300243",                                 # enterprise code
@@ -76,9 +76,9 @@ isiot401
 
 #### Configuration settings example
 
-Example, change the report interval to 60 seconds
+Example, change the report interval to 500 milliseconds
 ```shell
-isiot401:report_interval=60
+isiot401:report_interval=500
 ttrue
 ```
 
@@ -127,7 +127,7 @@ ttrue
     ```json
     {
         "modbus_addr": "1",              // [ number ], Modbus device address
-        "report_interval": "10",         // [ number ], report interval in seconds
+        "report_interval": "10000",      // [ number ], report interval in milliseconds
         "last_read": "12345",            // [ number ], uptime_int() of last successful read
         "registered": "yes",             // [ string ], device info registered: "yes" or "no"
         "modbus_reg0": "O2",             // [ string ], register 0 gas type
@@ -146,7 +146,7 @@ ttrue
     isiot401.status
     {
         "modbus_addr":"1",
-        "report_interval":"10",
+        "report_interval":"10000",
         "last_read":"12345",
         "registered":"yes",
         "modbus_reg0":"O2",
