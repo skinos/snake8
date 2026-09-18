@@ -674,7 +674,7 @@ function config_save() {
             return;
         }
 
-        var msg = $.i18n('Changing this setting will disconnect the LTE connection.');
+        var msg = $.i18n('Changing this setting will disconnect the LTE/NR connection.');
         var modemName = window.modem;
         var checkSms = false;
         if ( config.mode !== "dhcpc" && modemName && config.status !== "disable" )

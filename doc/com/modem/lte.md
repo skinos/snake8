@@ -151,8 +151,10 @@ Module power-cycle is counted on two independent ladders:
 
 Default watch interval is 8 s while registered; consecutive watch failures use a 1 s retry.
 
-* **Never registered** — after 5 / 10 / 20 / 60 minutes of failed watch, the modem power-cycles (backup when there is no ifname). If register `con_service` names a live ifname service, this backup is skipped; ltecon already power-cycles on SIM / signal / attach.
-* **Was up, then watch fails** — after 3 minutes, the modem returns to register. If `con_service` is live, it **`sreset`**s that service so ltecon redials. The module is not power-cycled on this path.
+Watch succeeds only when the last driver parse has radio, a usable SIM, and at least one signal bar. `iccid` `nosim` / `pin` / `puk`, or `signal`/`signal2` both 0 or missing, is a watch failure: no `READY`, `status` stays `register`.
+
+* **Never registered** — after 3 / 5 / 10 / 15 / 30 minutes of failed watch, the modem power-cycles (backup when there is no ifname). If register `con_service` names a live ifname service, this backup is skipped; ltecon already power-cycles on SIM / signal / attach.
+* **Was up, then watch fails** — after 5 minutes, the modem returns to register. If `con_service` is live, it **`sreset`**s that service so ltecon redials. The module is not power-cycled on this path.
 
 `ifname@ltecon` writes `con_service` (the `sstart` name) on this modem object in **`setup`** before starting the service, and clears it in **`shut`** before **`sdelete`**.
 
@@ -160,7 +162,7 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
 
 * CFUN fail: 8 / 15 / 20 / 30 / 60 / 120 / 300 s, then machine restart after 600 s
 * TTY open fail: same except first wait is 5 s; last tier machine restart (`tty_failed`)
-* UART panic: first reset immediate, then 15 / 20 / 30 / 60 / 120 / 300 s, then machine restart
+* UART panic / OK2RESET: first reset immediate, then 15 / 20 / 30 / 60 / 120 / 300 s; at 8+ skip GPIO (no machine restart)
 
 
 
@@ -189,8 +191,8 @@ Default watch interval is 8 s while registered; consecutive watch failures use a
         "status":"Current state",        // [ "nodevice", "setup", "register", "up", "idle", "noimei", "noimsi", "reset", "down" ]
                                              // "nodevice" modem device is not present
                                              // "setup" modem initialization in progress
-                                             // "register" network registration in progress
-                                             // "up" modem is ready for network access
+                                             // "register" ATD_WATCH (not yet READY; also no SIM / PIN / PUK / no signal)
+                                             // "up" ATD_READY only (radio, usable SIM, and signal)
                                              // "idle" modem enters idle/error state
                                              // "noimei" IMEI lock check failed or unavailable
                                              // "noimsi" IMSI lock check failed or unavailable

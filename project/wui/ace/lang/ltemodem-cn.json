@@ -27,5 +27,5 @@
     "Modified successfully": "修改成功",
     "Once locked, this cannot be undone.": "锁定后无法撤消",
     "No changes to apply": "配置未修改，不需要应用",
-    "Changing this setting will disconnect the LTE connection.": "LTE配置变更将导致连接中断并重连"
+    "Changing this setting will disconnect the LTE/NR connection.": "4G/5G配置变更将导致连接中断并重连"
 }

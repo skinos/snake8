@@ -205,6 +205,9 @@ typedef int boole;
 /** center pport component */
 #define CENTER_PPORT_COM      CENTER_PROJECT""PROJECT_OBJECT_GAPS"pport"
 #define PPORT_COM             CENTER_PROJECT""PROJECT_OBJECT_GAPS"pport"
+/** center nport component */
+#define CENTER_NPORT_COM      CENTER_PROJECT""PROJECT_OBJECT_GAPS"nport"
+#define NPORT_COM             CENTER_PROJECT""PROJECT_OBJECT_GAPS"nport"
 /// network project
 #define NETWORK_PROJECT "network"
 #define NETWORK_MODE    "default"

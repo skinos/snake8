@@ -361,11 +361,11 @@ Default first-round waits: SIM 30 s, signal/PLMN 120 s, attach 120 s; then 180/3
 
 When **`mode`** is omitted, IPv4 is **`dhcpc`** if the modem register **`na`** is set (typical 5G), otherwise **`ppp`**. A missing **`netdev`** forces **`ppp`** for that cycle only (not written to config). A USB composition rematch (`arch@usb.search`) does not increment `reset_times`.
 
-After the WAN is up, this service stays in DHCP/PPP and does not re-check RF unless **keeplive** is enabled. If modem watch then fails for 3 minutes, `modem@lte` **sreset**s this ifname service (register `con_service` on the ifdev) so dialing runs again from `fun` / SIM / signal / attach. The module is not power-cycled for that case.
+After the WAN is up, this service stays in DHCP/PPP and does not re-check RF unless **keeplive** is enabled. If modem watch then fails for 5 minutes, `modem@lte` **sreset**s this ifname service (register `con_service` on the ifdev) so dialing runs again from `fun` / SIM / signal / attach. The module is not power-cycled for that case.
 
 `setup` writes `con_service` on the ifdev before `sstart`. `shut` clears `con_service` before `sdelete` so the modem will not restart this service while ifname is going down.
 
-While the modem is still registering and this service is live, the modem skips its 5/10/20/60 minute never-registered watch reset; ltecon owns that recovery.
+While the modem is still registering and this service is live, the modem skips its 3/5/10/15/30 minute never-registered watch reset; ltecon owns that recovery.
 
 
 
@@ -402,6 +402,7 @@ While the modem is still registering and this service is live, the modem skips i
                                              // "uping" for connecting
                                              // "block" means waiting for keeplive checks to recover
                                              // "up" means ready for Internet access
+                                             // ifname already "up" is kept when modem status is only "register"
                                              // "failed" for keeplive failed
                                              // "down" for the modem is down
         "mode":"IPV4 address mode",     // [ "dhcpc", "static", "ppp" ]

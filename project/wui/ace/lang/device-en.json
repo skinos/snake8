@@ -14,7 +14,7 @@
     "nwisp": "5.8G WISP Gateway",
     "dwisp": "Dual WISP Gateway",
     "mbridge": "LTE/NR Modem",
-    "misp": "LTE Gateway",
+    "misp": "LTE/NR Gateway",
     "nmisp": "LTE/NR Gateway",
     "dmisp": "Dual LTE/NR Gateway",
     "tmisp": "Three LTE/NR Gateway",
