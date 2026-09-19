@@ -31,6 +31,7 @@ Projects are **not** isolated apps: they register components into one runtime (`
 | **GNSS as a product feature (NMEA objects)** | **`gnss`** and/or **`uart`** `uartdrv@gnss` | Device on serial → uart driver; system GNSS objects → gnss project |
 | **Camera / OSD** | **`camera`** | |
 | **Remote/cloud HE / MQTT / port map** | **`agent`** | |
+| **On-device customer policy / view / apply / exception watch** | **`ai`** | `ai@agent`; docs: `doc/com/ai/agent.md`. Do not put drivers here |
 | **Web admin page / menu** | **`wui`** (+ page assets); HTTP server is **`webs`** | |
 | **Auth / log / service / FPK / init·joint** | **`land`** | Do **not** put hardware drivers here |
 | **Board USB/GPIO/PCI/ethernet glue** | **`arch`** (if present) or **`config/<platform>/`** kernel/rootfs | USB match tables for modems live with `arch@usb` |
@@ -83,6 +84,7 @@ Projects are **not** isolated apps: they register components into one runtime (`
 | **wui** | Admin UI registration; `obj` → `webs@httpd` | Menus/pages (often live in feature projects’ `wui`) |
 | **webs** | `httpd` | HTTP server implementation |
 | **agent** | io, local, heclient, mqtt, portc; `gtog` | Cloud/remote control protocols |
+| **ai** | customer desired-state agent (`ai@agent`) | View/apply/except via existing HE; not a driver project |
 | **vpn** | l2tp / pptp / gre lists | Classic VPN clients |
 | **nvpn** | WireGuard list | WG management |
 | **ipsec** | IPsec list/client area | IPsec tunnels + certs |
@@ -135,5 +137,6 @@ Details: [`.claude/skills/skinos-uart/SKILL.md`](.claude/skills/skinos-uart/SKIL
 | **ifname** | [`doc/com/ifname/`](doc/com/ifname/) |
 | **uart** | [`doc/com/uart/`](doc/com/uart/) · skill **skinos-uart** |
 | **clock / storage / tui / wui / agent / …** | Matching `doc/com/<name>/` |
+| **ai** | [`doc/com/ai/`](doc/com/ai/) |
 
 **Rule of thumb:** code in `project/<name>/` · API docs in `doc/com/<topic>/` · shipping rules in that project’s `prj.json` · board defaults in `config/<platform>/…`.

@@ -8,14 +8,14 @@ Listen for gateway **portc** reverse-proxy connections, and map public TCP/UDP p
 - Standby keeplive: client pings with `k`, server echoes `k`; idle timeout is `nomate_timeout`
 - Client ping interval is `(nomate_timeout-1)/3`; heport pushes to **`agent@portc`**: `mode`, `active_pond`, `idle_pond`, `nomate_timeout`, `connect_timeout=(mating_timeout-1)`, `mate_timeout`
 - Those values are published by `center@pport`: `status` in `_setup`, `mode`/`active_pond`/`idle_pond`/`nomate_timeout`/`mating_timeout`/`mate_timeout` in `_service` (defaults apply when unset); `heport_pport_config` reads them via `reg_sintv` / `reg_sstring`
-- Register is created with **`PPORT_REG_SLOTS` (8192)** so per-user mesh relay counts can use the username as the key (`reg_sint(center@pport, username)`). Default object register is only 128 keys. Size applies when the register file is first created; an already-small file is not resized
+- Register is created with **`PPORT_REG_SLOTS` (8192)** (default object register is only 128 keys). Size applies when the register file is first created; an already-small file is not resized. Per-user mesh relay **count** is kept in **nport** (`nport_relay_limit`), not in this register
 - **`mode`**: `pond` (default, one proxy TCP per session) or `mux` (future multiplex; not implemented — service refuses to start). Hard cutover later; center does not run both data planes.
 - **UDP map framing** on the proxy TCP (after mate): each datagram is `[u16be length][payload]` (`length` 0..65535). TCP/serial maps stay raw byte streams. Requires matching **`agent@portc`** version.
 - Map rules can be persistent (`timeout` 0) or idle-expired; optional source-IP lock
 - Persistent maps reload from heport user `tcpmap` / `udpmap` files at service start
 - Pair with device-side **`agent@portc`** for the client pond
 - Two public ranges (defaults): `[dynamic_port, static_port)` = 20006–24999, center on demand (`dynamic_port[]` TCP, mesh WireGuard UDP relay). `[static_port, …)` = 25000+, user `tcpmap` / `udpmap`
-- Mesh relay UDP lives in `pport_udp_relay[]` (`relay_map` / `relay_unmap` / `relay_list` / `relay_dump`), not in user `tcp_map` / `udp_map` or `<user>/udpmap`
+- Mesh relay UDP lives in `pport_udp_relay[]` (`relay_map` / `relay_unmap` / `relay_clear` / `relay_list` / `relay_dump`), not in user `tcp_map` / `udp_map` or `<user>/udpmap`
 
 
 
@@ -103,7 +103,7 @@ ttrue
 | `[dynamic_port, static_port)` | 20006–24999 | Center | ttyd TCP via `dynamic_port[]`; mesh UDP via `relay_map` |
 | `[static_port, …)` | 25000+ | User | `tcpmap` / `udpmap` and `tcp_map` / `udp_map` with empty port |
 
-Mesh relay is a separate table (`pport_udp_relay[PPORT_RELAY_NUMBER]`, default 3000), indexed from `dynamic_port`. **`relay_map` / `relay_unmap` / `relay_list` / `relay_dump`** match the user UDP APIs, but listen in `[dynamic_port, static_port)` and do not share `pport_udp_server[]`. Same mac + hand reuses the existing listen. `timeout > 0` needs the device online and idle-unmaps the slot. `udp_map` / `udp_unmap` / `udp_list` / `udp_dump` do not see these ports. `dynamic_port[]` is a TCP number counter only. Per-user how many listens may exist is `<user>/config` **`relay_max`** (enforced by nport before it calls `relay_map`, not by this table size). Live count per username may live in the `center@pport` register (key = username); that store is sized with `PPORT_REG_SLOTS`.
+Mesh relay is a separate table (`pport_udp_relay[PPORT_RELAY_NUMBER]`, default 3000), indexed from `dynamic_port`. **`relay_map` / `relay_unmap` / `relay_clear` / `relay_list` / `relay_dump`** match the user UDP APIs, but listen in `[dynamic_port, static_port)` and do not share `pport_udp_server[]`. Same mac + hand_ip + hand_port + hand_proto reuses the existing listen (`map` with port 0). `timeout > 0` needs the device online and idle-unmaps the slot; mesh nport uses `timeout=0`. `relay_clear[]` drops the whole relay table (nport calls this at service start). `udp_map` / `udp_unmap` / `udp_list` / `udp_dump` do not see these ports. `dynamic_port[]` is a TCP number counter only. Per-user how many listens may exist is `<user>/config` **`relay_max`** (enforced by nport before `relay_map`, counted in nport memory). nport unmaps **port + mac** of the remembered slot; it does not call unmap-by-mac-only.
 
 
 ### API Reference
@@ -650,6 +650,18 @@ Mesh relay is a separate table (`pport_udp_relay[PPORT_RELAY_NUMBER]`, default 3
     Example, unmap all relay maps for a gateway
     ```shell
     center@pport.relay_unmap[ ,00037f122340 ]
+    ttrue
+    ```
+
++ `relay_clear[]` **unmap every mesh relay UDP**
+    - failed return tfalse
+    - succeed return ttrue
+    - Drops the whole `pport_udp_relay[]` table. Does not touch user TCP/UDP maps
+    - nport calls this once at service start (`pport_call`) before accepting WaitMesh
+
+    Example, clear all mesh relay ports
+    ```shell
+    center@pport.relay_clear
     ttrue
     ```
 

@@ -42,41 +42,43 @@ extern int pport_static_start;    // 25000(TCP)
 #define DATA_ITEM_GAPC      0x7c   // US(Unit Separator)  |
 #define DATA_END_GAPC       0x00   // NUL(NULL)           \0
 
-/**
- * @brief call the heport to execute a string he command
- * @param[in] mac, device mac identify
- * @param[in] cmd, string he command
- * @param[in] timeout, timeout to wait in second
- * @return json command result
+/*
+ * HH result semantics (string/json/talk_hh_execute and string/talk_hh_submit cb):
+ *
+ *   ret              meaning
+ *   --------------   ----------------------------------------------------------
+ *   NULL             Peer returned empty success (not a local error).
+ *   ttrue            Peer returned boolean success.
+ *   talk > tpanic    Peer returned payload (string / JSON); caller talk_free().
+ *   tfalse           Peer returned failure.
+ *   terror           Peer returned error (keep errno from peer if present).
+ *   tpanic           Local/call failure, wait miss, or libevent_hh_cancel() (see errno).
+ *
+ *   errno (when ret is tfalse/terror/tpanic; 0 means peer gave no code):
+ *   EWOULDBLOCK /    No peer reply in time (sync: udp2talk wait; async: ack timer
+ *   EAGAIN /         exhausted after retries). Same meaning on both paths.
+ *   EINPROGRESS
+ *   ECANCELED        Async only: libevent_hh_cancel() (local abort, not peer fail).
+ *   EINVAL           Bad args or bad talk to serialize.
+ *                    sync execute: usually tfalse+EINVAL; talk_hh_execute
+ *                    json2string fail → tpanic+EINVAL.
+ *                    submit: NULL session, no cb.
+ *   ENOENT           heport control unix missing, etc.
+ *   other            From peer encoding, connect/send, or libevent arm failure.
+ *                    Async: errno is saved on the session and restored before cb
+ *                    (so close/event cleanup cannot wipe peer/local errno).
+ *
+ * Success test used by callers (e.g. nport):
+ *   (ret == NULL || ret == ttrue || ret > tpanic)
+ *
+ * Async submit only:
+ *   Non-NULL session = in flight; cb runs once then session is destroyed.
+ *   NULL session     = immediate reject (bad args / no heport / cannot arm); cb not called.
+ *   After max_tries: wait miss → cb(tpanic) + EWOULDBLOCK; otherwise cb(last peer/local fail code).
+ *   cancel() → cb(tpanic) + ECANCELED.
  */
-talk_t string_hh_execute( const char *macid, const char *cmd, int timeout );
-/**
- * @brief call the heport to execute a string he command at line command
- * @param[in] mac, device mac identify
- * @param[in] cmd, string he command
- * @param[in] timeout, timeout to wait in second
- * @return succeed or failed, print the return at the terminal
- *		@retval 0 for succeed
- *		@retval other for failed
- */
-int    line_hh_command( const char *macid, const char *cmd, int timeout );
 
-/**
- * @brief call the heport to execute a json he command
- * @param[in] mac, device mac identify
- * @param[in] cmd, json he command
- * @param[in] timeout, timeout to wait in second
- * @return json command result
- */
-talk_t json_hh_execute( const char *macid, talk_t v, int timeout );
-/**
- * @brief call the heport to execute a talk that include list of he command
- * @param[in] mac, device mac identify
- * @param[in] cmd, json he command
- * @param[in] timeout, timeout to wait in second
- * @return json command result
- */
-talk_t talk_hh_execute( const char *macid, talk_t helist, int timeout );
+
 
 /**
  * @brief call heport service control (Unix JSON: list/knock/dump)
@@ -85,7 +87,53 @@ talk_t talk_hh_execute( const char *macid, talk_t helist, int timeout );
  * @param[in] timeout timeout in seconds
  * @return talk result
  */
-talk_t heport_call( const char *cmd, talk_t v, int timeout );
+ talk_t heport_call( const char *cmd, talk_t v, int timeout );
+ /**
+ * @brief Execute a string HE command via heport (blocking).
+ * @param macid device mac
+ * @param cmd string HE command
+ * @param timeout seconds to wait for reply (also bounds connect/send retry loop)
+ * @return see "HH result semantics" above
+ */
+talk_t string_hh_execute( const char *macid, const char *cmd, int timeout );
+/**
+ * @brief Execute string HE and print the result (line/CLI helper).
+ * @return 0 on success (NULL/ttrue/JSON); negative on tfalse/terror/tpanic
+ */
+int    line_hh_command( const char *macid, const char *cmd, int timeout );
+
+/**
+ * @brief Execute a JSON HE command via heport (blocking). Same semantics as string_hh_execute.
+ */
+talk_t json_hh_execute( const char *macid, talk_t v, int timeout );
+/**
+ * @brief Execute a talk/JSON HE list via heport (blocking). Same semantics as string_hh_execute.
+ */
+talk_t talk_hh_execute( const char *macid, talk_t helist, int timeout );
+
+/**
+ * Async HH completion callback. Session is invalid after return; caller must talk_free(ret) if ret > tpanic.
+ * @param ret see "HH result semantics" above (including NULL peer success and tpanic+EWOULDBLOCK on wait miss)
+ */
+typedef void (*libevent_hh_done_t)( talk_t ret, void *arg );
+typedef struct libevent_hh_struct *libevent_hh_t;
+
+/**
+ * Submit talk/JSON HE on event_base (non-blocking). Copies he; caller may talk_free(he) after return.
+ * @return in-flight session, or NULL if rejected immediately (cb not called)
+ * @note Local unix path heport.unix-<pid>-<fd>. Retries with a new fd up to max_tries.
+ */
+libevent_hh_t talk_hh_submit( struct event_base *base, const char *macid, talk_t he, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
+/**
+ * Submit string HE on event_base. Same semantics as talk_hh_submit / string_hh_execute results in cb.
+ */
+libevent_hh_t string_hh_submit( struct event_base *base, const char *macid, const char *cmd, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
+/**
+ * Cancel in-flight submit: cb(tpanic) once with errno=ECANCELED, then destroy session.
+ */
+void libevent_hh_cancel( libevent_hh_t s );
+
+
 
 /**
  * @brief call pport service control (Unix JSON: list/tcp_map/udp_map/...)
@@ -95,6 +143,18 @@ talk_t heport_call( const char *cmd, talk_t v, int timeout );
  * @return talk result
  */
 talk_t pport_call( const char *cmd, talk_t v, int timeout );
+/**
+ * Submit pport control on event_base (non-blocking). Same unix JSON as pport_call.
+ * Takes ownership of v. Session is libevent_hh_t; cancel with talk_pport_cancel.
+ * @return in-flight session, or NULL if rejected immediately (cb not called; v freed)
+ */
+libevent_hh_t talk_pport_submit( struct event_base *base, const char *cmd, talk_t v, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
+/**
+ * Cancel in-flight submit: cb(tpanic) once with errno=ECANCELED, then destroy session.
+ */
+ #define talk_pport_cancel libevent_hh_cancel
+
+
 
 /**
  * @brief call nport service control (Unix JSON: network_knock/endpoint_knock/dump/...)
@@ -104,6 +164,16 @@ talk_t pport_call( const char *cmd, talk_t v, int timeout );
  * @return talk result
  */
 talk_t nport_call( const char *cmd, talk_t v, int timeout );
+/**
+ * Submit nport control on event_base (non-blocking). Same unix JSON as nport_call.
+ * Takes ownership of v. Session is libevent_hh_t; cancel with talk_nport_cancel.
+ * @return in-flight session, or NULL if rejected immediately (cb not called; v freed)
+ */
+libevent_hh_t talk_nport_submit( struct event_base *base, const char *cmd, talk_t v, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
+/**
+ * Cancel in-flight submit: cb(tpanic) once with errno=ECANCELED, then destroy session.
+ */
+#define talk_nport_cancel libevent_hh_cancel
 
 
 

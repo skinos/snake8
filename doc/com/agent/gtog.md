@@ -4,10 +4,10 @@
 
 Manage a pool of WireGuard mesh VPN channels (**`agent@net`**, **`agent@net2`**, …). **`agent@gtog`** owns pool limits, object↔`netid` mapping, and runtime **`register`** / **`unregister`**. Each channel object runs the same **`gtog`** binary and holds per-network configuration, peers, and the long-running **`service`**.
 
-- Bring up persistent channels from on-disk config at boot (**`setup`** / **`shut`**)
+- On **`setup`**, Query **`center@nport`** for networks of this device and **`register`** each **`netid`** so the channel **`service`** starts
 - Create or destroy runtime channels by **`netid`** (**`register`** / **`unregister`**, config under **`=cache`**)
-- Accept mesh topology from the coordinator via heclient: **`endpoint`** (full map), **`branch`** / **`leaf`** (incremental peer)
-- Coordinate with **`center@nport`** over UDP (register / NAT / keeplive / sync); one network **`seq`** on pushes and `k;netid;seq;`
+- Accept mesh topology from the coordinator via heclient: **`endpoint`** (full map), **`branch`** / **`leaf`** (incremental add), **`leave`** (incremental drop)
+- Coordinate with **`center@nport`** over UDP (Query / Connect / NAT / keeplive / sync); one network **`seq`** on pushes and `k;netid;seq;`
     > Per-channel options (`server`, `netid`, keepalive, DNS, routes, …) are documented in **`net.md`**
 
 
@@ -16,9 +16,15 @@ Manage a pool of WireGuard mesh VPN channels (**`agent@net`**, **`agent@net2`**,
 ```json
 // Attributes introduction 
 {
+    "status":"pool switch",                                     // [ "disable","enable" ], setup starts query only when enable
     "net_max":"maximum number of WireGuard channel slots",      // [ number ], default 10
-    "port_start":"base local WireGuard listen_port"             // [ number ], default 10004
-                                                                   // agent@net uses port_start; agent@netN uses port_start+N-1 when channel listen_port is unset
+    "listen_port":"base local WireGuard listen_port",           // [ number ], default 10004
+                                                                   // agent@net uses listen_port; agent@netN uses listen_port+N-1 when channel listen_port is unset
+    "port":"coordinator UDP port",                              // [ number ], default 20002
+    "key":"shared key with the coordinator",                    // [ string ], default "NPORT-UDP@ashyelf.com"
+    "server":"coordinator address",                             // [ string ], optional; empty → agent@heclient.server
+    "keepintval":"query retry interval in seconds",             // [ number ], default 15 (≥5); also used while Query has no reply
+    "keeptimeout":"query UDP wait in seconds"                   // [ number ], default 15; clamped to < keepintval
 }
 ```
 
@@ -30,7 +36,9 @@ Example, show all the configure
 agent@gtog
 {
     "net_max":"10",                         # up to 10 channel slots
-    "port_start":"10004"                    # first channel listen_port when unset
+    "listen_port":"10004",                  # first channel listen_port when unset
+    "port":"20002",
+    "key":"NPORT-UDP@ashyelf.com"
 }
 ```
 
@@ -43,10 +51,10 @@ agent@gtog:net_max=5
 ttrue
 ```
 
-Example, merge set pool limits( include "net_max" "port_start" )
+Example, merge set pool limits( include "net_max" "listen_port" )
 
 ```shell
-agent@gtog|{"net_max":"8","port_start":"10004"}
+agent@gtog|{"net_max":"8","listen_port":"10004"}
 ttrue
 ```
 
@@ -59,11 +67,12 @@ All channels share names **`agent@net`**, **`agent@net2`**, … up to **`net_max
 
 | Path | APIs | Config store | Lifetime |
 |------|------|--------------|----------|
-| Boot / product | **`setup[]`** / **`shut[]`** on **`agent@gtog`** | Normal project config | Survives reboot; brought up again by **`agent@gtog.setup`** |
-| Runtime | **`register[]`** / **`unregister[]`** | **`register`** sets **`=cache`** (under `/tmp`); **`unregister`** uses **`=nocache`** and drops the cache | Gone after reboot until **`register`** runs again |
+| Boot | **`setup[]`** / **`shut[]`** / **`query`** | Query then **`register`** (**`=cache`**) | Listed nets come up after Query; gone when dropped from the list |
+| Runtime | **`register[]`** / **`unregister[]`** | **`register`** sets **`=cache`** (under `/tmp`); **`unregister`** uses **`=nocache`** and drops the cache | Gone after reboot until Query or **`register`** runs again |
 
-- **`setup`**: store **`net_max`** / **`port_start`** in register; for each slot that already has config, map object→`netid`, publish config **`port`** (coordinator) and **`listen_port`** (local; or **`port_start`** formula) into channel register, register with **`network@frame`**, schedule **`…setup`** on init delay.
-- **`register`**: same **`netid`** reuses the same object; a new **`netid`** takes a free slot (skip map-occupied and slots that already have on-disk config), then start/reset **`service`**.
+- **`setup`**: store **`net_max`** / **`listen_port`** / **`port`** / **`key`** in register; start **`query`**. Query sends UDP `mac;*;q;` to **`center@nport`** (pool **`server`** or **`agent@heclient.server`**, port default **20002**). Reply `q;*;{ "<netid>": {}, ... }`. Extra **`netid`s** are **`register`**ed (channel **`service`** starts); mapped nets missing from the list are **`unregister`**ed; `{}` stops all. Query repeats on **`keepintval`** until a list arrives.
+- **`register`**: same **`netid`** reuses the mapped object; a new **`netid`** takes a free slot. Incoming configure is compared to the channel cache; unchanged → **`sstart`**; different → save cache and **`sreset`** **`service`**.
+- Pool **`_set`** (heclient **`adjust`** of **`agent@gtog`**) zeros every channel register **`seq`** so the next keep **`s;`** pulls a full table.
 
 **Service phase, role, and net_state**
 
@@ -71,26 +80,36 @@ Each channel **`service`** uses three axes (also returned by **`list`** / **`sta
 
 | Field | Meaning | Values |
 |-------|---------|--------|
-| **`phase`** | Service lifecycle | `0=init`, `1=server_dial`, `2=run` (includes waiting for topology), `3=exit` (legacy value `2=wait_mesh` may still appear until fully collapsed) |
-| **`role`** | Mesh role of this device | `0=none`, `1=master`, `2=branch`, `3=leaf` |
-| **`net_state`** | Whether a usable master exists | `0=unknown`, `1=no_master`, `2=has_master` |
-| **`seq`** | Last applied topology version from coordinator | matches `seq` on `endpoint`/`branch`/`leaf` and on UDP `k;netid;seq;` |
+| **`phase`** | Service lifecycle | `init`, `dial`, `run` (includes waiting for topology), `exit` |
+| **`role`** | Mesh role of this device | `none`, `master`, `branch`, `leaf` |
+| **`net_state`** | Whether a usable master exists | `unknown`, `no_master`, `has_master` |
+| **`seq`** | Last applied topology version | channel register; from `endpoint` / `branch` / `leaf` / `leave` |
+| **`coord_seq`** | Last seq seen on UDP `k;netid;seq;` | coordinator keep |
+| **`delay`** | ICMP RTT to master (ms) | omitted until ICMP delay > 0 |
+| **`coord_delay`** | nport keep RTT (ms) | omitted until coord delay > 0 |
+| **`fails`** | Consecutive ICMP master keep fails | live **`status`** |
+| **`coord_fails`** | Consecutive nport keep fails | live **`status`** |
+| **`nattype`** | Self NAT class from endpoint | `free`, `limit`, `unknown` (unix sends `1`/`2`/`0`; **`_state`** maps to words) |
 
-Phases: **Init** (WireGuard iface) → **ServerDial** (UDP register → `u;` network JSON) → **Run** (UDP `b`/`l` until role+endpoint ready, then keeplive + **`network@frame.online`**) → **Exit**. Peers return only after **`endpoint`** / **`branch`** / **`leaf`**. Outbound **`listen_ip`**: channel **`extern`**, else **`agent@heclient.extern`**, then gateway / iface status; WAN retry via **`agent@heclient.reset`** → **`agent@gtog.reset`**.
+**`agent@net*.status`** / **`state`** return the words above. **`agent@gtog.list`** uses unix **`state`** per live channel (same words); falls back to register numbers if unix is down.
+
+Phases: **Init** (WireGuard iface; leftover **`.endpoint`** is unlinked) → **ServerDial** (UDP Connect → `u;` / `t;`) → **Run** (WaitMesh UDP `b`/`l` up to four times at 10 / 15 / 20 / 30 seconds, 75 second deadline; HE **`endpoint`** sets role, then keeplive + **`network@frame.online`**) → **Exit**. Peers return only after **`endpoint`** / **`branch`** / **`leaf`** / **`leave`**. Outbound **`listen_ip`**: channel **`extern`**, else **`agent@heclient.extern`**, then gateway / iface status; WAN retry via **`agent@heclient.reset`** → **`agent@gtog.reset`**.
 
 **Keepalive (Run)**
 
 | Target | Who | Purpose |
 |--------|-----|---------|
-| UDP `'k'` to **`center@nport`** | **every** online role (master / branch / leaf) | hole + receive `k;netid;seq;` |
-| ICMP to master VPN IP | branch / leaf with master | tunnel quality |
+| UDP `'k'` to **`center@nport`** | **every** online role (master / branch / leaf) | hole + receive `k;netid;seq;`; RTT is **`coord_delay`**, fails are **`coord_fails`** |
+| ICMP to every hub VPN IP | master / branch / leaf | keep spoke tunnels; RTT to the local master is **`delay`**; master fail re-elects among live hubs |
 
-If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`** periods, device sends UDP **`s;netid;local_seq;`** so nport pushes a full **`endpoint`**. Timers clamp as before (`keepintval` ≥ 5, …).
+If local register **`seq`** is not equal to **`coord_seq`** on a keep reply, device sends UDP **`s;netid;local_seq;`** so nport pushes a full **`endpoint`**. Timers clamp as before (`keepintval` ≥ 5, …). Pool **`_set`** zeros every channel **`seq`** so the next keep will **`s;`**.
 
 **Topology APIs** (from coordinator over heclient)
 
-- **`endpoint`**: full replace + optional **`seq`**; program WG; elect role; store **`%s.endpoint`**; unix **`reload`**. Prefer **`relay_port`** for the WG endpoint (with **`relay_ip`**, or `agent@portc` / `agent@heclient` `server` when `relay_ip` is omitted). Center `relay` is only for the master of a mesh with no public hub; a peer with `relay_port` is still treated as a hub even if `nattype` is LIMIT.
-- **`branch`** / **`leaf`**: incremental add/update + optional **`seq`** when **`role != none`**; full **`endpoint`** still required to drop peers.
+- **`endpoint`**: HE writes **`%s.endpoint`** (topology only) and unix **`reload`**. Service only reads the file, copies live ICMP **`fails`/`delay`** onto matching macs, then **`gtog_wg_set`**. Prefer **`relay_port`** for the WG endpoint (with **`relay_ip`**, or `agent@portc` / `agent@heclient` `server` when `relay_ip` is omitted). Hub = FREE or **`relay_port`**. Each device elects a local **master** among reachable hubs (**`pref`**, then smaller **`macid`**; ICMP book is in memory). A leaf puts the mesh CIDR and other spokes' **`extend`** on that master. A hub keeps spoke prefixes on the direct leaf peers.
+- **`branch`**: HE merges one hub (`FREE` or **`relay_port`**) into **`.endpoint`** + optional **`seq`**, then **`reload`**. Requires an existing file
+- **`leaf`**: HE merges one spoke into **`.endpoint`** + optional **`seq`**, then **`reload`**
+- **`leave`**: HE deletes **`macid`** from **`.endpoint`** + optional **`seq`**, then **`reload`**. Full **`endpoint`** remains the lag / `s;` fallback. Service start unlinks leftover **`.endpoint`** so WaitMesh always runs after Connect; **`unregister`** also deletes the file
 - Dual call style: **`agent@gtog.<api>[ netid, … ]`** or **`agent@net*.<api>[ … ]`**.
 
 
@@ -99,8 +118,8 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
 #### Management APIs
 
 + `setup[]` **bring up the gtog pool or one channel service**
-    - On **`agent@gtog`**: apply **`net_max`** / **`port_start`**, map slots that already have config, register them with **`network@frame`**, schedule each **`agent@net*.setup`** on init delay
-    - On **`agent@net*`**: start that channel’s **`service`** when channel **`status`** is **`enable`**
+    - On **`agent@gtog`**: apply **`net_max`** / **`listen_port`** / **`port`** / **`key`**, start **`query`**. Query lists nets of this mac from **`center@nport`**, then **`register`** each **`netid`** so the channel **`service`** starts
+    - On **`agent@net*`**: start that channel’s **`service`** unless channel **`status`** is **`disable`**
     - failed return tfalse
     - succeed return ttrue
     - Scheduled by FPK init (**`manage`**: **`agent@gtog.setup`**)
@@ -112,7 +131,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ```
 
 + `shut[]` **tear down the gtog pool or one channel**
-    - On **`agent@gtog`**: clear object→`netid` map; **`shut`** each present channel; unregister from **`network@frame`**
+    - On **`agent@gtog`**: stop **`query`**; clear object→`netid` map; **`shut`** each present channel; unregister from **`network@frame`**
     - On **`agent@net*`**: offline, stop **`service`**, bring the WireGuard interface down
     - failed return tfalse
     - succeed return ttrue
@@ -123,12 +142,25 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ttrue
     ```
 
++ `query[]` **ask the coordinator which netids this device belongs to**
+    - Only valid on **`agent@gtog`**
+    - UDP `mac;*;q;` until a list arrives; extra **`netid`s** are **`register`**ed; mapped nets missing from the list are **`unregister`**ed
+    - Long-running **`query`** service started by **`setup`**
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    agent@gtog.query
+    ttrue
+    ```
+
 
 #### Query APIs
 
-+ `list[]` **list mapped channels (on agent@gtog) or the endpoint file (on agent@net*)**
++ `list[]` **list mapped channels (on agent@gtog) or the live peer map (on agent@net*)**
     - On **`agent@gtog`**: slots that currently have an object→`netid` entry
-    - On **`agent@net*`**: JSON of **`%s.endpoint`** for that channel (see **`net.md`**)
+    - On **`agent@net*`**: unix live **`rt->endpoint`** (includes ICMP **`delay`** / **`fails`**); file if the service is not in Run
     - failed return NULL
     - succeed return [ json ], channel map or endpoint list
     ```json
@@ -137,12 +169,12 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
         {
             "netid":"network identifier",           // [ string ]
             "netdev":"WireGuard interface name",    // [ string ]
-            "port":"coordinator UDP port",          // [ number ]
             "listen_port":"local WireGuard listen", // [ number ]
-            "role":"mesh role",                     // [ number ], 0=none, 1=master, 2=branch, 3=leaf
-            "net_state":"master presence",          // [ number ], 0=unknown, 1=no_master, 2=has_master
-            "phase":"service lifecycle phase",      // [ number ], 0=init, 1=server_dial, 2=run, 3=exit
+            "role":"mesh role",                     // [ string ]: [ "none","master","branch","leaf" ], words when unix state is used
+            "net_state":"master presence",          // [ string ]: [ "unknown","no_master","has_master" ]
+            "phase":"service lifecycle phase",      // [ string ]: [ "init","dial","run","exit" ]
             "pref":"self preference value"          // [ number ]
+                                                       // unix down: role / net_state / phase fall back to register numbers
         }
         // "...":{ ... }  How many mapped channels show how many properties
     }
@@ -158,9 +190,9 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
             "netdev":"net",
             "port":"20002",
             "listen_port":"10004",
-            "role":"2",
-            "net_state":"2",
-            "phase":"2",
+            "role":"branch",
+            "net_state":"has_master",
+            "phase":"run",
             "pref":"50"
         }
     }
@@ -171,13 +203,13 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
 + `register[ netid, configure ]` **bind a netid to a free or existing channel and start service**
     - netid -------------------- [ string ], network identifier
     - configure ---------------- [ json ], optional, merged into channel cache config (see **`net.md`**)
-    - Keys in **`configure`** overlay the existing cache; omitted keys are kept. Center **`register`** HE may push only **`listen_port`**.
-    - If the channel service is already running with the same **`port`** / **`listen_port`** and merged config is unchanged (or **`configure`** omitted), keep the mesh without restart; a changed config is applied and the service is reset
+    - Keys in **`configure`** overlay the existing cache; omitted keys are kept. Center **`register`** HE typically pushes **`network`**, **`keep*`**, and optional **`listen_port`**.
+    - Incoming configure is compared to the channel cache; same (or **`configure`** omitted) → **`sstart`**; different → save and **`sreset`** **`service`**.
     ```json
     {
         "server":"coordinator address",             // [ string ], optional
         "port":"coordinator UDP port",              // [ number ], optional, default 20002
-        "listen_port":"local WireGuard listen",     // [ number ], optional, default port_start formula
+        "listen_port":"local WireGuard listen",     // [ number ], optional, default listen_port formula
         "netid":"network identify",                 // [ string ], optional, overwritten by argument netid
         "network":"VPN CIDR",                       // [ string ], optional
         "keepintval":"keeplive interval",           // [ number ], optional
@@ -225,11 +257,13 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ttrue
     ```
 
-+ `endpoint[ netid, endpoint list ]` **replace the full endpoint map for a network**
++ `endpoint[ netid, endpoint list ]` **replace the full endpoint map, or read the on-disk file**
     - netid ---------------- [ string ], network identifier
-    - endpoint list -------- [ json ], map keyed by device macid
+    - endpoint list -------- [ json ], omit to return **`%s.endpoint`** (HE topology; no ICMP book)
+    - with a map: replace; without a map: return the file (empty object if missing)
     ```json
     {
+        "seq":"coordinator topology version",       // [ number ], optional; applied to channel register when > 0
         "endpoint mac identify":                    // [ string ]: { json }
         {
             "ip":"public internet ip",              // [ ip address ], live hole
@@ -245,9 +279,10 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
         // "...":{ ... }  How many endpoints show how many properties
     }
     ```
-    - failed return tfalse
-    - succeed return ttrue
-    - Self macid must exist in the map; programs WireGuard; elects **`role`** / **`net_state`**; unix **`reload`**
+    - get (no map): return the on-disk file, or `{}` if missing
+    - set failed return tfalse
+    - set succeed return ttrue
+    - Self macid must exist in the map; HE writes **`.endpoint`** (source of truth); service **`reload`** reads it, programs WireGuard, elects **`role`** / **`net_state`**. Unix down still succeeds if the file was written
 
     Example, push a full endpoint list
     ```shell
@@ -255,7 +290,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ttrue
     ```
 
-+ `branch[ netid, branch information ]` **add or update one FREE (branch) peer**
++ `branch[ netid, branch information ]` **add or update one hub (FREE or relay_port)**
     - netid -------------------- [ string ], network identifier
     - branch information ------- [ json ]
     ```json
@@ -266,7 +301,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
         "relay_port":"center UDP relay",            // [ number ], optional; prefer for WG endpoint
         "relay_ip":"center public IP",              // [ ip address ], optional reserved; omit → portc/heclient server
         "pubkey":"WireGuard public key",            // [ string ]
-        "nattype":"NAT class",                      // [ number ], usually 1 (FREE)
+        "nattype":"NAT class",                      // [ number ], 1=FREE; 2=LIMIT (hub because relay_port)
         "pref":"master preference",                 // [ number ]
         "point":"VPN tunnel ip",                    // [ ip address ]
         "extend":"local networks via this peer"     // [ string ], optional
@@ -274,7 +309,7 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ```
     - failed return tfalse
     - succeed return ttrue
-    - Requires existing **`.endpoint`** and **`role != none`**; may promote peer to master when **`pref`** is higher; does not delete other peers
+    - Requires existing **`.endpoint`**; HE merges the hub then **`reload`**; does not delete other peers
 
     Example, add a branch peer
     ```shell
@@ -297,11 +332,30 @@ If local **`seq`** stays behind coordinator **`seq`** for about **`keepfailed`**
     ```
     - failed return tfalse
     - succeed return ttrue
-    - Requires existing **`.endpoint`** and **`role != none`**; does not re-elect master
+    - Requires existing **`.endpoint`**; HE merges the spoke then **`reload`**; a spoke without **`relay_port`** is not a hub
 
     Example, add a leaf peer
     ```shell
     agent@gtog.leaf[ office-vpn, {"macid":"aabbccddeeff","ip":"5.6.7.8","port":"10004","pubkey":"def...","point":"10.0.1.2","extend":"192.168.2.0/24"} ]
+    ttrue
+    ```
+
++ `leave[ netid, leave information ]` **remove one peer from the mesh**
+    - netid ------------------- [ string ], network identifier
+    - leave information ------- [ json ]
+    ```json
+    {
+        "macid":"device mac identify",              // [ string ]
+        "seq":"coordinator topology version"        // [ number ], optional
+    }
+    ```
+    - failed return tfalse
+    - succeed return ttrue
+    - HE deletes **`macid`** from **`.endpoint`** then **`reload`**; missing file or self-leave is success. Lag still uses full **`endpoint`**
+
+    Example, drop a peer
+    ```shell
+    agent@gtog.leave[ office-vpn, {"macid":"aabbccddeeff","seq":"12"} ]
     ttrue
     ```
 

@@ -141,7 +141,7 @@ talk_t      reg_keys( reg_t r );
 
 
 /* object-string convenience.
- * sput uses reg_attach+put: sys (no '@') attaches RO → put EROFS; use wreg+put to write sys.
+ * sput/sdel use reg_attach+put/del: sys (no '@') attaches RO → EROFS; use wreg to write sys.
  * capacity<=0 → same default slack as reg_put; sput_int/sput_boole use sizeof(type). */
 void       *reg_sput( const char *object, const char *name, const void *data, int size, int capacity );
 void       *reg_sput_int( const char *object, const char *name, int v );
@@ -152,6 +152,7 @@ const void *reg_sget( const char *object, const char *name, int *size_out );
 int         reg_sget_int( const char *object, const char *name, int def );
 const char *reg_sget_str( const char *object, const char *name );
 boole       reg_sget_boole( const char *object, const char *name, boole def );
+boole       reg_sdel( const char *object, const char *name );
 /* obj_t convenience (NULL obj → default object) */
 void       *reg_oput( obj_t this, const char *name, const void *data, int size, int capacity );
 void       *reg_oput_int( obj_t this, const char *name, int v );
@@ -162,6 +163,7 @@ const void *reg_oget( obj_t this, const char *name, int *size_out );
 int         reg_oget_int( obj_t this, const char *name, int def );
 const char *reg_oget_str( obj_t this, const char *name );
 boole       reg_oget_boole( obj_t this, const char *name, boole def );
+boole       reg_odel( obj_t this, const char *name );
 /* s/o lock convenience: leave an attach ref so fd (and fcntl lock) stays alive;
  * pair with matching unlock. Success → value pointer; fail → NULL. */
 void       *reg_slock( const char *object, const char *name );

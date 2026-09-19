@@ -151,4 +151,4 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 - Related self-service APIs: `center@api.user_profile`, `user_modify`, `user_passwd`
 - `center@userwui` config: `auth_object=center@ctrl`, `auth_api=user_match`
 - On-disk layout: `userdir/README.md`, `userdir/config.md`
-- Mesh relay listen cap: `<user>/config` `relay_max` (this component). Wish field `relay` stays on the net file and is only for a NAT master (`userdir/net/mynet.md`)
+- Mesh relay listen cap: `<user>/config` `relay_max` (this component). Wish field `relay` stays on the net file and makes a NAT member a hub (`userdir/net/mynet.md`)

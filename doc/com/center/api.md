@@ -799,23 +799,24 @@ the API can manage port proxy
 
 **Mesh network**
 
-Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.md`). Runtime UDP / push is **`center@nport`**. After add/delete/knock, api calls nport knock so live mesh converges (one member at a time; new joiner full `endpoint`, peers small `branch`/`leaf`).
+Durable files under `{device_path}/<user>/net/<netid>` (see `userdir/net/mynet.md`). Runtime UDP / push is **`center@nport`**. After add/delete/knock, api writes **disk** `seq` then calls nport knock (**live** `seq` may `++`). Add one member: `endpoint_add` → `endpoint_knock` → HE `register`. Online peers get `k;seq` (they `s;` when it does not match the applied register). WaitMesh then pushes `endpoint` / `branch` / `leaf`. There is no HE `leave`. `seq` is an alignment token (disk / live / device each hold a copy); see `center@nport` Concepts.
 
-**`relay` is only for the master of a mesh that has no public-address hub.** Do not turn it on for ordinary endpoints. A NAT master can still be reached if you set that master's `relay` to `auto` or `enable`. New members default to **`disable`** (omit / empty is disable). The center opens a public UDP only while that device is online. The port is not saved in the net file. Dump `ip`/`port` stay the hole (or static override); the borrowed UDP is `relay_port`. This is not a user `udpmap`.
+**`relay` makes a NAT member a hub** (same role as FREE). Ordinary spokes stay `disable`. New members default to **`disable`**. The port is not saved in the net file. Status `ip`/`port` stay the hole (or static override); the borrowed UDP is `relay_port`. This is not a user `udpmap`. Offline / hole reset **keep** the remembered port. Delete / disable / no longer want unmaps **that remembered port + mac** only.
 
-How many of those listens a username may hold at once is `<user>/config` **`relay_max`** (admin `center@ctrl` only). Omit the key = unlimited. `0` = none (even `enable` stays a leaf). A number `N` = at most N live listens (same mac + hand counts as one). Over the cap, nport does not `relay_map`. Shrinking the cap does not drop listens already up.
+How many of those listens a username may hold at once is `<user>/config` **`relay_max`** (admin `center@ctrl` only). Omit the key = unlimited. `0` = none (even `enable` stays a leaf). A number `N` = at most N remembered borrows across that user's meshes (nport `nport_relay_limit`). Over the cap, nport does not `relay_map`. Shrinking the cap does not drop listens already up.
 
 
-+ `network_add[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout] ]` **add a network**
++ `network_add[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout], [status] ]` **add a network**
     - user --------------- [ string ], username
     - netid -------------- [ string ], network identify; basename only (no `/`); reserved names rejected: gtog, cmd, net, agent, local, portc, heclient
     - network------------- [ string ], VPN CIDR, default 172.16.0.0/24
     - keeplive interval--- [ number ], endpoint keeplive to server interval, default 15, the unit is second
     - keeplive failed----- [ number ], endpoint keeplive failed times, default 4
     - keeplive timeout---- [ number ], endpoint keeplive timeout, default 15, the unit is second
+    - status ------------- [ string ], optional, `enable` / `disable`; default `enable` when omitted
     - create only; existing netid (this user or another) returns tfalse (`EEXIST`)
     - to change CIDR or keepalive after create, use `network_modify`
-    - bumps topology `seq` and knocks `center@nport`
+    - writes disk `seq` = `1` then knocks `center@nport` (live loads that number)
     - failed return tfalse
     - succeed return ttrue
 
@@ -825,14 +826,15 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     ttrue
     ```
 
-+ `network_modify[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout] ]` **change an existing network**
++ `network_modify[ user, netid, [network], [keeplive interval], [keeplive failed], [keeplive timeout], [status] ]` **change an existing network**
     - user --------------- [ string ], username
     - netid -------------- [ string ], network identify; basename only (no `/`)
     - omitted parameters leave that field unchanged
-    - explicit empty string also leaves that field unchanged (CIDR / keepalive are not cleared)
+    - explicit empty string also leaves that field unchanged (CIDR / keepalive / status are not cleared)
+    - status ------------- [ string ], optional, `enable` / `disable`
     - does not change `endpoint` membership or reallocate `point`
     - missing network returns tfalse (`ENOENT`)
-    - when at least one field changes: bumps topology `seq` and knocks `center@nport`
+    - when at least one field changes: disk `seq` `+1` then knocks `center@nport` (live `+1` if CIDR / keepalive / disable / members changed)
     - failed return tfalse
     - succeed return ttrue
 
@@ -852,43 +854,59 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - netid --------- [ string ], network identify; basename only (no `/`)
     - failed return tfalse
     - succeed return ttrue
-    - Releases any mesh relay UDP borrowed for members of this network
+    - Unmaps each member's **remembered** relay port (port+mac). After nport restart the port is forgotten until WaitMesh; delete in that window does not unmap
 
-+ `network_list[ [user] ]` **list networks**
-    - user ---------- [ string ], optional; omit to list all users
-    - error return NULL   
-    - succeed return json to describes the list
-    - with user: keyed by network identify
-    - without user: keyed by username, then network identify
++ `network_list[ user, [netid] ]` **list durable network configure from disk**
+    - user ---------- [ string ], required
+    - netid --------- [ string ], optional; basename only (no `/`)
+    - error return NULL
+    - succeed return json
+    - No user: `EINVAL`
+    - No netid: every net file under that user, keyed by netid (`endpoint` omitted)
+    - With netid: that net file without `endpoint`. Missing file: NULL (`ENOENT`)
+    - Members: `endpoint_list`. Live net / hole: `network_status` / `endpoint_status`
     ```json
-    // with user
     {
         "network identify":
         {
             "status": "enable or disable",
-            "seq": "topology version",
+            "seq": "disk seq (api write; nport live may differ until reload)",
             "network":"network address",
             "keepintval":"endpoint keeplive to server interval",
             "keepfailed":"endpoint keeplive failed times",
             "keeptimeout":"endpoint keeplive timeout"
         }
     }
+    ```
 
-    // without user
-    {
-        "username":
-        {
-            "network identify":
-            {
-                "status": "enable or disable",
-                "seq": "topology version",
-                "network":"network address",
-                "keepintval":"endpoint keeplive to server interval",
-                "keepfailed":"endpoint keeplive failed times",
-                "keeptimeout":"endpoint keeplive timeout"
-            }
-        }
-    }
+    Example, list all nets of ashyelf
+    ```shell
+    center@api.network_list[ ashyelf ]
+    ```
+
+    Example, one net file
+    ```shell
+    center@api.network_list[ ashyelf, mynet ]
+    ```
+
++ `network_status[ user, [netid] ]` **live network status from center@nport.status**
+    - user ---------- [ string ], required
+    - netid --------- [ string ], optional; basename only (no `/`)
+    - error return NULL
+    - succeed return json
+    - Same parameter rules as `network_list`
+    - No netid: that user’s loaded nets only (`user` / live `seq` / `status` per netid)
+    - With netid: that net’s `{ user, seq, status }` only (`seq` is nport memory). Wrong user or not loaded: NULL (`ENOENT`)
+    - Member run state: `endpoint_status`
+
+    Example, live nets of ashyelf
+    ```shell
+    center@api.network_status[ ashyelf ]
+    ```
+
+    Example, one net live status
+    ```shell
+    center@api.network_status[ ashyelf, mynet ]
     ```
 
 + `network_knock[ user, netid ]` **reload network into center@nport and sync online members one by one**
@@ -911,7 +929,7 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - netid -------------- [ string ], network identify
     - mac identify ------- [ string ], mac identify for gateway    
     - point -------------- [ ip address ], optional VPN address; auto-allocated in network CIDR when omitted
-    - extend ------------- [ network address ], optional, local network of endpoint, 192.168.0.0/24
+    - extend ------------- [ network address ], optional, comma-separated CIDRs behind this endpoint
     - pref --------------- [ number ], optional, branch priority among reachable hubs
     - ip ----------------- [ ip address ], optional static public IP override
     - port --------------- [ number ], optional static public port override
@@ -919,12 +937,12 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - relay -------------- [ string ], optional, `auto` / `enable` / `disable`; default `disable` when omitted
     - failed return tfalse
     - succeed return ttrue
-    - For the NAT master of a mesh with no public hub only; ordinary endpoints stay `disable`
+    - `relay` is for a NAT hub; ordinary spokes stay `disable`
     - Does not pick a public port. `disable` never opens a center UDP; `auto` opens one when the device is online and behind NAT; `enable` always does
     - Opening still needs a free slot under that user's `relay_max` (see Mesh intro)
-    - Live hole / relay `ip`/`port` appear in dump APIs only while the device is online
+    - Live hole / `relay_port` come from `endpoint_status`. Offline keeps a remembered relay until delete / disable / no longer want
     - Static `ip`/`port` overrides stay admin hole overrides; they are not overwritten with the borrowed port
-    - To change `relay` later, edit the net file (or delete and add again) then `endpoint_knock`
+    - Same mac already in the net is an overwrite (upsert), then `endpoint_knock`
 
     Example, add endpoint with explicit point
     ```shell
@@ -953,7 +971,7 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - mac identify -- [ string ], mac identify for gateway    
     - failed return tfalse
     - succeed return ttrue
-    - Removes durable membership, returns any mesh relay UDP, and knocks nport so neighbors drop the peer
+    - Removes durable membership, unmaps the remembered relay port (port+mac), HE `unregister`, then `k;seq` so online peers `s;` when it does not match
 
     Example
     ```shell
@@ -966,7 +984,7 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - netid ---------- [ string ], network identify
     - error return NULL   
     - succeed return json (durable file fields; may enrich `comment`/`name`/`type` from device files)
-    - online hole/pubkey via `center@api.endpoint_dump` / `center@api.network_dump`
+    - Live hole / online: `endpoint_status`. Full memory: `center@nport.endpoint_dump`
     ```json
     {
         "mac identify":
@@ -994,72 +1012,51 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     }
     ```  
 
++ `endpoint_status[ user, netid, [macid] ]` **live endpoint status from center@nport.endpoint_status**
+    - user ---------- [ string ], required
+    - netid --------- [ string ], required; basename only (no `/`)
+    - macid --------- [ string ], optional, 12-hex or `xx:xx:xx:xx:xx:xx`
+    - error return NULL
+    - succeed return json
+    - No macid: that net’s members, keyed by mac (`online` / `stale` / hole or static `ip`·`port` / `listen_port` / `nattype` 1=FREE 2=LIMIT / `relay`·`relay_port`)
+    - With macid: that member’s slim object. Wrong user, net not loaded, or mac missing: NULL (`ENOENT`)
+
+    Example, all members of mynet
+    ```shell
+    center@api.endpoint_status[ ashyelf, mynet ]
+    ```
+
+    Example, one member
+    ```shell
+    center@api.endpoint_status[ ashyelf, mynet, 00037f120000 ]
+    ```
+
++ `network_endpoint[ user, netid ]` **same neighbor table nport pushes as `agent@gtog.endpoint`**
+    - user ---------- [ string ], required
+    - netid --------- [ string ], required; basename only (no `/`)
+    - error return NULL
+    - succeed return json (`seq` + online, not-stale peers: `point` / `extend` / `pubkey` / `nattype` / `ip`·`port` / `pref` / `relay_port`)
+    - Stats the user’s net file then `nport_call` `network_endpoint`. Wrong user or file missing: NULL (`ENOENT`). Net not loaded: NULL (`ENOENT`)
+    - Every device that receives HE `endpoint` at this moment gets this same object
+
+    Example
+    ```shell
+    center@api.network_endpoint[ ashyelf, mynet ]
+    ```
+
 + `endpoint_knock[ user, netid, macid ]` **reload one endpoint into center@nport and sync that device**
     - user ---------- [ string ], username
     - netid --------- [ string ], network identify
     - mac identify -- [ string ], mac identify for gateway    
     - failed return tfalse
     - succeed return ttrue
-    - May push `register` + full `endpoint` when the gateway is TLS-online
+    - Missing on disk: `unregister` if it was in memory. Else `register` (CIDR / keep / listen if set) and `k;seq` to online peers. Returns a held relay if the wish no longer wants one
 
     Example
     ```shell
     center@api.endpoint_knock[ ashyelf, mynet, 00037f120000 ]
     ttrue
     ```  
-
-+ `network_dump[ user, netid ]` **dump durable topology merged with live hole / relay / pubkey / online**
-    - user ---------- [ string ], username
-    - netid --------- [ string ], network identify
-    - error return NULL
-    - succeed return json from `center@nport` runtime
-    ```json
-    {
-        "seq": "topology version",
-        "status": "enable or disable",
-        "network": "VPN CIDR",
-        "keepintval": "keeplive interval",
-        "keepfailed": "keeplive fail count",
-        "keeptimeout": "keeplive timeout",
-        "endpoint":
-        {
-            "00037f120000":
-            {
-                "point": "172.16.0.1",
-                "extend": "192.168.8.0/24",
-                "pref": "100",
-                "relay": "auto / enable / disable from the net file",
-                "pubkey": "WireGuard pubkey when registered",
-                "nattype": "1=FREE, 2=LIMIT (NAT probe only)",
-                "ip": "live hole or static public IP override",
-                "port": "live hole or static public port override",
-                "relay_port": "borrowed center UDP when mapped; omitted if none",
-                "listen_port": "device listen when set",
-                "online": "true or false",
-                "acked": "last hh-acked seq"
-            }
-        }
-    }
-    ```
-
-    Example
-    ```shell
-    center@api.network_dump[ ashyelf, mynet ]
-    ```
-
-+ `endpoint_dump[ user, netid, macid ]` **dump one endpoint durable + live hole / relay fields**
-    - user ---------- [ string ], username
-    - netid --------- [ string ], network identify
-    - mac identify -- [ string ], mac identify for gateway
-    - error return NULL
-    - succeed return json (same peer fields as above, plus network `seq`)
-
-    Example
-    ```shell
-    center@api.endpoint_dump[ ashyelf, mynet, 00037f120000 ]
-    ```
-
-
 
 **Firmware**
 

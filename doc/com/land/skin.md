@@ -1597,6 +1597,7 @@ void       *reg_sput_str(const char *object, const char *name, const char *s);
 const char *reg_sget_str(const char *object, const char *name);
 void       *reg_sput_boole(const char *object, const char *name, boole v);
 boole       reg_sget_boole(const char *object, const char *name, boole def);
+boole       reg_sdel(const char *object, const char *name);
 
 void       *reg_oput(obj_t this, const char *name, const void *data, int size, int capacity);
 const void *reg_oget(obj_t this, const char *name, int *size_out);
@@ -1607,9 +1608,10 @@ void       *reg_oput_str(obj_t this, const char *name, const char *s);
 const char *reg_oget_str(obj_t this, const char *name);
 void       *reg_oput_boole(obj_t this, const char *name, boole v);
 boole       reg_oget_boole(obj_t this, const char *name, boole def);
+boole       reg_odel(obj_t this, const char *name);
 ```
 
-**Description:** `reg_s*` attach by object string; `reg_o*` use `obj_name(this)` (`NULL` → default object). `reg_sput` / `reg_oput` take `capacity` like `reg_put` (`<=0` → default slack). Typed `*_int` / `*_boole` use `sizeof(type)`; `*_str` uses default slack. Sys (no `@`) attach is RO — `sput`/`oput` → `EROFS`; write with `wreg_attach` + `reg_put*`.
+**Description:** `reg_s*` attach by object string; `reg_o*` use `obj_name(this)` (`NULL` → default object). `reg_sput` / `reg_oput` take `capacity` like `reg_put` (`<=0` → default slack). Typed `*_int` / `*_boole` use `sizeof(type)`; `*_str` uses default slack. `reg_sdel` / `reg_odel` delete a key (`reg_del`). Sys (no `@`) attach is RO — `sput`/`oput`/`sdel`/`odel` → `EROFS`; write with `wreg_attach` + `reg_put*` / `reg_del`.
 ---
 
 ## 9. Structured mmap talk API (mxtalk.h)

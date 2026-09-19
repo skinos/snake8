@@ -226,7 +226,7 @@ ttrue
 + `adjust[ adjust configuration ]` **apply configuration to other components via `sset`**
     - adjust configuration --------- [ json ], map of object name → configure object
     - For each entry: enable cache store, then **`sset(object, cfg)`** so the target’s **`_set`** saves config and applies its restart policy (**`shut`/`setup`** or channel **`sreset`**)
-    - Prefer **`agent@portc`** and channel **`agent@net*`**; pool **`agent@gtog`** keys are mainly **`net_max`** / **`port_start`**
+    - Prefer **`agent@portc`** and channel **`agent@net*`**; pool **`agent@gtog`** keys are **`status`** / **`net_max`** / **`listen_port`** / **`port`** / **`key`**. Setting **`agent@gtog`** zeros each channel **`seq`** so the next keep requests a full **`endpoint`**.
     - failed return tfalse (any **`sset`** failed)
     - succeed return ttrue
     ```json
