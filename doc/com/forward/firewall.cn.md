@@ -15,6 +15,7 @@
         "telnet_access":"TELNET 服务器访问",      // [ "disable", "enable" ]
         "ssh_access":"SSH 服务器访问",            // [ "disable", "enable" ]
         "wui_access":"WEB 服务器访问",            // [ "disable", "enable" ]
+        "gtog_access":"自组网访问",               // [ "disable", "enable" ], enable 时放行 UDP 10004-10014
 
         "nat_through":"forward@nat 中 NAT 规则设置自动透传",    // [ "disable", "enable" ]
         "icmp_through":"ICMP 协议透传",                            // [ "disable", "enable" ]

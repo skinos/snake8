@@ -5,7 +5,7 @@
 Manage inbound firewall rules for external **ifname** (internet). Prefer the **Component API** below instead of editing raw configuration when possible.
 
 - per-ifname firewall with default action (drop/accept)
-- built-in access controls for ICMP, ESP/AH, telnet, SSH, web management
+- built-in access controls for ICMP, ESP/AH, telnet, SSH, web management, and mesh network (UDP 10004-10014)
 - NAT passthrough option to auto-allow `forward@nat` rules
 - skipped in **default** / **parasite** network modes
 
@@ -26,6 +26,7 @@ Manage inbound firewall rules for external **ifname** (internet). Prefer the **C
         "telnet_access":"TELNET Server access",      // [ "disable", "enable" ]
         "ssh_access":"SSH Server access",            // [ "disable", "enable" ]
         "wui_access":"WEB Server access",            // [ "disable", "enable" ]
+        "gtog_access":"mesh network access",         // [ "disable", "enable" ], UDP 10004-10014 when enable
 
         "nat_through":"NAT rule passthrough",                          // [ "disable", "enable" ]
         "icmp_through":"ICMP protocol passthrough",                    // [ "disable", "enable" ]
