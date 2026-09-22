@@ -4,7 +4,8 @@
 128	prelocal
 255	local
 254	main
-252	dns
+251	dns
+252	vpn
 253	default
 0	unspec
 1	ifname@lte

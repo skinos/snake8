@@ -49,7 +49,6 @@ Each **`agent@net`**, **`agent@net2`**, … is one WireGuard mesh channel implem
     "dns2":"secondary DNS server",                              // [ ip address ], optional
     "domain":"DNS search domain",                               // [ string ], optional
 
-    "metric":"route metric",                                    // [ number ], optional
     "defaultroute":"install default route via mesh",            // [ "disable","enable" ]
     "route_table":                                              // [ string ]: { json }, used when defaultroute is not enable
     {

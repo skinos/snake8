@@ -20,6 +20,8 @@ Manage policy based routing (`ip rule`). Prefer the **Component API** below inst
         "pref":"rule's priority",                                      // [ number ], range of 0-4294967295, The smaller, the higher
                                                                                 // 0 for local table priority
                                                                                 // 32766 for main table priority
+                                                                                // 36000 for dns table priority
+                                                                                // 37000 for vpn table priority
                                                                                 // 50000 for default table priority
                                                                                 // default is 40000
 
@@ -36,12 +38,14 @@ Manage policy based routing (`ip rule`). Prefer the **Component API** below inst
         "dstmask":"select the packet use destination mask",            // [ netmask ], necessary when "dst" be network
 
         "tid":"which route table to go to"                             // [ number ], range of 0-255
-                                                                                // 0 for local table
+                                                                                // 0 for unspec
+                                                                                // 251 for dns table
+                                                                                // 252 for vpn table
                                                                                 // 253 for default table
                                                                                 // 254 for main table
                                                                                 // 255 for local table
                                                                                 // Less than 100 is reserved for the system
-                                                                                // You are advised to use more than 100 for user-defined rules(And avoid 253,254,255)
+                                                                                // You are advised to use more than 100 for user-defined rules(And avoid 251,252,253,254,255)
     }
     // "...":{ ... }  How many rule show how many properties
 }
@@ -232,6 +236,8 @@ ttrue
     {
         "1":"1",
         "2":"2",
+        "251":"dns",
+        "252":"vpn",
         "253":"default",
         "254":"main",
         "255":"local"

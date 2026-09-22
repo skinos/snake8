@@ -564,16 +564,17 @@ boole lsmod( const char *module );
 #define LOCAL_RULE_PREF       34800
 #define FORWARD_RULE_PREF     34900
 // dns table
-#define DNS_TABLE_ID          252
-#define DNS_TABLE_NAME        "252"
+#define DNS_TABLE_ID          251
+#define DNS_TABLE_NAME        "dns"
 #define DNS_TABLE_PREF        36000
+// vpn table
+#define VPN_TABLE_ID          252
+#define VPN_TABLE_NAME        "vpn"
+#define VPN_TABLE_PREF        37000
 // default table
 #define DEFAULT_TABLE_NAME    "default"
 #define DEFAULT_TABLE_ID      253
 #define DEFAULT_TABLE_PREF    50000
-// metric
-#define EXTERN_METRIC         "10"
-#define VPN_METRIC            "5"
 /**
  * @brief calculate the subnet address from IP and netmask
  * @param[in] ip IP address string (e.g., "192.168.1.100")
@@ -677,6 +678,7 @@ int          routes_info( int tid, const char *destname, const char *mask, const
  * @return rule exist or not
  *		@retval true for exist
  *		@retval false for not exist
+ * @note lookup order matches policy: main, then VPN_TABLE, then DEFAULT_TABLE
  */
 boole        outer_info( char *gateway, char *netdev );
 /**
