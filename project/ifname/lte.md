@@ -109,7 +109,6 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // IPv4
     "tid":"table identify number",            // [ number ], exclusive route table ID, only for multiple WAN
-    "metric":"default route metric",          // [ number ]
     "mode":"IPV4 address mode",               // [ "dhcpc", "static", "ppp" ]
                                                    // omit: dhcpc when the modem register na is set, else ppp
                                                    // "dhcpc" for DHCP client

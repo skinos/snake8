@@ -66,7 +66,6 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     "masq":"NAT masquerade",                                   // [ "disable", "enable" ]
     "defaultroute":"set as default route",                     // [ "disable", "enable" ]
     "mtu":"MTU override",                                      // [ number ], optional, overrides ppp.mtu for route clamping
-    "metric":"route metric",                                   // [ number ], optional, route metric for this interface
     "route_table":                             // custom route rules, valid when defaultroute is "disable"
     {
         "route rule name":                     // [ string ]

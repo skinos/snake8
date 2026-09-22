@@ -45,7 +45,6 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     // Routing
     "masq":"NAT masquerade",                                   // [ "disable", "enable" ]
     "defaultroute":"set as default route",                     // [ "disable", "enable" ]
-    "metric":"route metric",                                   // [ number ], optional
     "route_table":                             // custom route rules, valid when defaultroute is "disable"
     {
         "route rule name":                     // [ string ]

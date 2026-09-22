@@ -50,7 +50,6 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
 
     // IPv4
     "tid":"table identify number",                               // [ number ], exclusive route table ID, only for multiple WAN
-    "metric":"default route metric",                             // [ number ]
     "mode":"IPV4 address mode",                                  // [ "dhcpc", "static", "pppoec" ]
                                                                       // "dhcpc" for DHCP client
                                                                       // "static" for manual setting

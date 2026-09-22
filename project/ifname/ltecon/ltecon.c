@@ -1751,12 +1751,6 @@ boole_t _online( obj_t this, param_t param )
 	{
 		return tfalse;
 	}
-	/* get the metric */
-	i = json_number( cfg, "metric" );
-	if ( i > 0 )
-	{
-		json_set_number( v, "metric", i );
-	}
 	/* get mode */
 	mode = reg_string( this, "mode" );
 	/* get gateway */
@@ -1877,7 +1871,7 @@ boole_t _online( obj_t this, param_t param )
 	}
 	/* tid route table init */
 	tid = reg_int( this, "tid" );
-	if ( tid != 0 )
+	if ( tid > 0 )
 	{
 		routes_ifname( tid, v );
 	}
