@@ -6,6 +6,7 @@ Accept gateway SSL connections, forward HE commands, and host HTTP `/auth` and `
 
 - Business management HE APIs moved to **`center@api`** (see `api.md`)
 - User/device database directory is still owned here (`device_path`)
+- Register publishes `device_path` and `talk_timeout` (seconds heport waits for a device ACK; nport uses it for `talk_hh_submit`)
 - Mesh networking is no longer handled by heport (to be redesigned in a separate program)
 
 
@@ -20,7 +21,7 @@ Accept gateway SSL connections, forward HE commands, and host HTTP `/auth` and `
     "port":"tcp port for gateway connect in ssl",         // [ number ], 1 to 65535
     "api_port":"http port for connect to control",        // [ number ], 1 to 65535
 
-    "talk_timeout":"timeout to disconnect",               // [ number ], The unit is seconds
+    "talk_timeout":"idle disconnect and HE ACK wait",     // [ number ], seconds; also published on register
     "key_lifetime":"auth key lifetime for http access"    // [ number ], The unit is seconds
 }
 ```   

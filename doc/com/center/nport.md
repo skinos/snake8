@@ -8,6 +8,7 @@ UDP coordinator for gateway-to-gateway mesh (register, NAT probe, keeplive, topo
 - Durable topology lives under heport `device_path` as `<user>/net/<netid>` (see `userdir/net/mynet.md`); those keys are **not** part of `center@nport` config
 - Neighbor tables are pushed over **`center@heport`** TLS via `talk_hh_submit` → `agent@gtog.register` / `unregister` / `endpoint` / `branch` / `leaf`
     > there is no HE `leave`; drop a member with `unregister` plus `seq` so peers `s;` when their applied `seq` does not match
+- One network **temporarily supports at most 341 endpoints**. `agent@gtog.endpoint` must fit one unix datagram (`JSON_LINE_MAX` 65535). Raising that needs a redesign of the unix-domain path (nport → `heport.unix`)
 - One **`seq`** per network: alignment token for the neighbor table (not greater/less). See **Concepts**. Carried on HE pushes and on `k;netid;seq;`
     > WaitMesh join does not bump `seq`
 
@@ -16,13 +17,14 @@ UDP coordinator for gateway-to-gateway mesh (register, NAT probe, keeplive, topo
 
 - **UDP**: hole listen + NAT test socket; device uses `simple_encode` outbound; server replies in plain text
 - **TLS push**: nport → unix `heport.unix` → forward tid HE → device; submit is fire-and-forget
+    > `talk_hh_submit` timeout is heport register `talk_timeout` (one try); pport unix submit stays 3s / one try
 - **Hot-plug**: WaitMesh joiner gets full `endpoint`; already-online peers get `branch` / `leaf` for that joiner; a peer whose applied `seq` ≠ live `seq` sends `s;` for full resync
 - **Relay**: `center@pport.relay_map` / `relay_unmap` over unix (`talk_pport_submit`); at service start `pport_call` `relay_clear` once (pport has no mesh netid)
 
 
 ### Dependencies
 
-- Requires `center@heport` so `device_path` is published and unix control / hh forward work
+- Requires `center@heport` so `device_path` and `talk_timeout` are published and unix control / hh forward work
 - Mesh relay listen needs `center@pport`
 - Device must run `agent@heclient` + `agent@gtog`
 
@@ -111,6 +113,12 @@ Connect stores hole and pubkey only. Online starts at `b` / `l`.
 - Each other online peer (keeplive not stale): joiner is a hub (`FREE` or `relay_port`) → `branch`; else `leaf`. A leaf with no `extend` is sent only to hubs
 - Delete member / delete net / net just disabled: HE `unregister` (and unmap the **remembered** relay port). No `leave`. Caller bumps `seq`; online peers get `k;seq` and `s;` when it does not match
 - Fail / lag: full `endpoint` to that mac only (`s;`)
+
+**Endpoint count (unix datagram)**
+
+`talk_hh_submit` is one unix datagram: `xxxxxxxxxxxx-` + HE JSON, `JSON_LINE_MAX` **65535** (including NUL). A full `agent@gtog.endpoint` (`seq` plus every online peer from `nport_peer_json`) must fit in that packet. Extra peers are truncated and never leave nport.
+
+With `point` / `pubkey` / `nattype` / `ip` / `port` / `pref` plus `extend` and `relay_port` (the largest usual peer), about **341** neighbors fit. **Each network temporarily supports at most 341 endpoints.** To support more, redesign the unix-domain communication (nport → `heport.unix`); do not only raise a counter. Peers without `extend` / `relay_port` can squeeze more into 65535 (~430–450), but 341 is the current supported max.
 
 **seq**
 
@@ -207,6 +215,7 @@ Connect stores hole and pubkey only. Online starts at `b` / `l`.
     - succeed return [ json ]
     - Snapshot of what every recipient gets on HE `endpoint` / `s;` / WaitMesh joiner table: `seq` plus each **online and not stale** peer via `nport_peer_json` (`point` / `extend` / `pubkey` / `nattype` / hole or static `ip`·`port` / `pref` / `relay_port`)
     - All recipients get this same object. Offline and stale peers are omitted (they are not pushed)
+    - Must fit one unix datagram (65535). One network **temporarily supports at most 341 endpoints**; more needs a redesign of the unix-domain path
     - Missing netid returns NULL (`ENOENT`)
     - Not `endpoint_status` (that is the operator slim view of every member)
 

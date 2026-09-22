@@ -55,8 +55,8 @@ extern int pport_static_start;    // 25000(TCP)
  *   tpanic           Local/call failure, wait miss, or libevent_hh_cancel() (see errno).
  *
  *   errno (when ret is tfalse/terror/tpanic; 0 means peer gave no code):
- *   EWOULDBLOCK /    No peer reply in time (sync: udp2talk wait; async: ack timer
- *   EAGAIN /         exhausted after retries). Same meaning on both paths.
+ *   EWOULDBLOCK /    No peer reply in time (sync: udp2talk wait; async: timeout_sec
+ *   EAGAIN /         with no reply after max_tries). Same meaning on both paths.
  *   EINPROGRESS
  *   ECANCELED        Async only: libevent_hh_cancel() (local abort, not peer fail).
  *   EINVAL           Bad args or bad talk to serialize.
@@ -73,8 +73,12 @@ extern int pport_static_start;    // 25000(TCP)
  *
  * Async submit only:
  *   Non-NULL session = in flight; cb runs once then session is destroyed.
- *   NULL session     = immediate reject (bad args / no heport / cannot arm); cb not called.
- *   After max_tries: wait miss → cb(tpanic) + EWOULDBLOCK; otherwise cb(last peer/local fail code).
+ *   NULL session     = immediate reject (bad args / no unix / hard send fail); cb not called.
+ *   timeout_sec      = deadline per no-reply attempt (covers EV_WRITE send wait + ACK).
+ *   max_tries        = how many times we may miss a complete reply (not send EAGAIN).
+ *   send             = event-driven (EAGAIN → EV_WRITE on the same fd until timeout).
+ *   A complete peer reply (ok or tfalse/terror/tpanic) settles; no extra tries.
+ *   After max_tries wait misses → cb(tpanic) + EWOULDBLOCK.
  *   cancel() → cb(tpanic) + ECANCELED.
  */
 
@@ -121,7 +125,7 @@ typedef struct libevent_hh_struct *libevent_hh_t;
 /**
  * Submit talk/JSON HE on event_base (non-blocking). Copies he; caller may talk_free(he) after return.
  * @return in-flight session, or NULL if rejected immediately (cb not called)
- * @note Local unix path heport.unix-<pid>-<fd>. Retries with a new fd up to max_tries.
+ * @note Local unix path heport.unix-<pid>-<fd>. send uses EV_WRITE; max_tries is no-reply only.
  */
 libevent_hh_t talk_hh_submit( struct event_base *base, const char *macid, talk_t he, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
 /**
@@ -146,6 +150,7 @@ talk_t pport_call( const char *cmd, talk_t v, int timeout );
 /**
  * Submit pport control on event_base (non-blocking). Same unix JSON as pport_call.
  * Takes ownership of v. Session is libevent_hh_t; cancel with talk_pport_cancel.
+ * Same send/max_tries as talk_hh_submit (EV_WRITE until timeout_sec; max_tries is no-reply only).
  * @return in-flight session, or NULL if rejected immediately (cb not called; v freed)
  */
 libevent_hh_t talk_pport_submit( struct event_base *base, const char *cmd, talk_t v, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );
@@ -167,6 +172,7 @@ talk_t nport_call( const char *cmd, talk_t v, int timeout );
 /**
  * Submit nport control on event_base (non-blocking). Same unix JSON as nport_call.
  * Takes ownership of v. Session is libevent_hh_t; cancel with talk_nport_cancel.
+ * Same send/max_tries as talk_hh_submit (EV_WRITE until timeout_sec; max_tries is no-reply only).
  * @return in-flight session, or NULL if rejected immediately (cb not called; v freed)
  */
 libevent_hh_t talk_nport_submit( struct event_base *base, const char *cmd, talk_t v, int timeout_sec, int max_tries, libevent_hh_done_t cb, void *arg );

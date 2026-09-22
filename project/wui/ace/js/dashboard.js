@@ -307,7 +307,7 @@ function updateSignalLayout() {
     var win_size = $(window).width() < 700;
     var change_style = win_size ? "normal" : "nowrap";
 
-    $("[id$='_rssi4_head'], [id$='_rssi5_head'], [id$='_rsrq4_head'], [id$='_rsrq5_head']").css({
+    $("[id$='_rssi4_head'], [id$='_rssi5_head'], [id$='_rsrq4_head'], [id$='_rsrq5_head'] , [id$='_network_head']").css({
         "white-space": change_style
     });
 
