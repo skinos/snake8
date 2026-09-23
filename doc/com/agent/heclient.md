@@ -3,7 +3,7 @@
 ### Overview
 
 Connect the device to a remote Heport service over TLS for registration, status reporting, periodic heartbeats, and remote HE command execution.
-The service uses a line-oriented Heport protocol (not MQTT). Related agent components such as **`agent@portc`**, **`agent@logc`**, and **`agent@gtog`** can be started or reconfigured through **`adjust`**.
+The service uses a line-oriented Heport protocol (not MQTT). Related agent components such as **`agent@portc`** and **`agent@gtog`** can be started or reconfigured through **`adjust`**.
 
 - Register the device with account **`user`** / **`vcode`** and push machine, gateway, IO, GNSS, and sensor snapshots
 - Keep the session alive with application keeplive; republish snapshots on **`update`**

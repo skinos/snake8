@@ -1496,7 +1496,7 @@ static void demo_dbs_all(void)
 
 ### 8.0 Summary
 
-`register.h` exposes a **mmap-backed key/value store** per object name (e.g. **`land@machine`**, system files **`MACHINE_REGFILE`** / **`COM_REGFILE`** in `skinhead.h`): hash index, variable-length heap with freelist, binary-safe, shared across processes.
+`register.h` exposes a **mmap-backed key/value store** per object name (e.g. **`land@syslog`**, system files **`MACHINE_REGFILE`** / **`COM_REGFILE`** in `skinhead.h`): hash index, variable-length heap with freelist, binary-safe, shared across processes.
 
 | API | Role |
 |-----|------|

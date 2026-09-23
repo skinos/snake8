@@ -405,7 +405,7 @@ You manage the gateway through **component names**, **configuration paths**, and
 ### Where to find component docs
 
 - Browse **[online component documentation](../com/)** when your product ships that tree (same layout as in **he.md**). It is updated as features grow.
-- In this **land** repository, many topics are also available as local files—for example **[auth.md](auth.md)** for authentication.
+- In this **land** repository, many topics are also available as local files—for example **[syslog.md](syslog.md)** for syslog.
 - Or contact technical support for the correct document bundle for your firmware.
 
 ### How to read a component document
@@ -414,21 +414,22 @@ You manage the gateway through **component names**, **configuration paths**, and
 - **Configuration** shows the JSON shape: field names, nesting, and meanings. Those names are the **`component:attr/path`** segments you type in HE (and the attribute names you use after **`set component`**).  
 - **Methods** lists callable APIs. Each becomes **`component.method`** or **`component.method[args]`** on the terminal, as documented.
 
-Once you know the **component name** (for example **`agent@logc`** from **[../agent/logc.md](../agent/logc.md)**), you can query, change, and invoke methods from eline using the same rules as **[he.md](he.md)**.
+Once you know the **component name** (for example **`land@syslog`** from **Configuration**), you can query, change, and invoke methods from eline using the same rules as **[he.md](he.md)**.
 
 ### Query configuration from the doc
 
 - **Full object** — type the component name alone:
 
 ```shell
-$ agent@logc
+$ land@syslog
 {
     "status":"enable",
+    "location":"",
     "level":"info",
     "trace":"disable",
-    "file_size":"100",
-    "remote_server":"192.168.8.250",
-    "remote_port":"514"
+    "size":"100",
+    "remote":"192.168.8.250",
+    "port":"514"
 }
 $ 
 ```
@@ -436,7 +437,7 @@ $
 - **One field** — use **`component:path`** as in the doc:
 
 ```shell
-$ agent@logc:level
+$ land@syslog:level
 info
 $ 
 ```
@@ -446,7 +447,7 @@ $
 - **Single attribute** — **`component:attr=value`**:
 
 ```shell
-$ agent@logc:remote_server=192.168.8.250
+$ land@syslog:remote=192.168.8.250
 ttrue
 $ 
 ```
@@ -454,7 +455,7 @@ $
 - **Merge several keys** — JSON after **`|`** (only listed keys change):
 
 ```shell
-$ agent@logc|{"remote_server":"192.168.8.251","remote_port":"500"}
+$ land@syslog|{"remote":"192.168.8.251","port":"500"}
 ttrue
 $ 
 ```
@@ -462,7 +463,7 @@ $
 - **Replace whole configuration** — **`component={...}`** with the full JSON from the doc:
 
 ```shell
-$ agent@logc={"status":"enable","level":"info","trace":"disable","file_size":"100"}
+$ land@syslog={"status":"enable","location":"","level":"info","trace":"disable","size":"100"}
 ttrue
 $ 
 ```
@@ -472,28 +473,28 @@ $
 Method names in the document map to **`component.method`** (and parameters to **`[...]`** if documented).
 
 ```shell
-$ agent@logc.show
+$ land@syslog.show
 Dec 15 15:47:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 102 times
 Dec 15 15:47:25 V520-12CC70 user.warn syslog: modem@lte check simcard failed 103 times
 ...                                         # more lines as returned by the device
-$ agent@logc.clear
+$ land@syslog.clear
 ttrue
 $ 
 ```
 
-### Same workflow with **`set agent@logc`**
+### Same workflow with **`set land@syslog`**
 
-After you read **Configuration**, you can edit that object interactively: attribute lines use **only the path part** (no repeated **`agent@logc:`** prefix on each key).
+After you read **Configuration**, you can edit that object interactively: attribute lines use **only the path part** (no repeated **`land@syslog:`** prefix on each key).
 
 ```shell
-$ set agent@logc
+$ set land@syslog
 { ... }                                     # current JSON printed once
-agent@logc: level
+land@syslog: level
 info
-agent@logc: remote_server=192.168.8.250
-agent@logc: g
-{ ... "remote_server":"192.168.8.250", ... }
-agent@logc: s
+land@syslog: remote=192.168.8.250
+land@syslog: g
+{ ... "remote":"192.168.8.250", ... }
+land@syslog: s
 ttrue
 $ 
 ```

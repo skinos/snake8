@@ -9,12 +9,11 @@ Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is wri
 - display, list, and delete log files
 - write log messages at different severity levels
 - critical log to internal storage
-- optional TCP uplink to center: first line is `{macid};{user}\n` (same account string as `agent@heclient` `user`); later lines match the local file format (`stamp host fac.prio msg\n`); any `\n`/`\r` inside the message body is replaced with `\t` so each record is one physical line
-- `center_ssl` = `enable` uses SSL encryption on the center TCP link; `disable` is plain TCP (both ends must match)
-- TCP connect / SSL handshake budget is 15s; after the link is up, write-idle timeout is 120s (aligned with TCP keepalive idle)
+- optional TCP uplink to center: first line is `{macid}\n`, later lines match the local file format (`stamp host fac.prio msg\n`); any `\n`/`\r` inside the message body is replaced with `\t` so each record is one physical line
+- TCP connect/TLS handshake budget is 15s; after the link is up, write-idle timeout is 120s (aligned with TCP keepalive idle)
 - local file optional: **no local file means live TCP only** — if the link is down the line is dropped, there is no offline retransmit
 - with local files, disconnect resume uses one cursor on `agent@logc` register (`tcp_ack_file` + `tcp_ack_off`, bound as pointers for direct read/write); if that cursor file is deleted the old cache is lost and the cursor moves to the live `log_file` from offset 0; first run with no cursor starts at live EOF; at-least-once (reconnect may repeat whole lines); rotation prefers not to delete the file still pointed by `tcp_ack_file`
-    > Object id is **`agent@logc`**. `center@heport` adjust pushes this object (`center` / `center_port` / `center_ssl`). `status` is the log output mode (`enable`/`both` start `/dev/log`; `file` alone does not); UDP uses `remote_server` / `remote_port`; TCP uses `center` / `center_port` / `center_ssl`.
+    > Object id is **`agent@logc`**. `center@heport` adjust pushes this object (`center` / `center_port` / `center_ssl`). HE method names still match the old **`land@syslog`** surface; `prj.json` aliases `land@syslog` → `logc` so those call strings keep working. `status` is the syslog mode (`enable`/`both` start `/dev/log`; `file` alone does not); UDP uses `remote_server` / `remote_port`; TCP uses `center` / `center_port` / `center_ssl`.
 
 
 
@@ -51,7 +50,7 @@ Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is wri
                                                       // "/path": use an absolute directory path
                                                       // empty or unset: use default var directory
     "file_size":"log file size limit in KB",       // [ number ], maximum log file size in kilobytes, default be 5 for internal or 100 for storage
-    "file_max":"rotated local file count",         // [ number ], max MMDDHHMM-uptime.log.txt files in the log dir, default be 1
+    "file_max":"rotated local file count",         // [ number ], max MMDDHHMM-uptime.log files in the log dir, default be 1
 
     "remote_server":"remote syslog server address", // [ string ], IP address or hostname of remote syslog server, empty means disabled
     "remote_port":"remote syslog server port",     // [ string ], port number for remote syslog, default be "514"
@@ -59,8 +58,7 @@ Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is wri
     "center":"TCP upload to center@log",           // [ "disable", "enable" ], default be "disable"; does not stop local file or UDP
     "center_server":"center host",                 // [ string ], optional; empty means inherit agent@heclient server
     "center_port":"center TCP port",               // [ number ], default be 20004
-    "center_ssl":"SSL encrypt the center TCP",     // [ "disable", "enable" ], default be "disable"
-                                                      // "enable": SSL encryption; "disable": plain TCP
+    "center_ssl":"encrypt the center TCP",         // [ "disable", "enable" ], default be "disable"
 
     "critical":"critical log",                      // [ "disable", "enable" ], enable critical log to internal storage, default be "disable"
     "critical_size":"critical log size limit in KB" // [ number ], maximum critical log file size in kilobytes, default be 100
@@ -86,11 +84,11 @@ agent@logc
 
     "file_location":"storage",                 # log stored on storage device
     "file_size":"100",                         # log file size limit 100KB
-    "file_max":"3",                            # keep at most three .log.txt files
+    "file_max":"3",                            # keep at most three .log files
 
     "center":"enable",                         # upload to center@log
     "center_port":"20004",                     # center TCP port
-    "center_ssl":"disable"                     # plain TCP; set enable for SSL encryption
+    "center_ssl":"disable"                     # plain TCP
 }
 ```
 
@@ -151,7 +149,7 @@ ttrue
     - succeed return [ json ], log file path and size information
     ```json
     {
-        "path": "log file path",           // [ string ], absolute path to the current log file (MMDDHHMM-uptime.log.txt)
+        "path": "log file path",           // [ string ], absolute path to the current log file (MMDDHHMM-uptime.log)
         "size": "size limit in KB"         // [ number ], log file size limit in kilobytes
     }
     ```
@@ -160,7 +158,7 @@ ttrue
     ```shell
     agent@logc.path[]
     {
-        "path":"/var/log/09211959-3600.log.txt",   # current active log file
+        "path":"/var/log/09211959-3600.log",   # current active log file
         "size":5                              # size limit in KB
     }
     ```
@@ -168,7 +166,7 @@ ttrue
 + `list[]` **list all log files in the log directory**
     - failed return NULL
     - succeed return [ json ], a map of log filename to full file path, including critical log files if enabled
-    - local logs are recognized by the `.log.txt` suffix
+    - local logs are recognized by the `.log` suffix
     ```json
     {
         "log filename": "full file path",  // [ string ]: [ string ], log filename and its absolute path
@@ -180,8 +178,8 @@ ttrue
     ```shell
     agent@logc.list
     {
-        "09211959-3600.log.txt":"/var/log/09211959-3600.log.txt",
-        "09212010-4200.log.txt":"/var/log/09212010-4200.log.txt",
+        "09211959-3600.log":"/var/log/09211959-3600.log",
+        "09212010-4200.log":"/var/log/09212010-4200.log",
         "critical.txt":"/var/internal/critical.txt",        # critical log file
         "critical.0.txt":"/var/internal/critical.0.txt"    # rotated critical log file
     }
@@ -378,7 +376,7 @@ ttrue
 
     Example, delete a specific log file
     ```shell
-    agent@logc.delete[ 09212010-4200.log.txt ]
+    agent@logc.delete[ 09212010-4200.log ]
     ttrue
     ```
 
@@ -543,10 +541,3 @@ ttrue
     agent@logc.del_verb[ uart ]
     ttrue
     ```
-
-
-
-### Other
-
-- Center peer is `center@log` (see `../center/log.md`); heport adjust only sets `center` / `center_port` / `center_ssl`
-- Short object alias: `log` → `logc` in agent `prj.json`
