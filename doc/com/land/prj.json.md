@@ -296,7 +296,7 @@ The `land` project provides core infrastructure: authentication, component manag
         "land@joint": "init",                            # land@joint uses the init component
         "com": "component",                              # com alias for component
         "reg": "register",                               # reg alias for register
-        "log": "syslog",                                 # log alias for syslog
+        "log": "logc",                                   # log alias for logc
         "serv": "service",                               # serv alias for service
         "fpk": "fpk",                                    # fpk alias for fpk
         "machine": "machine",                            # machine alias for machine
@@ -306,7 +306,7 @@ The `land` project provides core infrastructure: authentication, component manag
     {
         "arch":                                          # arch level: platform layer setup
         {
-            "land@syslog.setup": ""                      # start syslog at arch level
+            "agent@logc.setup": ""                       # start system log at arch level
         },
         "land":                                          # land level: core infrastructure setup
         {
@@ -320,11 +320,11 @@ The `land` project provides core infrastructure: authentication, component manag
     {
         "storage/insert":                                # when external storage is inserted
         {
-            "land@syslog.setup": ""                      # re-setup syslog to use new storage
+            "agent@logc.setup": ""                       # re-setup log to use new storage
         },
         "storage/remove":                                # when external storage is removed
         {
-            "land@syslog.setup": ""                      # re-setup syslog after storage removal
+            "agent@logc.setup": ""                       # re-setup log after storage removal
         }
     }
 }

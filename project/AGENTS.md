@@ -358,7 +358,7 @@ he '?project@component'
 he '?project@component.api'
 
 # 查看日志文件列表
-he 'land@syslog.list'
+he 'agent@logc.list'
 ```
 
 ## 参考资源

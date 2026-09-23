@@ -6,7 +6,7 @@ var syslogs_pager = '#syslogs-grid-pager';
 
 function load_syslog()
 {
-    he.load( [ 'land@syslog', 'land@syslog.list' ] ).then( function(v){
+    he.load( [ 'agent@logc', 'agent@logc.list' ] ).then( function(v){
 
         syslog = v[0];
         if ( syslog.status == "enable" || syslog.status == "both" )
@@ -16,30 +16,30 @@ function load_syslog()
         else if ( syslog.status == "file" )
         {
             $('#status').prop('checked', true );
-            $("#location").closest('.form-group').hide();
+            $("#file_location").closest('.form-group').hide();
             $("#remote").closest('.form-group').hide();
         }
         else
         {
             $('#status').prop('checked', false );
         }
-        $('#location').val( syslog.location );
-        $('#size').val( syslog.size );
+        $('#file_location').val( syslog.file_location || syslog.location );
+        $('#file_size').val( syslog.file_size || syslog.size );
         $('#level').val( syslog.level );
         $('#debug').val( syslog.debug );
         $('#verb').val( syslog.verb );
-        $('#remote').prop('checked', !!syslog.remote);
-        $('#server').val(syslog.remote);
-        $('#port').val(syslog.port);
+        $('#remote').prop('checked', !!(syslog.remote_server || syslog.remote));
+        $('#remote_server').val( syslog.remote_server || syslog.remote );
+        $('#remote_port').val( syslog.remote_port || syslog.port );
 
         $('#status').unbind('change').change(function () {
             if ($(this).prop('checked'))
             {
                 $('#statusSets').show();
-                var containerWidth = $('#size').outerWidth();  
-                if ($("#syslogs-grid-table")[0] && $("#syslogs-grid-table")[0].grid) { 
+                var containerWidth = $('#file_size').outerWidth();
+                if ($("#syslogs-grid-table")[0] && $("#syslogs-grid-table")[0].grid) {
                     $("#syslogs-grid-table").jqGrid('setGridWidth', containerWidth, true);
-                }  
+                }
             }
             else
             {
@@ -100,22 +100,27 @@ function save_syslog()
         else
         {
             syslog.status = "enable";
-            syslog.location = $('#location').val();
+            syslog.file_location = $('#file_location').val();
         }
-        syslog.size = $('#size').val();
+        syslog.file_size = $('#file_size').val();
         syslog.level = $('#level').val();
         syslog.debug = $('#debug').val();
         syslog.verb = $('#verb').val();
-        // 启用远程日志
+        // enable remote UDP syslog
         if ( $('#remote').prop('checked') )
         {
-            syslog.remote = $('#server').val();
-            syslog.port = $('#port').val();
+            syslog.remote_server = $('#remote_server').val();
+            syslog.remote_port = $('#remote_port').val();
         }
         else
         {
-            syslog.remote = '';
+            syslog.remote_server = '';
         }
+        /* drop legacy land@syslog keys if still present */
+        delete syslog.location;
+        delete syslog.size;
+        delete syslog.remote;
+        delete syslog.port;
     }
     else
     {
@@ -126,7 +131,7 @@ function save_syslog()
         page.alert( { message: $.i18n('No changes to apply') } );
         return;
     }
-    he.exec( [ "land@syslog="+JSON.stringify(syslog) ] ).then( function(){
+    he.exec( [ "agent@logc="+JSON.stringify(syslog) ] ).then( function(){
         page.hint2succeed( $.i18n('Modified successfully') );
         load_syslog();
     });
@@ -144,7 +149,7 @@ function syslog_delete( indexStr )
         // 选中行的数据
         var row = $(syslogs_table).jqGrid('getRowData', indexs[index]);
         // 通过name删除
-        cmds.push( 'land@syslog.delete['+row.name+"]" );
+        cmds.push( 'agent@logc.delete['+row.name+"]" );
     }
     // 执行删除
     he.exec( cmds ).then(function (){
@@ -169,7 +174,7 @@ function syslog_down( rowId )
 	sform.hidden = true;
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "username"; opt.value = window.username; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "key"; opt.value = window.talkkey; sform.appendChild( opt );
-	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "object"; opt.value = "land@syslog"; sform.appendChild( opt );
+	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "object"; opt.value = "agent@logc"; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "api"; opt.value = "list"; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "a"; opt.value = name; sform.appendChild( opt );
 	opt = document.createElement("input"); opt.setAttribute("type", "hidden"); opt.name = "f"; opt.value = name; sform.appendChild( opt );
@@ -246,7 +251,7 @@ $.i18n().load( page.lang('syslog') ).then( function () {
     });
 
     $(window).unbind('resize.myGrid').on('resize.myGrid', function () {
-        var inputWidth = $('#size').outerWidth();
+        var inputWidth = $('#file_size').outerWidth();
         $("#syslogs-grid-table").jqGrid('setGridWidth', inputWidth);
     });
 
@@ -267,4 +272,3 @@ $.i18n().load( page.lang('syslog') ).then( function () {
   }
 
 });
-

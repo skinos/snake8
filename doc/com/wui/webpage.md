@@ -416,7 +416,7 @@ he.exec(["ifname@wan.setup"]).then(function () { /* ... */ });
 he.exec(["ifname@wan.shut"]).then(function () { /* ... */ });
 
 // call a method with parameters
-he.exec(["land@syslog.delete[logfile.txt]"]).then(function () { /* ... */ });
+he.exec(["agent@logc.delete[logfile.txt]"]).then(function () { /* ... */ });
 ```
 
 ### Status polling
@@ -811,7 +811,7 @@ Parameter `a` is an array of HE command strings. Returns a Promise; use `.then(f
 | Replace full config | `"component@name="+JSON.stringify(obj)` | `"clock@restart="+JSON.stringify(cfg)` |
 | Merge partial attributes | `"component@name\|"+JSON.stringify(partial)` | `"ifname@lan\|"+JSON.stringify({status:"enable"})` |
 | Call method (no params) | `"component@name.method"` | `"ifname@lan.status"` |
-| Call method (with params) | `"component@name.method[param]"` | `"land@syslog.delete[log.txt]"` |
+| Call method (with params) | `"component@name.method[param]"` | `"agent@logc.delete[log.txt]"` |
 | Read attribute from method result | `"component@name.method:attr"` | `"land@machine.status:version"` |
 
 ### Low-level API

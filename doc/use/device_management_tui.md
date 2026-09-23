@@ -38,7 +38,7 @@ Leave eline with `exit` or Ctrl+D at `$ `.
 | Query one attribute | `component:attr/path` | `land@machine:name` |
 | Replace full configuration | `component={json}` | `forward@alg={"ftp":"enable"}` |
 | Set one attribute | `component:attr/path=value` | `land@machine:name=DemoGateway` |
-| Merge several attributes | `component\|{json}` or `component:path\|{json}` | `land@syslog\|{"level":"info"}` |
+| Merge several attributes | `component\|{json}` or `component:path\|{json}` | `agent@logc\|{"level":"info"}` |
 | Clear one attribute | `component:attr/path=` | `gnss@nmea:client=` |
 | Call a method | `component.method` | `land@machine.status` |
 | Call a method with arguments | `component.method[p1,p2]` | `clock@date.ntpsync[ntp1.aliyun.com]` |
@@ -1867,7 +1867,7 @@ ttrue
 
 ### 9.1 Syslog
 
-Web menu: **Debug → Syslog**. Component: `land@syslog`.
+Web menu: **Debug → Syslog**. Component: `agent@logc`.
 
 **Configuration**
 
@@ -1875,31 +1875,32 @@ Web menu: **Debug → Syslog**. Component: `land@syslog`.
 |-----|---------|
 | `status` | `disable` / `enable` / `tui` / `both` / `file` |
 | `level` | `verb` / `debug` / `info` / `warn` / `fault` |
-| `remote` / `port` | Remote syslog |
+| `remote_server` / `remote_port` | Remote UDP syslog |
 | `klog` | Kernel log |
-| `location` / `size` | File store and size (KB) |
+| `file_location` / `file_size` | File store and size (KB) |
+| `center` / `center_port` / `center_ssl` | TCP uplink to center (`center_ssl`: SSL on/off) |
 
 ```
-$ land@syslog
+$ agent@logc
 {
     "status": "enable",
     "level": "info",
-    "remote": "192.168.1.100",
-    "port": "514",
+    "remote_server": "192.168.1.100",
+    "remote_port": "514",
     "klog": "enable",
     "critical": "enable",
     "critical_size": "50",
-    "location": "storage",
-    "size": "100"
+    "file_location": "storage",
+    "file_size": "100"
 }
 ```
 
 **Query log files**
 
 ```
-$ land@syslog.list
+$ agent@logc.list
 {
-    "12345-syslog.log": "/var/log/12345-syslog.log",
+    "09211959-3600.log.txt": "/var/log/09211959-3600.log.txt",
     "critical.txt": "/var/internal/critical.txt"
 }
 ```
@@ -1910,11 +1911,11 @@ $ land@syslog.list
 | value | Absolute path |
 
 ```
-$ land@syslog:status=enable
+$ agent@logc:status=enable
 ttrue
-$ land@syslog={"status":"enable","level":"info"}
+$ agent@logc={"status":"enable","level":"info"}
 ttrue
-$ land@syslog.delete[12345-syslog.log]
+$ agent@logc.delete[09211959-3600.log.txt]
 ttrue
 ```
 

@@ -193,6 +193,8 @@ typedef int boole;
 #define GTOG_COM              AGENT_PROJECT""PROJECT_OBJECT_GAPS"gtog"
 /** agent io component */
 #define AGENT_IO_COM          AGENT_PROJECT""PROJECT_OBJECT_GAPS"io"
+/** agent io component */
+#define AGENT_LOGC_COM          AGENT_PROJECT""PROJECT_OBJECT_GAPS"logc"
 
 /// center project
 #define CENTER_PROJECT    "center"

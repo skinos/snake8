@@ -455,6 +455,7 @@ talk_t      string2json( const char *string );
  * @return string
  * 		@retval string for succeed
  *  	@retval NULL error, the errno code will be sets
+ * @note Omits attributes/elements whose value is JSON_POINTER (as if absent).
  */
 char       *json2string( talk_t json );
 /**

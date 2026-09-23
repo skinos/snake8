@@ -109,7 +109,7 @@ Always read the **`com.h` / `serv.h` / `scall*`** documentation for the API you 
 | **X / scalar** | `string2x`, `number2x`, `pointer2x`, `text2x` and matching `x2*` — leaves that are not JSON objects. |
 | **AXP** | Name/value **pairs** (`axp_*`); one attribute string + one value (`talk_t`). |
 | **JSON object** | Ordered map of AXPs (`json_*`): attach/detach, iterate `json_next` / `json_prev`, typed getters/setters, generic `json_value` / `json_set_value`. |
-| **I/O** | `string2json` / `json2string`, `file2json` / `json2file`, `json_save` / `json_load` — **`json2string` is heap memory (`free`)**; **`talk_free`** for `talk_t` graph nodes from the talk API. |
+| **I/O** | `string2json` / `json2string`, `file2json` / `json2file`, `json_save` / `json_load` — **`json2string` is heap memory (`free`)**; **`talk_free`** for `talk_t` graph nodes from the talk API. Stringify omits `JSON_POINTER` attributes/elements. |
 | **Merge** | `json_sync` / `json_patch` return **0/1**; invalid graphs **`assert`** (see §2.3). |
 
 Before using `axp_string()` / `x2number()` / … on an unknown node, confirm shape with **`json_check()`**, **`x_check()`**, or **`axp_value()`** / **`json_value()`**.
@@ -327,7 +327,7 @@ talk_free(json);
 talk_t string2json(const char *string);
 char *json2string(talk_t json);
 ```
-**Description:** Convert between string and JSON
+**Description:** Convert between string and JSON. `json2string` / `json2file` omit attributes and array elements whose value is `JSON_POINTER` (as if those properties were absent). A root that is only a pointer is not a valid document (`NULL` / error).
 
 #### file2json / json2file / json_save / json_load
 ```c
@@ -365,7 +365,7 @@ boole talk_equal(talk_t json, talk_t json2);
 void talk_free(talk_t json);
 int talk_print(talk_t json);
 ```
-**Description:** Duplicate/Compare/Free/Print talk objects
+**Description:** Duplicate/Compare/Free/Print talk objects. `talk_print` also omits `JSON_POINTER` attributes (same rule as `json2string`).
 
 ### 2.6 Sample program (every `talk.h` function)
 
@@ -1496,7 +1496,7 @@ static void demo_dbs_all(void)
 
 ### 8.0 Summary
 
-`register.h` exposes a **mmap-backed key/value store** per object name (e.g. **`land@syslog`**, system files **`MACHINE_REGFILE`** / **`COM_REGFILE`** in `skinhead.h`): hash index, variable-length heap with freelist, binary-safe, shared across processes.
+`register.h` exposes a **mmap-backed key/value store** per object name (e.g. **`land@machine`**, system files **`MACHINE_REGFILE`** / **`COM_REGFILE`** in `skinhead.h`): hash index, variable-length heap with freelist, binary-safe, shared across processes.
 
 | API | Role |
 |-----|------|

@@ -1,28 +1,35 @@
-## land@syslog — System Log Management
+## agent@logc — System Log Management
 
 ### Overview
 
-Manage the system log service including log output mode, log level filtering, log file location, remote syslog forwarding, and log file operations.
+Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is written to the local rotating file, optionally sent as classic UDP syslog, and optionally uploaded to `center@log` over TCP.
 - configure log output mode: syslog, tui terminal, both, or file only
 - set global log level and per-component log level filtering
-- forward logs to a remote syslog server
+- forward logs to a remote syslog server over UDP
 - display, list, and delete log files
 - write log messages at different severity levels
-- critical log to internal storage with automatic rotation
+- critical log to internal storage
+- optional TCP uplink to center: first line is `{macid};{user}\n` (same account string as `agent@heclient` `user`); later lines match the local file format (`stamp host fac.prio msg\n`); any `\n`/`\r` inside the message body is replaced with `\t` so each record is one physical line
+- `center_ssl` = `enable` uses SSL encryption on the center TCP link; `disable` is plain TCP (both ends must match)
+- TCP connect / SSL handshake budget is 15s; after the link is up, write-idle timeout is 120s (aligned with TCP keepalive idle)
+- local file optional: **no local file means live TCP only** — if the link is down the line is dropped, there is no offline retransmit
+- with local files, disconnect resume uses one cursor on `agent@logc` register (`tcp_ack_file` + `tcp_ack_off`, bound as pointers for direct read/write); if that cursor file is deleted the old cache is lost and the cursor moves to the live `log_file` from offset 0; first run with no cursor starts at live EOF; at-least-once (reconnect may repeat whole lines); rotation prefers not to delete the file still pointed by `tcp_ack_file`
+    > Object id is **`agent@logc`**. `center@heport` adjust pushes this object (`center` / `center_port` / `center_ssl`). `status` is the log output mode (`enable`/`both` start `/dev/log`; `file` alone does not); UDP uses `remote_server` / `remote_port`; TCP uses `center` / `center_port` / `center_ssl`.
 
 
 
-### Configuration reference ( land@syslog )
+### Configuration reference ( agent@logc )
 
 ```json
 // Attributes introduction 
 {
     "status":"log output mode",                    // [ "disable", "enable", "tui", "both", "file" ], default be "disable"
                                                       // "disable": logging disabled
-                                                      // "enable": output to syslog
+                                                      // "enable": output to syslog (/dev/log reader started)
                                                       // "tui": output to terminal
                                                       // "both": output to syslog and terminal
                                                       // "file": output to file only
+    "klog":"kernel log",                           // [ "disable", "enable" ], enable kernel log daemon, default be "disable"
     "trace":"trace mode",                          // [ "disable", "enable" ], default be "disable"
     "level":"global log level",                    // [ "verb", "debug", "info", "warn", "fault" ], set the global log level, default be "info"
                                                       // "verb": verbose, debug, info, warn, fault
@@ -30,45 +37,60 @@ Manage the system log service including log output mode, log level filtering, lo
                                                       // "info": info, warn, fault
                                                       // "warn": warn, fault
                                                       // "fault": fault only
-
     "fault":"fault level component filter",        // [ string ], semicolon-separated component names to enable fault logging, empty means none
     "warn":"warn level component filter",          // [ string ], semicolon-separated component names to enable warn logging, empty means none
     "info":"info level component filter",          // [ string ], semicolon-separated component names to enable info logging, empty means none
     "debug":"debug level component filter",        // [ string ], semicolon-separated component names to enable debug logging, empty means none
     "verb":"verbose level component filter",       // [ string ], semicolon-separated component names to enable verbose logging, empty means none
 
-    "remote":"remote syslog server address",       // [ string ], IP address or hostname of remote syslog server, empty means disabled
-    "port":"remote syslog server port",            // [ string ], port number for remote syslog, default be "514"
-    "klog":"kernel log",                           // [ "disable", "enable" ], enable kernel log daemon, default be "disable"
-    "critical":"critical log",                     // [ "disable", "enable" ], enable critical log to internal storage, default be "disable"
-    "critical_size":"critical log size limit in KB", // [ number ], maximum critical log file size in kilobytes, default be 100
-
-    "location":"log file storage location",        // [ "storage", "internal", "sd*", "mm*", "<path>" ], where to store log files
+    "file_location":"log file storage location",   // [ "storage", "internal", "sd*", "mm*", "<path>" ], where to store log files
                                                       // "storage": use the first available storage device
                                                       // "internal": use internal flash storage
                                                       // "sd*": use specific SD card (e.g. "sd0", "sd1")
                                                       // "mm*": use specific MMC storage (e.g. "mm0")
                                                       // "/path": use an absolute directory path
                                                       // empty or unset: use default var directory
-    "size":"log file size limit in KB"             // [ number ], maximum log file size in kilobytes, default be 5 for internal or 100 for storage
+    "file_size":"log file size limit in KB",       // [ number ], maximum log file size in kilobytes, default be 5 for internal or 100 for storage
+    "file_max":"rotated local file count",         // [ number ], max MMDDHHMM-uptime.log.txt files in the log dir, default be 1
+
+    "remote_server":"remote syslog server address", // [ string ], IP address or hostname of remote syslog server, empty means disabled
+    "remote_port":"remote syslog server port",     // [ string ], port number for remote syslog, default be "514"
+
+    "center":"TCP upload to center@log",           // [ "disable", "enable" ], default be "disable"; does not stop local file or UDP
+    "center_server":"center host",                 // [ string ], optional; empty means inherit agent@heclient server
+    "center_port":"center TCP port",               // [ number ], default be 20004
+    "center_ssl":"SSL encrypt the center TCP",     // [ "disable", "enable" ], default be "disable"
+                                                      // "enable": SSL encryption; "disable": plain TCP
+
+    "critical":"critical log",                      // [ "disable", "enable" ], enable critical log to internal storage, default be "disable"
+    "critical_size":"critical log size limit in KB" // [ number ], maximum critical log file size in kilobytes, default be 100
+
 }
 ```
 
 #### Configuration example
 
-Example, show all the syslog configure
+Example, show all the logc configure
 ```shell
-land@syslog
+agent@logc
 {
     "status":"enable",                         # output to syslog
-    "level":"info",                            # global log level is info
-    "remote":"192.168.1.100",                  # forward to remote syslog server
-    "port":"514",                              # remote syslog port
     "klog":"enable",                           # kernel log enabled
+    "level":"info",                            # global log level is info
+
+    "remote_server":"192.168.1.100",            # forward to remote syslog server
+    "remote_port":"514",                       # remote syslog port
+
     "critical":"enable",                       # critical log enabled
     "critical_size":"50",                      # critical log file size limit 50KB
-    "location":"storage",                      # log stored on storage device
-    "size":"100"                               # log file size limit 100KB
+
+    "file_location":"storage",                 # log stored on storage device
+    "file_size":"100",                         # log file size limit 100KB
+    "file_max":"3",                            # keep at most three .log.txt files
+
+    "center":"enable",                         # upload to center@log
+    "center_port":"20004",                     # center TCP port
+    "center_ssl":"disable"                     # plain TCP; set enable for SSL encryption
 }
 ```
 
@@ -76,31 +98,31 @@ land@syslog
 
 Example, enable the syslog output
 ```shell
-land@syslog:status=enable
+agent@logc:status=enable
 ttrue
 ```
 
 Example, set global log level to debug
 ```shell
-land@syslog:level=debug
+agent@logc:level=debug
 ttrue
 ```
 
-Example, merge set the syslog configure( include "status" "level" "remote" "port" )
+Example, merge set the syslog configure( include "status" "level" "remote_server" "remote_port" )
 ```shell
-land@syslog|{"status":"enable","level":"debug","remote":"192.168.1.100","port":"514"}
+agent@logc|{"status":"enable","level":"debug","remote_server":"192.168.1.100","remote_port":"514"}
 ttrue
 ```
 
 Example, enable the critical log
 ```shell
-land@syslog:critical=enable
+agent@logc:critical=enable
 ttrue
 ```
 
-Example, merge set the syslog configure with critical log( include "status" "critical" "critical_size" )
+Example, turn on TCP upload only (does not change status or UDP port)
 ```shell
-land@syslog|{"status":"enable","critical":"enable","critical_size":"50"}
+agent@logc|{"center":"enable","center_port":"20004","center_ssl":"disable"}
 ttrue
 ```
 
@@ -114,12 +136,13 @@ ttrue
     - failed return tfalse
     - succeed return ttrue
     - This is a lifecycle method called automatically by the system during startup
-    - Reads the configuration, sets log options and level mask, starts syslogd and optionally klogd
+    - Reads the configuration, sets log options and level mask, binds `/dev/log` (no syslogd), and optionally starts klogd
 
 + `shut[]` **stop the syslog service**
     - failed return tfalse
     - succeed return ttrue
-    - Kills syslogd and klogd processes
+    - Stops the `/dev/log` service and klogd
+
 
 #### Query APIs
 
@@ -128,16 +151,16 @@ ttrue
     - succeed return [ json ], log file path and size information
     ```json
     {
-        "path": "log file path",           // [ string ], absolute path to the current log file
+        "path": "log file path",           // [ string ], absolute path to the current log file (MMDDHHMM-uptime.log.txt)
         "size": "size limit in KB"         // [ number ], log file size limit in kilobytes
     }
     ```
 
     Example, get the log file path
     ```shell
-    land@syslog.path[]
+    agent@logc.path[]
     {
-        "path":"/var/log/12345-syslog.log",   # absolute path to the log file
+        "path":"/var/log/09211959-3600.log.txt",   # current active log file
         "size":5                              # size limit in KB
     }
     ```
@@ -145,6 +168,7 @@ ttrue
 + `list[]` **list all log files in the log directory**
     - failed return NULL
     - succeed return [ json ], a map of log filename to full file path, including critical log files if enabled
+    - local logs are recognized by the `.log.txt` suffix
     ```json
     {
         "log filename": "full file path",  // [ string ]: [ string ], log filename and its absolute path
@@ -154,9 +178,10 @@ ttrue
 
     Example, list all log files
     ```shell
-    land@syslog.list
+    agent@logc.list
     {
-        "12345-syslog.log":"/var/log/12345-syslog.log",    # log filename and path
+        "09211959-3600.log.txt":"/var/log/09211959-3600.log.txt",
+        "09212010-4200.log.txt":"/var/log/09212010-4200.log.txt",
         "critical.txt":"/var/internal/critical.txt",        # critical log file
         "critical.0.txt":"/var/internal/critical.0.txt"    # rotated critical log file
     }
@@ -169,7 +194,7 @@ ttrue
 
     Example, dump the log mask
     ```shell
-    land@syslog.mask[]
+    agent@logc.mask[]
     ttrue
     ```
 
@@ -188,7 +213,7 @@ ttrue
 
     Example, list supported type tokens
     ```shell
-    land@syslog.list_type
+    agent@logc.list_type
     {
         "land":{
             "default":"land_default",
@@ -214,7 +239,7 @@ ttrue
 
     Example, list types with fault enabled
     ```shell
-    land@syslog.list_fault
+    agent@logc.list_fault
     {
         "land":"",
         "arch@usb":""
@@ -227,7 +252,7 @@ ttrue
 
     Example, list types with warn enabled
     ```shell
-    land@syslog.list_warn
+    agent@logc.list_warn
     {
         "network":"",
         "ifname@lte":""
@@ -240,7 +265,7 @@ ttrue
 
     Example, list types with info enabled
     ```shell
-    land@syslog.list_info
+    agent@logc.list_info
     {
         "land@auth":"",
         "modem@lte":""
@@ -253,7 +278,7 @@ ttrue
 
     Example, list types with debug enabled
     ```shell
-    land@syslog.list_debug
+    agent@logc.list_debug
     {
         "uart@tty":""
     }
@@ -262,10 +287,11 @@ ttrue
 + `list_verb[]` **list component types with verbose level enabled**
     - failed return NULL
     - succeed return [ json ], keys are type tokens that currently have verbose logging enabled in the log mask
+    - `list_verbose[]` is the same API
 
     Example, list types with verbose enabled
     ```shell
-    land@syslog.list_verb
+    agent@logc.list_verb
     {
         "default_shell":""
     }
@@ -278,19 +304,19 @@ ttrue
 
     Example, show log file contents
     ```shell
-    land@syslog.show
+    agent@logc.show
     ttrue
     ```
 
     Example, show the latest 100 log lines
     ```shell
-    land@syslog.show[100]
+    agent@logc.show[100]
     ttrue
     ```
 
     Example, show log file as HTML table
     ```shell
-    land@syslog.show[ html ]
+    agent@logc.show[ html ]
     ttrue
     ```
 
@@ -307,7 +333,7 @@ ttrue
 
     Example, get the critical log path
     ```shell
-    land@syslog.critical_path[]
+    agent@logc.critical_path[]
     {
         "path":"/mnt/internal/critical.txt",   # absolute path to the critical log
         "size":100                             # size limit in KB
@@ -322,15 +348,16 @@ ttrue
 
     Example, show critical log file contents
     ```shell
-    land@syslog.critical_show
+    agent@logc.critical_show
     ttrue
     ```
 
     Example, show critical log file as HTML table
     ```shell
-    land@syslog.critical_show[ html ]
+    agent@logc.critical_show[ html ]
     ttrue
     ```
+
 
 #### Control APIs
 
@@ -340,7 +367,7 @@ ttrue
 
     Example, clear the log file
     ```shell
-    land@syslog.clear[]
+    agent@logc.clear[]
     ttrue
     ```
 
@@ -351,13 +378,13 @@ ttrue
 
     Example, delete a specific log file
     ```shell
-    land@syslog.delete[ 12345-syslog.log.0 ]
+    agent@logc.delete[ 09212010-4200.log.txt ]
     ttrue
     ```
 
     Example, delete the critical log file
     ```shell
-    land@syslog.delete[ critical.txt ]
+    agent@logc.delete[ critical.txt ]
     ttrue
     ```
 
@@ -368,7 +395,7 @@ ttrue
 
     Example, write a debug log message
     ```shell
-    land@syslog.debug[ connection established from 192.168.1.1 ]
+    agent@logc.debug[ connection established from 192.168.1.1 ]
     ttrue
     ```
 
@@ -379,7 +406,7 @@ ttrue
 
     Example, write an info log message
     ```shell
-    land@syslog.info[ system startup complete ]
+    agent@logc.info[ system startup complete ]
     ttrue
     ```
 
@@ -390,7 +417,7 @@ ttrue
 
     Example, write a warning log message
     ```shell
-    land@syslog.warn[ disk space low ]
+    agent@logc.warn[ disk space low ]
     ttrue
     ```
 
@@ -401,7 +428,7 @@ ttrue
 
     Example, write a fault log message
     ```shell
-    land@syslog.fault[ failed to connect to database ]
+    agent@logc.fault[ failed to connect to database ]
     ttrue
     ```
 
@@ -412,7 +439,7 @@ ttrue
 
     Example, enable fault logging for land and arch components
     ```shell
-    land@syslog.add_fault[ land;arch ]
+    agent@logc.add_fault[ land;arch ]
     ttrue
     ```
 
@@ -423,7 +450,7 @@ ttrue
 
     Example, enable warn logging for network components
     ```shell
-    land@syslog.add_warn[ network ]
+    agent@logc.add_warn[ network ]
     ttrue
     ```
 
@@ -434,7 +461,7 @@ ttrue
 
     Example, enable info logging for ifname components
     ```shell
-    land@syslog.add_info[ ifname ]
+    agent@logc.add_info[ ifname ]
     ttrue
     ```
 
@@ -445,7 +472,7 @@ ttrue
 
     Example, enable debug logging for modem components
     ```shell
-    land@syslog.add_debug[ modem ]
+    agent@logc.add_debug[ modem ]
     ttrue
     ```
 
@@ -453,10 +480,11 @@ ttrue
     - type, ... ----------- [ string ], one or more component type names separated by semicolons
     - failed return tfalse
     - succeed return ttrue
+    - `add_verbose[]` is the same API
 
     Example, enable verbose logging for uart components
     ```shell
-    land@syslog.add_verb[ uart ]
+    agent@logc.add_verb[ uart ]
     ttrue
     ```
 
@@ -467,7 +495,7 @@ ttrue
 
     Example, disable fault logging for land components
     ```shell
-    land@syslog.del_fault[ land ]
+    agent@logc.del_fault[ land ]
     ttrue
     ```
 
@@ -478,7 +506,7 @@ ttrue
 
     Example, disable warn logging for network components
     ```shell
-    land@syslog.del_warn[ network ]
+    agent@logc.del_warn[ network ]
     ttrue
     ```
 
@@ -489,7 +517,7 @@ ttrue
 
     Example, disable info logging for ifname components
     ```shell
-    land@syslog.del_info[ ifname ]
+    agent@logc.del_info[ ifname ]
     ttrue
     ```
 
@@ -500,7 +528,7 @@ ttrue
 
     Example, disable debug logging for modem components
     ```shell
-    land@syslog.del_debug[ modem ]
+    agent@logc.del_debug[ modem ]
     ttrue
     ```
 
@@ -508,9 +536,17 @@ ttrue
     - type, ... ----------- [ string ], one or more component type names separated by semicolons
     - failed return tfalse
     - succeed return ttrue
+    - `del_verbose[]` is the same API
 
     Example, disable verbose logging for uart components
     ```shell
-    land@syslog.del_verb[ uart ]
+    agent@logc.del_verb[ uart ]
     ttrue
     ```
+
+
+
+### Other
+
+- Center peer is `center@log` (see `../center/log.md`); heport adjust only sets `center` / `center_port` / `center_ssl`
+- Short object alias: `log` → `logc` in agent `prj.json`

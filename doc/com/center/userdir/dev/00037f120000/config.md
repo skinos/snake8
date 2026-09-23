@@ -6,9 +6,9 @@ JSON file that stores operator settings for one registered gateway.
 
 - Path: `{device_path}/<username>/dev/<macid>/config` (`00037f120000` here is an example macid)
 - HE/dbs path: `center@heport/<username>/dev/<macid>/config`
-- Loaded by `center@heport` on SSL register; used to build the `agent@heclient` / `agent@portc` adjust push
+- Loaded by `center@heport` on SSL register; used to build the `agent@heclient` adjust push (`agent@portc`, `agent@logc`, …)
 - Merged into `center@api.device_list` / endpoint list responses
-- Extra keys may be stored for UI/extensions; center currently consumes `comment` and `portc`
+- Extra keys may be stored for UI/extensions; center currently consumes `comment`, `portc`, `log`, `log_file_size`, and `log_file_max`
 
 
 ### Configuration reference ( <username>/dev/<macid>/config )
@@ -17,8 +17,12 @@ JSON file that stores operator settings for one registered gateway.
 // Attributes introduction 
 {
     "comment": "operator comment",              // [ string ], free text shown in gateway list
-    "portc": "port client switch"               // [ "enable", "disable" ], when "disable" the connect adjust sets agent@portc status to disable
+    "portc": "port client switch",              // [ "enable", "disable" ], when "disable" the connect adjust sets agent@portc status to disable
                                                     // omitted or other values: follow center@pport service status
+    "log": "remote log uplink switch",          // [ "disable", other ], "disable" forces agent@logc center=disable
+                                                    // omitted: follow center@log status / log.cfg
+    "log_file_size": "per-device file cap",     // [ number ], kilobytes; overrides center@log size when > 0
+    "log_file_max": "per-device file count"     // [ number ], overrides center@log max when > 0
     // "...":"..."  How many custom properties show how many properties
 }
 ```
@@ -83,6 +87,12 @@ On connect, `center@heport` pushes:
                 "active_pond": "6",
                 "pond": "6",
                 "idle_pond": "1"
+            },
+            "agent@logc":
+            {
+                "center": "enable",
+                "center_port": "20004",
+                "center_ssl": "disable"
             }
         }
     }
@@ -90,3 +100,5 @@ On connect, `center@heport` pushes:
 ```
 
 Timeouts and pond sizes come from the live `center@pport` register; `status` is forced to `"disable"` when this file has `"portc":"disable"` or when `center@pport` itself is disabled.
+
+`agent@logc` `center` is `"disable"` when `center@log` register/`log.cfg` is not `enable`, or when this file has `"log":"disable"`. While the log register `status` is still empty (listener not ready), heport falls back to `log.cfg` like nport does for mesh. Otherwise `center` is `"enable"` and `center_port` / `center_ssl` come from the live register or config. This adjust does not set syslog `status` or `port`.

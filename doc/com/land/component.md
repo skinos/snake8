@@ -69,7 +69,7 @@ Manage runtime component registration, unregistration, and discovery. Every obje
         },
         "log":
         {
-            "com":"land@syslog",
+            "com":"agent@logc",
             "exist":"true"
         }
     }

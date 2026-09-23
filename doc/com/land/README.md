@@ -2,7 +2,7 @@
 
 SDK-wide portal (build, develop, device management, packaging): **[`README.md`](../../README.md)** · domain catalog **[`projects.md`](../../projects.md)**.
 
-`landos` is a component-based gateway/device management foundation. It breaks device capabilities into components (for example `land@machine`, `land@syslog`, `land@auth`), and manages them through unified **configuration** (JSON) and **method interfaces** (APIs). During system startup, the registered tasks from your project are executed for initialization/coordination/shutdown. In day-to-day use, users interact with components mainly via the `he` tool: query/modify configurations and call component methods to perform real business actions.
+`landos` is a component-based gateway/device management foundation. It breaks device capabilities into components (for example `land@machine`, `land@auth`), and manages them through unified **configuration** (JSON) and **method interfaces** (APIs). During system startup, the registered tasks from your project are executed for initialization/coordination/shutdown. In day-to-day use, users interact with components mainly via the `he` tool: query/modify configurations and call component methods to perform real business actions.
 
 This document is the entry point for **land** core docs: overview, architecture notes, shared terms, how to start, and an index of English component docs under this directory.
 
@@ -127,12 +127,11 @@ Recommended read order:
 7. [`component.md`](./component.md) — component registration/management
 8. [`machine.md`](./machine.md) — `land@machine`
 9. [`auth.md`](./auth.md) — authentication and permissions
-10. [`syslog.md`](./syslog.md) — system log
-11. [`service.md`](./service.md) — service supervisor
-12. [`register.md`](./register.md) — register variables
-13. [`init.md`](./init.md) — startup tasks (`register` / `list` / `call` / `knock`)
-14. [`joint.md`](./joint.md) — joint-event handlers
-15. [`uninit.md`](./uninit.md) — shutdown tasks
+10. [`service.md`](./service.md) — service supervisor
+11. [`register.md`](./register.md) — register variables
+12. [`init.md`](./init.md) — startup tasks (`register` / `list` / `call` / `knock`)
+13. [`joint.md`](./joint.md) — joint-event handlers
+14. [`uninit.md`](./uninit.md) — shutdown tasks
 
 SDK packaging (repo root): [`project.md`](../../../project.md), [`fpk.md`](../../../fpk.md), [`project2fpk.md`](../../../project2fpk.md), [`fpk2rootfs.md`](../../../fpk2rootfs.md). Field reference: [`prj.json.md`](./prj.json.md).
 
@@ -142,6 +141,6 @@ SDK packaging (repo root): [`project.md`](../../../project.md), [`fpk.md`](../..
 
 1. This README (architecture + terms above)
 2. [`he.md`](./he.md) for command format and return types
-3. Component docs for your feature (`machine` / `auth` / `syslog` / …)
+3. Component docs for your feature (`machine` / `auth` / …)
 4. [`init.md`](./init.md) / [`joint.md`](./joint.md) / [`uninit.md`](./uninit.md) for boot and events
 5. [`skin.md`](./skin.md) when writing C com/exe/cmd

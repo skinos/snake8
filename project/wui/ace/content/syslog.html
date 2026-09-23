@@ -21,7 +21,7 @@
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Location"></label>
           <div class="col-sm-9">
-            <select class="col-xs-10 col-sm-5" id="location">
+            <select class="col-xs-10 col-sm-5" id="file_location">
               <option value="memory" data-i18n="Memory"></option>
               <option value="internal" data-i18n="Internal"></option>
               <option value="storage" data-i18n="Storage"></option>
@@ -33,7 +33,7 @@
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Max Size (KB)"></label>
           <div class="col-sm-9">
             <div class="clearfix">
-              <input type="text" id="size" class="col-xs-10 col-sm-5" maxlength="128" />
+              <input type="text" id="file_size" class="col-xs-10 col-sm-5" maxlength="128" />
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@
             <label class="col-sm-3 control-label no-padding-right" data-i18n="Remote Server"></label>
             <div class="col-sm-9">
               <div class="clearfix">
-                <input type="text" id="server" class="col-xs-10 col-sm-5" maxlength="128" />
+                <input type="text" id="remote_server" class="col-xs-10 col-sm-5" maxlength="128" />
               </div>
             </div>
           </div>
@@ -96,7 +96,7 @@
             <label class="col-sm-3 control-label no-padding-right" data-i18n="Remote Port"></label>
             <div class="col-sm-9">
               <div class="clearfix">
-                <input type="text" id="port" class="col-xs-10 col-sm-5" maxlength="128" />
+                <input type="text" id="remote_port" class="col-xs-10 col-sm-5" maxlength="128" />
               </div>
             </div>
           </div>
@@ -145,4 +145,3 @@
 </div><!-- /.row -->
 
 <script src="/js/syslog.js"></script>
-

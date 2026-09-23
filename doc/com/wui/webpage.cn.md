@@ -416,7 +416,7 @@ he.exec(["ifname@wan.setup"]).then(function () { /* ... */ });
 he.exec(["ifname@wan.shut"]).then(function () { /* ... */ });
 
 // 带参数调用方法
-he.exec(["land@syslog.delete[logfile.txt]"]).then(function () { /* ... */ });
+he.exec(["agent@logc.delete[logfile.txt]"]).then(function () { /* ... */ });
 ```
 
 ### 状态轮询
@@ -809,7 +809,7 @@ $.i18n().load(page.lang('mypage')).then(function () {
 | 替换完整配置 | `"component@name="+JSON.stringify(obj)` | `"clock@restart="+JSON.stringify(cfg)` |
 | 合并部分属性 | `"component@name\|"+JSON.stringify(partial)` | `"ifname@lan\|"+JSON.stringify({status:"enable"})` |
 | 调用方法（无参数） | `"component@name.method"` | `"ifname@lan.status"` |
-| 调用方法（带参数） | `"component@name.method[param]"` | `"land@syslog.delete[log.txt]"` |
+| 调用方法（带参数） | `"component@name.method[param]"` | `"agent@logc.delete[log.txt]"` |
 | 读取方法返回的属性 | `"component@name.method:attr"` | `"land@machine.status:version"` |
 
 ### 底层 API

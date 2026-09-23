@@ -200,7 +200,7 @@ ttrue
     {
         "storage/insert":
         {
-            "land@syslog.setup":""
+            "agent@logc.setup":""
         },
         "network/online":
         {

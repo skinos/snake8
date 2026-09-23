@@ -23,7 +23,8 @@ Directory layout created for each user:
   dev/
     <macid>/
       reg                        # last register / 0+r snapshot from the gateway
-      config                     # operator settings for this gateway (comment, portc, …)
+      config                     # operator settings for this gateway (comment, portc, log, …)
+      log/                       # center@log files YYYYMMDD-HHMMSS.log
       heartbeat/                 # planned sqlite store (not written yet)
   net/
     <netid>                      # durable mesh topology (point/extend/pref); runtime in center@nport
@@ -41,6 +42,7 @@ Document map:
 | `net/<netid>` | [`net/mynet.md`](net/mynet.md) (`mynet` is an example netid) |
 | `dev/<macid>/reg` | [`dev/00037f120000/reg.md`](dev/00037f120000/reg.md) |
 | `dev/<macid>/config` | [`dev/00037f120000/config.md`](dev/00037f120000/config.md) |
+| `dev/<macid>/log/` | [`dev/00037f120000/log.md`](dev/00037f120000/log.md) |
 | `dev/<macid>/heartbeat/` | [`dev/00037f120000/heartbeat.md`](dev/00037f120000/heartbeat.md) |
 | `firmware/*.zz` | [`firmware.md`](firmware.md) |
 

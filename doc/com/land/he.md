@@ -631,70 +631,69 @@ There are two ways to access component documentation. Each component can be mana
 - **Worked examples below** use **`~ # he '…'`** (Linux shell after **`ashy`**) so they can be copied verbatim. In **eline** (`$ `), type only the string inside the quotes—no **`he`** wrapper.
 
 ### Reference document query component configuration
-The component name is given in the **Configuration**, for example **Syslog** — **[syslog.md](syslog.md)** — component name **land@syslog**
+The component name is given in the **Configuration**, for example **System Log** — **[../agent/logc.md](../agent/logc.md)** — component name **agent@logc**
 
 - Enter **component name** to return all configurations for this component. The attributes and examples for each configuration are described in **Configuration** in the component documentation.
 
-    **Example: query all syslog configuration**
+    **Example: query all logc configuration**
     ```shell
-    ~ # he 'land@syslog'                    # Enter component name
+    ~ # he 'agent@logc'                    # Enter component name
     {                               # Return a JSON of all the component configuration
-        "status":"enable",                # enable the syslog functions
-        "location":"",                     # omit/empty uses the default file path policy (that file uses a random prefix under the system var dir)
+        "status":"enable",                # enable /dev/log reader
         "level":"info",                   # log level is normal information
         "trace":"disable",                # disable the code information
-        "size":"100",                     # log buffer is 100k
-        "remote":"192.168.8.250",         # send the syslog to remote server 192.168.8.250
-        "port":"514"                      # send the syslog to remote server port 514
+        "file_size":"100",                # log file size limit 100KB
+        "remote_server":"192.168.8.250",  # send UDP syslog to remote server
+        "remote_port":"514"               # remote syslog UDP port
     }
     ~ #
     ```
 
 - Query a specific attribute by providing the attribute with the **attribute path** after the **component name**.
 
-    **Example: query one syslog attribute**
+    **Example: query one logc attribute**
     ```shell
-    ~ # he 'land@syslog:level'                    # Query the value of the level attribute
+    ~ # he 'agent@logc:level'                    # Query the value of the level attribute
     info                                    # value of level is info
     ~ #
     ```
 
 ### Refer to the component documentation to modify the component configuration   
-Refer to **Syslog** docs (**[syslog.md](syslog.md)**). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
-- Modify the remote attribute of the land@syslog remote log server on the terminal.
+Refer to **System Log** docs (**[../agent/logc.md](../agent/logc.md)**). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
+- Modify the remote_server attribute of agent@logc on the terminal.
 
-    **Example: set one syslog attribute**
+    **Example: set one logc attribute**
     ```shell
-    ~ # he 'land@syslog:remote=192.168.8.250'                    # Change the value of remote to 192.168.8.250
+    ~ # he 'agent@logc:remote_server=192.168.8.250'                    # Change remote_server
     ttrue                                    # Return ttrue successfully
     ~ #
     ```
 
 - Modify multiple attributes at the same time by encapsulating only the target fields in a JSON object (the rest remains unchanged).
 
-    **Example: merge several syslog attributes**
+    **Example: merge several logc attributes**
     ```shell
-    ~ # he 'land@syslog|{"remote":"192.168.8.251","port":"500"}'                    # Change the value of remote to 192.168.8.251 and value of port to 500
+    ~ # he 'agent@logc|{"remote_server":"192.168.8.251","remote_port":"500"}'
     ttrue                                                    # Return ttrue successfully
     ~ #
     ```
 
-- Set the full syslog configuration on the terminal. To modify all configurations, provide the same JSON object.
+- Set the full logc configuration on the terminal. To modify all configurations, provide the same JSON object.
 
-    **Example: replace full syslog configuration**
+    **Example: replace full logc configuration**
     ```shell
-    ~ # he 'land@syslog={"status":"enable","location":"","debug":"arch@usb","level":"info","trace":"disable","size":"100"}'
+    ~ # he 'agent@logc={"status":"enable","level":"info","trace":"disable","file_size":"100"}'
     ttrue                                    # Return ttrue successfully
     ~ #
     ```
 
 ### Call a component method by referring to the component documentation   
-Refer to the same **Syslog** documentation. Methods described there can be called on the terminal as `component name.component method`.
-- Call the component land@syslog's show method to display the current log.
+Refer to the same **System Log** documentation. Methods described there can be called on the terminal as `component name.component method`.
+- Call the component agent@logc's show method to display the current log.
 
-    **Example: show syslog output**
+    **Example: show log output**
     ```shell
-    ~ # he 'land@syslog.show'
+    ~ # he 'agent@logc.show'
     Dec 15 15:47:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 102 times
     Dec 15 15:47:25 V520-12CC70 user.warn syslog: modem@lte check simcard failed 103 times
     Dec 15 15:47:30 V520-12CC70 user.warn syslog: modem@lte check simcard failed 104 times
@@ -713,11 +712,11 @@ Refer to the same **Syslog** documentation. Methods described there can be calle
     Dec 15 15:48:35 V520-12CC70 user.warn syslog: modem@lte check simcard failed 117 times
     ~ #
     ```
-- Call the clear method of component land@syslog to clear all current logs.
+- Call the clear method of component agent@logc to clear the current log file.
 
-    **Example: clear syslog**
+    **Example: clear log file**
     ```shell
-    ~ # he 'land@syslog.clear'
+    ~ # he 'agent@logc.clear'
     ttrue
     ~ #
     ```
