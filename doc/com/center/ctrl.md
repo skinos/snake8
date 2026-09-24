@@ -2,9 +2,9 @@
 
 ### Overview
 
-Admin-only HE APIs for managing cloud usernames (create, list, modify profile, reset password, delete) and privileged gateway diagnostics.
+Admin-only HE APIs for managing cloud usernames (create, list, get/set config, reset password, delete) and privileged gateway diagnostics.
 
-- Intended for device admin WUI (`user.html`) and operator `he` / eline
+- Intended for device admin WUI (`userlist.html` / `user.html`) and operator `he` / eline
 - Must **not** be listed in `center@userwui` `helist` / `publist` so cloud user pages cannot call these methods
 - Cloud login and self-service stay on `center@api` (see `api.md`)
 - Account files live under heport `device_path`: `{device_path}/<username>/config`
@@ -21,39 +21,18 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 **User**
 
-+ `user_add[ user, key, [vcode], [lang], [comment], [relay_max] ]` **create a user (create only)**
++ `user_add[ user, key, [vcode] ]` **create a user (create only)**
     - user ------- [ string ], required; only `A-Z` `a-z` `0-9` `_` `-`; length `< 32` bytes (reject `/` `.` space `;` etc.)
     - key -------- [ string ], required plaintext password (stored via `simple_encode`)
     - vcode ------ [ string ], optional device register code
-    - lang ------- [ "en", "cn", … ], optional; empty follows system
-    - comment ---- [ string ], optional
-    - relay_max -- [ number ], optional live mesh relay UDP cap; omit = unlimited; `0` = none; `N` = at most N
+    - other fields (lang/comment/relay_max/nport/pport/log/…) — use `user_set` / `user_orset` after create
     - fails if user already exists, key missing, username has illegal characters, or password encode fails
     - failed return tfalse
     - succeed return ttrue
 
     Example
     ```shell
-    dimmalex@CLS:~/snake8$ he center@ctrl.user_add[ ashyelf,Cfw1234BE,,en, TestUser ]
-    ttrue
-    dimmalex@CLS:~/snake8$
-    ```
-
-+ `user_modify[ user, [vcode], [lang], [comment], [relay_max] ]` **change non-password fields**
-    - user ------- [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
-    - omitted parameters leave that field unchanged
-    - explicit empty string clears `vcode` / `comment` / `relay_max` (cleared `relay_max` = unlimited); empty `lang` follows system
-    - relay_max -- [ number ], optional; `0` = none; `N` = at most N live mesh relay UDP listens
-    - does not change password
-    - shrinking the cap does not drop listens already up; new `relay_map` is refused until some are returned
-    - failed return tfalse
-    - succeed return ttrue
-
-    Example
-    ```shell
-    dimmalex@CLS:~/snake8$ he center@ctrl.user_modify[ ashyelf,sssss,en, TestUser ]
-    ttrue
-    dimmalex@CLS:~/snake8$ he center@ctrl.user_modify[ ashyelf,,,,2 ]
+    dimmalex@CLS:~/snake8$ he center@ctrl.user_add[ ashyelf,Cfw1234BE,sssss ]
     ttrue
     dimmalex@CLS:~/snake8$
     ```
@@ -71,12 +50,55 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     {
         "ashyelf":
         {
+            "vcode":"sssss",
             "lang":"en",
-            "comment":"TestUser",
-            "relay_max":"2"
+            "comment":"TestUser"
         }
     }
     dimmalex@CLS:~/snake8$
+    ```
+
++ `user_get[ user, [attr] ]` **read user config (no password)**
+    - user ------ [ string ], required; same charset as `user_add`
+    - attr ------ [ string ], optional field path; omit for whole object (password `key` stripped / refused)
+    - missing user dir or config file: NULL (`ENOENT`)
+    - failed return NULL
+    - succeed return json or field value
+
+    Example
+    ```shell
+    dimmalex@CLS:~/snake8$ he center@ctrl.user_get[ ashyelf ]
+    dimmalex@CLS:~/snake8$ he center@ctrl.user_get[ ashyelf, nport ]
+    ```
+
++ `user_set[ user, value, [attr] ]` **assign (`=`)**
+    - user ------ [ string ], required
+    - value ----- [ string | object ], required
+    - attr ------ [ string ], optional; with attr set that field (**empty string deletes** the key); without attr, `value` must be object (keys merged at user root; empty string values delete those keys)
+    - never writes `key` (use `user_add` / `user_reset`)
+    - after save, ctrl calls heport unix control `user_reload` (via `heport_call`, same path as `dump`) so online gateways re-get adjust
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    dimmalex@CLS:~/snake8$ he 'center@ctrl.user_set[ ashyelf, disable, nport ]'
+    ttrue
+    dimmalex@CLS:~/snake8$ he 'center@ctrl.user_set[ ashyelf, {"lang":"cn","comment":"lab"} ]'
+    ttrue
+    ```
+
++ `user_orset[ user, value, [attr] ]` **merge (`|`)**
+    - same args as `user_set`; object values are deep-merged; empty string clears keys the same way
+    - with attr + object: merge under that path; with attr + scalar: same as set
+    - also triggers heport unix control `user_reload` via `heport_call`
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    dimmalex@CLS:~/snake8$ he 'center@ctrl.user_orset[ ashyelf, {"nport":"disable","log":"enable"} ]'
+    ttrue
     ```
 
 + `user_delete[ user ]` **delete a user tree**
@@ -99,6 +121,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
     - user ------- [ string ], required; same charset as `user_add` (reject `/` `.` `..`)
     - newkey ----- [ string ], required new plaintext password
     - no old password and no admin password check; access is gated by not exposing this component on userwui helist
+    - also clears `user_match` login lockout for this username
     - failed return tfalse
     - succeed return ttrue
 
@@ -148,7 +171,9 @@ Admin-only HE APIs for managing cloud usernames (create, list, modify profile, r
 
 ### Other
 
-- Related self-service APIs: `center@api.user_profile`, `user_modify`, `user_passwd`
+- Admin WUI: menu `userlist.html` (add / delete / reset password); double-click opens `user.html` for `user_get` / `user_orset` (no password)
+- Related self-service APIs: `center@api.user_get`, `user_set`, `user_orset`, `user_passwd`
 - `center@userwui` config: `auth_object=center@ctrl`, `auth_api=user_match`
 - On-disk layout: `userdir/README.md`, `userdir/config.md`
 - Mesh relay listen cap: `<user>/config` `relay_max` (this component). Wish field `relay` stays on the net file and makes a NAT member a hub (`userdir/net/mynet.md`)
+- Feature gates on `<user>/config`: `nport` / `pport` / `log` = `disable` force agent adjust off (see `userdir/config.md`); live push via heport control `user_reload`

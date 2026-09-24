@@ -141,6 +141,35 @@ ttrue
     - succeed return ttrue
     - Stops the `/dev/log` service and klogd
 
++ `status[]` **get the center TCP uplink status**
+    - succeed return json describing the TCP connection to center (same shape as `agent@portc.status`)
+    ```json
+    {
+        "status":"current status",             // [ "uping", "down", "online" ]
+        "server":"resolved peer ip"            // [ ip address ], only when configure center_server is set and status is uping/online
+    }
+    ```
+    - `down`: service not running, or `center` is not `enable`
+    - `uping`: center enabled, TCP connecting / reconnecting
+    - `online`: center TCP is up
+
+    Example, get status when TCP upload is connected
+    ```shell
+    agent@logc.status
+    {
+        "status":"online",
+        "server":"1.2.3.4"
+    }
+    ```
+
+    Example, get status when center TCP is disabled or service is stopped
+    ```shell
+    agent@logc.status
+    {
+        "status":"down"
+    }
+    ```
+
 
 #### Query APIs
 

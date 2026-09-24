@@ -1687,7 +1687,7 @@ $ land@fpk.list
 ```
 $ land@fpk.delete[agent]
 ttrue
-$ arch@firmware.online_check
+$ arch@firmware.store_check
 {
     "version": "2.0.2",
     "url": "ftp://repo.example/pub/...",

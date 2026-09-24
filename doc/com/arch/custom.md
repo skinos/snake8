@@ -72,7 +72,7 @@ arch@custom
     "assid_prefix":"SkinOS5G",                 # 5 GHz SSID prefix: SkinOS5G
     "assid_mackey":"4",                        # use last 4 hex digits of MAC in 5 GHz SSID
     "firmware_store":"ftp://repo.ashyelf.com", # OTA repository base URL
-    "firmware_store_user":"dl:dl@ashyelf.com", # credentials for online_check and online_upgrade
+    "firmware_store_user":"dl:dl@ashyelf.com", # credentials for store_check and store_upgrade
     "project":                                 # project enable/disable map
     {
         "land":"enable",                           # land project is enabled

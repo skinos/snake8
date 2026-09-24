@@ -232,7 +232,7 @@ $.i18n().load( page.lang('software') ).then( function () {
   }
   // check new version online
   $('#check').unbind(ace.click_event).on(ace.click_event, function () {
-      he.exec( [ 'arch@firmware.online_check' ], $.i18n("Checking…") ).then( function(v){
+      he.exec( [ 'arch@firmware.store_check' ], $.i18n("Checking…") ).then( function(v){
         if ( !v[0] )
         {
             page.alert( { message: $.i18n('No new version'), callback: function( result ){

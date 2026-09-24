@@ -86,7 +86,7 @@ extern int pport_static_start;    // 25000(TCP)
 
 
 /**
- * @brief call heport service control (Unix JSON: list/knock/dump)
+ * @brief call heport service control (Unix JSON: list/knock/dump/user_reload)
  * @param[in] cmd control command name
  * @param[in] v argument json (ownership taken)
  * @param[in] timeout timeout in seconds

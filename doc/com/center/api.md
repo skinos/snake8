@@ -24,43 +24,59 @@ Business HE APIs for the center cloud: cloud-user self-service account fields, g
 
 Cloud-user self-service profile/password. Admin account CRUD and login `user_match`: see `center@ctrl` (`ctrl.md`).
 
-+ `user_profile[ user ]` **get one user profile (password stripped)**
+Writable self-service fields are listed in `user_self_attrs[]` in `api/user.c` (currently `vcode` / `lang` / `comment`). Password changes use `user_passwd` (old proof required). Admin-only fields (`relay_max`, `nport`/`pport`/`log`, …): `center@ctrl.user_set` / `user_orset`.
+
++ `user_get[ user, [attr] ]` **get one user profile (password stripped)**
     - user ------ [ string ], required; return that user config only (no list-all)
+    - attr ------ [ string ], optional field path; `key` refused
+    - missing user dir or config file: NULL (`ENOENT`)
     - failed return NULL
-    - succeed return json for that user
+    - succeed return json for that user (or one field)
     ```json
     // Note: password "key" is stripped from the return
     {
         "lang":"language type",                 // [ string ]
         "vcode":"device register vcode",        // [ string ], optional
         "comment":"comment string",             // [ string ]
-        "relay_max":"live mesh relay UDP cap"   // [ number ], optional; omitted = unlimited; 0 = none
+        "relay_max":"live mesh relay UDP cap"   // [ number ], optional; omitted = unlimited; 0 = none (read-only here)
     }
     ```
 
     Example, get user "sam"
     ```shell
-    dimmalex@CLS:~/snake8$ he center@api.user_profile[ sam ]
+    dimmalex@CLS:~/snake8$ he center@api.user_get[ sam ]
     {
         "comment":"RealOne"
     }
     dimmalex@CLS:~/snake8$
     ```
 
-+ `user_modify[ user, [vcode], [lang], [comment] ]` **self-service change non-password fields**
-    - user ------- [ string ], required
-    - vcode ------ [ string ], optional; omit = leave unchanged; empty string clears
-    - lang ------- [ string ], optional; omit = leave unchanged; empty = follow system
-    - comment ---- [ string ], optional; omit = leave unchanged; empty string clears
-    - does not change password (`key`) or `relay_max` (admin only, `center@ctrl.user_modify`)
++ `user_set[ user, value, [attr] ]` **self-service assign (`=`)**
+    - user ------ [ string ], required
+    - value ----- [ string | object ], required
+    - attr ------ [ string ], optional; with attr must be `vcode`/`lang`/`comment`; without attr, `value` must be object whose **every** key is on that allow list (any other key → whole call fails `EPERM`)
+    - empty string value deletes that allow-listed field (omit)
+    - never writes `key` / `relay_max` / feature gates
     - failed return tfalse
     - succeed return ttrue
 
-    Example, set language and comment for "sam"
+    Example
     ```shell
-    dimmalex@CLS:~/snake8$ he center@api.user_modify[ sam,,en, RealOne ]
+    dimmalex@CLS:~/snake8$ he 'center@api.user_set[ sam, en, lang ]'
     ttrue
-    dimmalex@CLS:~/snake8$
+    dimmalex@CLS:~/snake8$ he 'center@api.user_set[ sam, {"lang":"en","comment":"RealOne"} ]'
+    ttrue
+    ```
+
++ `user_orset[ user, value, [attr] ]` **self-service merge (`|`)**
+    - same args and allow list as `user_set`
+    - failed return tfalse
+    - succeed return ttrue
+
+    Example
+    ```shell
+    dimmalex@CLS:~/snake8$ he 'center@api.user_orset[ sam, {"vcode":"sssss","lang":"en"} ]'
+    ttrue
     ```
 
 + `user_passwd[ user, old_proof, new_wrap ]` **self-service change password (no plaintext on wire)**

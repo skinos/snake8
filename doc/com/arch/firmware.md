@@ -6,11 +6,11 @@
 
 - **`fpk`** installs a single local FPK package; **`zz`** applies a vendor **`.tar.gz`** upgrade archive built for this product
 - **`tftp_upgrade`** and **`online_upgrade`** download firmware then delegate to **`fpk`** or **`zz`** as appropriate
-- **`store_upgrade`** calls **`online_check`** for the newest store release, then **`online_upgrade`** with that download URL
+- **`store_check`** queries the firmware store and composes the **`.zz`** URL under **`pub`** or **`custom`** (same layout as **`make sdk_ftp`**); **`store_upgrade`** calls **`store_check`** then **`online_upgrade`**
 - upgrade is blocked when **`arch@lock`** **`upgrade`** is **`enable`**, when another upgrade is in progress, or when device identity register keys are missing
-    > **`fpk`**, **`zz`**, and upgrade paths that call them return **`Function locked`**; **`online_check`** is not affected by the upgrade lock
+    > **`fpk`**, **`zz`**, and upgrade paths that call them return **`Function locked`**; **`store_check`** is not affected by the upgrade lock
     > only one upgrade runs at a time; concurrent calls receive **`Update busy`**
-- OTA URL, download credentials, and post-upgrade restart hint are **not** stored on **`arch@firmware`**; **`online_check`**, **`online_upgrade`**, **`store_upgrade`**, and successful **`zz`** responses read them from **`arch@custom`** (see **Configuration reference ( arch@custom )** below)
+- OTA store URL and credentials are **not** stored on **`arch@firmware`**; **`store_check`** and **`store_upgrade`** read **`firmware_store`** / **`firmware_store_user`** from **`arch@custom`** (defaults **`ftp://repo.ashyelf.com`** and **`dl:dl@ashyelf.com`**); successful **`zz`** responses read **`upgrade_time`** from **`arch@custom`** (see **Configuration reference ( arch@custom )** below)
 - upgrade lock is stored on **`arch@lock`** (see **Configuration reference ( arch@lock )** below)
 - during upgrade the component updates **`machine_state`** in the land register, invokes **`machine/status`**, and drives **`gpio@action`** for upgrade indication
 
@@ -35,7 +35,7 @@ Example, show arch@custom attributes used by arch@firmware
 arch@custom
 {
     "firmware_store":"ftp://repo.ashyelf.com",                # OTA repository base URL
-    "firmware_store_user":"dl:dl@ashyelf.com",                  # credentials for online_check and online_upgrade
+    "firmware_store_user":"dl:dl@ashyelf.com",                  # credentials for store_check and store_upgrade
     "upgrade_time":"90"                                         # restart hint delay in seconds after zz flash success
 }
 ```
@@ -105,13 +105,14 @@ ttrue
 
 #### Query APIs
 
-+ `online_check` **query the firmware store for version and changelog**   
++ `store_check[ check ]` **query the firmware store for version and changelog**   
+    - check -------------- [ string ], optional, **`disable`** always returns store **`version`** and **`.zz`** **`url`**, even when it matches the device
     - failed return NULL
-    - succeed return [ json ], version and download URL when a newer build exists; changelog for current and available releases
+    - succeed return [ json ], version and download URL when a newer build exists (or always when **`disable`**); changelog for current and available releases
     ```json
     {
-        "version": "newer release version",         // [ string ], present only when remote version differs from device register "version"
-        "url": "firmware download URL",             // [ string ], present when a newer release is available
+        "version": "store release version",         // [ string ], present when remote version differs, or when check is disable
+        "url": "firmware download URL",             // [ string ], composed .zz path, present with version
         "changelog":                               // { json }, release notes from the store manifest
         {
             "release key": "change text"            // [ string ]: { json }, nested notes from the manifest
@@ -120,17 +121,18 @@ ttrue
     }
     ```
     - Uses **`firmware_store`** and **`firmware_store_user`** from **`arch@custom`** (or built-in defaults when unset).
-    - On failure **`errno`** may be **`ESRCH`** (missing device register keys) or **`EAGAIN`** (download or parse failed).
+    - Composes **`url`** as **`{store}/pub/{custom}/{hardware}_{custom}_{scope}_{version}.zz`** (or **`custom`** instead of **`pub`** when scope is not **`std`**), matching **`make sdk_ftp`**.
+    - On failure **`errno`** may be **`ESRCH`** (missing device register keys), **`EAGAIN`** (download or parse failed), or **`ENOENT`** (manifest has no version).
 
-    Example, check for online updates
+    Example, check for store updates
     ```shell
-    arch@firmware.online_check
+    arch@firmware.store_check
     {
-        "version":"2.0.2",
-        "url":"ftp://repo.ashyelf.com/pub/ashyelf/device_2.0.2.tar.gz",
+        "version":"v8.6.0402",
+        "url":"ftp://repo.ashyelf.com/pub/d218/mt7628_d218_std_v8.6.0402.zz",
         "changelog":
         {
-            "2.0.2":"Bug fixes and improvements"
+            "v8.6.0402":"Bug fixes and improvements"
         }
     }
     ```
@@ -213,19 +215,14 @@ ttrue
     ```
 
 + `online_upgrade[ url, user, cmd ]` **download firmware from a URL and apply it**
-    - url ---------------- [ string ], optional, full download URL; default from **`arch@custom`** **`firmware_store`**
-    - user --------------- [ string ], optional, curl **`-u`** credentials; default from **`arch@custom`** **`firmware_store_user`**
+    - url ---------------- [ string ], required, full firmware download URL
+    - user --------------- [ string ], optional, curl **`-u`** credentials in **`user:password`** form; omitted or empty downloads without authentication
     - cmd ---------------- [ string ], optional, post-success action: **`restart`** for restart after 5 seconds, or a positive integer string for that many seconds
     - failed return tfalse
     - succeed return ttrue
+    - **`url`** must be present and non-empty; otherwise **`errno`** is **`EINVAL`**.
     - Downloads with curl (up to 3 attempts, 300 s timeout), then runs **`zz`** on the downloaded file; sets **`machine_state`** to **`downloading`** during transfer.
     - On failure **`errno`** reflects the download or upgrade result; check system logs when **`tfalse`**.
-
-    Example, OTA upgrade with automatic restart
-    ```shell
-    arch@firmware.online_upgrade[ , , restart ]
-    ttrue
-    ```
 
     Example, OTA upgrade from a specific URL
     ```shell
@@ -233,12 +230,14 @@ ttrue
     ttrue
     ```
 
-+ `store_upgrade[ cmd ]` **check the firmware store and upgrade to the newest release**
++ `store_upgrade[ cmd, check ]` **check the firmware store and upgrade to the newest release**
     - cmd ---------------- [ string ], optional, post-success action passed to **`online_upgrade`**: **`restart`** for restart after 5 seconds, or a positive integer string for that many seconds
+    - check -------------- [ string ], optional, **`disable`** is passed to **`store_check`** to force-upgrade even when the version matches
     - failed return tfalse
     - succeed return ttrue
-    - Calls **`online_check`** using the same store path and credentials, then **`online_upgrade`** with the returned download **`url`**.
-    - On failure **`errno`** may be **`ENOENT`** when no newer release is available, or the same values as **`online_check`** / **`online_upgrade`**.
+    - Reads **`firmware_store_user`** from **`arch@custom`**; unset uses **`dl:dl@ashyelf.com`**. Store base URL is resolved inside **`store_check`**.
+    - Calls **`store_check`** for the store **`.zz`** URL, then **`online_upgrade`** with that URL and the store user.
+    - On failure **`errno`** may be **`ENOENT`** when no newer release is available (unless **`disable`**), or the same values as **`store_check`** / **`online_upgrade`**.
 
     Example, upgrade to the newest store release and restart
     ```shell
@@ -249,6 +248,12 @@ ttrue
     Example, upgrade to the newest store release without automatic restart
     ```shell
     arch@firmware.store_upgrade
+    ttrue
+    ```
+
+    Example, skip version compare and force-upgrade from the store
+    ```shell
+    arch@firmware.store_upgrade[ restart, disable ]
     ttrue
     ```
 
