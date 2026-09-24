@@ -1,12 +1,23 @@
-# 本地被管理协议 (localport)
+# Local managed protocol (localport)
 
-局域网通过 **TCP JSON** 管理网关的协议说明，由 [`agent@local`](../../com/agent/local.md) 提供。
+LAN **TCP JSON** management protocol provided by [`agent@local`](../../com/agent/local.md).
 
-| 文档 | 说明 |
-|------|------|
-| [localport_protocol_cn.md](./localport_protocol_cn.md) | TCP JSON 控制协议（端口 22220）与常用示例 |
+| Document | Language |
+|----------|----------|
+| [localport_protocol_cn.md](./localport_protocol_cn.md) | Chinese |
+| [localport_protocol.md](./localport_protocol.md) | English |
 
-相关：
+Related:
 
-- 组件配置与 API：[`agent@local`](../../com/agent/local.md)
-- HE 语法：[`he.md`](../../com/land/he.md) / [`eline.md`](../../com/land/eline.md)
+- Component config / API: [`agent@local`](../../com/agent/local.md)
+- HE grammar: [`he.md`](../../com/land/he.md) / [`eline.md`](../../com/land/eline.md)
+
+### Screenshots
+
+| Asset | Used by |
+|-------|---------|
+| `localport_protocol.png` / `localport_protocol_en.png` | CN / EN overview |
+| `localport_control.png` / `localport_control_en.png` | CN / EN short-connection flow |
+| `localport_jsonwui.png` / `localport_jsonwui_en.png` | CN / EN Web JSON agent form |
+| `localport_nc_machine_cfg.png` | Shared (ASCII terminal) |
+| `localport_nc_machine_status.png` | Shared (ASCII terminal) |
