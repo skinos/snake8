@@ -81,7 +81,7 @@ Instance configuration is stored under each `gnss@nmea` … `gnss@nmea8` object 
 ```json
 // Attributes introduction
 {
-    "status":"instance status",              // [ "disable", "enable" ], default "disable"
+    "status":"instance status",              // [ "disable", "enable" ], default "enable"
     "ttydev":"serial device path",           // [ string ], optional Linux TTY path (e.g. "/dev/ttyUSB0")
     "devcom":"device component",             // [ string ], optional hardware object that provides ttydev
     "drvcom":"driver component",             // [ string ], driver object (e.g. "gnssdrv@nmea")

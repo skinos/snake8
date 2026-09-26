@@ -190,20 +190,40 @@ boole_t _setup( obj_t this, param_t param )
 
 /*
  * _shut -- Remove iptables chain and stop supervised Dropbear.
- * INPUT rule is deleted by jump target (see telnet.c) for correct _set() ordering.
+ *
+ * INPUT jump must match setup() exactly (-p tcp --dport <port> -j <chain>).
+ * Call _shut before config_set in _set() so the old listen port is still used.
  */
 boole_t _shut( obj_t this, param_t param )
 {
+    talk_t cfg;
+    const char *port;
+
+    cfg = config_get( this, NULL );
+    port = NULL;
+    if ( cfg != NULL )
+    {
+        port = json_string( cfg, "port" );
+    }
+    if ( port == NULL || *port == '\0' )
+    {
+        port = "22";
+    }
+    /* Match setup() rule exactly, then drop the empty chain. */
+    iptables( "-t filter -D INPUT -p tcp --dport %s -j %s_%s", port, PROJECT_ID, COM_ID );
     iptables( "-t filter -F %s_%s", PROJECT_ID, COM_ID );
-    iptables( "-t filter -D INPUT -j  %s_%s", PROJECT_ID, COM_ID );
     iptables( "-t filter -X %s_%s", PROJECT_ID, COM_ID );
+    if ( cfg != NULL )
+    {
+        talk_free( cfg );
+    }
     sdelete( COM_IDPATH );
     return ttrue;
 }
 
 /*
  * _set -- Persist config, restart service, refresh firewall.
- * Blocked on wrt/slave; otherwise same sequence as telnet component.
+ * Blocked on wrt/slave. Shut before config_set so _shut still sees the old port.
  */
 boole _set( obj_t this, talk_t v, attr_t path )
 {
@@ -220,12 +240,18 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		return false;
 	}
 
+	/* Tear down old iptables/service before config_set so _shut sees the old port. */
+	_shut( this, NULL );
     ret = config_set( this, v, path );
     if ( ret == true )
     {
-        _shut( this, NULL );
         _setup( this, NULL );
 		scalls( FIREWALL_COM, "setup", NULL );
+    }
+    else
+    {
+		/* config_set failed; old config remains — bring the previous instance back. */
+		_setup( this, NULL );
     }
     return ret;
 }

@@ -211,3 +211,40 @@ arch@net
     bridge@lan.setmac[ 02:50:F4:00:00:01 ]
     ttrue
     ```
+
++ `up[]` **bring bridge and members up**
+    - failed return terror / tfalse
+    - succeed return ttrue
+    - instance (`bridge@lan`): `ifconfig` bridge up, then for each member call `up`/`connect` and `brctl addif`
+    - intended for ifdev lifecycle used by ifname / frame
+
++ `connect[]` **connect all bridge members**
+    - succeed return ttrue when at least one member `connect` was invoked
+    - calls each member's `connect` API
+
++ `connected[]` **bridge connected check**
+    - succeed return ttrue
+    - bridge always reports connected once created (members own real link state)
+
++ `down[]` **bring bridge and members down**
+    - succeed return ttrue when work was done
+    - instance: remove members from bridge, `down` each member, then `ifconfig` bridge down
+    - root (`network@bridge.down[]`): `_list` returns bridge instances; each instance is brought down in turn
+    - **LAN risk (high)**: calling `down` on the LAN bridge (typically `bridge@lan`) or `network@bridge.down[]` when that bridge carries the management path will cut HTTP/telnet to the device until power cycle or local recovery. Do not call in remote tests.
+
+    Example (do not run on live management LAN)
+    ```shell
+    # DANGER: may disconnect management
+    # bridge@lan.down
+    # network@bridge.down
+    ```
+
++ `online[]` **propagate online to all members**
+    - succeed return ttrue when at least one member was notified
+    - calls each member's `online`
+
++ `offline[]` **propagate offline to all members**
+    - succeed return ttrue when at least one member was notified
+    - calls each member's `offline`
+    - **LAN risk (high)**: `offline` on the LAN bridge / members can take the management path offline. Same caution as `down`.
+

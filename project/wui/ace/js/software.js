@@ -50,7 +50,7 @@ function delete_project( indexStr )
             page.alert( { message: $.i18n("Cannot delete software built into the firmware") } );
             return;
         }
-        cmds.push( 'land@fpk.delete[ '+key+']' );
+        cmds.push( 'land@fpk.uninstall[ '+key+']' );
     }
     // 执行删除
     he.exec( cmds ).then(function (){

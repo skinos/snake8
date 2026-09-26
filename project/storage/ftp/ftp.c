@@ -101,7 +101,7 @@ talk_t _get( obj_t this, attr_t path )
  *  D) Emit static server directives (port 21, passwd auth, chroot, etc.).
  *  E) Branch on "mode":
  *     - "anonymous": anonymous stanza; WRITE allowed only if permission=="all";
- *       chmod a+rwx on anonymous root (legacy permissive behaviour).
+ *       chmod a+rwx only when permission is "all" (read mode must not open FS writes).
  *     - else (user mode): RootLogin on; list land@auth "nas" users; for each
  *       share under cfg["user"], build READ/WRITE AllowUser lists from share
  *       "permission" and optional per-username overrides in share["user"].
@@ -120,11 +120,14 @@ boole_t _service( obj_t this, param_t param )
 	talk_t userlist;
 	talk_t permlist;
     const char *ptr;
+	const char *dir;
 	const char *mode;
+	const char *root;
     talk_t anonymous;
     const char *path;
 	const char *permission;
 	const char *user;
+	char realdir[LINE_MAX];
 	char cfgpath[LINE_MAX];
 	char readlist[LINE_MAX];
 	char writelist[LINE_MAX];
@@ -145,9 +148,19 @@ boole_t _service( obj_t this, param_t param )
     cfg = config_get( this, NULL );
     /* Chroot jail root for authenticated users (default mount). */
     path = json_string( cfg, "root" );
-	if ( path == NULL )
+	/* Empty string must fall back too; DefaultRoot "" makes proftpd fail to start. */
+	if ( path == NULL || *path == '\0' )
 	{
 		path = PROJECT_MNT_DIR;
+	}
+	/* Resolve symlinks (/mnt -> /tmp/mnt) so DefaultRoot matches <Directory> limits. */
+	if ( realpath( path, realdir ) != NULL )
+	{
+		root = realdir;
+	}
+	else
+	{
+		root = path;
 	}
     /* Core daemon options: standalone, system passwd, FTP port, umask, chroot. */
     string3file( cfgpath, \
@@ -160,7 +173,7 @@ boole_t _service( obj_t this, param_t param )
         "IdentLookups off\n"\
         "DefaultRoot %s\n"\
         "RequireValidShell off\n"
-        "DelayEngine on\n", path );
+        "DelayEngine on\n", root );
 
 	/* Anonymous FTP vs normal (passwd) login. */
 	mode = json_string( cfg, "mode" );
@@ -168,25 +181,29 @@ boole_t _service( obj_t this, param_t param )
 	{
 		anonymous = json_value( cfg, "anonymous" );
 		path = json_string( anonymous, "path" );
-		if ( path == NULL )
+		if ( path == NULL || *path == '\0' )
 		{
 			path = PROJECT_MNT_DIR;
 		}
 		permission = json_string( anonymous, "permission" );
         /* Map anonymous to nobody; restrict or allow WRITE under anonymous tree. */
+        /* Inside <Anonymous>, Directory paths are jail-relative; use * so WRITE Limit applies. */
         string3file( cfgpath, \
             "RootLogin off\n"\
             "<Anonymous %s>\n"\
             "   User nobody\n"\
             "   Group nogroup\n"\
             "   UserAlias anonymous nobody\n"\
-            "   <Directory %s>\n"\
-            "       <Limit WRITE>\n", path, path );
+            "   <Directory *>\n"\
+            "       AllowOverwrite on\n"\
+            "       <Limit WRITE>\n", path );
 
         if ( NULL != permission && 0 == strcmp( permission, "all" ) )
         {
             string3file( cfgpath, \
             "           AllowAll\n" );
+            /* Writable permission needs nobody able to create files on the share path. */
+            shell( "chmod a+rwx %s", path );
         }
         else
         {
@@ -197,8 +214,6 @@ boole_t _service( obj_t this, param_t param )
             "       </Limit>\n"\
             "   </Directory>\n"\
             "</Anonymous>\n" );
-		/* Ensure anonymous upload tree is world-accessible (device policy). */
-		shell( "chmod a+rwx %s", path );
 	}
     else
     {
@@ -217,7 +232,7 @@ boole_t _service( obj_t this, param_t param )
 		{
 			v = axp_json( axp );
 			path = json_string( v, "path");
-			if ( path == NULL )
+			if ( path == NULL || *path == '\0' )
 			{
 				path = PROJECT_MNT_DIR;
 			}
@@ -252,8 +267,17 @@ boole_t _service( obj_t this, param_t param )
 	                strcat( readlist, " ");
 	            }
 	        }
+			/* Non-Anonymous <Directory> needs absolute real paths (symlink-aware). */
+			if ( realpath( path, realdir ) != NULL )
+			{
+				dir = realdir;
+			}
+			else
+			{
+				dir = path;
+			}
 			/* ProFTPD: default deny; AllowUser whitelists for READ and WRITE. */
-			string3file( cfgpath, "<Directory %s>\n" , path );
+			string3file( cfgpath, "<Directory %s>\n" , dir );
 			string3file( cfgpath, "	 AllowOverwrite on\n" );
 			
 			string3file( cfgpath, "	 <Limit READ>\n" );

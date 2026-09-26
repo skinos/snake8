@@ -173,3 +173,41 @@ arch@net
     vlan@lan.setmac[ 02:50:F4:00:00:01 ]
     ttrue
     ```
+
++ `up[]` **bring VLAN netdev up**
+    - failed return terror / tfalse
+    - succeed return ttrue
+    - `ifconfig <vlan-netdev> 0.0.0.0 up` while holding netdev lock
+
++ `connect[]` **VLAN connect**
+    - succeed return ttrue
+    - no-op success (connectivity is delegated via `connected`)
+
++ `connected[]` **check VLAN connectivity via root ifdev**
+    - failed return tfalse
+    - succeed return ttrue / tfalse from root `vconnected[ vlanid ]` when available; otherwise ttrue
+
++ `down[]` **bring VLAN netdev down**
+    - failed return terror / tfalse
+    - succeed return ttrue
+    - `ifconfig <vlan-netdev> down`
+    - **LAN risk (high)**: if this VLAN is the management ifdev (often `vlan@lan` under `ifname@lan` / `bridge@lan`), `down` cuts remote management. Do not call on the live management VLAN.
+
+    Example (do not run on live management path)
+    ```shell
+    # DANGER: may disconnect management when vlan@lan is LAN ifdev
+    # vlan@lan.down
+    # network@vlan.down
+    ```
+
++ `online[ ifname ]` **forward online to root ifdev**
+    - ifname ----------- [ string ], optional, passed through to root `vonline`
+    - failed return tfalse
+    - succeed return root `vonline[ ifname, vlanid ]` when available; otherwise ttrue
+
++ `offline[ ifname ]` **forward offline to root ifdev**
+    - ifname ----------- [ string ], optional, passed through to root `voffline`
+    - failed return tfalse
+    - succeed return root `voffline[ ifname, vlanid ]` when available; otherwise ttrue
+    - **LAN risk (high)**: offline on the management VLAN path can drop remote access. Same caution as `down`.
+

@@ -17,6 +17,7 @@
 
 #define SNMPD_BIN          "/usr/sbin/snmpd"
 #define SNMPD_CONFIG_FILE  PROJECT_CONF_DIR"/snmpd.conf"
+#define SNMPD_PERSIST_FILE "/var/snmp/snmpd.conf"
 
 
 /*
@@ -254,9 +255,9 @@ boole_t _service( obj_t this, param_t param )
 
 	talk_free( cfg );
 
-	/* snmpd -a -f -Ls 0 -C -c <conf> 0.0.0.0:161 */
+	/* snmpd -a -f -Ls 0 -C -c <conf>; keep USM/engine state in a separate persistent file */
 	shell( "mkdir -p /var/snmp" );
-	setenv( "SNMP_PERSISTENT_FILE", SNMPD_CONFIG_FILE, 1 );
+	setenv( "SNMP_PERSISTENT_FILE", SNMPD_PERSIST_FILE, 1 );
 	execlp( SNMPD_BIN, "snmpd", "-a", "-f", "-Ls", "0", "-C", "-c", SNMPD_CONFIG_FILE, listen, (char*)0 );
 	app_faulting( "execlp the snmpd(%s) error", SNMPD_BIN );
 	return tfalse;

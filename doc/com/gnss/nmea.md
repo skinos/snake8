@@ -18,7 +18,7 @@ When `drvcom` is `gnssdrv@nmea`, the following fields are read from the `gnss@nm
 ```json
 // Attributes introduction 
 {
-    "status":"instance status",              // [ "disable", "enable" ], default "disable"
+    "status":"instance status",              // [ "disable", "enable" ], default "enable"
     "ttydev":"serial device path",           // [ string ], Linux TTY path (e.g. "/dev/ttyUSB0")
     "devcom":"device component",             // [ string ], optional hardware object that provides ttydev
     "drvcom":"driver component",             // [ string ], must be "gnssdrv@nmea" for this driver

@@ -175,16 +175,35 @@ boole_t _setup( obj_t this, param_t param )
 /*
  * _shut -- Tear down iptables rules and stop the supervised service.
  *
- * Deletes the custom filter chain and INPUT jump by target name (not by port)
- * so _set() can still remove the old jump after config_set() wrote a new port.
+ * INPUT jump must match setup() exactly (-p tcp --dport <port> -j <chain>);
+ * a bare "-j <chain>" does not delete that rule. Call _shut before config_set
+ * in _set() so the old listen port is still readable here when the port changes.
  *
  * Then removes the service supervisor entry for this component.
  */
 boole_t _shut( obj_t this, param_t param )
 {
+    talk_t cfg;
+    const char *port;
+
+    cfg = config_get( this, NULL );
+    port = NULL;
+    if ( cfg != NULL )
+    {
+        port = json_string( cfg, "port" );
+    }
+    if ( port == NULL || *port == '\0' )
+    {
+        port = "23";
+    }
+    /* Match setup() rule exactly, then drop the empty chain. */
+    iptables( "-t filter -D INPUT -p tcp --dport %s -j %s_%s", port, PROJECT_ID, COM_ID );
     iptables( "-t filter -F %s_%s", PROJECT_ID, COM_ID );
-    iptables( "-t filter -D INPUT -j  %s_%s", PROJECT_ID, COM_ID );
     iptables( "-t filter -X %s_%s", PROJECT_ID, COM_ID );
+    if ( cfg != NULL )
+    {
+        talk_free( cfg );
+    }
     sdelete( COM_IDPATH );
     return ttrue;
 }
@@ -192,8 +211,8 @@ boole_t _shut( obj_t this, param_t param )
 /*
  * _set -- Persist configuration changes and re-apply runtime state.
  *
- * Refused on wrt/slave (same as _setup gate). On success: write config,
- * shut down old instance, setup again, then refresh global firewall component.
+ * Refused on wrt/slave (same as _setup gate). Shut first (old port still in
+ * config), then write config, setup again, and refresh the firewall component.
  */
 boole _set( obj_t this, talk_t v, attr_t path )
 {
@@ -210,12 +229,18 @@ boole _set( obj_t this, talk_t v, attr_t path )
 		return false;
 	}
 
+	/* Tear down old iptables/service before config_set so _shut sees the old port. */
+	_shut( this, NULL );
     ret = config_set( this, v, path );
     if ( ret == true )
     {
-        _shut( this, NULL );
         _setup( this, NULL );
 		scalls( FIREWALL_COM, "setup", NULL );
+    }
+    else
+    {
+		/* config_set failed; old config remains — bring the previous instance back. */
+		_setup( this, NULL );
     }
     return ret;
 }

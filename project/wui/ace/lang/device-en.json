@@ -6,6 +6,7 @@
     "set": "Manual",
     "sourcenull": "Invalid",
     "default": "Default",
+    "ap": "Access Point",
     "gateway": "Gateway",
     "dgateway": "Dual WAN Gateway",
     "tgateway": "Three WAN Gateway",

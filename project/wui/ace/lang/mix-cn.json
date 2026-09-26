@@ -88,5 +88,6 @@
     "The connection will be disconnected due to configuration changes.": "配置变更将导致连接中断并重连",
     "Offline": "离线",
     "Sticky Routing": "粘路由",
-    "sticky tip": "默认在仍在线的链路间切换时，局域网已建连接留在原出口，新连接跟新默认。"
+    "sticky tip": "默认在仍在线的链路间切换时，局域网已建连接留在原出口，新连接跟新默认。",
+    "Balancing on First/Second/Third/Fourth/Fifth/Sixth": "负载均衡于 链接1/链接2/链接3/链接4/链接5/链接6"
 }

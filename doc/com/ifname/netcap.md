@@ -1,4 +1,4 @@
-## ifname@netcap — Network Packet Capture
+## script@netcap — Network Packet Capture
 
 ### Overview
 
@@ -8,7 +8,7 @@ Shell component (flat `exe` script under `project/ifname/netcap`) for background
 Capture files go under **`NETCAP_DIR`** (default `/tmp/file`, usable via `wui@file`).
 
 
-### Configuration reference ( ifname@netcap )
+### Configuration reference ( script@netcap )
 
 Edit macros at the top of the script:
 
@@ -36,8 +36,8 @@ Edit macros at the top of the script:
 - Returns: `ttrue` / `tfalse`
 
 ```shell
-$ ifname@netcap.lte
+$ script@netcap.lte
 ttrue
-$ ifname@netcap.stop
+$ script@netcap.stop
 ttrue
 ```

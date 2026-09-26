@@ -17,30 +17,26 @@ Manage machine hardware information, system configuration, and power operations.
 // Attributes introduction 
 {
     "name":"machine hostname",                     // [ string ], the system hostname
-    "mode":"machine working mode",                 // [ "ap", "wisp", "nwisp", "gateway", "dgateway", "tgateway", "qgateway", "misp", "nmisp", "dmisp", "mwm", "mix" ], default be "default"
-                                                       // "ap": access point
+    "mode":"machine working mode",                 // [ "default", "ap", "wisp", "nwisp", "gateway", "dgateway", "tgateway", "qgateway", "mbridge", "misp", "nmisp", "dmisp", "mwm", "mix" ], default be "default"
+                                                       // UI lists board-supported modes from network@frame.mode_list (subset of this enum)
+                                                       // "default": access point style (LAN dhcps disabled); WUI label "Access Point"
+                                                       // "ap": access point (alias of default on some boards)
                                                        // "wisp": 2.4G Wireless Internet Service Provider connection
                                                        // "nwisp": 5.8G Wireless Internet Service Provider connection( need the board support 5.8G wireless base
                                                        // "gateway": wire WAN gateway
                                                        // "dgateway": Dual wire WAN gateway
                                                        // "tgateway": Three wire WAN gateway
                                                        // "qgateway": Quartered wire WAN gateway
+                                                       // "mbridge": LTE/NR modem bridge (LAN dhcps disabled)
                                                        // "misp": LTE Mobile Internet Service Provider connection( need the board support LTE baseband)
                                                        // "nmisp": Next Mobile(NR/LTE) Internet Service Provider connection( need the board support NR/LTE baseb
                                                        // "dmisp": Dual Mobile(LTE/NR) Internet Service Provider connection( need the board support two LTE/NR b
                                                        // "mwm": multiple LTE and Wireless gateway
                                                        // "mix": custom mix connection from multiple internet connection
-                                                       // "mbridge" or "default": LAN dhcps status set disable
 
     "sn":"serial number",                          // [ string ], read-only, from EEPROM, cannot be changed
     "mac":"MAC address",                           // [ string ], read-only, from EEPROM, cannot be changed
     "macid":"MAC ID",                              // [ string ], read-only, from EEPROM, cannot be changed
-    "model":"product model",                       // [ string ], read-only, from EEPROM
-    "features":"product features",                 // [ string ], read-only, from EEPROM
-    "cmodel":"custom model",                       // [ string ], read-only, from EEPROM
-    "oem":"OEM information",                       // [ string ], read-only, from EEPROM
-    "magic":"magic number",                        // [ string ], read-only, from EEPROM
-    "datecode":"manufacture date code",            // [ string ], read-only, from EEPROM
     "language":"system language",                  // [ string ], stored in EEPROM, writable
     "gpversion":"general purpose version",         // [ string ], config dir file PROJECT_CFG_DIR/gpversion, writable via land@machine
     "cfgversion":"configuration version"           // [ string ], config dir file PROJECT_CFG_DIR/version, writable via land@machine
@@ -55,9 +51,9 @@ land@machine
 {
     "name":"SkinOS",                             # machine hostname
     "mode":"default",                            # working mode
-    "sn":"20240001",                             # serial number
-    "mac":"AA:BB:CC:DD:EE:FF",                   # MAC address
-    "model":"R2000",                             # product model
+    "sn":"20240001",                             # serial number (read-only from EEPROM)
+    "mac":"AA:BB:CC:DD:EE:FF",                   # MAC address (read-only from EEPROM)
+    "macid":"AABBCCDDEEFF",                      # MAC ID (read-only from EEPROM)
     "language":"cn",                             # system language
     "gpversion":"1.0.0",                         # general purpose version
     "cfgversion":"1.0.0"                         # configuration version
