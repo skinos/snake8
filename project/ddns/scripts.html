@@ -88,6 +88,24 @@
             </span>
           </div>
         </div>
+        <!-- check interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Check Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client_check_interval" class="col-xs-10 col-sm-5" min="60" max="86400" step="1" placeholder="600" />
+            </div>
+          </div>
+        </div>
+        <!-- retry interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Retry Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client_retry_interval" class="col-xs-10 col-sm-5" min="1" max="86400" step="1" placeholder="60" />
+            </div>
+          </div>
+        </div>
       </div><!--client-config-->
 
 
@@ -174,6 +192,24 @@
             </span>
           </div>
         </div>
+        <!-- check interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Check Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client2_check_interval" class="col-xs-10 col-sm-5" min="60" max="86400" step="1" placeholder="600" />
+            </div>
+          </div>
+        </div>
+        <!-- retry interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Retry Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client2_retry_interval" class="col-xs-10 col-sm-5" min="1" max="86400" step="1" placeholder="60" />
+            </div>
+          </div>
+        </div>
       </div><!--client2-config-->
 
 
@@ -258,6 +294,24 @@
               <input type="password" id="client3_password" maxlength="128" autocomplete="new-password" />
               <i class="ace-icon fa fa-eye-slash" id="client3_password-icon"></i>
             </span>
+          </div>
+        </div>
+        <!-- check interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Check Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client3_check_interval" class="col-xs-10 col-sm-5" min="60" max="86400" step="1" placeholder="600" />
+            </div>
+          </div>
+        </div>
+        <!-- retry interval (seconds) -->
+        <div class="form-group">
+          <label class="col-sm-3 control-label no-padding-right" data-i18n="Retry Interval"></label>
+          <div class="col-sm-9">
+            <div class="clearfix">
+              <input type="number" id="client3_retry_interval" class="col-xs-10 col-sm-5" min="1" max="86400" step="1" placeholder="60" />
+            </div>
           </div>
         </div>
       </div><!--client3-config-->
@@ -368,6 +422,8 @@
                     $('#client_domain').val( client.domain || '' );
                     $('#client_username').val( client.username || '' );
                     $('#client_password').val( client.password || '' );
+                    $('#client_check_interval').val( client.check_interval || '600' );
+                    $('#client_retry_interval').val( client.retry_interval || '60' );
                     $('#client-config').show();
                 }
                 else
@@ -390,6 +446,8 @@
                     $('#client2_domain').val( client2.domain || '' );
                     $('#client2_username').val( client2.username || '' );
                     $('#client2_password').val( client2.password || '' );
+                    $('#client2_check_interval').val( client2.check_interval || '600' );
+                    $('#client2_retry_interval').val( client2.retry_interval || '60' );
                     $('#client2-config').show();
                 }
                 else
@@ -412,6 +470,8 @@
                     $('#client3_domain').val( client3.domain || '' );
                     $('#client3_username').val( client3.username || '' );
                     $('#client3_password').val( client3.password || '' );
+                    $('#client3_check_interval').val( client3.check_interval || '600' );
+                    $('#client3_retry_interval').val( client3.retry_interval || '60' );
                     $('#client3-config').show();
                 }
                 else
@@ -496,6 +556,8 @@
             client.domain = $('#client_domain').val();
             client.username = $('#client_username').val();
             client.password = $('#client_password').val();
+            client.check_interval = $('#client_check_interval').val() || '600';
+            client.retry_interval = $('#client_retry_interval').val() || '60';
         }
 
         if ( !cfg.client2 )
@@ -511,6 +573,8 @@
             client2.domain = $('#client2_domain').val();
             client2.username = $('#client2_username').val();
             client2.password = $('#client2_password').val();
+            client2.check_interval = $('#client2_check_interval').val() || '600';
+            client2.retry_interval = $('#client2_retry_interval').val() || '60';
         }
 
         if ( !cfg.client3 )
@@ -526,6 +590,8 @@
             client3.domain = $('#client3_domain').val();
             client3.username = $('#client3_username').val();
             client3.password = $('#client3_password').val();
+            client3.check_interval = $('#client3_check_interval').val() || '600';
+            client3.retry_interval = $('#client3_retry_interval').val() || '60';
         }
 
         if ( ocompare( cfg, cfgcopy ) )

@@ -693,7 +693,11 @@ simagain:
 			return terror;
 		}
 	}
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	}
 	reason = reg_string( this, "reset_reason" );
 	if ( reason != NULL && 0 == strcmp( reason, "sim" ) )
 	{
@@ -1169,7 +1173,11 @@ simagain:
 	/*****************************************/
 	/**** ifname ip connect take care ********/
 	/*****************************************/
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	}
 	/* static ip setting */
 	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
 	{
@@ -1879,7 +1887,11 @@ boole_t _online( obj_t this, param_t param )
 	if ( ifdev != NULL )
 	{
 		scallst( ifdev, "online", object, v );
-		scalls( GPIO_COM, "action", "network/online,%s", ifdev );
+		/* connect owns the LED when running */
+		if ( spid( CONNECT_COM ) <= 0 )
+		{
+			scalls( GPIO_COM, "action", "network/online,%s", ifdev );
+		}
 	}
 
 	/***********************************/
@@ -1943,8 +1955,11 @@ talk_t _offline( obj_t this, param_t param )
 	{
 		scalls( ifdev, "offline", object );
 	}
-	/* led */
-	scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
+	}
 
 	return ttrue;
 }

@@ -3,5 +3,7 @@
     "succeed": "Update Succeed",
     "already": "Registing Succeed, No Update",
     "noneed": "Registing Succeed, No Need Update",
-    "deny": "Registing Succeed, Reject Update"
+    "deny": "Registing Succeed, Reject Update",
+    "Check Interval": "Check Interval (sec)",
+    "Retry Interval": "Retry Interval (sec)"
 }

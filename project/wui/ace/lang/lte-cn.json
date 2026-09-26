@@ -104,7 +104,7 @@
     "Query Times": "检测次数",
     "Count Times": "统计次数",
     "Received Packets": "要求包数",
-    "Failed TODO": "失败后操作",
+    "Action on Failure": "失败后操作",
     "Reconnection": "重新连接",
     "Reset Modem": "重置模块",
     "Reboot System": "重启系统",

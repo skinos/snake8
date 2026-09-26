@@ -34,5 +34,6 @@
     "static": "Static",
     "slaac": "SLAAC",
     "automatic": "DHCPv6",
-    "manual": "Manual"
+    "manual": "Manual",
+    "Action on Failure": "Action on Failure"
 }

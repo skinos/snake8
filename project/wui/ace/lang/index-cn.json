@@ -89,6 +89,8 @@
     "agent@net10": "自组网10",
     "ifname@lte": "4G/5G网络",
     "ifname@lte2": "4G/5G网络2",
+    "ifname@lte3": "4G/5G网络3",
+    "ifname@lte4": "4G/5G网络4",
     "ifname@wisp": "无线连网(2.4G)",
     "ifname@wisp2": "无线连网(5.8G)",
     "ifname@wan": "有线宽带",

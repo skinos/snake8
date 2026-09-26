@@ -18,14 +18,85 @@ Administration of equipment Management web page. The admin web stack is configur
 
     "webpage_path":"document root",         // [ string ], optional; if unset, webpath uses project default misc path
 
-    "publist":                   // valid public command list; if omitted, a built-in default allow list may apply
+    "publist":                   // /public allow-list: each command must hit at least one rule, else Auth Error; if omitted a built-in default is used
     {
-        "command match":"compare type"     // [ string ]: "sub" = substring, "equal" = full match, any other value = prefix match
+        // Format: "pattern":"mode"
+        // Mode must be one of (same as webs/httpd):
+        //
+        // equal — full-string equality
+        //   String HE: entire command must equal the key
+        //     e.g. "land@machine":"equal" allows only land@machine, not land@machine.status
+        //   JSON HE: without op (or op is =/|) compare obj to key; with method compare "obj.op" to key
+        //     e.g. "land@machine.status":"equal" allows {"obj":"land@machine","op":"status"}
+        //
+        // start — prefix match
+        //   String HE: command must start with the key
+        //     e.g. "land@machine":"start" allows land@machine, land@machine.status, land@machine:name=x
+        //   JSON HE: without method, obj prefix; with method, "obj.op" prefix
+        //     e.g. "ifname@":"start" allows ifname@lte / ifname@wan.status
+        //
+        // first2username — prefix match, and first argument must equal the logged-in username (/public has no user; this mode usually never matches there)
+        //   String HE: command starts with key and [first] equals username
+        //     e.g. "center@user.":"first2username" allows center@user.foo[admin,...] when username is admin
+        //   JSON HE: obj prefix match and field "1" equals username
+        //
+        "land@machine":"equal",
+        "land@machine.status":"start"
     },
-    "helist":                   // valid he command list (same compare rules as publist)
+    "helist":                   // /he allow-list: each command must hit at least one rule, else Auth Error; if omitted, /he has no allow-list filter
     {
-        "command match":"compare type"
-        // ... more the command match
+        // Format: "pattern":"mode"
+        // Mode must be one of (same as publist / webs/httpd):
+        //
+        // equal — full-string equality
+        //   String HE: entire command must equal the key
+        //     e.g. "land@machine":"equal" allows only land@machine, not land@machine.status
+        //   JSON HE: without op (or op is =/|) compare obj to key; with method compare "obj.op" to key
+        //     e.g. "land@machine.status":"equal" allows {"obj":"land@machine","op":"status"}
+        //
+        // start — prefix match
+        //   String HE: command must start with the key
+        //     e.g. "land@machine":"start" allows land@machine, land@machine.status, land@machine:name=x
+        //   JSON HE: without method, obj prefix; with method, "obj.op" prefix
+        //     e.g. "ifname@":"start" allows ifname@lte / ifname@wan.status
+        //
+        // first2username — prefix match, and first argument must equal the logged-in username (/he is authenticated, so this mode works)
+        //   String HE: command starts with key and [first] equals username
+        //     e.g. "center@user.":"first2username" allows center@user.foo[admin,...] when username is admin
+        //   JSON HE: obj prefix match and field "1" equals username
+        //
+        "land@machine":"equal"
+    },
+    "banlist":                  // deny-list: checked before helist/publist; hit => Auth Error. If omitted, built-in default is {"service":"api","_service":"api_end"}
+    {
+        // Format: "pattern":"mode"
+        // Mode must be one of:
+        //
+        // api — match method/API name only (exact), independent of object
+        //   String HE: take api from obj.api / obj.api[args] / obj.api:path, compare equal to key
+        //     e.g. "service":"api" bans webs@httpd.service, ifname@lte.service[x]
+        //     does not ban land@service.list (method is list, not service)
+        //   JSON HE: field "op" is a method (not =/|) and equals key
+        //     e.g. {"obj":"webs@httpd","op":"service"} is banned
+        //   Commands with no method (plain GET/SET/OR such as land@machine or land@machine={...}) are not hit by api
+        //
+        // api_start — match method-name prefix
+        //   e.g. "lock_":"api_start" bans *.lock_imei, *.lock_imsi, ...
+        //
+        // api_end — match method-name suffix
+        //   e.g. "_service":"api_end" bans methods ending with _service, such as foo_service, bar_service
+        //   note: plain method name "service" does not end with _service; also set "service":"api"
+        //
+        // obj — match object name only (exact), independent of method
+        //   String/JSON: if object equals key, ban any operation on that object (GET/SET/method)
+        //     e.g. "center@ctrl":"obj" bans center@ctrl, center@ctrl.status, center@ctrl={...}
+        //
+        // obj_start — match object-name prefix
+        //   e.g. "ifname@":"obj_start" bans all objects starting with ifname@ and their APIs
+        //   e.g. "modem@":"obj_start" bans modem@lte, modem@lte2, ...
+        //
+        "service":"api",
+        "_service":"api_end"
     },
     
     "manager":                              // Only the specified IP address or MAC address is allowed for access

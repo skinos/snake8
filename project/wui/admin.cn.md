@@ -18,14 +18,85 @@
 
     "webpage_path":"文档根目录",         // [ string ], 可选；如果未设置，webpath 使用项目默认的 misc 路径
 
-    "publist":                   // 有效的公共命令列表；如果省略，可能适用内置的默认允许列表
+    "publist":                   // /public 白名单：每条命令必须命中至少一条规则，否则 Auth Error；省略时用内置默认白名单
     {
-        "command match":"compare type"     // [ string ]: "sub" = 子串匹配, "equal" = 完全匹配, 其他值 = 前缀匹配
+        // 格式： "匹配串":"模式名"
+        // 模式名只能是下列之一（与 webs/httpd 实现一致）：
+        //
+        // equal —— 整串全等
+        //   字符串 HE：整条命令必须与 key 完全相同
+        //     例："land@machine":"equal" 只允许 land@machine，不允许 land@machine.status
+        //   JSON HE：无 op（或 op 为 =/|）时用 obj 与 key 全等；有方法名时用 "obj.op" 与 key 全等
+        //     例："land@machine.status":"equal" 允许 {"obj":"land@machine","op":"status"}
+        //
+        // start —— 前缀匹配
+        //   字符串 HE：命令以 key 为前缀即可
+        //     例："land@machine":"start" 允许 land@machine、land@machine.status、land@machine:name=x
+        //   JSON HE：无方法时 obj 前缀匹配；有方法时 "obj.op" 前缀匹配
+        //     例："ifname@":"start" 允许 ifname@lte / ifname@wan.status 等
+        //
+        // first2username —— 前缀匹配，且第一个参数必须等于当前登录用户名（/public 无用户，此模式通常无效）
+        //   字符串 HE：命令以 key 为前缀，且 [第一参数] 等于 username
+        //     例："center@user.":"first2username" 允许 center@user.foo[admin,...]（登录名为 admin）
+        //   JSON HE：obj 前缀匹配，且字段 "1" 等于 username
+        //
+        "land@machine":"equal",
+        "land@machine.status":"start"
     },
-    "helist":                   // 有效的 HE 命令列表（与 publist 相同的比较规则）
+    "helist":                   // /he 白名单：每条命令必须命中至少一条规则，否则 Auth Error；省略则 /he 不做白名单限制
     {
-        "command match":"compare type"
-        // ... 更多命令匹配规则
+        // 格式： "匹配串":"模式名"
+        // 模式名只能是下列之一（与 publist、webs/httpd 实现一致）：
+        //
+        // equal —— 整串全等
+        //   字符串 HE：整条命令必须与 key 完全相同
+        //     例："land@machine":"equal" 只允许 land@machine，不允许 land@machine.status
+        //   JSON HE：无 op（或 op 为 =/|）时用 obj 与 key 全等；有方法名时用 "obj.op" 与 key 全等
+        //     例："land@machine.status":"equal" 允许 {"obj":"land@machine","op":"status"}
+        //
+        // start —— 前缀匹配
+        //   字符串 HE：命令以 key 为前缀即可
+        //     例："land@machine":"start" 允许 land@machine、land@machine.status、land@machine:name=x
+        //   JSON HE：无方法时 obj 前缀匹配；有方法时 "obj.op" 前缀匹配
+        //     例："ifname@":"start" 允许 ifname@lte / ifname@wan.status 等
+        //
+        // first2username —— 前缀匹配，且第一个参数必须等于当前登录用户名（/he 已登录，此模式可用）
+        //   字符串 HE：命令以 key 为前缀，且 [第一参数] 等于 username
+        //     例："center@user.":"first2username" 允许 center@user.foo[admin,...]（登录名为 admin）
+        //   JSON HE：obj 前缀匹配，且字段 "1" 等于 username
+        //
+        "land@machine":"equal"
+    },
+    "banlist":                  // 黑名单：在 helist/publist 之前检查；命中则 Auth Error。省略时内置默认 {"service":"api","_service":"api_end"}
+    {
+        // 格式： "匹配串":"模式名"
+        // 模式名只能是下列之一：
+        //
+        // api —— 只匹配「方法名 / API 名」，与对象无关（全等）
+        //   字符串 HE：从 obj.api / obj.api[args] / obj.api:path 中取出 api，与 key 全等
+        //     例："service":"api" 禁止 webs@httpd.service、ifname@lte.service[x]
+        //     不禁止 land@service.list（方法名是 list，不是 service）
+        //   JSON HE：字段 "op" 为方法名且不是 =/| 时，与 key 全等
+        //     例：{"obj":"webs@httpd","op":"service"} 被禁止
+        //   无方法的命令（纯 GET/SET/OR，如 land@machine、land@machine={...}）不会被 api 命中
+        //
+        // api_start —— 只匹配方法名前缀
+        //   例："lock_":"api_start" 禁止 *.lock_imei、*.lock_imsi 等以 lock_ 开头的方法
+        //
+        // api_end —— 只匹配方法名后缀
+        //   例："_service":"api_end" 禁止方法名以 _service 结尾的调用，如 foo_service、bar_service
+        //   注意：单独的方法名 service 不以 _service 结尾，需另配 "service":"api"
+        //
+        // obj —— 只匹配「对象名」，与方法无关（全等）
+        //   字符串 / JSON：取出对象名与 key 全等则禁止该对象上的任意操作（含 GET/SET/方法）
+        //     例："center@ctrl":"obj" 禁止 center@ctrl、center@ctrl.status、center@ctrl={...}
+        //
+        // obj_start —— 只匹配对象名前缀
+        //   例："ifname@":"obj_start" 禁止所有 ifname@ 开头的对象及其 API
+        //   例："modem@":"obj_start" 禁止 modem@lte、modem@lte2 等
+        //
+        "service":"api",
+        "_service":"api_end"
     },
 
     "manager":                              // 仅允许指定的 IP 地址或 MAC 地址访问

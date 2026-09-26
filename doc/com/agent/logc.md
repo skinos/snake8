@@ -5,7 +5,7 @@
 Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is written to the local rotating file, optionally sent as classic UDP syslog, and optionally uploaded to `center@log` over TCP.
 - configure log output mode: syslog, tui terminal, both, or file only
 - set global log level and per-component log level filtering
-- forward logs to a remote syslog server over UDP
+- forward logs to a remote syslog server over UDP (`syslogd -R` style: raw `/dev/log` datagram, only ensure a trailing newline; local file/TCP formatting is separate)
 - display, list, and delete log files
 - write log messages at different severity levels
 - critical log to internal storage

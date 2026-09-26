@@ -233,46 +233,32 @@ var page =
 
     password: function( inputID, iconID, cb )
     {
-        $('#' + iconID).on( ace.click_event, function (){
-            var $inputOld = $( '#' + inputID );
-            var $inputNew;
-            var type = $inputOld.attr( 'type' );
-            if ( type === 'password' )
-            {
-                $inputNew = $( '<input type="text" />' );
-            }
-            else
-            {
-                $inputNew = $( '<input autocomplete="new-password" type="password" />' );
-            }
-            // xopy the attr
-            var attrs = [ 'id', 'maxlength', 'class', 'name' ];
-            for ( var key in attrs )
-            {
-                var attr = attrs[key];
-                var attrValue = $inputOld.attr( attr );
-                if (attrValue)
-                {
-                    $inputNew.attr( attr, attrValue );
-                }
-            }
-            // value
-            $inputNew.val( $inputOld.val() );
-            // swap
-            $inputOld.replaceWith( $inputNew );
+        /* Toggle input type in place so programmatic click and autofill stay reliable */
+        $('#' + iconID).off( ace.click_event + '.pagePassword' ).on( ace.click_event + '.pagePassword', function (){
+            var $input = $( '#' + inputID );
             var $icon = $( '#' + iconID );
-            if ($icon.hasClass('fa-eye-slash'))
-            { // show the password
-                $icon.removeClass('fa-eye-slash');
-                $icon.addClass('fa-eye second-color');
+            var show;
+
+            if ( $input.length === 0 || $icon.length === 0 )
+            {
+                return;
+            }
+            show = ( $input.attr( 'type' ) === 'password' );
+            $input.attr( 'type', show ? 'text' : 'password' );
+            if ( show )
+            {
+                $icon.removeClass( 'fa-eye-slash' );
+                $icon.addClass( 'fa-eye second-color' );
             }
             else
-            { // hide the password
-                $icon.removeClass('fa-eye second-color');
-                $icon.addClass('fa-eye-slash');
+            {
+                $icon.removeClass( 'fa-eye second-color' );
+                $icon.addClass( 'fa-eye-slash' );
             }
-            // callback
-            cb && cb();
+            if ( cb )
+            {
+                cb();
+            }
         });
     },
     // args: { message: title, callback:function, confirm:apply, cancel:cannel }

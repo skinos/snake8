@@ -97,7 +97,11 @@ boole_t _shut( obj_t this, param_t param )
     if ( ifdev != NULL && *ifdev != '\0' )
     {
     	scall( ifdev, "down", NULL );
-		scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
+		/* connect owns the LED when running */
+		if ( spid( CONNECT_COM ) <= 0 )
+		{
+			scalls( GPIO_COM, "action", "network/offline,%s", ifdev );
+		}
 	}
 
     return ttrue;
@@ -268,7 +272,11 @@ boole_t _service( obj_t this, param_t param )
 		sleep( 5 );
 		return terror;
 	}
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	}
 
 	/*****************************************/
 	/******* set the netdev mac **************/
@@ -407,7 +415,11 @@ boole_t _service( obj_t this, param_t param )
 			return tfalse;
 		}
 	}
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	}
 
 
 
@@ -471,7 +483,11 @@ boole_t _service( obj_t this, param_t param )
 	/*****************************************/
 	/**** ifname ip connect take care ********/
 	/*****************************************/
-	scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	/* connect owns the LED when running */
+	if ( spid( CONNECT_COM ) <= 0 )
+	{
+		scalls( GPIO_COM, "action", "network/onlineing,%s", ifdev );
+	}
 	/* static ip setting */
 	if ( mode != NULL && 0 == strcmp( mode, "static" ) )
 	{
@@ -1115,7 +1131,11 @@ boole_t _online( obj_t this, param_t param )
 	if ( ifdev != NULL )
 	{
 		scalls( ifdev, "online", object );
-		scalls( GPIO_COM, "action", "network/online,%s", ifdev );
+		/* connect owns the LED when running */
+		if ( spid( CONNECT_COM ) <= 0 )
+		{
+			scalls( GPIO_COM, "action", "network/online,%s", ifdev );
+		}
 	}
 
 	talk_free( cfg );
