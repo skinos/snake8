@@ -165,7 +165,7 @@ talk_t _netdev( obj_t this, param_t param )
         return NULL;
     }
     /* get the ifdev netdev */
-	return scall( ifdev, "ifdev", NULL );
+	return scall( ifdev, "netdev", NULL );
 }
 boole_t _service( obj_t this, param_t param )
 {
