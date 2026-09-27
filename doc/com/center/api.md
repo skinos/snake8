@@ -24,7 +24,7 @@ Business HE APIs for the center cloud: cloud-user self-service account fields, g
 
 Cloud-user self-service profile/password. Admin account CRUD and login `user_match`: see `center@ctrl` (`ctrl.md`).
 
-Writable self-service fields are listed in `user_self_attrs[]` in `api/user.c` (currently `vcode` / `lang` / `comment`). Password changes use `user_passwd` (old proof required). Admin-only fields (`relay_max`, `nport`/`pport`/`log`, …): `center@ctrl.user_set` / `user_orset`.
+Writable self-service fields are listed in `user_self_attrs[]` in `api/user.c` (currently `vcode` / `lang` / `comment`). Password changes use `user_passwd` (old proof required). Admin-only fields (`relay_max`, `idle_pond`, `log_file_size`, `log_file_max`, `nport`/`pport`/`log`, …): `center@ctrl.user_set` / `user_orset`. See `userdir/config.md`.
 
 + `user_get[ user, [attr] ]` **get one user profile (password stripped)**
     - user ------ [ string ], required; return that user config only (no list-all)
@@ -38,7 +38,10 @@ Writable self-service fields are listed in `user_self_attrs[]` in `api/user.c` (
         "lang":"language type",                 // [ string ]
         "vcode":"device register vcode",        // [ string ], optional
         "comment":"comment string",             // [ string ]
-        "relay_max":"live mesh relay UDP cap"   // [ number ], optional; omitted = unlimited; 0 = none (read-only here)
+        "relay_max":"live mesh relay UDP cap",  // [ number ], optional; omitted = unlimited; 0 = none (read-only here)
+        "idle_pond":"per-user idle pond",       // [ number ], optional; 0..10000; omit follows center@pport (read-only here)
+        "log_file_size":"per-user log file KB", // [ number ], optional; 1..1048576; omit follows center@log (read-only here)
+        "log_file_max":"per-user log file count" // [ number ], optional; 1..100000; omit follows center@log (read-only here)
     }
     ```
 
@@ -56,7 +59,7 @@ Writable self-service fields are listed in `user_self_attrs[]` in `api/user.c` (
     - value ----- [ string | object ], required
     - attr ------ [ string ], optional; with attr must be `vcode`/`lang`/`comment`; without attr, `value` must be object whose **every** key is on that allow list (any other key → whole call fails `EPERM`)
     - empty string value deletes that allow-listed field (omit)
-    - never writes `key` / `relay_max` / feature gates
+    - never writes `key` / `relay_max` / `idle_pond` / `log_file_size` / `log_file_max` / feature gates
     - failed return tfalse
     - succeed return ttrue
 

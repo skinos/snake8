@@ -7,7 +7,7 @@ Listen for gateway **portc** reverse-proxy connections, and map public TCP/UDP p
 - Gateways keep a pond of standby TCP links to this service (default port **20005**)
 - Standby keeplive: client pings with `k`, server echoes `k`; idle timeout is `nomate_timeout`
 - Client ping interval is `(nomate_timeout-1)/3`; heport pushes to **`agent@portc`**: `mode`, `active_pond`, `idle_pond`, `nomate_timeout`, `connect_timeout=(mating_timeout-1)`, `mate_timeout`
-- Those values are published by `center@pport`: `status` in `_setup`, `mode`/`active_pond`/`idle_pond`/`nomate_timeout`/`mating_timeout`/`mate_timeout` in `_service` (defaults apply when unset); `heport_pport_config` reads them via `reg_sintv` / `reg_sstring`
+- Those values are published by `center@pport`: `status` in `_setup`, `mode`/`active_pond`/`idle_pond`/`nomate_timeout`/`mating_timeout`/`mate_timeout` in `_service` (defaults apply when unset); `heport_pport_config` reads them via `reg_sintv` / `reg_sstring`. A user's `idle_pond`, when it is a full integer `0..10000`, replaces the service value for that user's gateways; blank or unusable keeps the service value
 - Register is created with **`PPORT_REG_SLOTS` (8192)** (default object register is only 128 keys). Size applies when the register file is first created; an already-small file is not resized. Per-user mesh relay **count** is kept in **nport** (`nport_relay_limit`), not in this register
 - **`mode`**: `pond` (default, one proxy TCP per session) or `mux` (future multiplex; not implemented — service refuses to start). Hard cutover later; center does not run both data planes.
 - **UDP map framing** on the proxy TCP (after mate): each datagram is `[u16be length][payload]` (`length` 0..65535). TCP/serial maps stay raw byte streams. Requires matching **`agent@portc`** version.
@@ -35,6 +35,7 @@ Listen for gateway **portc** reverse-proxy connections, and map public TCP/UDP p
                                                                           // "pond": current one-TCP-per-session; "mux": future, not implemented (service exits)
     "active_pond":"active standby pond size on gateway (maps present)", // [ number ], default be 6, pushed to agent@portc
     "idle_pond":"idle standby pond size on gateway (no maps)",          // [ number ], default be 1, pushed to agent@portc
+                                                                          // per-user config idle_pond 0..10000 overrides this for that user
 
     "unreg_timeout":"timeout before register completes",              // [ number ], default be 10, the unit is second
     "nomate_timeout":"idle timeout for standby (unmated) links",      // [ number ], default be 46, minimum 10, the unit is second

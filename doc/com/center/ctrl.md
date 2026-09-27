@@ -25,7 +25,7 @@ Admin-only HE APIs for managing cloud usernames (create, list, get/set config, r
     - user ------- [ string ], required; only `A-Z` `a-z` `0-9` `_` `-`; length `< 32` bytes (reject `/` `.` space `;` etc.)
     - key -------- [ string ], required plaintext password (stored via `simple_encode`)
     - vcode ------ [ string ], optional device register code
-    - other fields (lang/comment/relay_max/nport/pport/log/…) — use `user_set` / `user_orset` after create
+    - other fields (lang/comment/relay_max/nport/pport/idle_pond/log/log_file_size/log_file_max/…) — use `user_set` / `user_orset` after create. `idle_pond` empty follows `center@pport`; a full integer `0..10000` is pushed to that user's gateways instead. `log_file_size` (KB, `1..1048576`) and `log_file_max` (`1..100000`) empty follow `center@log`; a full integer in range is the file cap for that user's device logs
     - fails if user already exists, key missing, username has illegal characters, or password encode fails
     - failed return tfalse
     - succeed return ttrue
