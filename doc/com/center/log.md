@@ -9,7 +9,7 @@ TCP server that stores gateway syslog lines under the heport device tree.
 - First line on a connection is `{12-hex-macid};{username}` and a newline. On success the server drops any older live session for the same user+macid, then opens that device's current log file and keeps the fd for the life of the socket. Later lines are log text ending in newline. Newlines inside a line are already tabs when they arrive; they are stored as received
 - Files are `{device_path}/<user>/dev/<macid>/log/YYYYMMDD-HHMMSS.log`. A line is never split across files. When the next line would pass `log_file_size` (kilobytes), a new timestamp file is opened first. Oldest timestamp names are removed until the count is within `log_file_max`
 - Service caps are `log_file_size` (default 1024, usable `1..1048576`) and `log_file_max` (default 10, usable `1..100000`). The same keys on a user's account config replace them for that user. Blank or a value outside that range keeps the service cap. The stored user value is left as written
-- Read timeouts: `auth` (default 15) seconds after connect with no identity line; `idle` (default 3600) seconds with no data after identity. Set either to `0` to disable that timeout. Bad identity (format / unknown user+macid / open fail) closes the socket immediately
+- Read timeouts: `auth` (default 15) seconds after connect with no identity line; `idle` (default 3600) seconds with no data after identity. Usable range for both is `1..86400`. A blank or out-of-range value keeps the default. Bad identity (format / unknown user+macid / open fail) closes the socket immediately
 - `config` key `log` = `disable` does not stop this listener. `center@heport` uses it, together with this service's `status` (or `log.cfg` while register is empty), to push `agent@logc` `center` / `center_port` / `center_ssl` so the device turns the uplink on or off
 - List, path, and delete are `center@api` (`log_list`, `log_path`, `log_delete`), not methods on this object
 - Register fields are published before `status`. Empty `status` means the service is not ready yet; heport then falls back to `log.cfg` (same as nport/pport). `disable` means the uplink must stay off. `enable` means the listener is up
@@ -36,8 +36,8 @@ TCP server that stores gateway syslog lines under the heport device tree.
                                                 // "enable": SSL encryption; "disable": plain TCP
     "log_file_size":"max file size",         // [ number ], kilobytes, default be 1024
     "log_file_max":"max file count per device", // [ number ], default be 10
-    "auth":"wait for identity after connect", // [ number ], seconds, default be 15; 0 disables
-    "idle":"no data after identity"          // [ number ], seconds, default be 3600; 0 disables
+    "auth":"wait for identity after connect", // [ number ], seconds, default be 15; usable 1..86400
+    "idle":"no data after identity"          // [ number ], seconds, default be 3600; usable 1..86400
 }
 ```
 
@@ -126,7 +126,7 @@ Reconnect sends the identity line again (kicks the prior uplink if still up), th
 | `port` | Listen port string pushed as `agent@logc.center_port` |
 | `ssl` | `enable` / `disable` pushed as `agent@logc.center_ssl` |
 | `log_file_size` / `log_file_max` | Live global caps (ints) |
-| `auth` / `idle` | Live read timeouts in seconds (ints; 0 = off) |
+| `auth` / `idle` | Live read timeouts in seconds (ints; usable `1..86400`, defaults 15 and 3600) |
 
 
 

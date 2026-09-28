@@ -52,3 +52,5 @@ center@heport/ashyelf/udpmap
 ### Other
 
 Prefer `center@api.udpmap_add` / `udpmap_list` / `udpmap_delete` over editing the file by hand. Runtime control object is `center@pport`.
+
+Mesh WireGuard relay ports are not stored here. Those are center-owned maps in `[dynamic_port, static_port)` while the member is online. See `userdir/net/mynet.md` (`relay`) and `center@nport`.

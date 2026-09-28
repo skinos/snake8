@@ -23,6 +23,7 @@ center host when sudo is available.
 | **center@heport** | Remote management of embedded gateways (`agent@heclient` on embedded gateway) | TCP **20002** |
 | **center@nport** | Mesh coordinator (`agent@gtog` / `agent@net` on embedded gateway) | UDP **20002** |
 | **center@api** | Platform API control | TCP **20003** |
+| **center@log** | Remote log collector (`agent@logc` on embedded gateway) | TCP **20004** |
 | **center@pport** | Port proxy / tunnel (`agent@portc` on embedded gateway) | TCP **20005** |
 
 The slave platform includes **center** in `config/slave/project.config`; a slave
@@ -142,6 +143,7 @@ Default ports in the staged **`center`** package:
 $ grep '"port"' build/rootfs/usr/share/skinos/center/*.cfg
 center/heport.cfg:    "port":"20002",
 center/nport.cfg:     "port":"20002",
+center/log.cfg:       "port":"20004",
 center/pport.cfg:     "port":"20005",
 center/userwui.cfg:   "port":"20000",
 ```
@@ -224,6 +226,7 @@ he '@'
 he 'center@heport'
 he 'center@pport'
 he 'center@nport'
+he 'center@log'
 he 'center@userwui'
 ```
 
@@ -242,8 +245,8 @@ $ he 'center@heport'
     "status":"enable",
     "port":"20002",
     "api_port":"20003",
-    "talk_timeout":"25",
-    "key_lifetime":"300"
+    "talk_timeout":"61",
+    "key_lifetime":"600"
 }
 
 $ he 'center@pport'
@@ -263,6 +266,16 @@ $ he 'center@nport'
     ...
 }
 
+$ he 'center@log'
+{
+    "status":"enable",
+    "port":"20004",
+    "ssl":"disable",
+    "log_file_size":"1024",
+    "log_file_max":"10",
+    ...
+}
+
 $ he 'center@userwui'
 {
     "status":"enable",
@@ -274,8 +287,8 @@ $ he 'center@userwui'
 Expected:
 
 - `land@machine.status` returns JSON with a `version` field
-- `@` lists `center@heport`, `center@pport`, `center@nport`, `center@userwui`,
-  `center@api`, `center@ctrl`
+- `@` lists `center@heport`, `center@pport`, `center@nport`, `center@log`,
+  `center@userwui`, `center@api`, `center@ctrl`
 - Each center component has **`status":"enable"`** and ports matching the table below
 
 | Component | Config key | Default port | Protocol |
@@ -286,12 +299,13 @@ Expected:
 | center@heport | api_port | 20003 | TCP (API control) |
 | center@nport | port | 20002 | UDP (mesh coordinator) |
 | center@nport | nettest_port | 20003 | UDP (NAT probe) |
+| center@log | port | 20004 | TCP (remote log uplink) |
 | center@pport | port | 20005 | TCP (port proxy) |
 
 ### 9.2 Check listening ports with netstat
 
 ```bash
-netstat -lntp | egrep '20000|20001|20002|20003|20005'
+netstat -lntp | egrep '20000|20001|20002|20003|20004|20005'
 netstat -lnup | egrep '20002|20003'
 ```
 
@@ -302,18 +316,19 @@ tcp  0  0 0.0.0.0:20000  0.0.0.0:*  LISTEN  .../httpd
 tcp  0  0 0.0.0.0:20001  0.0.0.0:*  LISTEN  .../httpd
 tcp  0  0 0.0.0.0:20002  0.0.0.0:*  LISTEN  .../heport
 tcp  0  0 0.0.0.0:20003  0.0.0.0:*  LISTEN  .../heport
+tcp  0  0 0.0.0.0:20004  0.0.0.0:*  LISTEN  .../log
 tcp  0  0 0.0.0.0:20005  0.0.0.0:*  LISTEN  .../pport
 udp  0  0 0.0.0.0:20002  0.0.0.0:*          .../nport
 udp  0  0 0.0.0.0:20003  0.0.0.0:*          .../nport
 ```
 
-You should see **20000, 20001, 20002, 20003, 20005** in **LISTEN** state; UDP
-**20002** and **20003** are owned by **center@nport**.
+You should see **20000, 20001, 20002, 20003, 20004, 20005** in **LISTEN** state; UDP
+**20002** and **20003** are owned by **center@nport**. TCP **20004** is **center@log**.
 
 If `netstat` is not installed:
 
 ```bash
-ss -lntp | egrep '20000|20001|20002|20003|20005'
+ss -lntp | egrep '20000|20001|20002|20003|20004|20005'
 ss -lnup | egrep '20002|20003'
 ```
 
@@ -334,7 +349,7 @@ enough when embedded gateways use port maps.
 | **20002** | UDP | `agent@gtog` on embedded gateway → `center@nport` |
 | **20003** | TCP | API control (`center@heport` `api_port`) |
 | **20003** | UDP | NAT probe (`center@nport` `nettest_port`) |
-| **20004** | TCP/UDP | Reserved in the center port plan |
+| **20004** | TCP | `agent@logc` on embedded gateway → `center@log` (plain TCP unless `ssl` is `enable`) |
 | **20005** | TCP | `agent@portc` on embedded gateway → `center@pport` |
 | **20006–25000** | **TCP and UDP** | **Dynamic port maps** — `center@pport` `dynamic_port` pool (default starts at **20006**); ephemeral public ports for active proxy sessions |
 | **25000–30000** | **TCP and UDP** | **Static port maps** — `center@pport` `static_port` base (default **25000**); persistent mapped public ports (`map index = port − static_port`) |
@@ -379,19 +394,20 @@ owns a set of embedded gateways and has a **`vcode`** used when an embedded gate
 4. Click **Add** and fill in:
    - **Username** (`A-Z`, `a-z`, `0-9`, `_`, `-` only)
    - **Password**
-   - **vcode** (same value required in `agent@heclient` on the embedded gateway)
-   - **Language**, **comment** (optional)
-5. The new user should appear in the list
+   - **vcode** (optional; same value required in `agent@heclient` on the embedded gateway)
+5. The new user should appear in the list. **Language**, **comment**, and feature
+   gates are not on the add dialog. Open the account with the wrench or a
+   double-click (`user.html`) and save them there.
 
 #### Option B — HE commands
 
 ```bash
-# user_add[ user, key, [vcode], [lang], [comment] ]
-he 'center@ctrl.user_add[ myuser,MyPass123,123456,en,Test user ]'
+# user_add[ user, key, [vcode] ]  — create only; lang/comment come from user_set
+he 'center@ctrl.user_add[ myuser,MyPass123,123456 ]'
 
 he 'center@ctrl.user_list'
 
-he 'center@ctrl.user_modify[ myuser,654321,cn,Updated note ]'
+he 'center@ctrl.user_set[ myuser, {"lang":"cn","comment":"Updated note"} ]'
 
 he 'center@ctrl.user_reset[ myuser,NewPass456 ]'
 ```
@@ -399,15 +415,14 @@ he 'center@ctrl.user_reset[ myuser,NewPass456 ]'
 Example output (expected after `make sdk_start`):
 
 ```text
-$ he 'center@ctrl.user_add[ demo,DemoPass1,123456,en,Demo account ]'
+$ he 'center@ctrl.user_add[ demo,DemoPass1,123456 ]'
 ttrue
 
 $ he 'center@ctrl.user_list'
 {
     "demo":
     {
-        "lang":"en",
-        "comment":"Demo account"
+        "vcode":"123456"
     }
 }
 ```
@@ -762,7 +777,7 @@ After reboot:
 ```bash
 he 'land@machine.status'
 he 'center@heport'
-netstat -lntp | egrep '20000|20001|20002|20005'
+netstat -lntp | egrep '20000|20001|20002|20004|20005'
 ```
 
 Or open **`http://<center-host-IP>:20001`**. See **§9** for full checks.
@@ -796,6 +811,7 @@ Or open **`http://<center-host-IP>:20001`**. See **§9** for full checks.
 - [../../com/center/ctrl.md](../../com/center/ctrl.md) — admin user APIs
 - [../../com/center/pport.md](../../com/center/pport.md) — port proxy service
 - [../../com/center/nport.md](../../com/center/nport.md) — mesh coordinator
+- [../../com/center/log.md](../../com/center/log.md) — remote log collector
 - [../../com/center/userwui.md](../../com/center/userwui.md) — cloud-user Web
 
 ### Platform install

@@ -38,8 +38,9 @@ he center@userwui
 
     "port":"20000",
 
+    "session_timeout":"300",
     "talk_timeout":"61",
-    "key_lifetime":"300"
+    "key_lifetime":"600"
 }
 ```  
 Examples, modify the he port to 1000

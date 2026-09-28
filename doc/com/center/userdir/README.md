@@ -17,13 +17,13 @@ Directory layout created for each user:
 
 ```
 {device_path}/<username>/
-  config                         # account settings (key, vcode, lang, comment)
+  config                         # account settings (key, vcode, lang, comment, nport, relay_max, pport, idle_pond, log, log_file_size, log_file_max)
   tcpmap                         # persisted TCP port-forward rules
   udpmap                         # persisted UDP port-forward rules
   dev/
     <macid>/
       reg                        # last register / 0+r snapshot from the gateway
-      config                     # operator settings for this gateway (comment, portc, log, …)
+      config                     # operator settings for this gateway (comment, portc, gtog, log)
       log/                       # center@log files YYYYMMDD-HHMMSS.log
       heartbeat/                 # planned sqlite store (not written yet)
   net/

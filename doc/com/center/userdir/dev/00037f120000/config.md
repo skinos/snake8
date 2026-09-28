@@ -6,9 +6,10 @@ JSON file that stores operator settings for one registered gateway.
 
 - Path: `{device_path}/<username>/dev/<macid>/config` (`00037f120000` here is an example macid)
 - HE/dbs path: `center@heport/<username>/dev/<macid>/config`
-- Loaded by `center@heport` on SSL register; used to build the `agent@heclient` adjust push (`agent@portc`, `agent@logc`, …)
+- Loaded by `center@heport` on SSL register; used to build the `agent@heclient` / `agent@portc` / `agent@gtog` / `agent@logc` adjust push
 - Merged into `center@api.device_list` / endpoint list responses
-- Extra keys may be stored for UI/extensions; center currently consumes `comment`, `portc`, `log`, `log_file_size`, and `log_file_max`
+- Extra keys may be stored for UI/extensions; center currently consumes `comment`, `portc`, `gtog`, `log`
+- User-level gates on `<user>/config` (`nport`/`pport`/`log`) can also force the matching agent off (see `userdir/config.md`)
 
 
 ### Configuration reference ( <username>/dev/<macid>/config )
@@ -18,11 +19,11 @@ JSON file that stores operator settings for one registered gateway.
 {
     "comment": "operator comment",              // [ string ], free text shown in gateway list
     "portc": "port client switch",              // [ "enable", "disable" ], when "disable" the connect adjust sets agent@portc status to disable
-                                                    // omitted or other values: follow center@pport service status
-    "log": "remote log uplink switch",          // [ "disable", other ], "disable" forces agent@logc center=disable
-                                                    // omitted: follow center@log status / log.cfg
-    "log_file_size": "per-device file cap",     // [ number ], kilobytes; overrides center@log size when > 0
-    "log_file_max": "per-device file count"     // [ number ], overrides center@log max when > 0
+                                                    // omitted or other values: follow center@pport (and user pport gate)
+    "gtog": "mesh client switch",               // [ "enable", "disable" ], when "disable" forces agent@gtog off
+                                                    // omitted: follow center@nport (and user nport gate)
+    "log": "remote log switch"                  // [ "enable", "disable" ], when "disable" forces agent@logc.center off
+                                                    // omitted: follow center@log (and user log gate)
     // "...":"..."  How many custom properties show how many properties
 }
 ```
@@ -87,18 +88,10 @@ On connect, `center@heport` pushes:
                 "active_pond": "6",
                 "pond": "6",
                 "idle_pond": "1"
-            },
-            "agent@logc":
-            {
-                "center": "enable",
-                "center_port": "20004",
-                "center_ssl": "disable"
             }
         }
     }
 }
 ```
 
-Timeouts and pond sizes come from the live `center@pport` register; `status` is forced to `"disable"` when this file has `"portc":"disable"` or when `center@pport` itself is disabled.
-
-`agent@logc` `center` is `"disable"` when `center@log` register/`log.cfg` is not `enable`, or when this file has `"log":"disable"`. While the log register `status` is still empty (listener not ready), heport falls back to `log.cfg` like nport does for mesh. Otherwise `center` is `"enable"` and `center_port` / `center_ssl` come from the live register or config. This adjust does not set syslog `status` or `port`.
+Timeouts and `active_pond` come from the live `center@pport` register. `idle_pond` uses the owning user's `idle_pond` when that value is a full integer `0..10000`; otherwise it uses the `center@pport` register. `status` is forced to `"disable"` when this file has `"portc":"disable"`, when the owning user has `"pport":"disable"`, or when `center@pport` itself is disabled. The same OR logic applies to `gtog`/`nport` → `agent@gtog` and `log` → `agent@logc.center`. Per-user `log_file_size` / `log_file_max` stay on the account file and are applied by `center@log`, not in this adjust.

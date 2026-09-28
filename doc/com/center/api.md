@@ -2,7 +2,7 @@
 
 ### Overview
 
-Business HE APIs for the center cloud: cloud-user self-service account fields, gateway list/control, TCP/UDP port-map orchestration, mesh network endpoints, and firmware library.
+Business HE APIs for the center cloud: cloud-user self-service account fields, gateway list/control, TCP/UDP port-map orchestration, mesh network endpoints, remote log files, and firmware library.
 
 - Admin account CRUD lives in **`center@ctrl`** (not in `userwui` helist); cloud login `/auth` also uses `center@ctrl.user_match` via httpd `scalls`
 - Device SSL sessions and online memory stay in `center@heport`
@@ -1248,6 +1248,29 @@ How many of those listens a username may hold at once is `<user>/config` **`rela
     - url -------------- [ string ], url for download the firmware; no comma, brackets, whitespace, or control characters
     - mac identify ----- [ string ], mac identify for gateway; must exist under `{device_path}/<user>/dev/<macid>`
     - timeout ---------- [ number ], timeout for wait, the unit is second       
+    - failed return tfalse
+    - succeed return ttrue
+
+**Log**
+
+Files under `{device_path}/<user>/dev/<macid>/log/`. The collector is `center@log`. Names are `YYYYMMDD-HHMMSS.log` (19 characters).
+
++ `log_list[ user, macid ]` **list one gateway's log files**
+    - user ------ [ string ], required
+    - macid ----- [ string ], required; device directory must exist
+    - missing device directory: NULL
+    - no log directory yet: empty object
+    - succeed return json keyed by filename; each value is `{ "size":"<bytes>" }`
+
++ `log_path[ user, macid, name ]` **absolute path of one log file**
+    - name ------ [ string ], required; must be `YYYYMMDD-HHMMSS.log`
+    - used by httpd download
+    - failed return NULL
+    - succeed return the absolute path string
+
++ `log_delete[ user, macid, name ]` **delete one log file**
+    - name ------ [ string ], required; must be `YYYYMMDD-HHMMSS.log`
+    - a missing file still returns ttrue
     - failed return tfalse
     - succeed return ttrue
 

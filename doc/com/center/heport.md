@@ -32,8 +32,8 @@ dimmalex@CLS:~/snake8$ he center@heport
     "status":"enable",
     "port":"20002",
     "api_port":"20003",
-    "talk_timeout":"25",
-    "key_lifetime":"300"
+    "talk_timeout":"61",
+    "key_lifetime":"600"
 }
 dimmalex@CLS:~/snake8$ 
 ```  
