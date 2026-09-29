@@ -24,8 +24,11 @@ do
                     rm -fr ${DIR_ROOT}/${dir}/skinos_${name}*
                 done
             else
-                # Full skinos/root wipe only for OpenWrt musl/glibc platforms
-                if [ "${plat}" = "swrt5" ] || [ "${plat}" = "wrt5" ]; then
+                # Full skinos wipe: remove tree including .prepared/.built stamps.
+                # Leaving stamps while source dirs are gone makes empty fpk "succeed".
+                if [ "${plat}" = "swrt5" ] || [ "${plat}" = "wrt5" ] || \
+                   [ "${plat}" = "smtk3" ] || [ "${plat}" = "smtk2" ] || \
+                   [ "${plat}" = "srock" ]; then
                     echo "rm -fr ${DIR_ROOT}/${dir}/skinos_*"
                     rm -fr ${DIR_ROOT}/${dir}/skinos_*
                     echo "rm -fr ${DIR_ROOT}/${dir}/root*"
