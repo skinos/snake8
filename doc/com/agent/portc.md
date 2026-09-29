@@ -18,8 +18,8 @@ When **`agent@heclient.reset`** fires (bound **`extern`** path change), heclient
                                                                               // normally set by heport from center@pport (enable/disable)
 
     // server connection
-    "server":"port proxy server address",                                  // [ string ], domain name or ip address
-                                                                              // if set: resolve DNS (same as heclient) and show IP in status
+    "server":"port proxy server address",                                  // [ ip address ], optional
+                                                                              // if set: must be IP (no DNS); shown in status
                                                                               // if not set: use heclient's resolved server; status omits server
     "port":"port proxy server port",                                       // [ number ], default 20005
     "user":"username for registration",                                    // [ string ], if not set, use heclient's user
@@ -62,7 +62,7 @@ agent@portc
 
 Example, set the port proxy server and port
 ```shell
-agent@portc={"server":"proxy.ashyelf.com","port":"20005","user":"ashyelf"}
+agent@portc={"server":"114.132.219.158","port":"20005","user":"ashyelf"}
 ttrue
 ```
 
@@ -110,7 +110,7 @@ ttrue
                                                   // "down" for service is not running
                                                   // "online" for connected to server successfully
         "server":"resolved server ip"           // [ ip address ], only when configure server is set and status is uping/online
-                                                   // omitted when server is inherited from heclient
+                                                   // omitted when server is inherited from heclient; configure server must be IP (no DNS)
     }
     ```
 
@@ -119,7 +119,7 @@ ttrue
     agent@portc.status
     {
         "status":"online",                        # connected to server
-        "server":"114.132.219.158"                # resolved from configure server
+        "server":"114.132.219.158"                # from configure server (IP)
     }
     ```
 

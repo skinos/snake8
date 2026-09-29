@@ -1,0 +1,96 @@
+$ land@machine.status
+land@machine.status
+
+{
+    "mode":"mwm",
+    "name":"V528-212350",
+    "platform":"swrt5",
+    "hardware":"mt7621",
+    "custom":"d228",
+    "scope":"std",
+    "version":"v8.6.0920",
+    "rand":"-28804237",
+    "livetime":"02:41:39:0",
+    "current":"17:00:01:09:28:2026",
+    "mac":"88:12:4E:21:23:50",
+    "macid":"88124E212350",
+    "model":"D228",
+    "cmodel":"V528",
+    "magic":"875D3223E4671851",
+    "datecode":"20260825",
+    "cfgversion":"5",
+    "wui_port":"80",
+    "telnet_port":"23",
+    "ssh_port":"22",
+    "local_ip":"192.168.32.100"
+}
+V528-212350:~$ 
+$ modem@lte.status
+modem@lte.status
+
+{
+    "netdev":"usb0",
+    "imei":"861702060246799",
+    "mversion":"܄",
+    "ci":"81BA15013",
+    "lac":"819890",
+    "plmn":"46011",
+    "band":"n28",
+    "nettype":"NR5G-SA",
+    "rsrp":"-100",
+    "rsrq":"-12",
+    "sinr":"6",
+    "rssi":"-100",
+    "signal":"2",
+    "csq":"20",
+    "operator":"China Telecom",
+    "imsi":"460115219364957",
+    "iccid":"89860322245952942301",
+    "status":"up",
+    "name":"Fibocom-FM160",
+    "na":"enable"
+}
+V528-212350:~$ 
+$ ifname@lte.status
+ifname@lte.status
+
+{
+    "mode":"dhcpc",
+    "ifname":"ifname@lte",
+    "netdev":"usb0",
+    "ip":"10.5.238.61",
+    "gw":"10.5.238.62",
+    "dns":"192.168.1.1",
+    "dns2":"",
+    "ifdev":"modem@lte",
+    "ontime":"76",
+    "status":"up",
+    "delay":"139",
+    "mask":"255.255.255.0",
+    "livetime":"02:40:26:0",
+    "rx_bytes":"527853",
+    "rx_packets":"5202",
+    "tx_bytes":"686715",
+    "tx_packets":"9708",
+    "mac":"42:B4:81:A7:8C:64",
+    "tid":"1",
+    "imei":"861702060246799",
+    "mversion":"܄",
+    "ci":"81BA15013",
+    "lac":"819890",
+    "plmn":"46011",
+    "band":"n28",
+    "nettype":"NR5G-SA",
+    "rsrp":"-100",
+    "rsrq":"-12",
+    "sinr":"6",
+    "rssi":"-100",
+    "signal":"2",
+    "csq":"20",
+    "operator":"China Telecom",
+    "imsi":"460115219364957",
+    "iccid":"89860322245952942301",
+    "name":"Fibocom-FM160",
+    "na":"enable"
+}
+V528-212350:~$ 

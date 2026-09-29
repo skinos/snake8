@@ -1,0 +1,89 @@
+ping -c 10 -W 2 8.8.8.8
+PING 8.8.8.8 (8.8.8.8): 56 data bytes
+64 bytes from 8.8.8.8: seq=0 ttl=113 time=45.412 ms
+64 bytes from 8.8.8.8: seq=1 ttl=113 time=45.057 ms
+64 bytes from 8.8.8.8: seq=2 ttl=113 time=45.392 ms
+64 bytes from 8.8.8.8: seq=3 ttl=113 time=45.487 ms
+64 bytes from 8.8.8.8: seq=4 ttl=113 time=45.690 ms
+64 bytes from 8.8.8.8: seq=5 ttl=113 time=45.423 ms
+64 bytes from 8.8.8.8: seq=6 ttl=113 time=45.082 ms
+64 bytes from 8.8.8.8: seq=7 ttl=113 time=45.406 ms
+64 bytes from 8.8.8.8: seq=8 ttl=113 time=45.229 ms
+64 bytes from 8.8.8.8: seq=9 ttl=113 time=45.121 ms
+
+--- 8.8.8.8 ping statistics ---
+10 packets transmitted, 10 packets received, 0% packet loss
+round-trip min/avg/max = 45.057/45.329/45.690 ms
+admin@V528-212350:~# 
+curl -k --max-time 180 -o /tmp/perf.bin -w 'code=%{http_cod
+
+e} size=%{size_download} time=%{time_total} speed=%{speed_download}\n' 'https://
+
+speed.cloudflare.com/__down?bytes=31457280' -sS
+code=200 size=31457280 time=27.721908 speed=1134744
+admin@V528-212350:~# 
+he 'modem@lte.status'; he 'ifname@lte.status'; rm -f /tmp/p
+
+erf.bin
+{
+    "netdev":"usb0",
+    "imei":"861702060246799",
+    "mversion":"܄",
+    "ci":"81BA15013",
+    "lac":"819890",
+    "plmn":"46011",
+    "band":"n28",
+    "nettype":"NR5G-SA",
+    "rsrp":"-99",
+    "rsrq":"-12",
+    "sinr":"7",
+    "rssi":"-99",
+    "signal":"2",
+    "csq":"20",
+    "operator":"China Telecom",
+    "imsi":"460115219364957",
+    "iccid":"89860322245952942301",
+    "status":"up",
+    "name":"Fibocom-FM160",
+    "na":"enable"
+}
+{
+    "mode":"dhcpc",
+    "ifname":"ifname@lte",
+    "netdev":"usb0",
+    "ip":"10.5.238.61",
+    "gw":"10.5.238.62",
+    "dns":"192.168.1.1",
+    "dns2":"",
+    "ifdev":"modem@lte",
+    "ontime":"76",
+    "status":"up",
+    "delay":"62",
+    "mask":"255.255.255.0",
+    "livetime":"08:09:24:0",
+    "rx_bytes":"1562153",
+    "rx_packets":"15587",
+    "tx_bytes":"2049203",
+    "tx_packets":"29240",
+    "mac":"42:B4:81:A7:8C:64",
+    "tid":"1",
+    "imei":"861702060246799",
+    "mversion":"܄",
+    "ci":"81BA15013",
+    "lac":"819890",
+    "plmn":"46011",
+    "band":"n28",
+    "nettype":"NR5G-SA",
+    "rsrp":"-99",
+    "rsrq":"-12",
+    "sinr":"7",
+    "rssi":"-99",
+    "signal":"2",
+    "csq":"20",
+    "operator":"China Telecom",
+    "imsi":"460115219364957",
+    "iccid":"89860322245952942301",
+    "name":"Fibocom-FM160",
+    "na":"enable"
+}
+admin@V528-212350:~# 
