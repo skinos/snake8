@@ -113,7 +113,7 @@ $ myproj@glue.setup
 ttrue
 ```
 
-To greet from `glue.cfg`, edit the **whole script**. Keep `#!/bin/bash`, `. $cheader`, every method, and `cend`. Only `setup` needs the hello-world body.
+To greet from `glue.cfg`, edit the **whole script**. Keep `#!/bin/bash`, `. $cheader`, and every method. Only `setup` needs the hello-world body. Trailing `cend` is optional (EXIT trap in `api.sh` dispatches `$API`).
 
 ```bash
 #!/bin/bash
@@ -151,8 +151,6 @@ list()
     ret='{"'$PARAM1'":"'$PARAM2'"}'
     creturn $ret
 }
-
-cend
 ```
 
 **Nested `he`:** call `he …` directly; then one `creturn`.
@@ -202,9 +200,11 @@ Then `myproj@glue.setup` should print `hello, glue1` if `setup` reads `:name` as
 
 ## What the template does
 
-`comshell` is a bash script. The file always has this shape: shebang, `. $cheader`, one function per HE method, then `cend`. Do not remove `. $cheader` or `cend`. Use **Unix LF** line endings (CRLF breaks the script).
+`comshell` is a bash script. Shape: shebang, `. $cheader`, one function per HE method. Do not remove `. $cheader`. Trailing `cend` is optional — `api.sh` installs an EXIT trap that runs the same dispatch. Use **Unix LF** line endings (CRLF breaks the script).
 
-The hello-world listing above is that full file. `$cheader` loads the HE shell helpers (`creturn`, parameter variables, logging through `he`). `cend` dispatches the requested method.
+The hello-world listing above is that full file. `$cheader` loads the HE shell helpers (`creturn`, parameter variables, logging through `he`). Dispatch runs the shell function named `$API` (same spelling as the HE method).
+
+If a method is missing, dispatch returns `tpanic` (config `get`/`set` then fall back to the object `.cfg` file). Define `service()` whenever you use `land@service.start[..., service]` — otherwise ash may run `/usr/sbin/service`. Do not register a bare HE short name `service` for `land@service` in `prj.json` `obj` (call `land@service.…` instead). Helpers may use a leading `_` so `api_list` / `.obj` does not list them.
 
 Environment (set by the framework):
 

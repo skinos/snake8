@@ -49,6 +49,3 @@ service()
     fi
 }
 
-# call the method, you cannot delete this
-cend
-

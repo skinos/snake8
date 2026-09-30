@@ -45,12 +45,26 @@ typedef struct he_st
 typedef he_struct* he_t;
 /**
  * @brief list HE APIs of a component (shared library, ELF executable, or shell)
- * @param[in] object component object name (e.g., "land@machine")
+ * @param[in] object component object name (e.g., "land@machine"); ignored when filepath is set
+ * @param[in] filepath component file path; when non-empty, used instead of resolving object
  * @return json map: api name (no "_" prefix) → ""
  * 	@retval talk_t for succeed - caller must free with talk_free()
  *  @retval NULL for error, errno will be set
+ * @note filepath takes priority over object. Does not list get/set (config). ELF also omits init/fini/start.
  */
- talk_t api_list( const char *object );
+talk_t api_list( const char *object, const char *filepath );
+/**
+ * @brief probe whether a component exports an HE API (scan file; not via api_list)
+ * @param[in] object component object name; ignored when filepath is set
+ * @param[in] api method name without "_" (e.g., "setup", "get", "set")
+ * @param[in] filepath component file path; when non-empty, used instead of resolving object
+ * @return true if the matching function/symbol exists in the file
+ * 	@retval true for present (ELF: _api; shell: api())
+ *  @retval false for missing, errno set (ENOSYS typical)
+ * @note Unlike api_list, get/set are detectable (_get/_set or get()/set()).
+ * @see api_list, com_have, com_exist
+ */
+boole  api_exist( const char *object, const char *api, const char *filepath );
 
  
 

@@ -41,6 +41,3 @@ list()
     ret='{"'$PARAM1'":"'$PARAM2'"}'
     creturn $ret
 }
-
-# call the method, you cannot delete this
-cend

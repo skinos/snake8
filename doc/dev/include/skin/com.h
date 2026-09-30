@@ -67,9 +67,9 @@ typedef struct eapi_table_st
  * @param table Array of eapi_table_t (method name → comapi_t). Must be an array identifier.
  * @param getfn comget_t (obj, attr) → talk_t; used when API is "get" (from cget/sget).
  * @param setfn comset_t (obj, talk, attr) → boole; used when API is "set" (from cset/sset).
- * @note "get"/"set"/"exist" are not looked up in table; methods stay in table. setfn's boole is
+ * @note "get"/"set" are not looked up in table; methods stay in table. setfn's boole is
  *       mapped to ttrue/tfalse before talk2fd. Prefer MAIN2API(table) when config_* is enough.
- * @note "exist" is a meta probe (PARAM1=api name → ttrue/tfalse) used by com_exist/com_have.
+ * @note API presence for ? / com_have / com_exist uses api_exist()/api_list(), not a peer exist[].
  */
 #define MAIN2COM( table, getfn, setfn ) \
 int main( int argc, const char **argv ) \
@@ -87,7 +87,7 @@ int main( int argc, const char **argv ) \
 	this = execute_object(); \
 	api = execute_api(); \
 	pipe_fd = execute_pipe(); \
-	/* Shell spawn sets API/cpipe even when OBJECT is omitted (e.g. com_exist). */ \
+	/* Shell spawn sets API/cpipe even when OBJECT is omitted. */ \
 	if ( api != NULL || pipe_fd >= 0 ) \
 	{ \
 		param = execute_param(); \
@@ -110,39 +110,7 @@ int main( int argc, const char **argv ) \
 	ret = tpanic; \
 	if ( api != NULL && *api != '\0' ) \
 	{ \
-		if ( 0 == strcmp( api, "exist" ) ) \
-		{ \
-			/* Meta probe: PARAM1 = API name. Object unused for now. */ \
-			const char *name; \
-			boole found; \
-			name = param_string( param, 1 ); \
-			found = false; \
-			if ( name != NULL && *name != '\0' ) \
-			{ \
-				if ( 0 == strcmp( name, "get" ) || 0 == strcmp( name, "set" ) \
-					|| 0 == strcmp( name, "exist" ) ) \
-				{ \
-					found = true; \
-				} \
-				else \
-				{ \
-					for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
-					{ \
-						if ( 0 == strcmp( name, (table)[i].name ) ) \
-						{ \
-							found = true; \
-							break; \
-						} \
-					} \
-				} \
-			} \
-			ret = ( found == true ) ? ttrue : tfalse; \
-			if ( found == false ) \
-			{ \
-				errno = ENOSYS; \
-			} \
-		} \
-		else if ( 0 == strcmp( api, "get" ) ) \
+		if ( 0 == strcmp( api, "get" ) ) \
 		{ \
 			if ( this == NULL ) \
 			{ \
@@ -524,10 +492,11 @@ void   com_close( com_t com );
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
- * @note LIB: dlsym("_"+api). EXE: com_exist probes MAIN2COM "exist";
- *       com_have uses api_list() (same source as leading ".") so shell
- *       components without exist[] still match listed APIs.
+ * @note LIB/EXE/shell: api_exist() scans the file for _api / api() (get/set included).
+ *       api_list / leading "." still omit get/set (and ELF init/fini/start).
+ *       com_exist passes com->path into api_exist (filepath preferred over object).
  * @see com_have to check by object string without keeping a handle open
+ * @see api_exist, api_list
  * @see ccall, scall to invoke an API on an object
  */
 boole  com_exist( com_t com, const char *api );

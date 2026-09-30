@@ -22,7 +22,7 @@ shut()
 
 
 # method, service will exit with ttrue, the service will log for forever
-_service()
+service()
 {
     nubmer=1
     max=11
@@ -41,6 +41,3 @@ list()
     ret='{"'$PARAM1'":"'$PARAM2'"}'
     creturn $ret
 }
-
-# call the method, you cannot delete this
-cend
