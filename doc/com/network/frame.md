@@ -8,6 +8,8 @@ The **network frame** component (`network@frame`) is the hub for LAN/WAN/VPN reg
 - registers local/extern/VPN interfaces and coordinates VLAN and bridge sub-modules
 - publishes joint events on IPv4/IPv6 interface state changes
 - works with the **connect** service for multi-uplink scheduling
+- detects whether the kernel has IPv6 (`/proc/sys/net/ipv6`); when it does not, ifname/client IPv6 paths stay inactive (no DHCPv6 client, no odhcpd, no IPv6 upline joints)
+- IPv6 default route (`::/0`) follows the same slot preference as IPv4 `type`; `type6` only decides whether a dead PD prefix may move to another uplink
 
 
 
@@ -155,7 +157,7 @@ The network subsystem uses a layered architecture that separates configuration, 
 | `network@frame` | `network@bridge` | coordinates | `scall(BRIDGE_COM, "setup")` |
 | `network@frame` | `network@connect` | starts | `scall(CONNECT_COM, "setup")` |
 | `ifname@*` | `concom` (ethcon/ltecon) | delegates | `sstarts(object, drvcom, "service", ...)` |
-| `ifname@*` | `ifdev` (ethernet/modem/wifi) | references | `reg_string(this, "ifdev")` |
+| `ifname@*` | `ifdev` (ethernet/modem/wifi) | references | ifname holds the bound ifdev name for status / connect |
 | `ifname@*` | `network@frame` | notifies | `scall(NETWORK_COM, "online/offline/upline/downline")` |
 | `ethernet@*` | `network@frame` | registers devices | `scalls(NETWORK_COM, "add", "%s,%s", object, netdev)` |
 | `modem@*` | `network@frame` | registers devices | `scalls(NETWORK_COM, "add", "%s,%s", object, netdev)` |
@@ -251,9 +253,20 @@ The network subsystem uses a layered architecture that separates configuration, 
 
     "interval":"Connect scheduler poll interval",                  // [ number ], seconds; empty or 0 defaults to 10
 
+    // IPv6
+    "type6":"IPv6 default-route and PD-sticky policy",             // [ "type", "sticky", "disable" ], default "sticky"
+                                                                        // "::/0" for both "type" and "sticky" follows the IPv4 "type" preferred uplink (skip if that uplink has no IPv6)
+                                                                        // difference is only whether LAN may take another uplink PD when the PD source dies
+                                                                        // "type" — allow the LAN follow-chain to take another uplink PD / relay / ULA
+                                                                        // "sticky" — keep the original PD source and prefix; if that uplink dies, withdraw GUA, keep ULA, egress via preferred uplink masq6; do not steal backup PD
+                                                                        // "disable" — do not install IPv6 "::/0"; do not change LAN prefix policy
+
+    // DNS (IPv4 and IPv6; no dns6 / lan6)
     "custom_dns":"Custom DNS",                                     // [ "disable", "enable" ]
-    "dns":"Custom DNS1",                                           // [ ip address ], valid when "custom_dns" is "enable"
-    "dns2":"Custom DNS2",                                          // [ ip address ], valid when "custom_dns" is "enable"
+                                                                        // "disable" — learn DNS from the preferred uplink (IPv4 and IPv6)
+                                                                        // "enable" — use dns / dns2 below
+    "dns":"Custom DNS1",                                           // [ ipv4 address, ipv6 address ], valid when "custom_dns" is "enable"
+    "dns2":"Custom DNS2",                                          // [ ipv4 address, ipv6 address ], valid when "custom_dns" is "enable"
 
     "offload":"flow offload mode"                                  // [ "disable", "enable", "hw" ]
                                                                         // "disable" for no offload
@@ -273,7 +286,92 @@ network@frame
     "2":"ifname@lte",                          # priority slot 2: LTE modem
     "3":"ifname@lte2",                         # priority slot 3: second LTE modem
     "4":"ifname@wisp",                         # priority slot 4: WISP (wireless relay)
-    "custom_dns":"disable"                     # use DNS from the active uplink (not custom)
+    "type6":"sticky",                          # IPv6 ::/0 follows IPv4 slots; do not hop PD when the PD source dies
+    "custom_dns":"disable"                     # use DNS from the active uplink (IPv4 and IPv6)
+}
+```
+
+Example, IPv4 cold backup (WAN then LTE)
+```shell
+network@frame
+{
+    "type":"cold",
+    "1":"ifname@wan",
+    "2":"ifname@lte"
+}
+```
+
+Example, IPv4 hot backup
+```shell
+network@frame
+{
+    "type":"hot",
+    "1":"ifname@wan",
+    "2":"ifname@lte"
+}
+```
+
+Example, IPv4 lazy hot backup (no fail-back until current fails)
+```shell
+network@frame
+{
+    "type":"lazy",
+    "1":"ifname@wan",
+    "2":"ifname@lte"
+}
+```
+
+Example, IPv6 factory PD sticky (recommended)
+```shell
+network@frame
+{
+    "type6":"sticky"
+}
+```
+
+Example, IPv6 follow IPv4 slots and allow PD to move when the source dies
+```shell
+network@frame
+{
+    "type6":"type"
+}
+```
+
+Example, IPv6 no default route from the scheduler
+```shell
+network@frame
+{
+    "type6":"disable"
+}
+```
+
+Example, custom DNS IPv4
+```shell
+network@frame
+{
+    "custom_dns":"enable",
+    "dns":"8.8.8.8",
+    "dns2":"1.1.1.1"
+}
+```
+
+Example, custom DNS IPv6
+```shell
+network@frame
+{
+    "custom_dns":"enable",
+    "dns":"2001:4860:4860::8888",
+    "dns2":"2606:4700:4700::1111"
+}
+```
+
+Example, custom DNS mixed IPv4 and IPv6
+```shell
+network@frame
+{
+    "custom_dns":"enable",
+    "dns":"8.8.8.8",
+    "dns2":"2001:4860:4860::8888"
 }
 ```
 
@@ -294,6 +392,12 @@ ttrue
 Example, merge set multi-link configure( include "type" "1" "2" "3" "4" )
 ```shell
 network@frame|{"type":"hot4","1":"ifname@lte","2":"ifname@lte2","3":"ifname@wan","4":"ifname@wisp"}
+ttrue
+```
+
+Example, merge set IPv6 PD policy and custom DNS
+```shell
+network@frame|{"type6":"sticky","custom_dns":"disable"}
 ttrue
 ```
 
@@ -878,16 +982,17 @@ ttrue
     - Called by ifname components when an interface goes offline (IPv4)
 
 + `upline[ info ]` **IPv6 online notification**
-    - info ------------- [ json ], connection information
+    - info ------------- [ json ], connection information (`mode6`, `ifname`, `netdev`, `gw6`, `dns6`, `dns62`, `prefix`, …)
     - failed return tfalse
     - succeed return ttrue
-    - Called by ifname components when an interface comes online (IPv6)
+    - Called by ifname / odhcp6c when an uplink has usable IPv6 (GUA and/or IA_PD)
+    - unchanged payload is ignored (no joint re-fire); IPv4 `online` still records `ontime` / `livetime`, IPv6 upline does not
 
 + `downline[ ifname ]` **IPv6 offline notification**
     - ifname ----------- [ string ], interface name
     - failed return tfalse
     - succeed return ttrue
-    - Called by ifname components when an interface goes offline (IPv6)
+    - Called by ifname components when an interface loses IPv6 (clears uplink IPv6 state and publishes downline joints)
 
 
 

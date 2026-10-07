@@ -2,7 +2,7 @@
 
 ### Overview
 
-Manage DHCP server (dnsmasq) and IPv6 DHCP relay (odhcpd) for local network interfaces. DHCP server settings are configured per logical **`ifname`** (e.g. `ifname@lan`). The component generates dnsmasq configuration from per-interface settings, supports static IP assignment via station bindings, and provides DHCP lease listing.
+Manage DHCP server (dnsmasq) and IPv6 RA/DHCPv6 (odhcpd) for local network interfaces. DHCP server settings are configured per logical **`ifname`** (e.g. `ifname@lan`). The component generates dnsmasq configuration from per-interface `dhcps`, and odhcpd UCI from each LAN `mode6`/`dhcps6` (`slaac`/`hybrid`/`dhcp`, optional downstream PD).
 
 - manages dnsmasq and odhcpd lifecycle: setup, shutdown, reset, reload
 - generates per-interface DHCP configuration from ifname settings
@@ -10,6 +10,7 @@ Manage DHCP server (dnsmasq) and IPv6 DHCP relay (odhcpd) for local network inte
 - integrates with client@station for MAC-IP binding (dhcp-host entries)
 - supports DNS proxy configuration
 - provides DHCP lease listing from dnsmasq lease file
+- IPv6: `_odhcpd` installs LAN prefixes (follow PD / static6 / ULA) and builds odhcpd UCI with per-LAN pin/`follow` and a single relay master (ethcon/ltecon do not do this)
 
 
 
@@ -99,11 +100,11 @@ ttrue
 + `setup[]` **start DHCP services**
     - succeed return ttrue
     - on slave platforms, no DHCP service is started
-    - starts dnsmasq and odhcpd (when available)
+    - starts dnsmasq; starts odhcpd only when the kernel has IPv6 support
 
 + `shut[]` **stop DHCP services**
     - succeed return ttrue
-    - stops dnsmasq and odhcpd
+    - stops dnsmasq; stops odhcpd when it was started for IPv6
 
 
 #### Query APIs
@@ -146,14 +147,44 @@ ttrue
 + `reset[]` **restart DHCP services**
     - succeed return ttrue
     - on slave platforms, does nothing
-    - backs up lease file, restarts dnsmasq and odhcpd, restores lease file
-    - typically called after network interface changes
+    - backs up lease file, restarts dnsmasq (and odhcpd when the kernel has IPv6), restores lease file
+    - used by `network/on` and `network/off` (LAN up/down) and by the user to reset all DHCP services
 
-+ `on[]` **reload DHCP configuration**
++ `online[]` **reload IPv4 DHCP (dnsmasq)**
     - succeed return ttrue
     - on slave platforms, does nothing
-    - sends SIGHUP to dnsmasq and odhcpd to reload configuration without full restart
+    - SIGHUP dnsmasq only (resolv/DNS after WAN IPv4 online/offline)
 
++ `upline[]` **reload IPv6 DHCP (odhcpd)**
+    - succeed return ttrue
+    - on slave platforms, does nothing
+    - no-op when the kernel has no IPv6 support
+    - regenerates `/etc/config/dhcp` (and re-applies LAN prefixes in `_odhcpd`) then **restarts** odhcpd
+    - SIGHUP is not used: odhcpd does not reload UCI on signal
+    - used by `network/upline` and `network/downline`
+
+#### IPv6 pin / follow (`_odhcpd`)
+
+LAN `mode6`: `disable` | `static6` | `follow` | `ifname@…` (legacy `auto`→`follow`). Implemented only in `client@dhcps` (not ethcon/ltecon WAN-client paths). When the kernel has no IPv6, every LAN is treated as `mode6=disable` (no odhcpd LAN work).
+
+`_odhcpd` pipeline (one function, no helpers):
+
+1. **A** open `/etc/config/dhcp`
+2. **B** scan default + all WAN uplinks that are IPv6-up → follow-pick (PD: default → last successful PD uplink → first; else v6: default → first)
+3. **C** scan each LAN → provisional uplink + want (`server` / `relay`)
+4. **D** decide plan: `server-only` (multi-PD OK) vs `single-relay` (one master)
+5. **E** finalize LANs: pin≠master → server/ULA; `follow` RELAY shares master
+6. **F** install prefixes + write UCI per LAN (+ one master WAN stanza if relay)
+7. **G** `execlp(odhcpd -u)` — `-u` disables netifd/ubus ifname lookup (landos has no netifd; otherwise RA never goes out)
+
+| Want | When | Action |
+|------|------|--------|
+| server | `static6`, or uplink has IA_PD, or no IPv6 | install prefix (static6 / PD slice / ULA) + `ra/dhcpv6=server` |
+| relay | uplink has IPv6 but no PD | `ra/ndp/dhcpv6=relay`; one process-wide `master` |
+
+Relay master: among RELAY LANs prefer `ifname@` pins; `network@frame.default` breaks ties; else first. Pin≠master → server/ULA + warn. `follow` RELAY shares the winning master. Multiple PD servers (different WANs) OK in parallel — pin each LAN; two `follow` LANs share one follow-pick uplink.
+
+Owned LAN CIDR (PD slice / static6 / ULA-only) appears in `ifname@lan*.status` as `prefix`. Uplink IA_PD appears in that WAN/LTE `status` as `prefix`. Limits: one relay master only; `pd=auto` enables dhcpv6 server but does not compute leftover slices; relay stanza does not also serve local ULA PIO.
 
 
 ### Published Joint Events
@@ -162,7 +193,9 @@ The following joint events trigger DHCP service actions. Other components can su
 
 | Event | Description |
 |-------|-------------|
-| `network/on` | Sent when a local interface comes up. Triggers `client@dhcps.reset` to restart DHCP services. |
-| `network/off` | Sent when a local interface goes down. Triggers `client@dhcps.reset` to restart DHCP services. |
-| `network/online` | Sent when internet connectivity is established. Triggers `client@dhcps.on` to reload configuration. |
-| `network/offline` | Sent when internet connectivity is lost. Triggers `client@dhcps.on` to reload configuration. |
+| `network/on` | Local interface up. Triggers `client@dhcps.reset` (IPv4+IPv6 restart). |
+| `network/off` | Local interface down. Triggers `client@dhcps.reset` (IPv4+IPv6 restart). |
+| `network/online` | IPv4 internet up. Triggers `client@dhcps.online` (dnsmasq SIGHUP). |
+| `network/offline` | IPv4 internet down. Triggers `client@dhcps.online` (dnsmasq SIGHUP). |
+| `network/upline` | IPv6 uplink up. Triggers `client@dhcps.upline` (odhcpd restart). |
+| `network/downline` | IPv6 uplink down. Triggers `client@dhcps.upline` (odhcpd restart). |

@@ -201,7 +201,7 @@ The following JSON shows the complete `prj.json` structure with type annotations
     },
     "init":                                                  // [ json ], boot startup tasks
     {
-        "boot level":                                        // [ string ]: { json }, boot level name (arch, land, bus, device, network, manage, local, extern, app, app2, general, delay, delay2, delay3, delay4, delay5)
+        "boot level":                                        // [ string ]: { json }, boot level name (arch, land, bus, network, device, manage, local, extern, app, app2, general, delay, delay2, delay3, delay4, delay5)
         {
             "component.method": "description"                // [ string ]: [ string ], HE-style component method call and its description
             // "...":"..."  How many tasks at this level show how many properties
@@ -258,7 +258,7 @@ The following JSON shows the complete `prj.json` structure with type annotations
 
 ## 14. Example — `land` project (this repository)
 
-The `land` project provides core infrastructure: authentication, component management, init/uninit/joint scheduling, register variables, syslog, service supervision, machine info, and FPK packaging.
+The `land` project provides core infrastructure: authentication, component management, init/uninit/joint scheduling, register variables, service supervision, machine info, and FPK packaging.
 
 ```json
 {
@@ -269,62 +269,48 @@ The `land` project provides core infrastructure: authentication, component manag
     "version": "8.0.0",                                  # current version
     "author": "dimmalex@gmail.com",                      # author
 
-    "lib":                                               # has 1 library
+    "lib":                                               # shared libraries
     {
-        "skin": "skinos core library"                    # the skinos core library
+        "skin": "skinos core library",                   # the skinos core library
+        "skine": "skinos crypto helpers",
+        "skinm": "skinos mcontrol and service client"
     },
-    "cmd":                                               # has 3 commands
+    "cmd":                                               # shell commands
     {
         "he": "tools for call all component",            # he command tool
+        "hetab": "HE tab completion helper for ash shell",
+        "heexec": "minimal loader for daemon exec services",
         "daemon": "service daemon management",           # daemon executable
         "eline": "tools for terminal line to execute the he command"
     },
-    "com":                                               # has 8 components
+    "com":                                               # components
     {
         "fpk": "fpk management",                         # fpk package management
         "init": "init/uninit/joint management",          # init/uninit/joint shared implementation
         "component": "component management",             # component registration
         "register": "register variables",                # register variable management
-        "syslog": "system log management",               # syslog service
         "service": "service management",                 # daemon service management
         "machine": "system basic information management", # machine info and control
         "auth": "authentication management"              # user authentication
     },
-    "obj":                                               # has 9 object mappings
+    "obj":                                               # object mappings / aliases
     {
         "land@uninit": "init",                           # land@uninit uses the init component
         "land@joint": "init",                            # land@joint uses the init component
         "com": "component",                              # com alias for component
         "reg": "register",                               # reg alias for register
-        "log": "syslog",                                 # log alias for syslog
-        "serv": "service",                               # serv alias for service
         "fpk": "fpk",                                    # fpk alias for fpk
-        "machine": "machine",                            # machine alias for machine
-        "auth": "auth"                                   # auth alias for auth
+        "auth": "auth",                                  # auth alias for auth
+        "machine": "machine"                             # machine alias for machine
     },
-    "init":                                              # has 2 boot levels
+    "init":                                              # boot levels
     {
-        "arch":                                          # arch level: platform layer setup
-        {
-            "land@syslog.setup": ""                      # start syslog at arch level
-        },
         "land":                                          # land level: core infrastructure setup
         {
             "land@auth.setup": "",                       # setup authentication
             "land@joint.setup": "",                      # setup joint event system
             "land@init.setup": "",                       # setup init system
             "land@uninit.setup": ""                      # setup uninit system
-        }
-    },
-    "joint":                                             # has 2 joint event subscriptions
-    {
-        "storage/insert":                                # when external storage is inserted
-        {
-            "land@syslog.setup": ""                      # re-setup syslog to use new storage
-        },
-        "storage/remove":                                # when external storage is removed
-        {
-            "land@syslog.setup": ""                      # re-setup syslog after storage removal
         }
     }
 }

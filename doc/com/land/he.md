@@ -631,94 +631,97 @@ There are two ways to access component documentation. Each component can be mana
 - **Worked examples below** use **`~ # he '…'`** (Linux shell after **`ashy`**) so they can be copied verbatim. In **eline** (`$ `), type only the string inside the quotes—no **`he`** wrapper.
 
 ### Reference document query component configuration
-The component name is given in the **Configuration**, for example **Syslog** — **[syslog.md](syslog.md)** — component name **land@syslog**
+The component name is given in the **Configuration**, for example **Machine** — **[machine.md](machine.md)** — component name **land@machine**
 
 - Enter **component name** to return all configurations for this component. The attributes and examples for each configuration are described in **Configuration** in the component documentation.
 
-    **Example: query all syslog configuration**
+    **Example: query all machine configuration**
     ```shell
-    ~ # he 'land@syslog'                    # Enter component name
+    ~ # he 'land@machine'                    # Enter component name
     {                               # Return a JSON of all the component configuration
-        "status":"enable",                # enable the syslog functions
-        "location":"",                     # omit/empty uses the default file path policy (that file uses a random prefix under the system var dir)
-        "level":"info",                   # log level is normal information
-        "trace":"disable",                # disable the code information
-        "size":"100",                     # log buffer is 100k
-        "remote":"192.168.8.250",         # send the syslog to remote server 192.168.8.250
-        "port":"514"                      # send the syslog to remote server port 514
+        "name":"SkinOS",                    # machine hostname
+        "mode":"default",                   # working mode
+        "sn":"20240001",                    # serial number (read-only from EEPROM)
+        "mac":"AA:BB:CC:DD:EE:FF",          # MAC address (read-only from EEPROM)
+        "macid":"AABBCCDDEEFF",             # MAC ID (read-only from EEPROM)
+        "language":"cn",                    # system language
+        "gpversion":"1.0.0",                # general purpose version
+        "cfgversion":"1.0.0"                # configuration version
     }
     ~ #
     ```
 
 - Query a specific attribute by providing the attribute with the **attribute path** after the **component name**.
 
-    **Example: query one syslog attribute**
+    **Example: query one machine attribute**
     ```shell
-    ~ # he 'land@syslog:level'                    # Query the value of the level attribute
-    info                                    # value of level is info
+    ~ # he 'land@machine:name'                    # Query the value of the name attribute
+    SkinOS                                    # value of name is SkinOS
     ~ #
     ```
 
 ### Refer to the component documentation to modify the component configuration   
-Refer to **Syslog** docs (**[syslog.md](syslog.md)**). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
-- Modify the remote attribute of the land@syslog remote log server on the terminal.
+Refer to **Machine** docs (**[machine.md](machine.md)**). The attributes described in **Configuration** can be modified on the terminal by `component name:attribute path=value`.
+- Modify the name attribute of land@machine on the terminal.
 
-    **Example: set one syslog attribute**
+    **Example: set one machine attribute**
     ```shell
-    ~ # he 'land@syslog:remote=192.168.8.250'                    # Change the value of remote to 192.168.8.250
+    ~ # he 'land@machine:name=MyRouter'                    # Change the value of name to MyRouter
     ttrue                                    # Return ttrue successfully
     ~ #
     ```
 
 - Modify multiple attributes at the same time by encapsulating only the target fields in a JSON object (the rest remains unchanged).
 
-    **Example: merge several syslog attributes**
+    **Example: merge several machine attributes**
     ```shell
-    ~ # he 'land@syslog|{"remote":"192.168.8.251","port":"500"}'                    # Change the value of remote to 192.168.8.251 and value of port to 500
+    ~ # he 'land@machine|{"name":"MyRouter","mode":"default","language":"en"}'                    # Change name, mode, and language
     ttrue                                                    # Return ttrue successfully
     ~ #
     ```
 
-- Set the full syslog configuration on the terminal. To modify all configurations, provide the same JSON object.
+- Set the full machine configuration on the terminal. To modify all configurations, provide the same JSON object.
 
-    **Example: replace full syslog configuration**
+    **Example: replace full machine configuration**
     ```shell
-    ~ # he 'land@syslog={"status":"enable","location":"","debug":"arch@usb","level":"info","trace":"disable","size":"100"}'
+    ~ # he 'land@machine={"name":"SkinOS","mode":"default","language":"cn","gpversion":"1.0.0","cfgversion":"1.0.0"}'
     ttrue                                    # Return ttrue successfully
     ~ #
     ```
 
 ### Call a component method by referring to the component documentation   
-Refer to the same **Syslog** documentation. Methods described there can be called on the terminal as `component name.component method`.
-- Call the component land@syslog's show method to display the current log.
+Refer to the same **Machine** documentation. Methods described there can be called on the terminal as `component name.component method`.
+- Call the component land@machine's status method to display the current machine status.
 
-    **Example: show syslog output**
+    **Example: show machine status**
     ```shell
-    ~ # he 'land@syslog.show'
-    Dec 15 15:47:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 102 times
-    Dec 15 15:47:25 V520-12CC70 user.warn syslog: modem@lte check simcard failed 103 times
-    Dec 15 15:47:30 V520-12CC70 user.warn syslog: modem@lte check simcard failed 104 times
-    Dec 15 15:47:35 V520-12CC70 user.warn syslog: modem@lte check simcard failed 105 times
-    Dec 15 15:47:40 V520-12CC70 user.warn syslog: modem@lte check simcard failed 106 times
-    Dec 15 15:47:45 V520-12CC70 user.warn syslog: modem@lte check simcard failed 107 times
-    Dec 15 15:47:50 V520-12CC70 user.warn syslog: modem@lte check simcard failed 108 times
-    Dec 15 15:47:55 V520-12CC70 user.warn syslog: modem@lte check simcard failed 109 times
-    Dec 15 15:48:00 V520-12CC70 user.warn syslog: modem@lte check simcard failed 110 times
-    Dec 15 15:48:05 V520-12CC70 user.warn syslog: modem@lte check simcard failed 111 times
-    Dec 15 15:48:10 V520-12CC70 user.warn syslog: modem@lte check simcard failed 112 times
-    Dec 15 15:48:15 V520-12CC70 user.warn syslog: modem@lte check simcard failed 113 times
-    Dec 15 15:48:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 114 times
-    Dec 15 15:48:25 V520-12CC70 user.warn syslog: modem@lte check simcard failed 115 times
-    Dec 15 15:48:30 V520-12CC70 user.warn syslog: modem@lte check simcard failed 116 times
-    Dec 15 15:48:35 V520-12CC70 user.warn syslog: modem@lte check simcard failed 117 times
+    ~ # he 'land@machine.status'
+    {
+        "name":"SkinOS",
+        "mode":"default",
+        "platform":"rk3568",
+        "hardware":"R2000",
+        "custom":"default",
+        "scope":"product",
+        "version":"8.0.0",
+        "livetime":"3d 2h 15m",
+        "current":"2025-01-15 10:30:00",
+        "mac":"AA:BB:CC:DD:EE:FF",
+        "model":"R2000",
+        "local_ip":"192.168.1.1"
+    }
     ~ #
     ```
-- Call the clear method of component land@syslog to clear all current logs.
+- Call the temp method of component land@machine to read temperatures when available.
 
-    **Example: clear syslog**
+    **Example: read machine temperatures**
     ```shell
-    ~ # he 'land@syslog.clear'
-    ttrue
+    ~ # he 'land@machine.temp'
+    {
+        "cpu":"48",
+        "wifi@n":"52",
+        "wifi@a":"49"
+    }
     ~ #
     ```
 

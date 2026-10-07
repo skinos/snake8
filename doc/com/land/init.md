@@ -12,8 +12,8 @@ There are multiple boot levels at system startup, executed in order:
 - `arch` — platform layer setup
 - `land` — core infrastructure setup
 - `bus` — bus subsystem setup
-- `device` — device setup
 - `network` — network subsystem setup
+- `device` — device setup
 - `manage` — management framework setup
 - `local` — local interface setup
 - `extern` — internet connection setup
@@ -34,7 +34,7 @@ There are multiple boot levels at system startup, executed in order:
         "task name":                       // [ string ]: { json }, custom task name
         {                                      // task definition
             "level": "boot level",             // [ string ], the boot level to run this task at
-                                                   // "arch", "land", "bus", "device", "network",
+                                                   // "arch", "land", "bus", "network", "device",
                                                    // "manage", "local", "extern", "app", "app2",
                                                    // "general", "delay", "delay2", "delay3",
                                                    // "delay4", "delay5"
@@ -179,16 +179,17 @@ ttrue
     ttrue
     ```
 
-+ `knock[ project ]` **run a project's prj.json init section (hot install path)**
++ `knock[ project, level ]` **run one installed level from a project's prj.json init section**
     - project --------- [ string ], project name (directory under the installed projects root)
+    - level ----------- [ string ], boot level taken from that project's `prj.json` `init` key
     - failed return tfalse
     - succeed return ttrue
-    - Reads that project's `prj.json` → `init` and invokes each `project@component.method` entry
-    - Used by `land@fpk.install` after placing a package; empty `init` section still returns ttrue
+    - Forks one child per HE call at that level, same execution as `call`
+    - `land@fpk.install` walks the installed package's levels and calls this once per level
 
-    Example, apply init hooks from project wui after FPK install
+    Example, apply the app init hooks from project wui
     ```shell
-    land@init.knock[ wui ]
+    land@init.knock[ wui, app ]
     ttrue
     ```
 

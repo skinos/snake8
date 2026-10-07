@@ -99,7 +99,7 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - path, ... ----------- [ string ], each argument may be an fpk archive file or a directory containing prj.json
     - failed return tfalse
     - succeed return ttrue
-    - After files are placed, calls `land@uninit.knock[ name ]` (if replacing) then `land@init.knock[ name ]` so the package's `prj.json` init/uninit hooks run without reboot
+    - After loading the package being installed, walks its `init` / `uninit` level keys and calls `land@uninit.knock[ name, level ]` (before replace) then `land@init.knock[ name, level ]` (after place, and on rollback). Level list always comes from that loaded package; knock reads the on-disk project at that moment.
     - After install finishes, refreshes the ash HE whitelist via `he_shell`
 
     Example, install an fpk package
@@ -112,7 +112,7 @@ Examples such as **`land@fpk.list`** JSON fields use **`⟨PRJ_ROOT⟩/…`** so
     - name, ... ----------- [ string ], one or more project names to uninstall; firmware projects are skipped
     - failed return tfalse
     - succeed return ttrue
-    - Before removal, calls `land@uninit.knock[ name ]` to run that project's `prj.json` uninit hooks
+    - Before removal, loads that project's `prj.json` once, walks its `uninit` levels, and calls `land@uninit.knock[ name, level ]` for each
     - After uninstall finishes, refreshes the ash HE whitelist via `he_shell`
 
     Example, uninstall the wui project

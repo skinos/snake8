@@ -164,16 +164,17 @@ ttrue
     ttrue
     ```
 
-+ `knock[ project ]` **run a project's prj.json joint section (hot install path)**
++ `knock[ project, level ]` **run one joint event from a project's prj.json joint section**
     - project --------- [ string ], project name
+    - level ----------- [ string ], event name taken from that project's `prj.json` `joint` key
     - failed return tfalse
     - succeed return ttrue
-    - Reads that project's `prj.json` → `joint` and invokes each registered `project@component.method`
-    - Empty `joint` section returns ttrue
+    - Forks one child per HE call for that event, same execution as `call`
+    - No event payload is passed
 
-    Example, apply joint hooks from project wui
+    Example, apply wui handlers for network/online
     ```shell
-    land@joint.knock[ wui ]
+    land@joint.knock[ wui, network/online ]
     ttrue
     ```
 

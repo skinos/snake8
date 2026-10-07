@@ -7,6 +7,8 @@ Usually `ifname@lte` is the first LTE/NR network instance. If there are multiple
 
 - manages LTE/NR interface lifecycle: setup, shutdown, status query
 - supports PPP and DHCP client IPv4 addressing
+- supports DHCPv6 and SLAAC IPv6 addressing (`mode6`; PDP `profile_cfg.type` ipv4/ipv6/ipv4v6 is separate)
+- when the kernel has no IPv6 support, reading this ifname’s config omits IPv6 keys (`mode6`, `static6`, `dhcpc6`, `slaac`, `masq6`, `mtu6`); IPv6 runtime stays off
 - provides SIM card detection, PLMN registration, signal strength monitoring
 - after the WAN is up without keeplive, a long modem watch failure restarts this ifname service so ltecon redials (the module is not power-cycled on that path)
 - supports backup SIM card failover with configurable thresholds
@@ -144,29 +146,58 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     "masq":"outgoing NAT for IPv4",                                               // [ "disable", "enable" ]
     "mtu":"Maximum transmission unit",                                            // [ number ], The unit is in bytes
 
-    // IPv6
-    "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "slaac" ]
-                                                    // "disable" means IPv6 is disabled
-                                                    // "manual" means static IPv6 settings
-                                                    // "automatic" means DHCPv6
-                                                    // "slaac" means Stateless Address Autoconfiguration
-    "manual":                                 // detail configuration for "method" is "manual"
+    // IPv6 keys: addr = this ifname address; mask = this ifname subnet length;
+    //            prefix = CIDR delegated to LAN; pdlen = IA_PD length to request (auto/56/disable)
+    "mode6":"IPv6 address mode",              // [ "disable", "auto", "static6", "dhcpc6", "slaac" ]
+                                                    // default "auto"
+                                                    // independent from profile_cfg.type; if type is "ipv4", treat mode6 as disable
+                                                    // "disable" — no IPv6 on this ifname (no DHCPv6, no SLAAC, no static6)
+                                                    // "auto" — run DHCPv6 client (odhcp6c) with RA merge; succeed if IA_PD or a GUA on this ifname
+                                                    //          status/upline may report mode6 as "slaac" when only RA GUA was obtained (not a second ltecon slaac stage)
+                                                    // "static6" — use static6{}; WAN address is static6.addr, not DHCPv6/SLAAC
+                                                    // "dhcpc6" — use dhcpc6{}; DHCPv6 client for IA_NA (this ifname address) and optional IA_PD (LAN prefix)
+                                                    // "slaac" — use slaac{}; always accept RA and form addresses locally; no DHCPv6 IA_PD
+    "static6":                                // detail when "mode6" is "static6"
     {
         "addr":"IPv6 address",                      // < ipv6 address >
-        "prefix":"IPv6 prefix",                     // < number >, 1-128
-        "hop":"IPv6 gateway",                       // [ ipv6 address ]
-        "resolve":"IPv6 DNS",                       // [ ipv6 address ]
-        "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
+        "mask":"IPv6 subnet length of addr",        // [ number ], default 64; this ifname only (LTE on-link length)
+        "gw":"IPv6 gateway",                        // [ ipv6 address ]
+        "dns":"IPv6 DNS",                           // [ ipv6 address ]
+        "dns2":"IPv6 DNS2"                          // [ ipv6 address ]
+                                                    // no static LAN PD here; give LAN a prefix via ifname@lan static6 / ula, or real IA_PD from dhcpc6
     },
-    "automatic":                              // detail configuration for "method" is "automatic"
+    "dhcpc6":                                 // detail when "mode6" is "dhcpc6", and the first try of "auto"
     {
-        "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
-        "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
-        "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
-        "resolve":"Custom DNS1",                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
-        "resolve2":"Custom DNS2"                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
+        "request":"DHCPv6 address request",          // [ "try", "force", "none" ], default "try"
+                                                         // "try" — request IA_NA, continue if the server has none
+                                                         // "force" — require IA_NA
+                                                         // "none" — do not request IA_NA (PD/RA only)
+        "pdlen":"IA_PD prefix length to request",    // [ "auto", "48", "52", "56", "60", "64", "disable" ], default "auto"
+                                                         // this is the requested length, not the prefix string
+                                                         // "auto" — let the server choose the delegated length
+                                                         // "48"/"52"/"56"/"60"/"64" — request that prefix length
+                                                         // "disable" — do not request IA_PD
+                                                         // the prefix actually delegated appears in status as "prefix"
+        "ra":"accept Router Advertisement",          // [ "disable", "enable" ], default "enable"
+        "ra_holdoff":"min seconds between RA updates", // [ number string ], default "3" (odhcp6c -m; RFC4861)
+        "release":"send release on stop",            // [ "disable", "enable" ], default "disable"
+        "need_pd":"require IA_PD to succeed",        // [ "disable", "enable" ], default "disable"
+        "clientid":"DHCPv6 client DUID",             // [ string ], empty default
+        "reqopts":"extra DHCPv6 request options",    // [ string ], empty default
+        "custom_dns":"Custom IPv6 DNS",              // [ "disable", "enable" ], default "disable"
+        "dns":"Custom IPv6 DNS1",                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+        "dns2":"Custom IPv6 DNS2"                    // [ ipv6 address ], valid when "custom_dns" is "enable"
     },
-    "masquerade":"outgoing NAT for IPv6",                                                 // [ "disable", "enable" ]
+    "slaac":                                  // detail when "mode6" is "slaac"
+    {
+        "custom_dns":"Custom IPv6 DNS",              // [ "disable", "enable" ], default "disable"
+        "dns":"Custom IPv6 DNS1",                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+        "dns2":"Custom IPv6 DNS2"                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+    },
+    "masq6":"outgoing NAT66",                 // [ "auto", "enable", "disable" ], default "auto"
+                                                    // "auto" — NAT66 only when no prefix is delegated to LAN; with PD do not NAT
+                                                    // "enable" / "disable" — force; relay needs "disable"
+    "mtu6":"IPv6 MTU",                        // [ number ], empty default means do not set IPv6 MTU separately
 
     // Configure for link detection mechanism, or call it keeplive mechanism
     "keeplive":
@@ -191,6 +222,11 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
             "dest":                                                           // destination address for ICMP keeplive
             {
                 "destination identify":"destination address",                     // [ string ]: [ IP address ]
+                // "...":"..."  How many destinations show how many properties
+            },
+            "dest6":                                                        // IPv6 destination address for ICMP keeplive
+            {
+                "destination identify":"destination address",                     // [ string ]: [ ipv6 address ]
                 // "...":"..."  How many destinations show how many properties
             },
             "timeout":"Maximum time to wait for the return of a PING echo packet",     // [ number ], The unit is in seconds
@@ -274,7 +310,8 @@ ifname@lte
         "lcp_echo_failure":"12"            # LCP echo failure times is 12
     },
     "masq":"enable",                                 # out stream share the interface IPv4 address to access the Internet
-    "method":"slaac",                                # IPv6 address mode is slaac
+    "mode6":"auto",                                  # IPv6: try DHCPv6 then SLAAC
+    "masq6":"auto",                                  # NAT66 only when no PD to LAN
     "keeplive":                                      # keeplive mechanism configure save here
     {
         "type":"recv",                               # use count receive packet to keeplive
@@ -298,6 +335,103 @@ ifname@lte
 }
 ```
 
+Example, IPv4 DHCP client
+```shell
+ifname@lte
+{
+    "mode":"dhcpc",
+    "masq":"enable"
+}
+```
+
+Example, IPv4 PPP
+```shell
+ifname@lte
+{
+    "mode":"ppp",
+    "ppp":
+    {
+        "lcp_echo_interval":"10",
+        "lcp_echo_failure":"12"
+    },
+    "masq":"enable"
+}
+```
+
+Example, IPv4 static
+```shell
+ifname@lte
+{
+    "mode":"static",
+    "static":
+    {
+        "ip":"10.0.0.2",
+        "mask":"255.255.255.0",
+        "gw":"10.0.0.1",
+        "dns":"8.8.8.8",
+        "dns2":"1.1.1.1"
+    },
+    "masq":"enable"
+}
+```
+
+Example, IPv6 factory path (try DHCPv6 then SLAAC, NAT66 only without PD)
+```shell
+ifname@lte
+{
+    "mode6":"auto",
+    "masq6":"auto"
+}
+```
+
+Example, IPv6 with dual-stack PDP and factory IPv6
+```shell
+ifname@lte
+{
+    "profile":"enable",
+    "profile_cfg":
+    {
+        "type":"ipv4v6",
+        "apn":"internet"
+    },
+    "mode6":"auto",
+    "masq6":"auto"
+}
+```
+
+Example, IPv6 DHCPv6 with prefix delegation
+```shell
+ifname@lte
+{
+    "mode6":"dhcpc6",
+    "dhcpc6":
+    {
+        "request":"try",
+        "pdlen":"auto",
+        "ra":"enable"
+    },
+    "masq6":"auto"
+}
+```
+
+Example, IPv6 SLAAC only with NAT66 (typical cellular without PD)
+```shell
+ifname@lte
+{
+    "mode6":"slaac",
+    "masq6":"enable"
+}
+```
+
+Example, IPv6 SLAAC share the on-link /64 with LAN (relay, no NAT66)
+```shell
+ifname@lte
+{
+    "mode6":"slaac",
+    "masq6":"disable"
+}
+```
+
 #### Configuration settings example
 
 Example, modify the keeplive to icmp for first LTE network
@@ -315,6 +449,12 @@ ttrue
 Example, merge set the first LTE configure( include "profile" "profile_cfg" )
 ```shell
 ifname@lte|{"profile":"enable","profile_cfg":{"apn":"NewAPN"}}
+ttrue
+```
+
+Example, merge set IPv6 mode and NAT66 for the first LTE
+```shell
+ifname@lte|{"mode6":"auto","masq6":"auto"}
 ttrue
 ```
 
@@ -420,13 +560,22 @@ While the modem is still registering and this service is live, the modem skips i
         "tx_bytes":"sent bytes",        // [ number ]
         "tx_packets":"sent packets",    // [ number ]
         "mac":"MAC address",            // [ mac address ]
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, present when IPv6 is enabled
-                                            // "manual" for manual setting
-                                            // "automatic" for DHCPv6
-                                            // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "mode6":"IPv6 address mode in use", // [ "auto", "static6", "dhcpc6", "slaac" ], Optional
+                                             // omitted when kernel IPv6 is off or mode6 is "disable"
+                                             // this is the configured mode (from ifname config / runtime), not a derived state
+                                             // "auto" — connection tried DHCPv6 first, may have fallen back to SLAAC
+                                             // "dhcpc6" — DHCPv6 client; addr is IA_NA or RA; prefix is IA_PD when the server delegated one
+                                             // "slaac" — addresses from RA only; prefix is usually omitted
+                                             // "static6" — addresses from static6{}
+        "addr":"IPv6 address/prefixlen",  // [ string ], Optional, CIDR on netdev, e.g. "2408:8456::1/64"
+        "addr2":"IPv6 address2/prefixlen", // [ string ], Optional
+        "addr3":"IPv6 address3/prefixlen", // [ string ], Optional
+        "gw6":"IPv6 gateway",           // [ ipv6 address ], Optional
+        "dns6":"IPv6 DNS",              // [ ipv6 address ], Optional
+        "dns62":"IPv6 DNS2",            // [ ipv6 address ], Optional
+        "prefix":"delegated IPv6 prefix", // [ string ], Optional, e.g. "2408:8456:1032:8368::/64"
+                                             // LAN CIDR from DHCPv6 IA_PD (or tunnel PD sources); omitted when empty
+                                             // not dhcpc6.pdlen (that is requested length: auto/56/disable)
         "imei":"IMEI number",           // [ string ]
         "imsi":"IMSI number",           // [ string ]
         "iccid":"ICCID number",         // [ string, "nosim", "pin", "puk" ]
@@ -479,6 +628,12 @@ While the modem is still registering and this service is live, the modem skips i
         "tx_bytes":"4440236",
         "tx_packets":"47893",
         "mac":"02:50:F4:00:00:00",
+        "mode6":"dhcpc6",                  # IPv6 uses DHCPv6 client
+        "addr":"2408:8456:1032:8368:c:29ff:fea3:9b6d/64",
+        "addr2":"fe80::c:29ff:fea3:9b6d/64",
+        "gw6":"fe80::1234",
+        "dns6":"2408:8888:0:8888::8",
+        "dns62":"2408:8899:0:8899::8",
         "imei":"868186042111714",
         "ci":"4A37D91",
         "lac":"25E3",

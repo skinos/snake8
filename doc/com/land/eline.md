@@ -405,7 +405,7 @@ You manage the gateway through **component names**, **configuration paths**, and
 ### Where to find component docs
 
 - Browse **[online component documentation](../com/)** when your product ships that tree (same layout as in **he.md**). It is updated as features grow.
-- In this **land** repository, many topics are also available as local files—for example **[syslog.md](syslog.md)** for syslog.
+- In this **land** repository, many topics are also available as local files—for example **[machine.md](machine.md)** for machine.
 - Or contact technical support for the correct document bundle for your firmware.
 
 ### How to read a component document
@@ -414,22 +414,23 @@ You manage the gateway through **component names**, **configuration paths**, and
 - **Configuration** shows the JSON shape: field names, nesting, and meanings. Those names are the **`component:attr/path`** segments you type in HE (and the attribute names you use after **`set component`**).  
 - **Methods** lists callable APIs. Each becomes **`component.method`** or **`component.method[args]`** on the terminal, as documented.
 
-Once you know the **component name** (for example **`land@syslog`** from **Configuration**), you can query, change, and invoke methods from eline using the same rules as **[he.md](he.md)**.
+Once you know the **component name** (for example **`land@machine`** from **Configuration**), you can query, change, and invoke methods from eline using the same rules as **[he.md](he.md)**.
 
 ### Query configuration from the doc
 
 - **Full object** — type the component name alone:
 
 ```shell
-$ land@syslog
+$ land@machine
 {
-    "status":"enable",
-    "location":"",
-    "level":"info",
-    "trace":"disable",
-    "size":"100",
-    "remote":"192.168.8.250",
-    "port":"514"
+    "name":"SkinOS",
+    "mode":"default",
+    "sn":"20240001",
+    "mac":"AA:BB:CC:DD:EE:FF",
+    "macid":"AABBCCDDEEFF",
+    "language":"cn",
+    "gpversion":"1.0.0",
+    "cfgversion":"1.0.0"
 }
 $ 
 ```
@@ -437,8 +438,8 @@ $
 - **One field** — use **`component:path`** as in the doc:
 
 ```shell
-$ land@syslog:level
-info
+$ land@machine:name
+SkinOS
 $ 
 ```
 
@@ -447,7 +448,7 @@ $
 - **Single attribute** — **`component:attr=value`**:
 
 ```shell
-$ land@syslog:remote=192.168.8.250
+$ land@machine:name=MyRouter
 ttrue
 $ 
 ```
@@ -455,7 +456,7 @@ $
 - **Merge several keys** — JSON after **`|`** (only listed keys change):
 
 ```shell
-$ land@syslog|{"remote":"192.168.8.251","port":"500"}
+$ land@machine|{"name":"MyRouter","mode":"default","language":"en"}
 ttrue
 $ 
 ```
@@ -463,7 +464,7 @@ $
 - **Replace whole configuration** — **`component={...}`** with the full JSON from the doc:
 
 ```shell
-$ land@syslog={"status":"enable","location":"","level":"info","trace":"disable","size":"100"}
+$ land@machine={"name":"SkinOS","mode":"default","language":"cn","gpversion":"1.0.0","cfgversion":"1.0.0"}
 ttrue
 $ 
 ```
@@ -473,28 +474,38 @@ $
 Method names in the document map to **`component.method`** (and parameters to **`[...]`** if documented).
 
 ```shell
-$ land@syslog.show
-Dec 15 15:47:20 V520-12CC70 user.warn syslog: modem@lte check simcard failed 102 times
-Dec 15 15:47:25 V520-12CC70 user.warn syslog: modem@lte check simcard failed 103 times
-...                                         # more lines as returned by the device
-$ land@syslog.clear
-ttrue
+$ land@machine.status
+{
+    "name":"SkinOS",
+    "mode":"default",
+    "platform":"rk3568",
+    "hardware":"R2000",
+    "version":"8.0.0",
+    "livetime":"3d 2h 15m",
+    "local_ip":"192.168.1.1"
+}
+$ land@machine.temp
+{
+    "cpu":"48",
+    "wifi@n":"52",
+    "wifi@a":"49"
+}
 $ 
 ```
 
-### Same workflow with **`set land@syslog`**
+### Same workflow with **`set land@machine`**
 
-After you read **Configuration**, you can edit that object interactively: attribute lines use **only the path part** (no repeated **`land@syslog:`** prefix on each key).
+After you read **Configuration**, you can edit that object interactively: attribute lines use **only the path part** (no repeated **`land@machine:`** prefix on each key).
 
 ```shell
-$ set land@syslog
+$ set land@machine
 { ... }                                     # current JSON printed once
-land@syslog: level
-info
-land@syslog: remote=192.168.8.250
-land@syslog: g
-{ ... "remote":"192.168.8.250", ... }
-land@syslog: s
+land@machine: name
+SkinOS
+land@machine: name=MyRouter
+land@machine: g
+{ ... "name":"MyRouter", ... }
+land@machine: s
 ttrue
 $ 
 ```

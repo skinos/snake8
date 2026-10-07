@@ -16,8 +16,8 @@ There are multiple shutdown levels at system shutdown, executed in order:
 - `extern` — internet connection shutdown
 - `local` — local interface shutdown
 - `manage` — management framework shutdown
-- `network` — network subsystem shutdown
 - `device` — device shutdown
+- `network` — network subsystem shutdown
 - `bus` — bus subsystem shutdown
 - `land` — core infrastructure shutdown
 - `arch` — platform layer shutdown
@@ -36,7 +36,7 @@ There are multiple shutdown levels at system shutdown, executed in order:
             "level": "shutdown level",         // [ string ], the shutdown level to run this task at
                                                    // "delay5", "delay4", "delay3", "delay2", "delay",
                                                    // "general", "app2", "app", "extern", "local",
-                                                   // "manage", "network", "device", "bus", "land", "arch"
+                                                   // "manage", "device", "network", "bus", "land", "arch"
             "call": "component API or program" // [ string ], the component method or program to call
         }
         // "...":{...}  How many tasks show how many properties
@@ -173,16 +173,17 @@ ttrue
     ttrue
     ```
 
-+ `knock[ project ]` **run a project's prj.json uninit section (hot uninstall path)**
++ `knock[ project, level ]` **run one installed level from a project's prj.json uninit section**
     - project --------- [ string ], project name
+    - level ----------- [ string ], shutdown level taken from that project's `prj.json` `uninit` key
     - failed return tfalse
     - succeed return ttrue
-    - Reads that project's `prj.json` → `uninit` and invokes each `project@component.method`
-    - Used by `land@fpk.uninstall` (and before replace on install); empty `uninit` still returns ttrue
+    - Forks one child per HE call at that level, same execution as `call`
+    - `land@fpk.uninstall` walks the installed package's levels and calls this once per level
 
-    Example, apply uninit hooks from project wui before/after FPK removal
+    Example, apply the app uninit hooks from project wui
     ```shell
-    land@uninit.knock[ wui ]
+    land@uninit.knock[ wui, app ]
     ttrue
     ```
 

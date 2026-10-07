@@ -7,6 +7,8 @@ Usually ifname@wisp is the first WISP (2.4G) network. If there are multiple WISP
 
 - manages WISP interface lifecycle: setup, shutdown, status query
 - supports static, DHCP client, and PPPoE dial IPv4 addressing
+- supports static, DHCPv6, and SLAAC IPv6 addressing (`mode6`); `6in4`/`6rd` keys are reserved (not implemented in this release)
+- when the kernel has no IPv6 support, reading this ifname’s config omits IPv6 keys (`mode6`, `static6`, `dhcpc6`, `slaac`, `masq6`, `mtu6`, …); IPv6 runtime stays off
 - provides wireless AP scanning, channel listing, and security mode listing
 - keeplive mechanism with ICMP, DNS, and receive packet detection
 - NAT masquerade for outgoing traffic
@@ -87,29 +89,74 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
     "masq":"outgoing NAT for IPv4",                                               // [ "disable", "enable" ]
     "mtu":"Maximum transmission unit",                                            // [ number ], The unit is in bytes
 
-    // IPv6
-    "method":"IPv6 address mode",             // [ "disable", "manual", "automatic", "slaac" ]
-                                                    // "disable" means IPv6 is disabled
-                                                    // "manual" means static IPv6 settings
-                                                    // "automatic" means DHCPv6
-                                                    // "slaac" means Stateless Address Autoconfiguration
-    "manual":                                 // detail configuration for "method" is "manual"
+    // IPv6 keys: addr = this ifname address; mask = this ifname subnet length;
+    //            prefix = CIDR delegated to LAN; pdlen = IA_PD length to request (auto/56/disable)
+    "mode6":"IPv6 address mode",              // [ "disable", "auto", "static6", "dhcpc6", "slaac", "6in4", "6rd" ]
+                                                    // default "auto"; omitted from config read when the kernel has no IPv6
+                                                    // "disable" — no IPv6
+                                                    // "auto" — run DHCPv6 client (odhcp6c) with RA merge; succeed if IA_PD or a GUA on this ifname
+                                                    //          status/upline may report mode6 as "slaac" when only RA GUA was obtained (not a second ethcon slaac stage)
+                                                    // "static6" — use static6{}
+                                                    // "dhcpc6" — use dhcpc6{}
+                                                    // "slaac" — use slaac{}; always accept RA (kernel accept_ra path)
+                                                    // "6in4" / "6rd" — reserved; not implemented in this release
+    "static6":                                // detail when "mode6" is "static6"
     {
         "addr":"IPv6 address",                      // < ipv6 address >
-        "prefix":"IPv6 prefix",                     // < number >, 1-128
-        "hop":"IPv6 gateway",                       // [ ipv6 address ]
-        "resolve":"IPv6 DNS",                       // [ ipv6 address ]
-        "resolve2":"IPv6 DNS2"                      // [ ipv6 address ]
+        "mask":"IPv6 subnet length of addr",        // [ number ], default 64; this ifname only (WISP on-link length)
+        "gw":"IPv6 gateway",                        // [ ipv6 address ]
+        "dns":"IPv6 DNS",                           // [ ipv6 address ]
+        "dns2":"IPv6 DNS2"                          // [ ipv6 address ]
+                                                    // no static LAN PD here; give LAN a prefix via ifname@lan static6 / ula, or real IA_PD from dhcpc6
     },
-    "automatic":                             // detail configuration for "method" is "automatic"
+    "dhcpc6":                                 // detail when "mode6" is "dhcpc6", and the first try of "auto"
     {
-        "mode":"mode for get the ipv6",                  // [ "try", "force", "disable" ]
-        "prefix":"ipv6-prefix of length for request",    // [ "auto", "48", "52", "56", "60", "60", "disable" ]
-        "custom_resolve":"Custom DNS",                   // [ "disable", "enable" ]
-        "resolve":"Custom DNS1",                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
-        "resolve2":"Custom DNS2"                         // [ ipv6 address ], valid when "custom_resolve" is "enable"
+        "request":"DHCPv6 address request",          // [ "try", "force", "none" ], default "try"
+        "pdlen":"IA_PD length to request",           // [ "auto", "48", "52", "56", "60", "64", "disable" ], default "auto"
+                                                         // requested length only; the CIDR obtained is status/upline "prefix"
+        "ra":"accept Router Advertisement",          // [ "disable", "enable" ], default "enable"
+        "ra_holdoff":"min seconds between RA updates", // [ number string ], default "3" (odhcp6c -m; RFC4861)
+        "release":"send release on stop",            // [ "disable", "enable" ], default "disable"
+        "need_pd":"require IA_PD to succeed",        // [ "disable", "enable" ], default "disable"
+        "clientid":"DHCPv6 client DUID",             // [ string ], empty default
+        "reqopts":"extra DHCPv6 request options",    // [ string ], empty default
+        "custom_dns":"Custom IPv6 DNS",              // [ "disable", "enable" ], default "disable"
+        "dns":"Custom IPv6 DNS1",                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+        "dns2":"Custom IPv6 DNS2"                    // [ ipv6 address ], valid when "custom_dns" is "enable"
     },
-    "masquerade":"outgoing NAT for IPv6",                                                 // [ "disable", "enable" ]
+    "slaac":                                  // detail when "mode6" is "slaac"
+    {
+        "custom_dns":"Custom IPv6 DNS",              // [ "disable", "enable" ], default "disable"
+        "dns":"Custom IPv6 DNS1",                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+        "dns2":"Custom IPv6 DNS2"                    // [ ipv6 address ], valid when "custom_dns" is "enable"
+    },
+    "6in4":                                   // reserved (not implemented); detail when "mode6" is "6in4"
+    {
+        "peer":"tunnel remote IPv4",                 // [ ipv4 address ]
+        "addr":"local IPv6 endpoint",                // < ipv6 address >
+        "prefix":"delegated prefix",                 // [ string ], e.g. 2001:db8::/48, PD source for LAN
+        "local":"local IPv4 endpoint",               // [ ipv4 address ], empty means this ifname IPv4
+        "mtu":"tunnel MTU",                          // [ number ], default 1480
+        "ttl":"tunnel TTL",                          // [ number ], default 64
+        "tunnel_id":"broker tunnel id",              // [ string ], empty default
+        "username":"broker username",                // [ string ], empty default
+        "password":"broker password",                // [ string ], empty default
+        "update_key":"broker update key"             // [ string ], empty default
+    },
+    "6rd":                                    // reserved (not implemented); detail when "mode6" is "6rd"
+    {
+        "peer":"6rd border relay IPv4",              // [ ipv4 address ]
+        "prefix":"6rd IPv6 prefix",                  // < ipv6 prefix >
+        "prefix_len":"6rd prefix length",            // [ number ], default 32
+        "ip4_mask":"IPv4 mask bits in 6rd",          // [ number ], default 0
+        "local":"local IPv4 endpoint",               // [ ipv4 address ], empty means this ifname IPv4
+        "mtu":"tunnel MTU",                          // [ number ], default 1480
+        "ttl":"tunnel TTL"                           // [ number ], default 64
+    },
+    "masq6":"outgoing NAT66",                 // [ "auto", "enable", "disable" ], default "auto"
+                                                    // "auto" — NAT66 only when no prefix is delegated to LAN; with PD do not NAT
+                                                    // "enable" / "disable" — force; relay needs "disable"
+    "mtu6":"IPv6 MTU",                        // [ number ], empty default means do not set IPv6 MTU separately; 6in4/6rd use the tunnel "mtu"
 
     // Configure for link detection mechanism, or call it keeplive mechanism
     "keeplive":
@@ -131,6 +178,11 @@ For the full network architecture, see [`../network/frame.md`](../network/frame.
             "dest":                                                         // destination address for ICMP keeplive
             {
                 "destination identify":"destination address",                     // [ string ]: [ IP address ]
+                // "...":"..."  How many destinations show how many properties
+            },
+            "dest6":                                                        // IPv6 destination address for ICMP keeplive
+            {
+                "destination identify":"destination address",                     // [ string ]: [ ipv6 address ]
                 // "...":"..."  How many destinations show how many properties
             },
             "timeout":"Maximum time to wait for the return of a PING echo packet",     // [ number ], The unit is in seconds
@@ -177,7 +229,8 @@ ifname@wisp
     "wpa_key":"87654321",    # password 87654321
     "mode":"dhcpc",                                  # mode is DHCP client
     "masq":"enable",                                 # out stream share the interface IPv4 address to access the Internet
-    "method":"slaac",                                # IPv6 address mode is slaac
+    "mode6":"auto",                                  # IPv6: try DHCPv6 then SLAAC
+    "masq6":"auto",                                  # NAT66 only when no PD to LAN
     "keeplive":                                      # keeplive mechanism configure save here
     {
         "type":"icmp",                               # use ICMP to keeplive
@@ -193,6 +246,104 @@ ifname@wisp
             "interval":"5"
         }
     }
+}
+```
+
+Example, IPv4 DHCP client
+```shell
+ifname@wisp
+{
+    "mode":"dhcpc",
+    "masq":"enable"
+}
+```
+
+Example, IPv4 static
+```shell
+ifname@wisp
+{
+    "mode":"static",
+    "static":
+    {
+        "ip":"192.168.10.2",
+        "mask":"255.255.255.0",
+        "gw":"192.168.10.1",
+        "dns":"8.8.8.8",
+        "dns2":"1.1.1.1"
+    },
+    "masq":"enable"
+}
+```
+
+Example, IPv4 PPPoE
+```shell
+ifname@wisp
+{
+    "mode":"pppoec",
+    "pppoec":
+    {
+        "username":"1923221@gd.com",
+        "password":"FDAED13E"
+    },
+    "masq":"enable"
+}
+```
+
+Example, IPv6 factory path (try DHCPv6 then SLAAC, NAT66 only without PD)
+```shell
+ifname@wisp
+{
+    "mode6":"auto",
+    "masq6":"auto"
+}
+```
+
+Example, IPv6 DHCPv6 with prefix delegation
+```shell
+ifname@wisp
+{
+    "mode6":"dhcpc6",
+    "dhcpc6":
+    {
+        "request":"try",
+        "pdlen":"auto",
+        "ra":"enable"
+    },
+    "masq6":"auto"
+}
+```
+
+Example, IPv6 SLAAC only with NAT66
+```shell
+ifname@wisp
+{
+    "mode6":"slaac",
+    "masq6":"enable"
+}
+```
+
+Example, IPv6 SLAAC share the on-link /64 with LAN (relay, no NAT66)
+```shell
+ifname@wisp
+{
+    "mode6":"slaac",
+    "masq6":"disable"
+}
+```
+
+Example, IPv6 static address
+```shell
+ifname@wisp
+{
+    "mode6":"static6",
+    "static6":
+    {
+        "addr":"2001:db8:1::2",
+        "mask":"64",
+        "gw":"2001:db8:1::1",
+        "dns":"2001:4860:4860::8888"
+    },
+    "masq6":"disable"
 }
 ```
 
@@ -219,6 +370,12 @@ ttrue
 Example, merge set the first WISP configure( include "peer" "secure" "wpa_key" )
 ```shell
 ifname@wisp|{"peer":"Myhotpot","secure":"wpapsk","wpa_key":"88888888"}
+ttrue
+```
+
+Example, merge set IPv6 mode and NAT66 for the first WISP
+```shell
+ifname@wisp|{"mode6":"auto","masq6":"auto"}
 ttrue
 ```
 
@@ -269,13 +426,14 @@ ttrue
         "tx_bytes":"sent bytes",        // [ number ]
         "tx_packets":"sent packets",    // [ number ]
         "mac":"MAC address",            // [ mac address ]
-        "method":"IPv6 address mode",   // [ "manual", "automatic", "slaac" ], Optional, present when IPv6 is enabled
-                                            // "manual" for manual setting
-                                            // "automatic" for DHCPv6
-                                            // "slaac" for Stateless address autoconfiguration
-        "addr":"IPv6 address",          // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr2":"IPv6 address2",        // [ ipv6 address ], Optional, exist when IPV6 enable
-        "addr3":"IPv6 address3",        // [ ipv6 address ], Optional, exist when IPV6 enable
+        "mode6":"IPv6 address mode",    // [ "disable", "auto", "static6", "dhcpc6", "slaac", "6in4", "6rd" ], Optional, present when IPv6 is enabled
+        "addr":"IPv6 address/prefixlen",  // [ string ], Optional, CIDR on netdev, e.g. "2001:db8::1/64"
+        "addr2":"IPv6 address2/prefixlen", // [ string ], Optional
+        "addr3":"IPv6 address3/prefixlen", // [ string ], Optional
+        "gw6":"IPv6 gateway",           // [ ipv6 address ], Optional
+        "dns6":"IPv6 DNS",              // [ ipv6 address ], Optional
+        "dns62":"IPv6 DNS2",            // [ ipv6 address ], Optional
+        "prefix":"delegated IPv6 prefix", // [ string ], Optional, LAN CIDR from IA_PD / 6in4 / 6rd; omitted when empty (not from static6)
         "peer":"Peer SSID",             // [ string ]
         "peermac":"Peer BSSID",         // [ mac address ]
         "channel":"Peer channel",       // [ number ], 0-165
@@ -304,8 +462,8 @@ ttrue
         "tx_bytes":"1320",                 # send 1320 bytes
         "tx_packets":"4",                  # send 4 packets
         "mac":"02:50:F4:00:00:00",         # netdev MAC address is 02:50:F4:00:00:00
-        "method":"slaac",                  # IPv6 address mode is slaac
-        "addr":"fe80::50:f4ff:fe00:0",     # local IPv6 address is fe80::50:f4ff:fe00:0
+        "mode6":"auto",                    # IPv6 address mode is auto
+        "addr":"fe80::50:f4ff:fe00:0/64",  # local IPv6 address is fe80::50:f4ff:fe00:0/64
         "peer":"TP-link-2231",            # peer is TP-link-2231
         "peermac":"70:3A:D8:54:BC:90",    # peer BSSID is 70:3A:D8:54:BC:90
         "channel":"10",                   # channel is 10

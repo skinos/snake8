@@ -77,8 +77,9 @@ project/<name>/
         "network/online": { "project@component.online": "" },
         "storage/insert": { "project@component.storage": "" }
     },
-    "uninit": {                    // 关闭时调用
-        "project@component.shut": ""
+    "uninit": {                    // 关闭时调用（与 init 相同：外层是级别）
+        "app": { "project@component.shut": "" },
+        "general": { "project@component.shut": "" }
     },
 
     "wui": {                       // Web UI注册
