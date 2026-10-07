@@ -15,6 +15,9 @@ if ( index )
 /* load the status */
 function status_load()
 {
+  var t;
+  var key;
+  var val;
   he.bkload( [ object+".status" ] ).then( function(v){
       state = v[0];
       var info = state;
@@ -84,6 +87,35 @@ function status_load()
       }
       $(id+"_mac").text( info.mac||' ' );
 	  $(id+"_ip").text( info.ip||' ' );
+      if ( info.mode6 )
+      {
+          $(id+"_v6_head").show();
+          fill_mode6_cell( id+"_mode6", info );
+          $(id+"_addrs").empty();
+          for ( t = 1; ; t++ )
+          {
+              key = ( t <= 1 ) ? "addr" : ( "addr" + t );
+              val = info[key];
+              if ( !val )
+              {
+                  break;
+              }
+              if ( t <= 1 )
+              {
+                  $(id+"_addrs").append( $("<span></span>").text( val ) );
+              }
+              else
+              {
+                  $(id+"_addrs").append( $("<div style=\"display: block;\"></div>").append( $("<span></span>").text( val ) ) );
+              }
+          }
+      }
+      else
+      {
+          $(id+"_v6_head").hide();
+          fill_mode6_cell( id+"_mode6", null );
+          $(id+"_addrs").empty();
+      }
       // 延迟
       if (info.delay) {
           if (info.delay === "failed" || info.delay === "block") {

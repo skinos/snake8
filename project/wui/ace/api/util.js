@@ -9,6 +9,28 @@ function able2boole ( able )
     }
     return able !== 'disable';
 }
+
+/**
+ * IPv6 Mode status cell: first line mode6; second line "prefix (Prefix)" only when prefix is non-empty.
+ * @param {String|jQuery} el cell selector or jQuery object (e.g. "#wan_mode6")
+ * @param {Object} info status json with mode6 / prefix
+ */
+function fill_mode6_cell( el, info )
+{
+    var $el = $(el);
+    $el.empty();
+    if ( !info || !info.mode6 )
+    {
+        return;
+    }
+    $el.append( $("<span></span>").text( $.i18n(info.mode6) ) );
+    if ( info.prefix )
+    {
+        $el.append( $("<div style=\"display: block;\"></div>").append(
+            $("<span></span>").text( info.prefix + " (Prefix)" )
+        ) );
+    }
+}
 function boole2able( val )
 {
     return val ? 'enable' : 'disable'

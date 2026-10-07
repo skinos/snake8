@@ -317,6 +317,9 @@ function updateSignalLayout() {
 }
 
 function lte_show(info, id) {
+    var t;
+    var key;
+    var val;
     if (!info) {
         $(id).hide().attr('or-online', 'false'); // 隐藏并标记非在线;
         return;
@@ -555,24 +558,35 @@ function lte_show(info, id) {
         $(id + "_delay").text("");
     }
     
-    // IPv6
-    if (info.method && info.method !== "disable") {
-        $(id + "_method").text($.i18n(info.method));
-        
-        $(id + "_addr").text(info.addr || "");
-        $(id + "_addr2").text(info.addr2 || "");
-        $(id + "_addr3").text(info.addr3 || "");
-        $(id + "_hop").text(info.hop || "");
-        $(id + "_resolve").text(info.resolve || "");
-        $(id + "_resolve2").text(info.resolve2 || "");
+    // IPv6: show only when status has a non-empty mode6
+    if (info.mode6) {
+        $(id + "_v6_head").show();
+        $(id + "_v6gw_head").show();
+        fill_mode6_cell(id + "_mode6", info);
+        $(id + "_addrs").empty();
+        for (t = 1; ; t++) {
+            key = (t <= 1) ? "addr" : ("addr" + t);
+            val = info[key];
+            if (!val) {
+                break;
+            }
+            if (t <= 1) {
+                $(id + "_addrs").append($("<span></span>").text(val));
+            } else {
+                $(id + "_addrs").append($("<div style=\"display: block;\"></div>").append($("<span></span>").text(val)));
+            }
+        }
+        $(id + "_gw6").text(info.gw6 || "");
+        $(id + "_dns6").text(info.dns6 || "");
+        $(id + "_dns62").text(info.dns62 || "");
     } else {
-        $(id + "_method").text("");
-        $(id + "_addr").text("");
-        $(id + "_addr2").text("");
-        $(id + "_addr3").text("");
-        $(id + "_hop").text("");
-        $(id + "_resolve").text("");
-        $(id + "_resolve2").text("");
+        $(id + "_v6_head").hide();
+        $(id + "_v6gw_head").hide();
+        fill_mode6_cell(id + "_mode6", null);
+        $(id + "_addrs").empty();
+        $(id + "_gw6").text("");
+        $(id + "_dns6").text("");
+        $(id + "_dns62").text("");
     }
     
     // 流量统计
@@ -643,17 +657,12 @@ function lte_show(info, id) {
         $(id + "_delay_head").hide();
     }
 
-    // IPv6头部显示控制
-    if (info.method && info.method !== "disable") {
-        $(id + "_addr_head").show();
-        $(id + "_hop_head").show();
-    } else {
-        $(id + "_addr_head").hide();
-        $(id + "_hop_head").hide();
-    }
 }
 
 function wan_show(info, id) {
+    var t;
+    var key;
+    var val;
     if (!info) {
         $(id).hide().attr('or-online', 'false');
         return;
@@ -713,59 +722,35 @@ function wan_show(info, id) {
     $(id + "_dns").text(info.dns || ' ');
     $(id + "_dns2").text(info.dns2 || ' ');
     
-    // IPv6
-    if (info.method && info.method !== "disable") {
-        $(id + "_addr_head").show();
-        $(id + "_hop_head").show();
-
-        $(id + "_method").text($.i18n(info.method));
-        
-        if (info.addr) {
-            $(id + "_addr").text(info.addr);
-        } else {
-            $(id + "_addr").text("");
+    // IPv6: show only when status has a non-empty mode6
+    if (info.mode6) {
+        $(id + "_v6_head").show();
+        $(id + "_v6gw_head").show();
+        fill_mode6_cell(id + "_mode6", info);
+        $(id + "_addrs").empty();
+        for (t = 1; ; t++) {
+            key = (t <= 1) ? "addr" : ("addr" + t);
+            val = info[key];
+            if (!val) {
+                break;
+            }
+            if (t <= 1) {
+                $(id + "_addrs").append($("<span></span>").text(val));
+            } else {
+                $(id + "_addrs").append($("<div style=\"display: block;\"></div>").append($("<span></span>").text(val)));
+            }
         }
-        
-        if (info.addr2) {
-            $(id + "_addr2").text(info.addr2);
-        } else {
-            $(id + "_addr2").text("");
-        }
-        
-        if (info.addr3) {
-            $(id + "_addr3").text(info.addr3);
-        } else {
-            $(id + "_addr3").text("");
-        }
-        
-        if (info.hop) {
-            $(id + "_hop").text(info.hop);
-        } else {
-            $(id + "_hop").text("");
-        }
-        
-        if (info.resolve) {
-            $(id + "_resolve").text(info.resolve);
-        } else {
-            $(id + "_resolve").text("");
-        }
-        
-        if (info.resolve2) {
-            $(id + "_resolve2").text(info.resolve2);
-        } else {
-            $(id + "_resolve2").text("");
-        }
+        $(id + "_gw6").text(info.gw6 || "");
+        $(id + "_dns6").text(info.dns6 || "");
+        $(id + "_dns62").text(info.dns62 || "");
     } else {
-        $(id + "_addr_head").hide();
-        $(id + "_hop_head").hide();
-
-        $(id + "_method").text("");
-        $(id + "_addr").text("");
-        $(id + "_addr2").text("");
-        $(id + "_addr3").text("");
-        $(id + "_hop").text("");
-        $(id + "_resolve").text("");
-        $(id + "_resolve2").text("");
+        $(id + "_v6_head").hide();
+        $(id + "_v6gw_head").hide();
+        fill_mode6_cell(id + "_mode6", null);
+        $(id + "_addrs").empty();
+        $(id + "_gw6").text("");
+        $(id + "_dns6").text("");
+        $(id + "_dns62").text("");
     }
     
     // 流量统计
@@ -789,6 +774,9 @@ function wan_show(info, id) {
 }
 
 function lan_show(info, id) {
+    var t;
+    var key;
+    var val;
     if (!info) {
         $(id).hide();
         return;
@@ -806,51 +794,55 @@ function lan_show(info, id) {
             $(id + "_mask").text(info.mask || ' ');
             $(id + "_rxtx").text(byte2readable(info.rx_bytes || "0") + " / " + byte2readable(info.tx_bytes || "0"));
             
-            // IPv6
-            if (info.method && info.method !== "disable") {
-                $(id + "_addr_head").show();
-
-                $(id + "_method").text($.i18n(info.method));
-                
-                if (info.addr) {
-                    $(id + "_addr").text(info.addr);
-                } else {
-                    $(id + "_addr").text("");
+            // IPv6: show only when status has a non-empty mode6
+            if (info.mode6) {
+                $(id + "_v6_head").show();
+                fill_mode6_cell(id + "_mode6", info);
+                $(id + "_addrs").empty();
+                for (t = 1; ; t++) {
+                    key = (t <= 1) ? "addr" : ("addr" + t);
+                    val = info[key];
+                    if (!val) {
+                        break;
+                    }
+                    if (t <= 1) {
+                        $(id + "_addrs").append($("<span></span>").text(val));
+                    } else {
+                        $(id + "_addrs").append($("<div style=\"display: block;\"></div>").append($("<span></span>").text(val)));
+                    }
                 }
-                
-                if (info.addr2) {
-                    $(id + "_addr2").text(info.addr2);
+                $(id + "_gw6").text(info.gw6 || "");
+                $(id + "_dns6").text(info.dns6 || "");
+                $(id + "_dns62").text(info.dns62 || "");
+                if (info.gw6 || info.dns6 || info.dns62) {
+                    $(id + "_v6gw_head").show();
                 } else {
-                    $(id + "_addr2").text("");
-                }
-                
-                if (info.addr3) {
-                    $(id + "_addr3").text(info.addr3);
-                } else {
-                    $(id + "_addr3").text("");
-                }
-                
-                if (info.hop) {
-                    $(id + "_hop").text(info.hop);
-                } else {
-                    $(id + "_hop").text("");
+                    $(id + "_v6gw_head").hide();
                 }
             } else {
-                $(id + "_addr_head").hide();
-
-                $(id + "_method").text("");
-                $(id + "_addr").text("");
-                $(id + "_addr2").text("");
-                $(id + "_addr3").text("");
-                $(id + "_hop").text("");
+                $(id + "_v6_head").hide();
+                $(id + "_v6gw_head").hide();
+                fill_mode6_cell(id + "_mode6", null);
+                $(id + "_addrs").empty();
+                $(id + "_gw6").text("");
+                $(id + "_dns6").text("");
+                $(id + "_dns62").text("");
             }
+        } else {
+            $(id + "_v6_head").hide();
+            $(id + "_v6gw_head").hide();
         }
     } else {
         $(id + "_status").text($.i18n("down"));
+        $(id + "_v6_head").hide();
+        $(id + "_v6gw_head").hide();
     }
 }
 
 function wisp_show(info, id) {
+    var t;
+    var key;
+    var val;
     if (!info) {
         $(id).hide().attr('or-online', 'false');
         return;
@@ -956,59 +948,35 @@ function wisp_show(info, id) {
     $(id + "_dns").text(info.dns || ' ');
     $(id + "_dns2").text(info.dns2 || ' ');
     
-    // IPv6
-    if (info.method && info.method !== "disable") {
-        $(id + "_addr_head").show();
-        $(id + "_hop_head").show();
-
-        $(id + "_method").text($.i18n(info.method));
-        
-        if (info.addr) {
-            $(id + "_addr").text(info.addr);
-        } else {
-            $(id + "_addr").text("");
+    // IPv6: show only when status has a non-empty mode6
+    if (info.mode6) {
+        $(id + "_v6_head").show();
+        $(id + "_v6gw_head").show();
+        fill_mode6_cell(id + "_mode6", info);
+        $(id + "_addrs").empty();
+        for (t = 1; ; t++) {
+            key = (t <= 1) ? "addr" : ("addr" + t);
+            val = info[key];
+            if (!val) {
+                break;
+            }
+            if (t <= 1) {
+                $(id + "_addrs").append($("<span></span>").text(val));
+            } else {
+                $(id + "_addrs").append($("<div style=\"display: block;\"></div>").append($("<span></span>").text(val)));
+            }
         }
-        
-        if (info.addr2) {
-            $(id + "_addr2").text(info.addr2);
-        } else {
-            $(id + "_addr2").text("");
-        }
-        
-        if (info.addr3) {
-            $(id + "_addr3").text(info.addr3);
-        } else {
-            $(id + "_addr3").text("");
-        }
-        
-        if (info.hop) {
-            $(id + "_hop").text(info.hop);
-        } else {
-            $(id + "_hop").text("");
-        }
-        
-        if (info.resolve) {
-            $(id + "_resolve").text(info.resolve);
-        } else {
-            $(id + "_resolve").text("");
-        }
-        
-        if (info.resolve2) {
-            $(id + "_resolve2").text(info.resolve2);
-        } else {
-            $(id + "_resolve2").text("");
-        }
+        $(id + "_gw6").text(info.gw6 || "");
+        $(id + "_dns6").text(info.dns6 || "");
+        $(id + "_dns62").text(info.dns62 || "");
     } else {
-        $(id + "_addr_head").hide();
-        $(id + "_hop_head").hide();
-
-        $(id + "_method").text("");
-        $(id + "_addr").text("");
-        $(id + "_addr2").text("");
-        $(id + "_addr3").text("");
-        $(id + "_hop").text("");
-        $(id + "_resolve").text("");
-        $(id + "_resolve2").text("");
+        $(id + "_v6_head").hide();
+        $(id + "_v6gw_head").hide();
+        fill_mode6_cell(id + "_mode6", null);
+        $(id + "_addrs").empty();
+        $(id + "_gw6").text("");
+        $(id + "_dns6").text("");
+        $(id + "_dns62").text("");
     }
     
     // 流量统计
