@@ -80,8 +80,8 @@ boole_t _shut( obj_t this, param_t param )
 
     /* call the offline */
     scalls( NETWORK_COM, "offline", object );
-    /* stop the automatic service */
-    sdelete( "%s-automatic", object );
+    /* stop the dhcp6 service */
+    sdelete( "%s-dhcp6", object );
     /* stop the service */
     sdelete( object );
 
@@ -131,8 +131,33 @@ boole _set( obj_t this, talk_t v, attr_t path )
 }
 talk_t _get( obj_t this, attr_t path )
 {
-    return config_get( this, path );
-}    
+	talk_t cfg;
+	talk_t ret;
+
+	cfg = config_get( this, NULL );
+	/* hide IPv6 knobs when kernel/global ipv6 register is off */
+	if ( cfg != NULL && reg_int( NULL, "ipv6" ) != 1 )
+	{
+		json_delete_axp( cfg, "mode6" );
+		json_delete_axp( cfg, "static6" );
+		json_delete_axp( cfg, "dhcpc6" );
+		json_delete_axp( cfg, "slaac" );
+		json_delete_axp( cfg, "6in4" );
+		json_delete_axp( cfg, "6rd" );
+		json_delete_axp( cfg, "masq6" );
+		json_delete_axp( cfg, "mtu6" );
+		json_delete_axp( cfg, "ula" );
+		json_delete_axp( cfg, "pdid" );
+		json_delete_axp( cfg, "pdlen" );
+		json_delete_axp( cfg, "dhcps6" );
+	}
+	ret = attr_cut( cfg, path );
+	if ( ret != cfg )
+	{
+		talk_free( cfg );
+	}
+	return ret;
+}
 
 
 
@@ -179,7 +204,7 @@ boole_t _service( obj_t this, param_t param )
 	const char *ifdev;
     const char *object;
 	const char *netdev;
-	const char *method;
+	const char *mode6;
 	int reset_times;
 	int connect_failed;
 	int failed_timeout;
@@ -230,18 +255,19 @@ boole_t _service( obj_t this, param_t param )
 	{
 		mode = "dhcpc";
 	}
-	method = json_string( cfg, "method" );
-	if ( method == NULL || *method == '\0' )
+	mode6 = json_string( cfg, "mode6" );
+	if ( mode6 == NULL || *mode6 == '\0' )
 	{
-		method = "disable";
+		mode6 = "disable";
 	}
-	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
+	/* no kernel IPv6: same as mode6=disable */
+	if ( reg_int( NULL, "ipv6" ) != 1 )
 	{
-		method = "disable";
+		mode6 = "disable";
 	}
 	/* set the mode */
 	reg_set_string( this, "mode", mode );
-	reg_set_string( this, "method", method );
+	reg_set_string( this, "mode6", mode6 );
 	netdev = reg_sstring( ifdev, "netdev" );
     if ( netdev == NULL || *netdev == '\0' )
     {
@@ -505,8 +531,8 @@ boole_t _service( obj_t this, param_t param )
 		}
 	}
 
-	/* slaac setting */
-	if ( method != NULL && 0 == strcmp( method, "slaac" ) )
+	/* IPv6: only mode6=slaac enables kernel accept_ra; dhcpc6/auto use odhcp6c userland RA */
+	if ( mode6 != NULL && 0 == strcmp( mode6, "slaac" ) )
 	{
 		slaac_ip_enable( netdev );
 	}
@@ -514,22 +540,11 @@ boole_t _service( obj_t this, param_t param )
 	{
 		slaac_ip_disable( netdev );
 	}
-	/* manual ip setting */
-	if ( method != NULL && 0 == strcmp( method, "manual" ) )
+	/* static6 address on the netdev */
+	if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 	{
-		/* set the static ip */
-		v = json_json( cfg, "manual" );
-		manual_ip_enable( netdev, v );
-	}
-	else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-	{
-		v = json_json( cfg, "automatic" );
-		ptr = json_string( v, "manual" );
-		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-		{
-			v = json_json( cfg, "manual" );
-			manual_ip_enable( netdev, v );
-		}
+		v = json_json( cfg, "static6" );
+		static6_ip_enable( netdev, v );
 	}
 
 	ret = tfalse;
@@ -541,18 +556,23 @@ boole_t _service( obj_t this, param_t param )
 		{
 			scallt( NETWORK_COM, "online", v );
 		}
-		/* ipv6 static setting */
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		/* ipv6 static6 */
+		if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			if ( mode_static6( object, ifdev, netdev, cfg, v ) == true )
 			{
 				scallt( NETWORK_COM, "upline", v );
 			}
 		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		/* ipv6 dhcpc6/auto: run odhcp6c in this process */
+		else if ( mode6 != NULL && ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) ) )
 		{
-			ret = automatic_client_connect( object, ifdev, netdev, json_json( cfg, "manual" ) );
+			ret = dhcp6_client_connect( object, ifdev, netdev, json_json( cfg, "dhcpc6" ) );
+		}
+		/* ipv6 slaac: background poll then upline */
+		else if ( mode6 != NULL && 0 == strcmp( mode6, "slaac" ) )
+		{
+			sstart( object, "dhcp6", NULL, "%s-dhcp6", object );
 		}
 		ret = ttrue;
 		// prevent starting multiple setup
@@ -560,17 +580,17 @@ boole_t _service( obj_t this, param_t param )
 	}
 	else
 	{
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			if ( mode_static6( object, ifdev, netdev, cfg, v ) == true )
 			{
 				scallt( NETWORK_COM, "upline", v );
 			}
 		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		/* ipv6 dhcpc6/auto/slaac: background service (pppoec waits for ipv6-up on pppX) */
+		else if ( mode != NULL && 0 != strcmp( mode, "pppoec" ) && mode6 != NULL && ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) || 0 == strcmp( mode6, "slaac" ) ) )
 		{
-			sstart( object, "automatic", NULL, "%s-automatic", object );
+			sstart( object, "dhcp6", NULL, "%s-dhcp6", object );
 		}
 		/* ipv4 dhcp client setting */
 		if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
@@ -589,6 +609,10 @@ boole_t _service( obj_t this, param_t param )
 			{
 				json_set_number( pppoe, "mtu", mtu );
 			}
+			if ( mode6 != NULL && ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) || 0 == strcmp( mode6, "slaac" ) ) )
+			{
+				json_set_string( pppoe, "ipv6", "enable" );
+			}
 			ret = pppoe_client_connect( object, ifdev, netdev, pppoe );
 		}
 	}
@@ -598,57 +622,151 @@ boole_t _service( obj_t this, param_t param )
     talk_free( cfg );
     return ret;
 }
-boole_t _automatic( obj_t this, param_t param )
+boole_t _dhcp6( obj_t this, param_t param )
 {
+	int i;
+	int rc;
+	talk_t v;
 	talk_t ret;
-    talk_t cfg;
+	talk_t cfg;
+	char *end;
 	const char *obj;
+	const char *ptr;
 	const char *ifdev;
 	const char *netdev;
-	const char *method;
+	const char *mode6;
 	const char *object;
+	char host[NI_MAXHOST];
+	struct ifaddrs *ifa;
+	struct ifaddrs *ifaddr;
 
 	obj = obj_com( this );
-    object = obj_name( this );
-    /* get the ifname configure */
-    cfg = config_get( this, NULL ); 
-    if ( cfg == NULL )
-    {
-        return terror;
-    }
-	method = json_string( cfg, "method" );
+	object = obj_name( this );
+	/* get the ifname configure */
+	cfg = config_get( this, NULL );
+	if ( cfg == NULL )
+	{
+		return terror;
+	}
+	mode6 = reg_string( this, "mode6" );
+	if ( mode6 == NULL || *mode6 == '\0' )
+	{
+		mode6 = json_string( cfg, "mode6" );
+	}
+	if ( mode6 == NULL || *mode6 == '\0' )
+	{
+		mode6 = "disable";
+	}
+	if ( reg_int( NULL, "ipv6" ) != 1 )
+	{
+		mode6 = "disable";
+	}
+	if ( 0 == strcmp( mode6, "disable" ) )
+	{
+		talk_free( cfg );
+		return ttrue;
+	}
 	/* get the ifdev */
 	ifdev = reg_string( this, "ifdev" );
-    if ( ifdev == NULL || *ifdev == '\0' )
-    {
-        talk_free( cfg );
-        return tfalse;
-    }
+	if ( ifdev == NULL || *ifdev == '\0' )
+	{
+		talk_free( cfg );
+		return tfalse;
+	}
 	/* need the ifdev exist */
 	if ( com_have( ifdev, NULL ) == false )
 	{
-        talk_free( cfg );
-        return tfalse;
+		talk_free( cfg );
+		return tfalse;
 	}
-    /* get the netdev */
-	netdev = reg_sstring( ifdev, "netdev" );
-    if ( netdev == NULL || *netdev == '\0' )
-    {
-        ifname_fault( obj, "%s netdev get error", object );
-        talk_free( cfg );
-        sleep( 3 );
-        return tfalse;
-    }
+	/* pppoe ipv6-up passes the ppp netdev as the first param */
+	ptr = param_string( param, 1 );
+	if ( ptr != NULL && *ptr != '\0' )
+	{
+		netdev = ptr;
+	}
+	else
+	{
+		netdev = reg_sstring( ifdev, "netdev" );
+	}
+	if ( netdev == NULL || *netdev == '\0' )
+	{
+		ifname_fault( obj, "%s netdev get error", object );
+		talk_free( cfg );
+		sleep( 3 );
+		return tfalse;
+	}
 
 	ret = terror;
-	/* automatic setting */
-	if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+	/* dhcpc6/auto: odhcp6c replaces this process */
+	if ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) )
 	{
-		ret = automatic_client_connect( object, ifdev, netdev, json_json( cfg, "manual" ) );
+		ret = dhcp6_client_connect( object, ifdev, netdev, json_json( cfg, "dhcpc6" ) );
+		talk_free( cfg );
+		return ret;
+	}
+	/* slaac: wait for a global address then upline */
+	if ( 0 == strcmp( mode6, "slaac" ) )
+	{
+		slaac_ip_enable( netdev );
+		for ( i = 0; i < 60; i++ )
+		{
+			host[0] = '\0';
+			if ( getifaddrs( &ifaddr ) == 0 )
+			{
+				for ( ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next )
+				{
+					if ( ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET6 )
+					{
+						continue;
+					}
+					if ( 0 != strcmp( ifa->ifa_name, netdev ) )
+					{
+						continue;
+					}
+					rc = getnameinfo( ifa->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST );
+					if ( rc != 0 )
+					{
+						continue;
+					}
+					end = strstr( host, "%" );
+					if ( end != NULL )
+					{
+						*end = '\0';
+					}
+					/* skip link-local */
+					if ( strncmp( host, "fe80:", 5 ) == 0 || strncmp( host, "FE80:", 5 ) == 0 )
+					{
+						host[0] = '\0';
+						continue;
+					}
+					break;
+				}
+				freeifaddrs( ifaddr );
+			}
+			if ( host[0] != '\0' )
+			{
+				v = json_create( NULL );
+				json_set_string( v, "mode6", "slaac" );
+				json_set_string( v, "ifname", object );
+				json_set_string( v, "ifdev", ifdev );
+				json_set_string( v, "netdev", netdev );
+				json_set_string( v, "addr", host );
+				scallt( NETWORK_COM, "upline", v );
+				talk_free( v );
+				talk_free( cfg );
+				pause();
+				return ttrue;
+			}
+			sleep( 1 );
+		}
+		ifname_warn( obj, "%s slaac wait GUA timeout on %s", object, netdev );
+		talk_free( cfg );
+		return tfalse;
 	}
 
-    talk_free( cfg );
-    return ret;
+	talk_free( cfg );
+	return ret;
 }
 
 
@@ -661,18 +779,20 @@ talk_t _state( obj_t this, param_t param )
     talk_t v;
     struct stat st;
     const char *ptr;
+    const char *gw6;
     const char *object;
+    const char *prefix;
     const char *ifdev;
     const char *netdev;
 	const char *device;
 	const char *mode;
-	const char *method;
+	const char *mode6;
 	const char *custom_dns;
 	const char *dns;
 	const char *dns2;
-	const char *custom_resolve;
-	const char *resolve;
-	const char *resolve2;
+	const char *dns6;
+	const char *dns62;
+	const char *custom_dns6;
     char path[PATH_MAX];
 
 	netdev = NULL;
@@ -682,14 +802,15 @@ talk_t _state( obj_t this, param_t param )
 	/* get mode */
 	tid = reg_int( this, "tid" );
 	mode = reg_string( this, "mode" );
-	method = reg_string( this, "method" );
+	mode6 = reg_string( this, "mode6" );
+	if ( reg_int( NULL, "ipv6" ) != 1 )
+	{
+		mode6 = "disable";
+	}
     /* get the custom_dns */
 	dns = reg_string( this, "dns" );
 	dns2 = reg_string( this, "dns2" );
 	custom_dns = reg_string( this, "custom_dns" );
-	resolve = reg_string( this, "resolve" );
-	resolve2 = reg_string( this, "resolve2" );
-	custom_resolve = reg_string( this, "custom_resolve" );
 
     /* get the ipv4 online status */
     project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ol", object );
@@ -855,20 +976,58 @@ talk_t _state( obj_t this, param_t param )
 		json_set_string( ret, "mode", mode );
 	}
 
-    /* get the ipv6 online status */
-	if ( method != NULL && *method != '\0' && 0 != strcmp( method, "disable" ) )
+    /* IPv6 status only when kernel IPv6 is on and mode6 is configured on */
+	if ( reg_int( NULL, "ipv6" ) == 1 && mode6 != NULL && *mode6 != '\0' && 0 != strcmp( mode6, "disable" ) )
 	{
 		int t;
 		int rc;
+		int bi;
+		int plen;
 		char *end;
+		unsigned char b;
+		unsigned char *bytes;
 		char host[NI_MAXHOST];
 		struct ifaddrs *ifaddr, *ifa;
 
-		json_set_string( ret, "method", method );
+		prefix = reg_string( this, "prefix" );
+		gw6 = reg_string( this, "gw6" );
+		dns6 = reg_string( this, "dns6" );
+		dns62 = reg_string( this, "dns62" );
+		custom_dns6 = reg_string( this, "custom_dns6" );
+		json_set_string( ret, "mode6", mode6 );
 	    project_var_path( path, sizeof(path), NETWORK_PROJECT, "%s.ul", object );
 		v = file2json( path );
-	    json_sync( v, ret );
-		talk_free( v );
+		if ( json_check( v ) == true )
+		{
+			json_sync( v, ret );
+		}
+		ptr = json_string( v, "gw6" );
+		if ( ptr != NULL && *ptr != '\0' )
+		{
+			gw6 = ptr;
+		}
+		ptr = json_string( v, "dns6" );
+		if ( custom_dns6 == NULL || 0 != strcmp( custom_dns6, "enable" ) )
+		{
+			if ( ptr != NULL && *ptr != '\0' )
+			{
+				dns6 = ptr;
+			}
+			ptr = json_string( v, "dns62" );
+			if ( ptr != NULL && *ptr != '\0' )
+			{
+				dns62 = ptr;
+			}
+		}
+		ptr = json_string( v, "prefix" );
+		if ( ptr != NULL && *ptr != '\0' )
+		{
+			prefix = ptr;
+		}
+		json_delete_axp( ret, "gw6" );
+		json_delete_axp( ret, "dns6" );
+		json_delete_axp( ret, "dns62" );
+		json_delete_axp( ret, "prefix" );
 		if ( netdev != NULL && *netdev != '\0' )
 		{
 			if ( getifaddrs( &ifaddr ) == 0 )
@@ -905,25 +1064,52 @@ talk_t _state( obj_t this, param_t param )
 						{
 							*end = '\0';
 						}
+						/* status shows CIDR with /length; % is zone id, already stripped */
+						if ( ifa->ifa_netmask != NULL && ifa->ifa_netmask->sa_family == AF_INET6 )
+						{
+							plen = 0;
+							bytes = ((struct sockaddr_in6 *)ifa->ifa_netmask)->sin6_addr.s6_addr;
+							for ( bi = 0; bi < 16; bi++ )
+							{
+								b = bytes[bi];
+								if ( b == 0xff )
+								{
+									plen += 8;
+									continue;
+								}
+								while ( b & 0x80 )
+								{
+									plen++;
+									b <<= 1;
+								}
+								break;
+							}
+							snprintf( host + strlen(host), sizeof(host) - strlen(host), "/%d", plen );
+						}
 						json_set_string( ret, path, host );
 						t++;
-						//printf("dev: %-8s address: <%s> scope %d\n", ifa->ifa_name, host, in6->sin6_scope_id);
 					}
 				}
 				freeifaddrs(ifaddr);					
 			}
 		}
-		if ( custom_resolve != NULL && 0 == strcmp( custom_resolve, "enable" ) )
+		if ( gw6 != NULL && *gw6 != '\0' )
 		{
-			if ( resolve != NULL && *resolve != '\0' )
-			{
-				json_set_string( ret, "resolve", resolve );
-			}
-			if ( resolve2 != NULL && *resolve2 != '\0' )
-			{
-				json_set_string( ret, "resolve2", resolve2 );
-			}
+			json_set_string( ret, "gw6", gw6 );
 		}
+		if ( dns6 != NULL && *dns6 != '\0' )
+		{
+			json_set_string( ret, "dns6", dns6 );
+		}
+		if ( dns62 != NULL && *dns62 != '\0' )
+		{
+			json_set_string( ret, "dns62", dns62 );
+		}
+		if ( prefix != NULL && *prefix != '\0' )
+		{
+			json_set_string( ret, "prefix", prefix );
+		}
+		talk_free( v );
 	}
 
     return ret;
@@ -1055,6 +1241,20 @@ boole_t _online( obj_t this, param_t param )
 		}
 	}
 	reg_set_string( this, "dns2", dns2 );
+	/* ipv6 already up: fold dns6/dns62 into the same resolv file */
+	if ( reg_int( NULL, "ipv6" ) == 1 )
+	{
+		ptr = reg_string( this, "dns6" );
+		if ( ptr != NULL && *ptr != '\0' )
+		{
+			string3file( path, "nameserver %s\n", ptr );
+		}
+		ptr = reg_string( this, "dns62" );
+		if ( ptr != NULL && *ptr != '\0' )
+		{
+			string3file( path, "nameserver %s\n", ptr );
+		}
+	}
 	/* local IPv4 from online event, else read netdev */
 	ptr = json_string( v, "ip" );
 	ipaddr[0] = '\0';
@@ -1191,18 +1391,21 @@ talk_t _offline( obj_t this, param_t param )
 }
 boole_t _upline( obj_t this, param_t param )
 {
+	int mtu6;
 	talk_t v;
 	talk_t cfg;
 	talk_t value;
 	const char *ptr;
 	const char *obj;
+	const char *gw6;
+	const char *dns6;
+	const char *dns62;
+	const char *mode6;
+	const char *masq6;
 	const char *object;
 	const char *netdev;
-	const char *method;
-	const char *hop;
-	const char *custom_resolve;
-	const char *resolve;
-	const char *resolve2;
+	const char *prefix;
+	const char *custom_dns;
 	char path[PATH_MAX];
 
 	obj = obj_com( this );
@@ -1211,66 +1414,141 @@ boole_t _upline( obj_t this, param_t param )
 	/* get netdev */
 	netdev = json_string( v, "netdev" );
 	/* get the configure */
-	cfg = config_get( this, NULL ); 
+	cfg = config_get( this, NULL );
 	if ( cfg == NULL )
 	{
 		return tfalse;
 	}
-	/* get mode */
-	method = reg_string( this, "method" );
-	/* get gateway */
-	hop = json_string( v, "hop" );
-	/* get the custom_resolve */
-	snprintf( path, sizeof(path), "%s/%s.ipv6", RESOLV_DIR, object );
-	unlink( path );
-	value = json_json( cfg, method );
-	custom_resolve = json_string( value, "custom_resolve" );
-	if ( custom_resolve != NULL && 0 == strcmp( custom_resolve, "enable" ) )
+	mode6 = reg_string( this, "mode6" );
+	if ( mode6 == NULL || *mode6 == '\0' )
 	{
-		resolve = json_string( value, "resolve" );
-		resolve2 = json_string( value, "resolve2" );
-		reg_set_string( this, "custom_resolve", "enable" );
+		mode6 = json_string( v, "mode6" );
+	}
+	if ( reg_int( NULL, "ipv6" ) != 1 )
+	{
+		mode6 = "disable";
+	}
+	if ( mode6 == NULL || *mode6 == '\0' || 0 == strcmp( mode6, "disable" ) )
+	{
+		talk_free( cfg );
+		return ttrue;
+	}
+	/* detail block: auto uses dhcpc6{} */
+	if ( mode6 != NULL && 0 == strcmp( mode6, "auto" ) )
+	{
+		value = json_json( cfg, "dhcpc6" );
+	}
+	else if ( mode6 != NULL && *mode6 != '\0' )
+	{
+		value = json_json( cfg, mode6 );
 	}
 	else
 	{
-		resolve = json_string( v, "resolve" );
-		if ( resolve == NULL || *resolve == '\0' )
-		{
-			resolve = "2001:4860:4860::8888"; // GOOGLE
-		}
-		resolve2 = json_string( v, "resolve2" );
-		if ( resolve2 == NULL || *resolve2 == '\0' )
-		{
-			resolve2 = "2001:dc7:1000::1";    //CNNIC
-		}
-		ptr = json_string( value, "domain" );
-		if ( ptr != NULL )
-		{
-			string3file( path, "search %s\n", ptr );
-		}
-		reg_set_string( this, "custom_resolve", "disable" );
+		value = NULL;
 	}
-	if ( resolve != NULL && *resolve != '\0' )
+	gw6 = json_string( v, "gw6" );
+	prefix = json_string( v, "prefix" );
+	/* IPv6 DNS into regs + rewrite this ifname resolv */
+	custom_dns = json_string( value, "custom_dns" );
+	if ( custom_dns != NULL && 0 == strcmp( custom_dns, "enable" ) )
 	{
-		string3file( path, "nameserver %s\n", resolve );
+		dns6 = json_string( value, "dns" );
+		dns62 = json_string( value, "dns2" );
+		reg_set_string( this, "custom_dns6", "enable" );
 	}
-	reg_set_string( this, "resolve", resolve );
-	if ( resolve2 != NULL && *resolve2 != '\0' )
+	else
 	{
-		string3file( path, "nameserver %s\n", resolve2 );
+		dns6 = json_string( v, "dns6" );
+		dns62 = json_string( v, "dns62" );
+		reg_set_string( this, "custom_dns6", "disable" );
 	}
-	reg_set_string( this, "resolve2", resolve2 );
+	reg_set_string( this, "dns6", dns6 );
+	reg_set_string( this, "dns62", dns62 );
+	/* rewrite this ifname resolv from dns/dns2/dns6/dns62 */
+	snprintf( path, sizeof(path), "%s/%s", RESOLV_DIR, object );
+	unlink( path );
+	ptr = reg_string( this, "dns" );
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		string3file( path, "nameserver %s\n", ptr );
+	}
+	ptr = reg_string( this, "dns2" );
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		string3file( path, "nameserver %s\n", ptr );
+	}
+	if ( dns6 != NULL && *dns6 != '\0' )
+	{
+		string3file( path, "nameserver %s\n", dns6 );
+	}
+	if ( dns62 != NULL && *dns62 != '\0' )
+	{
+		string3file( path, "nameserver %s\n", dns62 );
+	}
+	/* optional IPv6 MTU */
+	mtu6 = json_number( cfg, "mtu6" );
+	if ( mtu6 > 0 && netdev != NULL && *netdev != '\0' )
+	{
+		snprintf( path, sizeof(path), "/proc/sys/net/ipv6/conf/%s/mtu", netdev );
+		number2file( path, mtu6 );
+	}
 
-	ifname_info( obj, "%s(%s) upline[ %s, %s ]", object, netdev, hop?:"", resolve?:"" );
-	/* masquerade */
+	ifname_info( obj, "%s(%s) upline[ %s, %s, prefix=%s ]", object, netdev, gw6?:"", dns6?:"", prefix?:"" );
+	reg_set_string( this, "gw6", gw6 );
+	reg_set_string( this, "prefix", prefix );
+	/* masq6=enable always NAT66; auto does not NAT (PD or relay GUA instead) */
 	ip6tables( "-t nat -D %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
-	ptr = json_string( cfg, "masquerade" );
-	if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
+	masq6 = json_string( cfg, "masq6" );
+	if ( masq6 == NULL || *masq6 == '\0' )
 	{
-		ip6tables("-t nat -A %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
+		masq6 = "auto";
+	}
+	if ( 0 == strcmp( masq6, "enable" ) )
+	{
+		ip6tables( "-t nat -A %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
 	}
 
 	talk_free( cfg );
+	return ttrue;
+}
+boole_t _downline( obj_t this, param_t param )
+{
+	const char *obj;
+	const char *object;
+	const char *netdev;
+	const char *ptr;
+	char path[PATH_MAX];
+
+	obj = obj_com( this );
+	object = obj_name( this );
+	netdev = reg_string( this, "netdev" );
+	/* clear local IPv6 state; rewrite resolv without v6 NS */
+	reg_set_string( this, "dns6", NULL );
+	reg_set_string( this, "dns62", NULL );
+	reg_set_string( this, "gw6", NULL );
+	reg_set_string( this, "prefix", NULL );
+	reg_set_string( this, "custom_dns6", NULL );
+	snprintf( path, sizeof(path), "%s/%s", RESOLV_DIR, object );
+	unlink( path );
+	ptr = reg_string( this, "dns" );
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		string3file( path, "nameserver %s\n", ptr );
+	}
+	ptr = reg_string( this, "dns2" );
+	if ( ptr != NULL && *ptr != '\0' && 0 != strcmp( ptr, "0.0.0.0" ) )
+	{
+		string3file( path, "nameserver %s\n", ptr );
+	}
+	if ( netdev != NULL && *netdev != '\0' )
+	{
+		ip6tables( "-t nat -D %s -o %s -j MASQUERADE", MASQ_CHAIN, netdev );
+		ifname_info( obj, "%s(%s) downline", object, netdev );
+	}
+	else
+	{
+		ifname_info( obj, "%s downline", object );
+	}
 	return ttrue;
 }
 boole_t _keepon( obj_t this, param_t param )

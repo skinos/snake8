@@ -21,7 +21,7 @@ boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, 
 	const char *pin;
 	const char *mode;
 	const char *netdev;
-	const char *method;
+	const char *mode6;
 	const char *reason;
 	int connect_failed;
 	int failed_timeout;
@@ -49,10 +49,10 @@ boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, 
 	/***** get the connect mode **************/
 	/*****************************************/
 	mode = json_string( cfg, "mode" );
-	method = json_string( cfg, "method" );
-	if ( method == NULL || *method == '\0' )
+	mode6 = json_string( cfg, "mode6" );
+	if ( mode6 == NULL || *mode6 == '\0' )
 	{
-		method = "disable";
+		mode6 = "disable";
 	}
 	/* na(5G) or eth(RmNet): default dhcpc; else default ppp */
 	if ( mode == NULL || *mode == '\0' )
@@ -77,17 +77,22 @@ boole_t bsim_service( obj_t this, param_t param, talk_t cfg, const char *ifdev, 
     {
 		ifname_warn( obj, "%s modify the mode to ppp when cannot find netdev", object );
     	mode = "ppp";
-		method = "disable";
+		mode6 = "disable";
 		json_set_string( cfg, "mode", "ppp" );
     }
-	/* ppp mode no ipv6 */
+	/* ppp mode no ipv6 (odhcp6c needs a real netdev) */
 	if ( mode != NULL && 0 == strcmp( mode, "ppp" ) )
 	{
-		method = "disable";
+		mode6 = "disable";
+	}
+	/* no kernel IPv6: same as mode6=disable */
+	if ( reg_int( NULL, "ipv6" ) != 1 )
+	{
+		mode6 = "disable";
 	}
 	/* set the mode */
 	reg_set_string( this, "mode", mode );
-	reg_set_string( this, "method", method );
+	reg_set_string( this, "mode6", mode6 );
 
 
 
@@ -766,8 +771,8 @@ simagain:
 		}
 	}
 
-	/* slaac setting */
-	if ( method != NULL && 0 == strcmp( method, "slaac" ) )
+	/* IPv6: only mode6=slaac enables kernel accept_ra; dhcpc6/auto use odhcp6c userland RA */
+	if ( mode6 != NULL && 0 == strcmp( mode6, "slaac" ) )
 	{
 		slaac_ip_enable( netdev );
 	}
@@ -775,22 +780,11 @@ simagain:
 	{
 		slaac_ip_disable( netdev );
 	}
-	/* manual ip setting */
-	if ( method != NULL && 0 == strcmp( method, "manual" ) )
+	/* static6 address on the netdev */
+	if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 	{
-		/* set the static ip */
-		v = json_json( cfg, "manual" );
-		manual_ip_enable( netdev, v );
-	}
-	else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
-	{
-		v = json_json( cfg, "automatic" );
-		ptr = json_string( v, "manual" );
-		if ( ptr != NULL && 0 == strcmp( ptr, "enable" ) )
-		{
-			v = json_json( cfg, "manual" );
-			manual_ip_enable( netdev, v );
-		}
+		v = json_json( cfg, "static6" );
+		static6_ip_enable( netdev, v );
 	}
 
 	ret = tfalse;
@@ -802,18 +796,23 @@ simagain:
 		{
 			scallt( NETWORK_COM, "online", v );
 		}
-		/* ipv6 static setting */
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		/* ipv6 static6 */
+		if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			if ( mode_static6( object, ifdev, netdev, cfg, v ) == true )
 			{
 				scallt( NETWORK_COM, "upline", v );
 			}
 		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		/* ipv6 dhcpc6/auto: run odhcp6c in this process */
+		else if ( mode6 != NULL && ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) ) )
 		{
-			ret = automatic_client_connect( object, ifdev, netdev, json_json( cfg, "manual" ) );
+			ret = dhcp6_client_connect( object, ifdev, netdev, json_json( cfg, "dhcpc6" ) );
+		}
+		/* ipv6 slaac: background poll then upline */
+		else if ( mode6 != NULL && 0 == strcmp( mode6, "slaac" ) )
+		{
+			sstart( object, "dhcp6", NULL, "%s-dhcp6", object );
 		}
 		ret = ttrue;
 		// prevent starting multiple setup
@@ -821,17 +820,17 @@ simagain:
 	}
 	else
 	{
-		if ( method != NULL && 0 == strcmp( method, "manual" ) )
+		if ( mode6 != NULL && 0 == strcmp( mode6, "static6" ) )
 		{
-			if ( method_manual( object, ifdev, netdev, cfg, v ) == true )
+			if ( mode_static6( object, ifdev, netdev, cfg, v ) == true )
 			{
 				scallt( NETWORK_COM, "upline", v );
 			}
 		}
-		/* ipv6 automatic setting */
-		else if ( method != NULL && 0 == strcmp( method, "automatic" ) )
+		/* ipv6 dhcpc6/auto/slaac: background service */
+		else if ( mode6 != NULL && ( 0 == strcmp( mode6, "dhcpc6" ) || 0 == strcmp( mode6, "auto" ) || 0 == strcmp( mode6, "slaac" ) ) )
 		{
-			sstart( object, "automatic", NULL, "%s-automatic", object );
+			sstart( object, "dhcp6", NULL, "%s-dhcp6", object );
 		}
 		/* ipv4 dhcp client setting */
 		if ( mode != NULL && 0 == strcmp( mode, "dhcpc" ) )
