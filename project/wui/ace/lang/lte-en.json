@@ -33,6 +33,10 @@
     "pppoec": "PPPOE",
     "static": "Static",
     "slaac": "SLAAC",
+    "auto": "Auto",
+    "follow": "Follow",
+    "dhcpc6": "DHCPv6",
+    "static6": "Static",
     "automatic": "DHCPv6",
     "manual": "Manual",
     "Action on Failure": "Action on Failure"

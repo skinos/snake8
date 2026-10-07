@@ -15,6 +15,10 @@
     "aes": "AES",
     "tkip": "TKIP",
     "auto": "Auto",
+    "follow": "Follow",
+    "dhcpc6": "DHCPv6",
+    "static6": "Static",
+    "slaac": "SLAAC",
     "tkipaes": "TKIP&AES",
     "wifi@nsta": "Client(2.4G)",
     "wifi@asta": "Client(5.8G)"

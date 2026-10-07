@@ -18,5 +18,10 @@
     "wpa2pskwpa3psk": "WPA2/WPA3 Mixed",
     "tkip": "TKIP",
     "aes": "AES",
-    "tkipaes": "TKIP&AES"
+    "tkipaes": "TKIP&AES",
+    "auto": "Auto",
+    "follow": "Follow",
+    "dhcpc6": "DHCPv6",
+    "static6": "Static",
+    "slaac": "SLAAC"
 }
