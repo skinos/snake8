@@ -222,12 +222,12 @@ void slaac_ip_enable( const char *device );
 void slaac_ip_disable( const char *device );
 
 /**
- * @brief Enable manually configured IPv6 address
+ * @brief Enable static6 IPv6 address
  * @param[in] device Network device name
- * @param[in] cfg Configuration info (JSON format, contains addr and prefix)
+ * @param[in] cfg static6{} (addr and mask)
  * @note Use ip command to add IPv6 address
  */
-void manual_ip_enable( const char *device, talk_t cfg );
+void static6_ip_enable( const char *device, talk_t cfg );
 
 /**
  * @brief Disable manually configured IPv6 address
@@ -237,32 +237,32 @@ void manual_ip_enable( const char *device, talk_t cfg );
 void manual_ip_disable( const char *device );
 
 /**
- * @brief Configure manual IPv6 mode
+ * @brief Fill upline info for mode6=static6
  * @param[in] object Object name
  * @param[in] ifdev Interface device name
  * @param[in] device Network device name
- * @param[in] cfg Configuration info (JSON format)
+ * @param[in] cfg Configuration (reads static6{})
  * @param[out] info Output info (JSON format)
  * @return Success or failure
  * @retval true Success
  * @retval false Failure
- * @note Set manual IPv6 mode related parameters (hop, resolve, etc.)
+ * @note Maps gw/dns/dns2/prefix into upline fields
  */
-boole method_manual( const char *object, const char *ifdev, const char *device, talk_t cfg, talk_t info );
+boole mode_static6( const char *object, const char *ifdev, const char *device, talk_t cfg, talk_t info );
 
 /**
- * @brief Start automatic IPv6 client connection (DHCPv6)
+ * @brief Start DHCPv6 client (odhcp6c) for mode6=dhcpc6/auto
  * @param[in] ifname Interface name
  * @param[in] ifdev Interface device name
  * @param[in] device Network device name
- * @param[in] cfg Configuration info (JSON format)
+ * @param[in] cfg dhcpc6{} block (may be NULL for defaults)
  * @return Execution result
  * @retval true Started successfully
  * @retval terror Error
  * @retval tfalse Execution failed
- * @note This function forks child process to execute odhcp6c, will not return after configuration
+ * @note Replaces the process with odhcp6c; maps request/pdlen/ra/release/need_pd/clientid/reqopts
  */
-talk_t automatic_client_connect( const char *ifname, const char *ifdev, const char *device, talk_t cfg );
+talk_t dhcp6_client_connect( const char *ifname, const char *ifdev, const char *device, talk_t cfg );
 
 /** @} */ /* IPv6Settings */
 
@@ -275,12 +275,12 @@ talk_t automatic_client_connect( const char *ifname, const char *ifdev, const ch
  */
 
 /**
- * @brief Switch DNS resolution configuration to specified interface
+ * @brief Switch system DNS to specified interface
  * @param[in] ifname Interface name
  * @return Success or failure
  * @retval true Success
  * @retval false Failure
- * @note Create symbolic link to point /etc/resolv.conf to interface-specific DNS config
+ * @note Symlink /etc/resolv.conf to RESOLV_DIR/<ifname>
  */
 boole resolv_switch( const char *ifname );
 

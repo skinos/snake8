@@ -16,11 +16,30 @@ include $(gSKIN_MKFILE)
 # 生成项目通用定义
 $(eval $(call Package/Define))
 
+PKG_CONFIG_DEPENDS := CONFIG_PACKAGE_skinos_ifname_ipv6
+
 # menuconfig的选项的位置及说明
 define Package/$(PKG_NAME)
   CATEGORY:=Skin system
   TITLE:=$(INTRO_STR)
-  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +libevent2 +libopenssl
+  DEPENDS:=+PACKAGE_skinos_arch:skinos_arch +PACKAGE_skinos_land:skinos_land +PACKAGE_skinos_network:skinos_network +libevent2 +libopenssl \
+	+PACKAGE_skinos_ifname_ipv6:odhcp6c \
+	+PACKAGE_skinos_ifname_ipv6:odhcpd-ipv6only \
+	+PACKAGE_skinos_ifname_ipv6:ip6tables-mod-nat
+endef
+define Package/$(PKG_NAME)/config
+config PACKAGE_skinos_ifname_ipv6
+	bool "IPv6 (odhcp6c / odhcpd / masq6)"
+	default n
+	depends on PACKAGE_skinos_ifname
+	select IPV6
+	select PACKAGE_odhcp6c
+	select PACKAGE_odhcpd-ipv6only
+	select PACKAGE_ip6tables-mod-nat
+	help
+	  Enable IPv6 on ifname (ethcon/ltecon/...). Selects Global IPv6,
+	  WAN/LTE client (odhcp6c), LAN RA/DHCPv6 (odhcpd-ipv6only),
+	  and masq6 (ip6tables-mod-nat).
 endef
 # menuconfig的界面上的帮助
 define Package/$(PKG_NAME)/description
