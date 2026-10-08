@@ -104,6 +104,8 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/mt7981/target/image_filogic.mk" "${g
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/mt7621/target/image_mt7621.mk" "${gSDK_DIR}/target/linux/ramips/image/mt7621.mk"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/mt7628/target/image_mt76x8.mk" "${gSDK_DIR}/target/linux/ramips/image/mt76x8.mk"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/rk3568/target/image_armv8.mk" "${gSDK_DIR}/target/linux/rockchip/image/armv8.mk"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/rk3568/target/image_Makefile" "${gSDK_DIR}/target/linux/rockchip/image/Makefile"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/rk3568/target/ashyelf-rk3568-boot.scr" "${gSDK_DIR}/target/linux/rockchip/image/ashyelf-rk3568-boot.scr"
 
 # one board.d script for all ashyelf / custom boards (mt7628 swconfig + DSA)
 for dest in \
@@ -120,6 +122,12 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/wifi-scripts-Makefile" "${gS
 # iperf already uses -static-libstdc++; drop unused libstdcpp package depend
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iperf-Makefile" "${gSDK_DIR}/feeds/packages/net/iperf/Makefile"
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/perl-111-glibc-GNU_SOURCE-cloexec-prototypes.patch" "${gSDK_DIR}/feeds/packages/lang/perl/patches/111-glibc-GNU_SOURCE-cloexec-prototypes.patch"
+# package/firmware
+copy_if_diff ${gPLATFORM_DIR}/adjust/patch/package/firmware/linux-firmware-broadcom.mk ${gSDK_DIR}/package/firmware/linux-firmware/broadcom.mk
+for src in "${gPLATFORM_DIR}"/adjust/patch/package/firmware/ap6398s/*; do
+    [ -e "${src}" ] || continue
+    copy_if_diff "${src}" "${gSDK_DIR}/package/firmware/linux-firmware/brcm_firmware/ap6398s/$(basename "${src}")"
+done
 
 # patch to busybox for udhcpc support ifnameid and exit when renewip failed
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/busybox/udhcpc-defconfig-ifnameid-renewexit.patch" "${gSDK_DIR}/package/utils/busybox/patches/900-udhcpc-defconfig-ifnameid-renewexit.patch"
@@ -173,12 +181,19 @@ copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-600-shared-libext.p
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-610-list-short-table.patch" "${gSDK_DIR}/package/network/utils/iptables/patches/610-list-short-table.patch"
 # xtables-nft: always depend on libiptext6 (needed when IPV6 is disabled)
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/iptables-Makefile" "${gSDK_DIR}/package/network/utils/iptables/Makefile"
+# wg: hide net* interfaces unless the interface is named explicitly
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/wireguard-900-hide-net-ifaces.patch" \
+    "${gSDK_DIR}/package/network/utils/wireguard-tools/patches/900-hide-net-ifaces.patch"
 
 # disable the print error when no ubusd
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/hostapd_wpa_supplicant.uc" "${gSDK_DIR}/package/network/services/hostapd/files/wpa_supplicant.uc"
 
+# odhcp6c: no ubus (skinos has no ubusd; WITH_UBUS SIGSEGV in ubus_get_ctx)
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/package/odhcp6c-Makefile" "${gSDK_DIR}/package/network/ipv6/odhcp6c/Makefile"
+
 # scripts
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/scripts/gen_fw_gpt.sh" "${gSDK_DIR}/scripts/gen_fw_gpt.sh"
+copy_if_diff "${gPLATFORM_DIR}/adjust/patch/scripts/ashyelf_rk3568_files.sh" "${gSDK_DIR}/scripts/ashyelf_rk3568_files.sh"
 
 # config
 copy_if_diff "${gPLATFORM_DIR}/adjust/patch/config/Config-images.in" "${gSDK_DIR}/config/Config-images.in"

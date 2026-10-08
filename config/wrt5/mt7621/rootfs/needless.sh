@@ -44,7 +44,6 @@ rm -fr ./etc/ssl
 rm -fr ./etc/sysupgrade.conf
 #rm -fr ./etc/capabilities
 rm -fr ./etc/crontabs
-rm -fr ./etc/iproute2
 rm -fr ./etc/profile.d
 rm -fr ./etc/rc.button
 rm -fr ./etc/rc.wps

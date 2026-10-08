@@ -190,14 +190,9 @@ menu "Global build settings"
 	config IPV6
 		bool "Enable IPv6 support"
 		default y
-		depends on TARGET_ramips_mt76x8
 		help
 		  Enable IPv6 in kernel and IPv6-dependent packages.
-		  On mt76x8 (MT7628) you can disable this to save RAM.
-		  Other targets always keep IPv6 enabled.
-
-	config IPV6
-		def_bool y if !TARGET_ramips_mt76x8
+		  All targets can enable or disable this. skinos_ifname_ipv6 selects it.
 
 	comment "Stripping options"
 

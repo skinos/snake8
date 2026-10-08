@@ -2,13 +2,15 @@
 
 ### Overview
 
-Manage all local network clients. This component monitors the ARP table to track which devices are on the LAN, combines this with DHCP lease information and saved per-MAC settings, and provides a unified view of all connected clients. It also supports MAC-IP binding via ARP table manipulation and publishes joint events when clients appear or disappear.
+Manage all local network clients. This component monitors the ARP table (and IPv6 neighbour table when `reg ipv6==1`) to track which devices are on the LAN, combines this with DHCP lease information and saved per-MAC settings, and provides a unified view of all connected clients. It also supports MAC–IPv4 binding via ARP table manipulation and publishes joint events when clients appear or disappear.
 
-- monitors ARP table in real-time via netlink socket for instant client detection
-- combines ARP data, DHCP lease data, and saved per-MAC configuration into unified client list
-- supports MAC-IP binding with ARP table enforcement
-- publishes joint events on client appear/disappear with IP change detection
-- provides IP-to-MAC resolution from ARP table
+- doorbell: netlink `RTM_NEWNEIGH/DELNEIGH` (+ timer) → `station_update`
+- IPv4 table: `/proc/net/arp`; IPv6 table: `RTM_GETNEIGH` dump (same source as `ip -6 neigh`)
+- presence is **MAC-based**: IPv6 address churn does not emit appear/disappear; only new/gone MAC (or IPv4 address change) does
+- IPv6 addresses exposed as `addr`, `addr2`, `addr3` (at most 3; skips incomplete / no-lladdr; hides `fe80::` link-local and multicast in `list`)
+- combines ARP/ND data, DHCPv4 lease data, and saved per-MAC configuration into unified client list
+- supports MAC–IPv4 binding (`bindip` / `arpbind`) only — no IPv6 bind yet
+- provides `ip2mac` (IPv4 ARP) and `addr2mac` (IPv6 `RTM_GETNEIGH` lookup)
 
 
 
@@ -93,16 +95,22 @@ ttrue
 #### Query APIs
 
 + `list[]` **list all current client information**
-    - succeed return [ json ], combined view of ARP data, DHCP leases, and saved settings
-    - each key is a MAC address; each value contains ip, name, ifname, netdev, uptime, livetime
+    - succeed return [ json ], combined view of ARP/ND data, DHCPv4 leases, Wi-Fi stalist (`wifi@n` / `wifi@a`), and saved settings
+    - each key is a MAC address; each value contains ip, optional addr/addr2/…, name, ifname, netdev, ifdev, rssi, signal, uptime, livetime
     ```json
     {
         "client MAC address":                 // [ string ]
         {
             "name":"client name",             // [ string ], hostname from DHCP or saved config
-            "ip":"ip address",                // [ ip address ]
+            "ip":"ipv4 address",              // [ ipv4 ], from ARP / DHCPv4
+            "addr":"ipv6 address",            // [ ipv6 ], first non-link-local ND address (when ipv6 on)
+            "addr2":"ipv6 address",           // [ ipv6 ], optional
+            "addr3":"ipv6 address",           // [ ipv6 ], optional (max 3)
             "ifname":"connected ifname",      // [ string ], e.g. "ifname@lan", "ifname@lan2"
             "netdev":"kernel netdev",         // [ string ], e.g. "br-lan"
+            "ifdev":"wifi ssid/radio object", // [ string ], from wifi@n / wifi@a stalist when on Wi-Fi
+            "rssi":"signal dBm",              // [ number ], from radio stalist
+            "signal":"formatted rssi",        // [ string ], e.g. "-52dBm"
             "uptime":"uptime seconds",        // [ number ], seconds since appearance
             "livetime":"connected time"       // [ string ], format hour:minute:second:day
         }
@@ -118,6 +126,7 @@ ttrue
         {
             "name":"xiaomi-aircondition-ma2_mibt917A",
             "ip":"192.168.31.140",
+            "addr":"2409:8a55:10a0:ab94::1234",
             "ifname":"ifname@lan"
         },
         "40:31:3C:B5:6D:4C":
@@ -130,6 +139,8 @@ ttrue
         "F6:F7:73:82:0A:FC":
         {
             "ip":"192.168.100.183",
+            "addr":"2409:8a55:10a0:ab94::abcd",
+            "addr2":"fd00:1234::1",
             "ifname":"ifname@lan2",
             "name":"Xiaomi-14-Ultra",
             "livetime":"14:39:27:1"
@@ -138,13 +149,25 @@ ttrue
     ```
 
 + `ip2mac[ ip ]` **resolve IPv4 address to MAC address**
-    - ip --------------- [ ip address ]
+    - ip --------------- [ ipv4 address ]
     - failed return NULL
     - succeed return [ string ], the MAC address associated with the IP
 
     Example, resolve IP to MAC
     ```shell
     client@station.ip2mac[ 192.168.31.140 ]
+    04:CF:8C:39:91:7A
+    ```
+
++ `addr2mac[ addr ]` **resolve IPv6 address to MAC address**
+    - addr ------------- [ ipv6 address ]
+    - failed return NULL (also when `reg ipv6!=1`)
+    - succeed return [ string ], MAC from IPv6 neighbour dump (`RTM_GETNEIGH`)
+    - skips incomplete / no-lladdr; can resolve `fe80::` even though `list` hides link-local
+
+    Example, resolve IPv6 to MAC
+    ```shell
+    client@station.addr2mac[ 2409:8a55:10a0:ab94::1234 ]
     04:CF:8C:39:91:7A
     ```
 
@@ -188,5 +211,5 @@ The following joint events are published when LAN clients appear, disappear, or 
 
 | Event | Description |
 |-------|-------------|
-| `station/appear` | Sent when a new client appears on the LAN or a client gets a new IP address. Payload includes `ip`, `mac`, `ifname`, `netdev`. |
-| `station/disappear` | Sent when a client goes offline or its IP address is about to change. Payload includes `ip`, `mac`, `ifname`, `netdev`. |
+| `station/appear` | Sent when a new MAC appears on the LAN, or an existing client gets a **new IPv4** address. Payload includes `mac`, `ifname`, `netdev`, and `ip` (IPv4) and/or `addr` (first IPv6 when the MAC was first seen via ND only). IPv6 address changes alone do **not** emit this event. |
+| `station/disappear` | Sent when a MAC leaves both ARP and IPv6 ND tables, or when its **IPv4** address is about to change. Payload includes `ip`, `mac`, `ifname`, `netdev`. |

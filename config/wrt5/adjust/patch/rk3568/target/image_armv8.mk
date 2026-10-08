@@ -461,13 +461,17 @@ define Device/xunlong_orangepi-r1-plus-lts
 endef
 TARGET_DEVICES += xunlong_orangepi-r1-plus-lts
 
-define Device/graytech_ashyelf-v720
+define Device/autoflight-720f
   $(Device/rk3568)
-  DEVICE_VENDOR := Graytech
-  DEVICE_MODEL := Ashyelf_V720
+  DEVICE_VENDOR := Autoflight
+  DEVICE_MODEL := Autoflight_720f
+#  DEVICE_DTS := rk3568-autoflight-720f
+  BOOT_SCRIPT := ashyelf-rk3568
+  KERNEL = kernel-bin  
+  IMAGE/sysupgrade.img.gz := boot-common | boot-script-bin $$(BOOT_SCRIPT) | ashyelf-img autoflight-720f 
   DEVICE_PACKAGES := kmod-brcmfmac kmod-ata-ahci-dwc ashyelf-v720-firmware wpad
 endef
-TARGET_DEVICES += graytech_ashyelf-v720
+TARGET_DEVICES += autoflight-720f
 
 define Device/graytech_dy-v11
   $(Device/rk3568)

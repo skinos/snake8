@@ -1,0 +1,12 @@
+--- a/src/ipc.c
++++ b/src/ipc.c
+@@ -21,6 +21,9 @@
+ 
+ 	if (len == 1)
+ 		return 0;
++	/* add by dimmalex: do not list net* unless the interface is named explicitly */
++	if (!strncmp(str, "net", 3))
++		return 0;
+ 
+ 	if (len >= list->cap - list->len) {
+ 		char *new_buffer;
