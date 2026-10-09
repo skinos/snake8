@@ -400,6 +400,29 @@ talk_t _stalist( obj_t this, param_t param )
 				}
                 continue;
             }
+            /* iw "rx bytes" = from station → client tx; "tx bytes" = to station → client rx */
+            ptr = strstr( readbuf, "	rx bytes:" );
+            if ( ptr != NULL )
+            {
+				ei = 0;
+				if ( sscanf( ptr, "%*[^:]:%llu", &ei ) == 1 )
+				{
+					snprintf( path, sizeof(path), "%llu", ei );
+					json_set_string( x, "tx_bytes", path );
+				}
+                continue;
+            }
+            ptr = strstr( readbuf, "	tx bytes:" );
+            if ( ptr != NULL )
+            {
+				ei = 0;
+				if ( sscanf( ptr, "%*[^:]:%llu", &ei ) == 1 )
+				{
+					snprintf( path, sizeof(path), "%llu", ei );
+					json_set_string( x, "rx_bytes", path );
+				}
+                continue;
+            }
             ptr = strstr( readbuf, "connected time:" );
             if ( ptr != NULL )
             {

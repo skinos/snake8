@@ -4,6 +4,7 @@
     "Fields marked with * are required": "带*的字段为必填项",
     "Hostname": "主机名",
     "IP Address": "IP地址",
+    "IPv6 Address": "IPv6地址",
     "Interface": "接口",
     "Interface Device": "接口设备",
     "Leave": "离开",

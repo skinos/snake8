@@ -302,7 +302,9 @@ ttrue
             "apidx":"AP index",          // [ string ]
             "livetime":"online time",    // [ string ], format is hour:minute:second:day
             "rssi":"signal strength",    // [ number ], the unit is dBm
-            "ifdev":"SSID component"     // [ string ]
+            "ifdev":"SSID component",    // [ string ]
+            "rx_bytes":"client rx",      // [ string ], from iw station dump (AP tx); optional
+            "tx_bytes":"client tx"       // [ string ], from iw station dump (AP rx); optional
         }
         // "...":{}  How many clients show how many properties
     }

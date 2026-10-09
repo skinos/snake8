@@ -471,6 +471,7 @@ var clients_pager = '#clients-grid-pager';
             // 保存所有的客户端行
             var count = 0;
             var rows = [];
+            var has_ipv6 = false;
             for ( var index in clientlist )
             {
                 var client = clientlist[index];
@@ -502,6 +503,11 @@ var clients_pager = '#clients-grid-pager';
                 row[ 'mac'] =  index;
                 row[ 'ip'] = client.ip || '';
                 row[ 'name'] = client.name || '';
+                row[ 'ipv6' ] = clients_ipv6_html( client );
+                if ( row[ 'ipv6' ] )
+                {
+                    has_ipv6 = true;
+                }
                 if ( !client.rx_bytes && !client.tx_bytes )
                 {
                     row[ 'rxtx' ] = '';
@@ -603,12 +609,44 @@ var clients_pager = '#clients-grid-pager';
                 page: currentPage,
                 rowNum: currentRowNum
             }).trigger('reloadGrid');
+            // 全部客户端都没有 IPv6 地址时隐藏该列
+            if ( has_ipv6 )
+            {
+                $(clients_table).jqGrid( 'showCol', 'ipv6' );
+            }
+            else
+            {
+                $(clients_table).jqGrid( 'hideCol', 'ipv6' );
+            }
             // 恢复滚动条的位置
             jqtable.setScrollPos(scrollPos);
             // 改变离线行的颜色
             $('td[title=' + $.i18n('Leave') + ']').closest('tr').css({color: '#888'});
             clients_set_width();
         });
+    }
+
+    /* addr / addr2 / addr3 → 同一单元格内换行 */
+    function clients_ipv6_html( client )
+    {
+        var parts = [];
+        if ( !client )
+        {
+            return '';
+        }
+        if ( client.addr )
+        {
+            parts.push( client.addr );
+        }
+        if ( client.addr2 )
+        {
+            parts.push( client.addr2 );
+        }
+        if ( client.addr3 )
+        {
+            parts.push( client.addr3 );
+        }
+        return parts.join( '<br>' );
     }
 
     function clients_set_width(){
@@ -696,16 +734,22 @@ var clients_pager = '#clients-grid-pager';
         {
             caption: ' ', // 必需设置值, 防止表格不能折叠
             toolbar: [true, "top"], 
-            colNames: [ $.i18n('Hostname'), $.i18n('MAC Address'), $.i18n('IP Address'), $.i18n('Live Time'), $.i18n('Rx/Tx'), $.i18n('Interface'), $.i18n('Interface Device')],
+            colNames: [ $.i18n('Hostname'), $.i18n('MAC Address'), $.i18n('IP Address'), $.i18n('IPv6 Address'), $.i18n('Live Time'), $.i18n('Rx/Tx'), $.i18n('Interface'), $.i18n('Interface Device')],
             colModel: [
-                { name:'name', width:200, editable:true, editrules:{ required:true } },
-                { name:'mac', width:150, editable:true, editrules:{ required:true } },
+                { name:'name', width:160, editable:true, editrules:{ required:true } },
+                { name:'mac', width:130, editable:true, editrules:{ required:true } },
                 { name:'ip', width:130 },
+                {
+                    name:'ipv6', width:280, sortable:false, hidden:true,
+                    formatter: function ( cellvalue )
+                    {
+                        return cellvalue || '';
+                    }
+                },
                 { name:'livetime', width:90 },
-                { name:'rxtx', width:150 },
+                { name:'rxtx', width:120 },
                 { name:'ifname', width:100 },
                 { name:'ifdev', width:100 },
-               
             ],
             pager: '#clients-grid-pager',
             rowNum: 20,

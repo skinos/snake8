@@ -9,6 +9,7 @@ Manage all local network clients. This component monitors the ARP table (and IPv
 - presence is **MAC-based**: IPv6 address churn does not emit appear/disappear; only new/gone MAC (or IPv4 address change) does
 - IPv6 addresses exposed as `addr`, `addr2`, `addr3` (at most 3; skips incomplete / no-lladdr; hides `fe80::` link-local and multicast in `list`)
 - combines ARP/ND data, DHCPv4 lease data, and saved per-MAC configuration into unified client list
+- `setup` optionally loads cdriver **`ip-acct`** (`ip-acct.ko`) with `lan=` from `network@frame.list[local]` netdevs (max 4); if the package/ko is absent, station still runs. `list` fills `rx_bytes`/`tx_bytes` from Wi-Fi `stalist` when available, then overwrites from `/proc/ip-acct` by IPv4 when ip-acct is loaded
 - supports MAC–IPv4 binding (`bindip` / `arpbind`) only — no IPv6 bind yet
 - provides `ip2mac` (IPv4 ARP) and `addr2mac` (IPv6 `RTM_GETNEIGH` lookup)
 
@@ -96,7 +97,7 @@ ttrue
 
 + `list[]` **list all current client information**
     - succeed return [ json ], combined view of ARP/ND data, DHCPv4 leases, Wi-Fi stalist (`wifi@n` / `wifi@a`), and saved settings
-    - each key is a MAC address; each value contains ip, optional addr/addr2/…, name, ifname, netdev, ifdev, rssi, signal, uptime, livetime
+    - each key is a MAC address; each value contains ip, optional addr/addr2/…, name, ifname, netdev, ifdev, rssi, signal, uptime, livetime, optional rx_bytes/tx_bytes
     ```json
     {
         "client MAC address":                 // [ string ]
@@ -111,6 +112,8 @@ ttrue
             "ifdev":"wifi ssid/radio object", // [ string ], from wifi@n / wifi@a stalist when on Wi-Fi
             "rssi":"signal dBm",              // [ number ], from radio stalist
             "signal":"formatted rssi",        // [ string ], e.g. "-52dBm"
+            "rx_bytes":"received bytes",      // [ string ], from ip-acct (/proc/ip-acct) matched by ipv4
+            "tx_bytes":"sent bytes",          // [ string ], from ip-acct (/proc/ip-acct) matched by ipv4
             "uptime":"uptime seconds",        // [ number ], seconds since appearance
             "livetime":"connected time"       // [ string ], format hour:minute:second:day
         }
