@@ -3,14 +3,21 @@
 Build and run the **center** cloud management platform on an Ubuntu host so **embedded
 gateways** can connect through the **agent** project on each gateway.
 
-Use board identity **`slave-x86-ubuntu2404`** (Ubuntu 24.04) on the host. Embedded
-gateways keep their own product firmware; point the **agent** project on each embedded
-gateway at this center host.
+Match the host Ubuntu release to a **slave** board identity (see §2 / §4):
 
-Example command outputs below are from a **verified walkthrough** on Ubuntu 24.04 using a
-fresh Gitee clone under `~/tmp/snake8` (2026-08-19). Steps that require
-**`sudo`** (`make sdk_install`, `make sdk_start`) show **expected** output from a running
-center host when sudo is available.
+| Host OS | `gBOARDID` |
+|---------|------------|
+| Ubuntu **20.04** | `slave-x86-ubuntu2004` |
+| Ubuntu **24.04** | `slave-x86-ubuntu2404` |
+
+Embedded gateways keep their own product firmware; point the **agent** project on each
+embedded gateway at this center host.
+
+Example command outputs below are from a **verified walkthrough** on Ubuntu 24.04
+(`slave-x86-ubuntu2404`) using a fresh Gitee clone under `~/tmp/snake8` (2026-08-19).
+Steps that require **`sudo`** (`make sdk_install`, `make sdk_start`) show **expected**
+output from a running center host when sudo is available. On Ubuntu 20.04 use the same
+steps with `slave-x86-ubuntu2004` instead.
 
 ---
 
@@ -33,7 +40,14 @@ build compiles center services together with land, webs, and wui.
 
 ## 2. Requirements
 
-- **OS:** Ubuntu 24.04 (64-bit)
+- **OS:** Ubuntu **20.04** or **24.04** (64-bit)
+- **Board identity:** must match the host OS (do not mix):
+
+  | Host OS | Use this `gBOARDID` |
+  |---------|---------------------|
+  | Ubuntu 20.04 | `slave-x86-ubuntu2004` |
+  | Ubuntu 24.04 | `slave-x86-ubuntu2404` |
+
 - **Network:** Host reachable from embedded gateways (same LAN or routed path)
 - **Privileges:** `make sdk_install` and `make sdk_start` install under
   `/usr/share/skinos` and need **sudo**
@@ -67,7 +81,15 @@ Cloning into 'snake8'...
 
 ## 4. Select board identity
 
-Persist the choice (writes `gBOARDID`):
+Pick **`gBOARDID` by host Ubuntu version** — this is required for a correct slave
+build/install on this machine:
+
+| Host OS | Command |
+|---------|---------|
+| Ubuntu **20.04** | `make pid gBOARDID=slave-x86-ubuntu2004` |
+| Ubuntu **24.04** | `make pid gBOARDID=slave-x86-ubuntu2404` |
+
+Persist the choice (writes the `gBOARDID` file). Example on **Ubuntu 24.04**:
 
 ```bash
 make pid gBOARDID=slave-x86-ubuntu2404
@@ -79,14 +101,21 @@ Example output (verified):
 Switch the Board Identify to slave-x86-ubuntu2404
 ```
 
-The `gBOARDID` file should contain:
+The `gBOARDID` file should contain (24.04 example):
 
 ```text
 gBOARDID=slave-x86-ubuntu2404
 ```
 
-> If unset, the Makefile defaults to `slave-x86-ubuntu2004`. On Ubuntu 24.04 use
-> **`make pid gBOARDID=slave-x86-ubuntu2404`** as shown above.
+On **Ubuntu 20.04** the file must instead be:
+
+```text
+gBOARDID=slave-x86-ubuntu2004
+```
+
+> If `gBOARDID` is unset, the top-level Makefile defaults to
+> **`slave-x86-ubuntu2004`**. On Ubuntu 24.04 you **must** set
+> `slave-x86-ubuntu2404` explicitly as above — do not leave the default.
 
 ---
 
@@ -625,7 +654,8 @@ Mesh network uses **center@nport** and **`agent@gtog`** on the embedded gateway;
 | Step | Command |
 |------|---------|
 | Install build deps | `make preset` |
-| Select Ubuntu 24.04 board | `make pid gBOARDID=slave-x86-ubuntu2404` |
+| Select board (Ubuntu 20.04) | `make pid gBOARDID=slave-x86-ubuntu2004` |
+| Select board (Ubuntu 24.04) | `make pid gBOARDID=slave-x86-ubuntu2404` |
 | Update platform FPK | `make update` |
 | Build | `make` |
 | Install to host | `make sdk_install` |
