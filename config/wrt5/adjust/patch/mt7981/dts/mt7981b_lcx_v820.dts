@@ -11,7 +11,7 @@
 #include "mt7981b.dtsi"
 
 / {
-	compatible = "ashyelf,v820", "mediatek,mt7981";
+	compatible = "lcx,v820", "mediatek,mt7981";
 	model = "V820";
 
 	aliases {
@@ -45,27 +45,35 @@
 		};
 	};
 
+	/*
+	 * gpio.cfg LEDs (arch@gpio uses /sys/class/leds/ledN):
+	 *   sys / network@connect_state = 8, power = 13,
+	 *   modem@lte_signal = 34, modem@lte2_signal = 35.
+	 * Control GPIOs stay unclaimed so userspace can export them:
+	 *   modem@lte_reset = 4, uart@tty_power = 6,
+	 *   modem@lte2_reset = 10, usb@hub_power = 12.
+	 */
 	leds {
 		compatible = "gpio-leds";
 
 		bd_led1: led-1 {
-			label = "led9";
-			gpios = <&pio 9 GPIO_ACTIVE_HIGH>;
+			label = "led8";
+			gpios = <&pio 8 GPIO_ACTIVE_HIGH>;
 		};
 
 		bd_led2: led-2 {
-			label = "led10";
-			gpios = <&pio 10 GPIO_ACTIVE_HIGH>;
+			label = "led13";
+			gpios = <&pio 13 GPIO_ACTIVE_HIGH>;
 		};
 
 		bd_led3: led-3 {
-			label = "led11";
-			gpios = <&pio 11 GPIO_ACTIVE_HIGH>;
+			label = "led34";
+			gpios = <&pio 34 GPIO_ACTIVE_HIGH>;
 		};
 
 		bd_led4: led-4 {
-			label = "led12";
-			gpios = <&pio 12 GPIO_ACTIVE_HIGH>;
+			label = "led35";
+			gpios = <&pio 35 GPIO_ACTIVE_HIGH>;
 		};
 
 	};
@@ -104,11 +112,10 @@
 	};
 
 	/*
-	 * gmac1 + int_gbe_phy: unused on V820 (all RJ45 via MT7531).
-	 * To enable: delete status = "disabled" below (no fixed-link with phy-handle).
+	 * gmac1 + int_gbe_phy → eth1: modem@lte PCIe/PHY datapath
+	 * (MT7531 port4 lan0 → modem@lte2; eth0 is DSA CPU @2500 to switch).
 	 */
 	gmac1: mac@1 {
-		status = "disabled";
 		compatible = "mediatek,eth-mac";
 		reg = <1>;
 		phy-mode = "gmii";

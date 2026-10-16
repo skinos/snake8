@@ -36,7 +36,7 @@ start()
 
     # init the raw syslog
     ln -s /dev/log /var/syslogd
-    syslogd -L -O /var/bootup.syslog
+    syslogd -L -O /var/log/bootup.log
 }
 stop()
 {

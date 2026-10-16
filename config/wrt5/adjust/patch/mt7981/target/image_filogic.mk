@@ -865,10 +865,10 @@ endef
 TARGET_DEVICES += ashyelf_r607
 
 # modify by dimmalex from r607 for SkinOS or Openwrt version
-define Device/ashyelf_v820
-  DEVICE_VENDOR := ASHYELF
+define Device/lcx_v820
+  DEVICE_VENDOR := LCX
   DEVICE_MODEL := V820
-  DEVICE_DTS := mt7981b_ashyelf_v820
+  DEVICE_DTS := mt7981b_lcx_v820
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTC_FLAGS := --pad 4096
   DEVICE_DTS_LOADADDR := 0x43f00000
@@ -891,7 +891,7 @@ define Device/ashyelf_v820
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += ashyelf_v820
+TARGET_DEVICES += lcx_v820
 
 define Device/cmcc_a10-stock
   DEVICE_VENDOR := CMCC
