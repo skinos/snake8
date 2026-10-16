@@ -15,7 +15,6 @@ setup()
     PROJECT_SER_DIR=$TROOT/.ser
     PROJECT_COM_DIR=$TROOT/.com
     PROJECT_CAH_DIR=$TROOT/.cah
-    PROJECT_CONF_DIR=$TROOT/.conf
 
     MROOT=/mnt/skinos
     PROJECT_CFG_DIR=$MROOT/config
@@ -25,6 +24,8 @@ setup()
     PROJECT_APP_DIR=$PROJECT_INT_DIR/skinos
     
     VROOT=/var/skinos
+    PROJECT_LOG_DIR=$VROOT/log
+    PROJECT_CONF_DIR=$VROOT/conf
 
     mkdir -p $TROOT
     chmod a+rwx $TROOT
@@ -43,6 +44,8 @@ setup()
 
     sudo mkdir -p $VROOT
     sudo chmod a+rwx $VROOT
+    mkdir -p $PROJECT_LOG_DIR
+    mkdir -p $PROJECT_CONF_DIR
 
     # load the basic ko
     if [ -e /usr/prj/pdriver/crackid.ko ]; then

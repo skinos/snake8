@@ -1,0 +1,3 @@
+# CA center component. openssl and openvpn are invoked as programs.
+CFLAGS += -Wno-unused-parameter
+LDFLAGS +=

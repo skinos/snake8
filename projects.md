@@ -27,7 +27,7 @@ Projects are **not** isolated apps: they register components into one runtime (`
 | **Bridge / VLAN / hosts / keep-alive** | **`network`** | L2/L3 plumbing |
 | **NAT / firewall / route table** | **`forward`** | Often joint on `network/*` |
 | **LAN DHCP / client list / ACL** | **`client`** | |
-| **IPsec / WireGuard / L2TP/PPTP/GRE** | **`ipsec` / `nvpn` / `vpn`** | |
+| **IPsec / WireGuard / L2TP/PPTP/GRE / OpenVPN** | **`ipsec` / `nvpn` / `vpn` / `ovpn`** | |
 | **GNSS as a product feature (NMEA objects)** | **`gnss`** and/or **`uart`** `uartdrv@gnss` | Device on serial → uart driver; system GNSS objects → gnss project |
 | **Camera / OSD** | **`camera`** | |
 | **Remote/cloud HE / MQTT / port map** | **`agent`** | |
@@ -88,6 +88,7 @@ Projects are **not** isolated apps: they register components into one runtime (`
 | **vpn** | l2tp / pptp / gre lists | Classic VPN clients |
 | **nvpn** | WireGuard list | WG management |
 | **ipsec** | IPsec list/client area | IPsec tunnels + certs |
+| **ovpn** | OpenVPN list/client | Multi-instance OpenVPN clients |
 | **gnss** | GNSS frame / nmea objects | System GNSS feature (may use uart GNSS driver) |
 | **camera** | OSD / camera | Video-related components |
 | **tmptools** | Templates | Copy patterns for **any** new project |

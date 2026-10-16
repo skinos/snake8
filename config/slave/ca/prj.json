@@ -1,0 +1,30 @@
+{
+    "name": "ca",
+    "intro": "Certificate authority",
+    "desc": "Generate CA, certificates, keys, TLS, DH and PKCS#12 for OpenVPN and IPsec",
+    "type": "root",
+    "version": "1.0.0",
+    "author": "dimmalex@gmail.com",
+
+    "com":
+    {
+        "cert": "Certificate authority"
+    },
+
+    "wui":
+    {
+        "cert":
+        {
+            "menu": "Service",
+            "cn": "CA中心",
+            "en": "CA Center",
+            "page": "cert.html",
+            "config": "ca@cert",
+            "lang":
+            {
+                "cn": "cn.json",
+                "en": "en.json"
+            }
+        }
+    }
+}

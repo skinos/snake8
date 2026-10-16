@@ -1,0 +1,727 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Country"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="country" class="col-xs-10 col-sm-5" maxlength="2" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Province"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="province" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="City"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="city" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Organization"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="org" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Organization Unit"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="ou" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Email"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="email" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="CA Common Name"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="cn" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Server Common Name"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="server_cn" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Valid Days"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="days" class="col-xs-10 col-sm-5" maxlength="8" />
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Key Size"></label>
+      <div class="col-sm-9">
+        <select id="bits" class="col-xs-10 col-sm-5">
+          <option value="2048">2048</option>
+          <option value="4096">4096</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="PKCS#12 Password"></label>
+      <div class="col-sm-9">
+        <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+          <input type="password" id="password" maxlength="64" autocomplete="new-password" />
+          <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
+        </span>
+      </div>
+    </div>
+
+    <div class="hr hr32 hr-dotted"></div>
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="CA Certificate"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_ca" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_ca_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_ca_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_ca_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="CA Private Key"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_cakey" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_cakey_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_cakey_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_cakey_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr hr32 hr-dotted"></div>
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Server Certificate"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_crt" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_crt_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_crt_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_crt_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Server Private Key"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_key" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_key_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_key_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_key_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="PKCS#12 File"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_p12" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_p12_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_p12_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_p12_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hr hr32 hr-dotted"></div>
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="TLS Key"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_tls" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_tls_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_tls_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_tls_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="TLS-Crypt-v2 Key"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_tlsv2" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_tlsv2_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_tlsv2_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_tlsv2_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Static Secret Key"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_static" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_static_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_static_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_static_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="DH Parameters"></label>
+      <div class="col-sm-9">
+        <div class="col-xs-12 col-sm-5">
+          <input type="file" id="cert_dh" />
+        </div>
+        <div class="col-xs-12 col-sm-7 form-right-text">
+          <button class="btn btn-sm btn-white btn-info" data-i18n="Download" id="cert_dh_down" style="display:none;"></button>
+          <button class="btn btn-sm btn-white btn-warning" data-i18n="Delete" id="cert_dh_remove" style="display:none;"></button>
+          <button class="btn btn-sm btn-main" data-i18n="Generate" id="cert_dh_make" type="button"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="col-sm-9 col-sm-offset-3">
+        <span class="grey" data-i18n="Download these files and import them on the OpenVPN or IPsec page."></span>
+      </div>
+    </div>
+
+    <div class="hr hr32 hr-dotted"></div>
+
+    <div id="client_group">
+      <table id="client-key-grid-table"></table>
+      <div id="client-key-grid-pager"></div>
+      <div id="client-grid-controls" style="display: none;">
+        <div style="display: flex; align-items: center">
+          <label for="clientRowNums" style="margin-right: 5px; white-space: nowrap;" data-i18n="Display"></label>
+          <select id="clientRowNums" style="width: 60px;">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </div>
+      </div>
+      <div class="space-4"></div>
+      <span class="grey" data-i18n="The client name is the certificate common name."></span>
+    </div>
+
+    <div class="clearfix form-actions">
+      <div class="col-md-offset-3 col-md-9">
+        <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+        &nbsp; &nbsp;
+        <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+      </div>
+    </div>
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script type="text/javascript">
+(function () {
+    var object = 'ca@cert';
+    var keylist = {};
+    var lastCfgSnapshot = null;
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+    var client_table = '#client-key-grid-table';
+    var client_pager = '#client-key-grid-pager';
+    var certPrefix = 'cert';
+
+    function fill_form( cfg )
+    {
+        cfg = cfg || {};
+        $( '#country' ).val( cfg.country || 'CN' );
+        $( '#province' ).val( cfg.province || 'GD' );
+        $( '#city' ).val( cfg.city || 'ShenZhen' );
+        $( '#org' ).val( cfg.org || 'Ashyelf' );
+        $( '#ou' ).val( cfg.ou || 'SkinOS' );
+        $( '#email' ).val( cfg.email || '' );
+        $( '#cn' ).val( cfg.cn || 'ca' );
+        $( '#server_cn' ).val( cfg.server_cn || 'server' );
+        $( '#days' ).val( cfg.days || '3650' );
+        $( '#bits' ).val( cfg.bits === '4096' ? '4096' : '2048' );
+        $( '#password' ).val( cfg.password || '' );
+    }
+
+    function collect_cfg()
+    {
+        return {
+            country: $( '#country' ).val().trim(),
+            province: $( '#province' ).val().trim(),
+            city: $( '#city' ).val().trim(),
+            org: $( '#org' ).val().trim(),
+            ou: $( '#ou' ).val().trim(),
+            email: $( '#email' ).val().trim(),
+            cn: $( '#cn' ).val().trim(),
+            server_cn: $( '#server_cn' ).val().trim(),
+            days: $( '#days' ).val().trim() || '3650',
+            bits: $( '#bits' ).val(),
+            password: $( '#password' ).val()
+        };
+    }
+
+    function show_files( status )
+    {
+        var files = [ 'ca', 'cakey', 'crt', 'key', 'p12', 'tls', 'tlsv2', 'static', 'dh' ];
+        var i;
+        keylist = status || {};
+        for ( i = 0; i < files.length; i++ )
+        {
+            var id = files[i];
+            if ( keylist[id] )
+            {
+                $( '#' + certPrefix + '_' + id + '_down' ).show();
+                $( '#' + certPrefix + '_' + id + '_remove' ).show();
+            }
+            else
+            {
+                $( '#' + certPrefix + '_' + id + '_down' ).hide();
+                $( '#' + certPrefix + '_' + id + '_remove' ).hide();
+            }
+        }
+    }
+
+    function client_set_width()
+    {
+        var containerWidth;
+
+        containerWidth = $( '#client_group' ).parent().width() || $( window ).width() - 100;
+        if ( $( client_table )[0] && $( client_table )[0].grid )
+        {
+            $( client_table ).jqGrid( 'setGridWidth', containerWidth );
+        }
+    }
+
+    function show_clients( clients )
+    {
+        var rows = [];
+        var name;
+        var scrollPos;
+        var currentPage;
+        var currentRowNum;
+
+        clients = clients || {};
+        client_set_width();
+        for ( name in clients )
+        {
+            if ( !clients.hasOwnProperty( name ) )
+            {
+                continue;
+            }
+            rows.push( {
+                name: name,
+                crt: clients[name].crt ? '1' : '',
+                key: clients[name].key ? '1' : '',
+                p12: clients[name].p12 ? '1' : ''
+            } );
+        }
+        scrollPos = jqtable.getScrollPos();
+        currentPage = $( client_table ).jqGrid( 'getGridParam', 'page' );
+        currentRowNum = $( client_table ).jqGrid( 'getGridParam', 'rowNum' );
+        $( client_table ).jqGrid( 'clearGridData', true );
+        $( client_table ).jqGrid( 'setGridParam', {
+            data: rows,
+            page: currentPage,
+            rowNum: currentRowNum
+        } ).trigger( 'reloadGrid' );
+        jqtable.setScrollPos( scrollPos );
+        $( client_table ).jqGrid( 'setCaption', $.i18n( 'Client Certificate List' ) + ' (' + rows.length + ')' );
+    }
+
+    function key_load()
+    {
+        he.load( [ object + '.key', object + '.list_client' ] ).then( function ( v ) {
+            show_files( v[0] || {} );
+            show_clients( v[1] || {} );
+        } );
+    }
+
+    function load_cfg()
+    {
+        he.load( [ object, object + '.key', object + '.list_client' ] ).then( function ( v ) {
+            var cfg = v[0] || {};
+            fill_form( cfg );
+            lastCfgSnapshot = JSON.parse( JSON.stringify( collect_cfg() ) );
+            show_files( v[1] || {} );
+            show_clients( v[2] || {} );
+        } );
+    }
+
+    function save_cfg()
+    {
+        var cfg = collect_cfg();
+        var copy = lastCfgSnapshot ? JSON.parse( JSON.stringify( lastCfgSnapshot ) ) : {};
+        if ( ocompare( cfg, copy ) )
+        {
+            page.alert( { message: $.i18n( 'Settings unchanged' ) } );
+            return;
+        }
+        he.exec( [ object + '=' + JSON.stringify( cfg ) ] ).then( function () {
+            page.hint2succeed( $.i18n( 'Modify successfully' ) );
+            load_cfg();
+        } );
+    }
+
+    function download_file( api, attr, filename )
+    {
+        var opt;
+        var sform = document.createElement( 'FORM' );
+        document.body.appendChild( sform );
+        sform.hidden = true;
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'username'; opt.value = window.username; sform.appendChild( opt );
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'key'; opt.value = window.talkkey; sform.appendChild( opt );
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'object'; opt.value = object; sform.appendChild( opt );
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'api'; opt.value = api; sform.appendChild( opt );
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'a'; opt.value = attr; sform.appendChild( opt );
+        opt = document.createElement( 'input' ); opt.type = 'hidden'; opt.name = 'f'; opt.value = filename; sform.appendChild( opt );
+        sform.method = 'GET';
+        sform.action = '/download';
+        sform.submit();
+    }
+
+    function run_make( item )
+    {
+        var go = function () {
+            he.exec( [ object + '.' + item.make ] ).then( function ( v ) {
+                if ( v && v[0] === false )
+                {
+                    page.hint2warning( $.i18n( 'Generate failed' ) );
+                }
+                else
+                {
+                    page.hint2succeed( $.i18n( 'Generate successfully' ) );
+                }
+                key_load();
+            } );
+        };
+        if ( item.needca )
+        {
+            if ( !keylist.ca || !keylist.cakey )
+            {
+                page.hint2warning( $.i18n( 'Generate failed, no CA key' ) );
+                return;
+            }
+        }
+        if ( item.confirm === 'ca' )
+        {
+            page.confirm( { message: $.i18n( 'Generating a new CA deletes the server certificate and all client certificates. Continue?' ) } ).then( function ( ok ) {
+                if ( ok )
+                {
+                    go();
+                }
+            } );
+            return;
+        }
+        if ( item.confirm === 'dh' )
+        {
+            page.confirm( { message: $.i18n( 'Generating DH parameters can take a long time. Continue?' ) } ).then( function ( ok ) {
+                if ( ok )
+                {
+                    go();
+                }
+            } );
+            return;
+        }
+        go();
+    }
+
+    function bind_files()
+    {
+        var rows = [
+            { id: 'ca', make: 'make_ca', clear: 'clear_ca', api: 'import_ca', file: 'ca.crt', confirm: 'ca' },
+            { id: 'cakey', make: 'make_ca', clear: 'clear_cakey', api: 'import_cakey', file: 'ca.key', confirm: 'ca' },
+            { id: 'crt', make: 'make_server', clear: 'clear_cert', api: 'import_cert', file: 'server.crt', needca: true },
+            { id: 'key', make: 'make_server', clear: 'clear_key', api: 'import_key', file: 'server.key', needca: true },
+            { id: 'p12', make: 'make_pkcs12', clear: 'clear_pkcs12', api: 'import_pkcs12', file: 'server.p12', needca: true },
+            { id: 'tls', make: 'make_tls', clear: 'clear_tls', api: 'import_tls', file: 'server.tlsauth' },
+            { id: 'tlsv2', make: 'make_tlsv2', clear: 'clear_tlsv2', api: 'import_tlsv2', file: 'server.tlsv2' },
+            { id: 'static', make: 'make_static', clear: 'clear_static', api: 'import_static', file: 'server.static' },
+            { id: 'dh', make: 'make_dh', clear: 'clear_dh', api: 'import_dh', file: 'server.dh', confirm: 'dh' }
+        ];
+        var i;
+        for ( i = 0; i < rows.length; i++ )
+        {
+            (function ( item ) {
+                var selector = '#' + certPrefix + '_' + item.id;
+                $( selector ).ace_file_input( {
+                    no_file: $.i18n( 'No File' ),
+                    btn_choose: $.i18n( 'Choose' ),
+                    btn_change: $.i18n( 'Change' ),
+                    icon_remove: ''
+                } );
+                $( selector ).fileupload( {
+                    url: '/upload?username=' + window.username +
+                         '&key=' + window.talkkey +
+                         '&object=' + encodeURIComponent( object ) +
+                         '&api=' + item.api +
+                         '&p=[]',
+                    paramName: 'filename',
+                    dataType: 'text',
+                    add: function ( e, data ) {
+                        page.overlay( $.i18n( 'Importing...' ) );
+                        data.submit();
+                    },
+                    done: function () {
+                        page.overlay2hide();
+                        key_load();
+                    },
+                    fail: function () {
+                        page.overlay2hide();
+                    }
+                } );
+                $( selector + '_remove' ).on( ace.click_event, function () {
+                    var go = function () {
+                        he.exec( [ object + '.' + item.clear ] ).then( function () {
+                            page.hint2succeed( $.i18n( 'Delete successfully' ) );
+                            key_load();
+                        } );
+                    };
+                    if ( item.clear === 'clear_ca' )
+                    {
+                        page.confirm( { message: $.i18n( 'Deleting the CA also deletes the server certificate and all client certificates. Continue?' ) } ).then( function ( ok ) {
+                            if ( ok )
+                            {
+                                go();
+                            }
+                        } );
+                        return;
+                    }
+                    go();
+                } );
+                $( selector + '_down' ).on( ace.click_event, function () {
+                    download_file( 'key', item.id, item.file );
+                } );
+                $( selector + '_make' ).on( ace.click_event, function () {
+                    run_make( item );
+                } );
+            })( rows[i] );
+        }
+    }
+
+    function client_add( data )
+    {
+        var name = ( data.name || '' ).replace( /^\s+|\s+$/g, '' );
+        if ( !/^[A-Za-z0-9_-]{1,32}$/.test( name ) )
+        {
+            page.hint2warning( $.i18n( 'Client name is invalid' ) );
+            key_load();
+            return;
+        }
+        if ( !keylist.ca || !keylist.cakey )
+        {
+            page.hint2warning( $.i18n( 'Generate failed, no CA key' ) );
+            key_load();
+            return;
+        }
+        he.exec( [ object + '.add_client[' + name + ']' ] ).then( function ( v ) {
+            if ( v && v[0] === false )
+            {
+                page.hint2warning( $.i18n( 'Generate failed' ) );
+            }
+            else
+            {
+                page.hint2succeed( $.i18n( 'Generate successfully' ) );
+            }
+            key_load();
+        } );
+    }
+
+    function client_delete( indexStr )
+    {
+        var indexs = String( indexStr ).split( ',' );
+        var cmds = [];
+        var i;
+        for ( i = 0; i < indexs.length; i++ )
+        {
+            var row = $( client_table ).jqGrid( 'getRowData', indexs[i] );
+            if ( row && row.name )
+            {
+                cmds.push( object + '.delete_client[' + row.name + ']' );
+            }
+        }
+        if ( cmds.length === 0 )
+        {
+            return;
+        }
+        he.exec( cmds ).then( function () {
+            page.hint2succeed( $.i18n( 'Delete successfully' ) );
+            key_load();
+        } );
+    }
+
+    function init_client_table()
+    {
+        jqtable.create( client_table, client_pager,
+            {
+                caption: ' ',
+                toolbar: [ true, 'top' ],
+                colNames: [
+                    $.i18n( 'Client Name' ),
+                    $.i18n( 'Certificate' ),
+                    $.i18n( 'Private Key' ),
+                    $.i18n( 'PKCS#12' )
+                ],
+                colModel: [
+                    { name: 'name', width: 180, key: true, editable: true, editoptions: { maxlength: '32' }, editrules: { required: true } },
+                    {
+                        name: 'crt', width: 90, fixed: true, sortable: false,
+                        formatter: function ( cellvalue, options, rowObject ) {
+                            var name = rowObject && rowObject.name ? rowObject.name : '';
+                            if ( !name || !rowObject.crt )
+                            {
+                                return '';
+                            }
+                            return '<a class="btn btn-mini btn-main ca-cli-down" data-name="' + name + '" data-kind="crt" title="' + $.i18n( 'Download' ) + '"><i class="ace-icon fa fa-download"></i></a>';
+                        }
+                    },
+                    {
+                        name: 'key', width: 90, fixed: true, sortable: false,
+                        formatter: function ( cellvalue, options, rowObject ) {
+                            var name = rowObject && rowObject.name ? rowObject.name : '';
+                            if ( !name || !rowObject.key )
+                            {
+                                return '';
+                            }
+                            return '<a class="btn btn-mini btn-main ca-cli-down" data-name="' + name + '" data-kind="key" title="' + $.i18n( 'Download' ) + '"><i class="ace-icon fa fa-download"></i></a>';
+                        }
+                    },
+                    {
+                        name: 'p12', width: 90, fixed: true, sortable: false,
+                        formatter: function ( cellvalue, options, rowObject ) {
+                            var name = rowObject && rowObject.name ? rowObject.name : '';
+                            if ( !name || !rowObject.p12 )
+                            {
+                                return '';
+                            }
+                            return '<a class="btn btn-mini btn-main ca-cli-down" data-name="' + name + '" data-kind="p12" title="' + $.i18n( 'Download' ) + '"><i class="ace-icon fa fa-download"></i></a>';
+                        }
+                    }
+                ],
+                pager: client_pager,
+                rowNum: 20,
+                viewrecords: true,
+                pgbuttons: true,
+                pagerpos: 'center',
+                pginput: true,
+                autowidth: true,
+                loadonce: true,
+                shrinkToFit: true,
+                responsive: true
+            }
+        ).jqGrid( 'navGrid', client_pager,
+            $.extend( true, {}, jqtable.navOptions, {
+                add: true, addicon: 'ace-icon fa fa-plus-circle purple',
+                del: true, delicon: 'ace-icon fa fa-trash-o red',
+                edit: false, view: false, search: false, refresh: false
+            } ),
+            {},
+            $.extend( true, {}, jqtable.addOptions, {
+                afterShowForm: function ( form ) {
+                    var hintText = '<div style="margin-bottom: 15px; padding: 8px 12px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 3px;">' +
+                        '<span style="color: red;">*</span> ' + $.i18n( 'Fields marked with * are required' ) +
+                        '</div>';
+                    $( "label[for='name']", form ).append( '<span style="color: red; margin-left: 3px;">*</span>' );
+                    $( 'table > tbody > tr:first', form ).before( '<tr><td colspan="2">' + hintText + '</td></tr>' );
+                    $( '#name', form ).attr( 'placeholder', $.i18n( 'Enter Client Name' ) );
+                },
+                onclickSubmit: function ( params, data ) { client_add( data ); }
+            } ),
+            $.extend( true, {}, jqtable.deleteOptions, {
+                onclickSubmit: function ( params, data ) { client_delete( data ); }
+            } ),
+            {},
+            {}
+        );
+
+        var $toolbar = $( '#t_' + client_table.replace( '#', '' ) );
+        $toolbar.append( $( '#client-grid-controls' ).children() );
+        $toolbar.css( {
+            'display': 'flex',
+            'justify-content': 'space-between',
+            'align-items': 'center',
+            'background': '#f5f5f5',
+            'padding': '8px 10px',
+            'height': 'auto'
+        } );
+        $( '#clientRowNums' ).on( 'change', function () {
+            $( client_table ).jqGrid( 'setGridParam', {
+                rowNum: parseInt( $( this ).val(), 10 )
+            } ).trigger( 'reloadGrid' );
+        } );
+        $( window ).off( 'resize.caClientGrid' ).on( 'resize.caClientGrid', function () {
+            client_set_width();
+        } );
+    }
+
+    $( document ).off( 'click.caClient' ).on( 'click.caClient', '.ca-cli-down', function () {
+        var name = $( this ).attr( 'data-name' );
+        var kind = $( this ).attr( 'data-kind' );
+        var ext = kind === 'key' ? '.key' : ( kind === 'p12' ? '.p12' : '.crt' );
+        if ( !name )
+        {
+            return;
+        }
+        download_file( 'list_client', name + '/' + kind, name + ext );
+    } );
+
+    page.password( 'password', 'password-icon' );
+    $.i18n().load( page.lang( langjson ) ).then( function () {
+        $.i18n().locale = lang;
+        $( 'body' ).i18n();
+        bind_files();
+        init_client_table();
+        load_cfg();
+        $( '#refresh' ).on( ace.click_event, function () {
+            location.reload();
+        } );
+        $( '#apply' ).on( ace.click_event, function () {
+            save_cfg();
+        } );
+    } );
+})();
+</script>

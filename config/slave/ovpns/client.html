@@ -1,0 +1,346 @@
+<!-- ajax layout which only needs content area -->
+<div class="row">
+  <div class="col-xs-12 form-btn-wrapper">
+    <!-- PAGE CONTENT BEGINS -->
+    <div class="form-horizontal" role="form">
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Status"></label>
+      <div class="col-sm-9">
+        <label>
+          <input id="status" class="ace ace-switch ace-switch-6" type="checkbox" />
+          <span class="lbl"></span>
+        </label>
+      </div>
+    </div>
+
+    <div id="statusSets" style="display: none;">
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="CN"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="cn" class="col-xs-10 col-sm-5" maxlength="128" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="tunnelip_row">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Tunnel Address"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="tunnelip" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="peer_row" style="display: none;">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Tunnel Peer"></label>
+      <div class="col-sm-9">
+        <div class="clearfix">
+          <input type="text" id="tunnelpeer" class="col-xs-10 col-sm-5" maxlength="64" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" id="pass_row" style="display: none;">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Password"></label>
+      <div class="col-sm-9">
+        <span class="input-icon input-icon-right input-icon-form col-xs-10 col-sm-5">
+          <input type="password" id="password" maxlength="128" autocomplete="new-password" />
+          <i class="ace-icon fa fa-eye-slash" id="password-icon"></i>
+        </span>
+      </div>
+    </div>
+
+    <div class="form-group" id="redir_row">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Redirect Gateway"></label>
+      <div class="col-sm-9">
+        <select id="redirect" class="col-xs-10 col-sm-5">
+          <option value="" data-i18n="Follow Server"></option>
+          <option value="enable" data-i18n="Enable"></option>
+          <option value="disable" data-i18n="Disable"></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Push Reset"></label>
+      <div class="col-sm-9">
+        <label>
+          <input id="push_reset" class="ace ace-switch ace-switch-6" type="checkbox" />
+          <span class="lbl"></span>
+        </label>
+      </div>
+    </div>
+
+    <div id="tun_push">
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Primary DNS"></label>
+        <div class="col-sm-9">
+          <div class="clearfix">
+            <input type="text" id="dns" class="col-xs-10 col-sm-5" maxlength="64" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Secondary DNS"></label>
+        <div class="col-sm-9">
+          <div class="clearfix">
+            <input type="text" id="dns2" class="col-xs-10 col-sm-5" maxlength="64" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Local Networks"></label>
+        <div class="col-sm-9" id="local_net_container"></div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-3 control-label no-padding-right" data-i18n="Remote Networks"></label>
+        <div class="col-sm-9" id="remote_net_container"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-3 control-label no-padding-right" data-i18n="Custom Options"></label>
+      <div class="col-sm-9">
+        <textarea id="options" class="col-xs-10 col-sm-5" maxlength="1024"></textarea>
+      </div>
+    </div>
+
+    </div><!-- /#statusSets -->
+
+    <div class="clearfix form-actions">
+      <div class="col-md-offset-3 col-md-9">
+        <button class="btn btn-second" type="button" id="back"><span data-i18n="Back"></span></button>
+        &nbsp; &nbsp; &nbsp;
+        <button class="btn btn-second" type="button" id="refresh"><span data-i18n="Refresh"></span></button>
+        &nbsp; &nbsp; &nbsp;
+        <button class="btn btn-main" type="button" id="apply"><span data-i18n="Apply"></span></button>
+      </div>
+    </div>
+
+    </div>
+    <!-- PAGE CONTENT ENDS -->
+  </div><!-- /.col -->
+</div><!-- /.row -->
+
+<script type="text/javascript">
+(function () {
+    var object;
+    var lastCfgSnapshot = null;
+    var serverCfg = {};
+    var path = page.param( 'path', location.hash );
+    var langjson = base64.decode( page.param( 'lang', location.hash ) );
+    var pagepath = base64.decode( page.param( 'page', location.hash ) );
+    var prjpath = pagepath.substring( 0, pagepath.lastIndexOf( '/' ) );
+
+    if ( !path )
+    {
+        return;
+    }
+    object = decodeURIComponent( path );
+
+    function add_net_rule( container, target, mask )
+    {
+        var t = target != null ? target : '';
+        var m = mask != null ? mask : '';
+        var html = '<div class="route-rule-item clearfix" style="margin-bottom:6px;">' +
+            '<div class="col-xs-10 col-sm-5" style="display:flex;padding-left:0;padding-right:0;">' +
+                '<input type="text" name="ovpns_net_target[]" placeholder="' + $.i18n( 'Enter Target' ) + '" value="' +
+                String( t ).replace( /"/g, '&quot;' ) + '" style="flex:1; height:34px; min-width:0;" />' +
+                '<input type="text" name="ovpns_net_mask[]" placeholder="' + $.i18n( 'Enter Mask' ) + '" value="' +
+                String( m ).replace( /"/g, '&quot;' ) + '" style="flex:1; height:34px; min-width:0; margin-left:5px" />' +
+                '<button type="button" style="width:38px; height:34px; padding:0; margin-left:5px"></button>' +
+            '</div></div>';
+        $( container ).append( html );
+        refresh_net_buttons( container );
+    }
+
+    function fill_net_rules( container, map )
+    {
+        var key;
+        var ent;
+        var n = 0;
+        $( container ).empty();
+        if ( map && typeof map === 'object' )
+        {
+            for ( key in map )
+            {
+                if ( !map.hasOwnProperty( key ) )
+                {
+                    continue;
+                }
+                ent = map[key];
+                if ( !ent || typeof ent !== 'object' )
+                {
+                    continue;
+                }
+                add_net_rule( container, ent.target || '', ent.mask || '' );
+                n++;
+            }
+        }
+        if ( n === 0 )
+        {
+            add_net_rule( container, '', '' );
+        }
+    }
+
+    function refresh_net_buttons( container )
+    {
+        var items = $( container + ' .route-rule-item' );
+        items.each( function ( index ) {
+            var btn = $( this ).find( 'button' );
+            btn.removeClass( 'btn-main btn-second btn-sm ovpns_net_add ovpns_net_del' );
+            btn.addClass( 'btn btn-sm' );
+            if ( index === items.length - 1 )
+            {
+                btn.addClass( 'btn-main ovpns_net_add' );
+                btn.html( '<i class="ace-icon fa fa-plus white"></i>' );
+            }
+            else
+            {
+                btn.addClass( 'btn-second ovpns_net_del' );
+                btn.html( '<i class="ace-icon fa fa-trash-o white"></i>' );
+            }
+        } );
+        $( container + ' button' ).blur();
+    }
+
+    function read_net_rules( container )
+    {
+        var out = {};
+        var idx = 0;
+        $( container + ' input[name="ovpns_net_target[]"]' ).each( function ( i ) {
+            var t = $( this ).val().trim();
+            var m = $( container + ' input[name="ovpns_net_mask[]"]' ).eq( i ).val().trim();
+            if ( t && m )
+            {
+                out['r' + idx] = { target: t, mask: m };
+                idx++;
+            }
+        } );
+        return out;
+    }
+
+    function sync_mode_ui()
+    {
+        var auth = serverCfg.auth || 'certificate';
+        var tap = serverCfg.dev === 'tap';
+        var user = auth === 'username' || auth === 'certificate+username';
+        var radiusOn = serverCfg.radius && serverCfg.radius.status === 'enable';
+        $( '#tun_push, #redir_row, #tunnelip_row' ).toggle( !tap );
+        $( '#peer_row' ).toggle( !tap && serverCfg.topology === 'net30' );
+        $( '#pass_row' ).toggle( user && !radiusOn );
+    }
+
+    function fill_form( cfg )
+    {
+        cfg = cfg || {};
+        $( '#status' ).prop( 'checked', able2boole( cfg.status ) );
+        $( '#cn' ).val( cfg.cn || '' );
+        $( '#tunnelip' ).val( cfg.tunnelip || '' );
+        $( '#tunnelpeer' ).val( cfg.tunnelpeer || '' );
+        $( '#password' ).val( cfg.password || '' );
+        $( '#redirect' ).val( cfg.redirect || '' );
+        $( '#push_reset' ).prop( 'checked', able2boole( cfg.push_reset ) );
+        $( '#dns' ).val( cfg.dns || '' );
+        $( '#dns2' ).val( cfg.dns2 || '' );
+        $( '#options' ).val( cfg.options || '' );
+        fill_net_rules( '#local_net_container', cfg.local_net );
+        fill_net_rules( '#remote_net_container', cfg.remote_net );
+        sync_mode_ui();
+        $( '#status' ).unbind( 'change' ).change( function () {
+            if ( $( this ).prop( 'checked' ) )
+            {
+                $( '#statusSets' ).show();
+            }
+            else
+            {
+                $( '#statusSets' ).hide();
+            }
+        } ).trigger( 'change' );
+    }
+
+    function snapshot_cfg( cfg )
+    {
+        return JSON.parse( JSON.stringify( cfg || {} ) );
+    }
+
+    function collect_cfg_from_form()
+    {
+        var next = {};
+        next.status = $( '#status' ).prop( 'checked' ) ? 'enable' : 'disable';
+        next.cn = $( '#cn' ).val().trim();
+        next.tunnelip = $( '#tunnelip' ).val().trim();
+        next.tunnelpeer = $( '#tunnelpeer' ).val().trim();
+        next.password = $( '#password' ).val();
+        next.redirect = $( '#redirect' ).val();
+        next.push_reset = $( '#push_reset' ).prop( 'checked' ) ? 'enable' : 'disable';
+        next.dns = $( '#dns' ).val().trim();
+        next.dns2 = $( '#dns2' ).val().trim();
+        next.options = $( '#options' ).val().trim();
+        next.local_net = read_net_rules( '#local_net_container' );
+        next.remote_net = read_net_rules( '#remote_net_container' );
+        return next;
+    }
+
+    function load_config()
+    {
+        he.load( [ object, 'ovpns@server' ] ).then( function ( v ) {
+            var cfg = v[0] || {};
+            serverCfg = v[1] || {};
+            fill_form( cfg );
+            lastCfgSnapshot = snapshot_cfg( cfg );
+        } );
+    }
+
+    function save_config()
+    {
+        var new_cfg = collect_cfg_from_form();
+        var copy = lastCfgSnapshot ? snapshot_cfg( lastCfgSnapshot ) : {};
+        if ( ocompare( new_cfg, copy ) )
+        {
+            page.alert( { message: $.i18n( 'Settings unchanged' ) } );
+            return;
+        }
+        he.exec( [ object + '=' + JSON.stringify( new_cfg ) ] ).then( function () {
+            page.hint2succeed( $.i18n( 'Save successfully' ) );
+            load_config();
+        } );
+    }
+
+    $( document ).on( 'click', '.ovpns_net_del', function () {
+        var id = '#' + $( this ).closest( '[id$=_container]' ).attr( 'id' );
+        $( this ).closest( '.route-rule-item' ).remove();
+        if ( $( id + ' .route-rule-item' ).length === 0 )
+        {
+            add_net_rule( id, '', '' );
+        }
+        else
+        {
+            refresh_net_buttons( id );
+        }
+    } );
+    $( document ).on( 'click', '.ovpns_net_add', function () {
+        var id = '#' + $( this ).closest( '[id$=_container]' ).attr( 'id' );
+        add_net_rule( id, '', '' );
+    } );
+
+    page.password( 'password', 'password-icon' );
+    $.i18n().load( page.lang( langjson ) ).then( function () {
+        $.i18n().locale = lang;
+        $( 'body' ).i18n();
+        load_config();
+        $( '#back' ).on( ace.click_event, function () {
+            $( location ).attr( 'href', '#app?page=' + base64.encode( prjpath + '/server.html' ) + '&lang=' + base64.encode( langjson ) );
+        } );
+        $( '#refresh' ).on( ace.click_event, function () {
+            location.reload();
+        } );
+        $( '#apply' ).on( ace.click_event, function () {
+            save_config();
+        } );
+    } );
+})();
+</script>

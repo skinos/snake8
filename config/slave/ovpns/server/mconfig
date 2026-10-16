@@ -1,0 +1,3 @@
+# OpenVPN server executable (setuid root on slave install)
+CFLAGS += -Wno-deprecated-declarations -Wno-unused-parameter
+LDFLAGS += -lskinm -lcrypto

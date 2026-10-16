@@ -134,6 +134,10 @@ sdk_install:
 		sudo chown root:root /usr/share/skinos/agent/gtog; \
 		sudo chmod u+s /usr/share/skinos/agent/gtog; \
 	fi
+	if [ -f /usr/share/skinos/ovpns/server ];then \
+		sudo chown root:root /usr/share/skinos/ovpns/server; \
+		sudo chmod u+s /usr/share/skinos/ovpns/server; \
+	fi
 sdk_start:
 	if [ -f /usr/share/skinos/setup.sh ]; then \
 		/usr/share/skinos/setup.sh; \
@@ -151,9 +155,9 @@ sdk_uninstall:
 	sudo rm -fr /tmp/skinos
 	sudo rm -fr /var/skinos
 	sudo rm -fr /usr/share/skinos
-	#sudo rm -fr /mnt/skinos well clear all device
+	sudo rm -fr /mnt/skinos
 	sudo ldconfig
-.PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_clean
+.PHONY: sdk_install sdk_bootup sdk_start sdk_stop sdk_uninstall sdk_clean
 
 
 

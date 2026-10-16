@@ -1,0 +1,45 @@
+{
+    "name": "ovpns",
+    "intro": "OpenVPN server",
+    "desc": "OpenVPN server and per-client objects",
+    "type": "root",
+    "version": "1.0.0",
+    "author": "dimmalex@gmail.com",
+
+    "exe":
+    {
+        "server":"OpenVPN server"
+    },
+
+    "init":
+    {
+        "manage":
+        {
+            "ovpns@server.setup":""
+        }
+    },
+
+    "uninit":
+    {
+        "manage":
+        {
+            "ovpns@server.shut":""
+        }
+    },
+
+    "wui":
+    {
+        "server":
+        {
+            "menu": "Service",
+            "cn": "OpenVPN服务器",
+            "en": "OpenVPN Server",
+            "page": "server.html",
+            "lang":
+            {
+                "cn": "cn.json",
+                "en": "en.json"
+            }
+        }
+    }
+}

@@ -41,7 +41,7 @@ update:
 
 # SDK rebuild for HOST
 rebuild:
-	make;make sdk_install;make sdk_start
+	make sdk_stop;make sdk_uninstall;make;make sdk_install;make sdk_start
 # SDK help for smtk2/smtk3
 menu:
 	make sdk_menu
