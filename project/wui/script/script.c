@@ -174,7 +174,7 @@ talk_t _delete( obj_t this, param_t param )
     }
 
     type = com_path( object, path, sizeof(path) );
-    if ( type != COM_FILE_EXECUTE )
+    if ( type != COM_FILE_EXECUTE && type != COM_FILE_SHELL )
     {
         if ( type == COM_FILE_LIB )
         {
@@ -200,7 +200,7 @@ talk_t _delete( obj_t this, param_t param )
     return ttrue;
 }
 
-/* view[ object ] — return base64-encoded content of any COM_FILE_EXECUTE object */
+/* view[ object ] — return base64-encoded content of an exe or shell component */
 talk_t _view( obj_t this, param_t param )
 {
     talk_t v;
@@ -220,7 +220,7 @@ talk_t _view( obj_t this, param_t param )
     }
 
     type = com_path( object, path, sizeof(path) );
-    if ( type != COM_FILE_EXECUTE )
+    if ( type != COM_FILE_EXECUTE && type != COM_FILE_SHELL )
     {
         if ( type == COM_FILE_LIB )
         {
@@ -292,7 +292,7 @@ talk_t _save( obj_t this, param_t param )
     }
 
     type = com_path( object, path, sizeof(path) );
-    if ( type != COM_FILE_EXECUTE )
+    if ( type != COM_FILE_EXECUTE && type != COM_FILE_SHELL )
     {
         if ( type == COM_FILE_LIB )
         {
