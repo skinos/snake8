@@ -116,9 +116,7 @@ upd_privateip=0
 ddns_rundir="/var/run/ddns"
 [ -d $ddns_rundir ] || mkdir -p -m755 $ddns_rundir
 
-# directory to store log files
-ddns_logdir="/var/log/ddns"
-[ -d $ddns_logdir ] || mkdir -p -m755 $ddns_logdir
+# log file is /var/log/ddns_<section>.log (set in dynamic_dns_updater.sh)
 
 # number of lines to before rotate logfile
 ddns_loglines=250

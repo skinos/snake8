@@ -106,7 +106,7 @@ CHKFILE="$ddns_rundir/$SECTION_ID.nextcheck" # next check (system uptime + check
 DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
 ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
 IPFILE="$ddns_rundir/$SECTION_ID.ip"	#
-LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
+LOGFILE="/var/log/ddns_$SECTION_ID.log"	# log file
 
 # VERBOSE > 1 delete logfile if exist to create an empty one
 # only with this data of this run for easier diagnostic
@@ -173,7 +173,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # dns_server		using a non default dns server to get Registered IP from Internet
 # force_dnstcp		force communication with DNS server via TCP instead of default UDP
 # proxy			using a proxy for communication !!! ALSO used to detect current IP via web => return proxy's IP !!!
-# use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
+# use_logfile		self-explanatory "/var/log/ddns_$SECTION_ID.log"
 # is_glue			the record that should be updated is a glue record
 #
 # some functionality needs
