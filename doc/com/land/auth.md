@@ -24,9 +24,11 @@ The configuration structure is divided into three layers
         {                      // username configure in this json
             "id":"username identify number",                        // [ number ], linux system user id number
             "key":"username password",                              // [ string ], encrypt password, cannot be space
-            "key_check":"key need strength",                        // [ "disable", "enable" ], default be "disable"
-            "key_failed_time":"Number of consecutive failures",     // [ number ], default be 0
-            "key_failed_wait":"failures to block",                  // [ number ], default be 5, the unit is second
+            "key_check":"key need strength",                        // [ "disable", "enable" ], default be "disable"; "enable" rejects weak passwords on modify/change
+            "key_failed_time":"Number of consecutive failures",     // [ number ], default be 0 (disabled); >0 enables lockout after that many failed check/match
+            "key_failed_wait":"failures to block",                  // [ number ], seconds to refuse login after key_failed_time is reached; <=0 disables lockout
+                                                                    // runtime counters in register: failed_count_<account>, failed_uptime_<account> (EBUSY while locked, no sleep)
+                                                                    // webs may compute remaining wait from failed_uptime_<account> + key_failed_wait
 
             "group":                     // [ json ], List of groups to which the username belongs
             {
@@ -193,8 +195,8 @@ ttrue
     - domain ------------- [ string ], optional, specify a specific domain, default is common
     - username ----------- [ string ] 
     - password ----------- [ string ], text password
-    - failed return tfalse
-    - succeed return ttrue
+    - failed return tfalse (`errno`: `ENOENT` unknown user, `EINVAL` wrong password, `EACCES` domain denied, `EBUSY` locked by `key_failed_*`)
+    - succeed return ttrue (clears that account's failed counters)
 
     Example, check the username admin correct
     ```shell
@@ -212,8 +214,9 @@ ttrue
     - domain ----------------- [ string ], optional, specify a specific domain, default is common
     - username --------------- [ string ] 
     - ciphertext ------------- [ string ], cryptographic password
-    - failed return tfalse
-    - succeed return ttrue
+    - failed return tfalse (same `errno` mapping as `check`)
+    - succeed return ttrue (clears that account's failed counters)
+    - Web login (`POST /auth`) uses this API by default; `webs@httpd` maps `errno` to JSON `reason`
 
     Example, check the username admin correct
     ```shell

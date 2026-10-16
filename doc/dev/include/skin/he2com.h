@@ -50,18 +50,20 @@ typedef he_struct* he_t;
  * @return json map: api name (no "_" prefix) → ""
  * 	@retval talk_t for succeed - caller must free with talk_free()
  *  @retval NULL for error, errno will be set
- * @note filepath takes priority over object. Does not list get/set (config). ELF also omits init/fini/start.
+ * @note lib scans `.dynsym`. ELF exe calls built-in "list". Shell scans api().
+ *       filepath takes priority over object. Does not list get/set. ELF scan omits init/fini/start.
  */
 talk_t api_list( const char *object, const char *filepath );
 /**
- * @brief probe whether a component exports an HE API (scan file; not via api_list)
+ * @brief probe whether a component exports an HE API
  * @param[in] object component object name; ignored when filepath is set
  * @param[in] api method name without "_" (e.g., "setup", "get", "set")
  * @param[in] filepath component file path; when non-empty, used instead of resolving object
  * @return true if the matching function/symbol exists in the file
- * 	@retval true for present (ELF: _api; shell: api())
+ * 	@retval true for present (lib: `_api` in `.dynsym`; exe: symbol scan; shell: api())
  *  @retval false for missing, errno set (ENOSYS typical)
- * @note Unlike api_list, get/set are detectable (_get/_set or get()/set()).
+ * @note ELF exe presence for a live component is com_have/com_exist, which call "list".
+ *       Unlike api_list, get/set are detectable (_get/_set or get()/set()).
  * @see api_list, com_have, com_exist
  */
 boole  api_exist( const char *object, const char *api, const char *filepath );
@@ -175,6 +177,15 @@ talk_t json_he_execute( talk_t cmd );
  *  	@retval tpanic for calling or parameter error, errno will be set
  */
 talk_t talk_he_command( talk_t cmd );
+/**
+ * @brief execute a batch of HE commands like talk_he_command, log configuration writes, skip rejected ones
+ * @param[in] cmd json object, each value is a string HE or JSON HE
+ * @param[in] matchlist {"pattern":"api|api_start|api_end|obj|obj_start|op"} or NULL for no filter
+ * @param[in] black 0 whitelist, 1 blacklist
+ * @param[in] modifyer log prefix for a configuration write, or NULL
+ * @return json result map, caller must talk_free
+ */
+talk_t rpc_he_command( talk_t cmd, talk_t matchlist, int black, const char *modifyer );
 
 
 

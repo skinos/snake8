@@ -174,6 +174,21 @@ ttrue
     04:CF:8C:39:91:7A
     ```
 
++ `ipscan[ ifname ]` **start a one-shot IPv4 subnet probe on a LAN**
+    - ifname ----------- [ string ], optional, default `ifname@lan`
+    - succeed return ttrue
+    - starts service **`<ifname>-ipscan`** via `sstart` → `ipscand` (e.g. `ifname@lan-ipscan`)
+    - if that service is **still running**, `sstart` does not restart it; call again after it finishes to rescan
+    - `ipscand` reads `ifname.status` (`ip`/`mask`/`netdev`), pings each host on the subnet (skip self; refuse if host count &gt; 1024); replies fill ARP and then appear in `list`
+
+    Example, scan the first LAN
+    ```shell
+    client@station.ipscan
+    ttrue
+    client@station.ipscan[ ifname@lan2 ]
+    ttrue
+    ```
+
 
 #### Control APIs
 

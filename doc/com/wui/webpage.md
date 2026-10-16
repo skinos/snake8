@@ -843,6 +843,7 @@ he.cmd({
 | `"NULL"` | `null` |
 | JSON object | parsed object |
 | `"Auth Error"` | redirects to `login.html` |
+| `"Auth Expired"` | alerts session expired, then redirects to `login.html` |
 
 ### Reboot helpers
 

@@ -383,30 +383,29 @@ typedef int boole;
 /// system important path
 #define PROJECT_DIR 			 "/usr/share/skinos"
 #define PROJECT_ETC_DIR 		 "/etc"
+#define PROJECT_TMP_DIR 		 "/tmp/skinos"
+#define PROJECT_VAR_DIR 		 "/var/skinos"
+#define PROJECT_MNT_DIR 		 "/mnt/skinos"
 #if defined gPLATFORM__slave
-	#define PROJECT_TMP_DIR 		 "/tmp/skinos"
-	#define PROJECT_VAR_DIR 		 "/var/skinos"
-	#define PROJECT_MNT_DIR 		 "/mnt/skinos"
 	#define PROJECT_LIB_DIR          "/usr/local/lib"
 	#define PROJECT_BIN_DIR          "/usr/local/bin"
+	#define PROJECT_LOG_DIR          PROJECT_VAR_DIR"/log"
 	#define PROJECT_CFG_DIR 		 PROJECT_MNT_DIR"/config"
 	#define PROJECT_REGISTER_LIB_DIR PROJECT_LIB_DIR
 	#define PROJECT_REGISTER_BIN_DIR PROJECT_BIN_DIR
 #else
-	#define PROJECT_TMP_DIR 		 "/tmp"
-	#define PROJECT_VAR_DIR 		 "/var"
-	#define PROJECT_MNT_DIR 		 "/mnt"
 	#define PROJECT_LIB_DIR          "/usr/lib"
 	#define PROJECT_BIN_DIR          "/usr/bin"
+	#define PROJECT_LOG_DIR          "/var/log"
 	#define PROJECT_CFG_DIR          PROJECT_ETC_DIR"/config"
-	#define PROJECT_REGISTER_LIB_DIR PROJECT_VAR_DIR"/lib"
-	#define PROJECT_REGISTER_BIN_DIR PROJECT_VAR_DIR"/bin"
+	#define PROJECT_REGISTER_LIB_DIR "/var/lib"
+	#define PROJECT_REGISTER_BIN_DIR "/var/bin"
 #endif
+#define PROJECT_CONF_DIR             PROJECT_VAR_DIR"/conf"
 #define PROJECT_REG_DIR              PROJECT_TMP_DIR"/.reg"
 #define PROJECT_SER_DIR              PROJECT_TMP_DIR"/.ser"
 #define PROJECT_COM_DIR              PROJECT_TMP_DIR"/.com"
 #define PROJECT_CAH_DIR              PROJECT_TMP_DIR"/.cah"
-#define PROJECT_CONF_DIR             PROJECT_TMP_DIR"/.conf"
 #define PROJECT_OEM_DIR              PROJECT_MNT_DIR"/.oem"
 #define PROJECT_FAC_DIR              PROJECT_MNT_DIR"/.fac"
 #define PROJECT_DBS_DIR 		     PROJECT_MNT_DIR"/dbs"

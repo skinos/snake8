@@ -25,7 +25,8 @@
     {
         "object name":                                      // [ string ]: { json }, e.g. "modem@lte"
         {
-            "usb path": ""                                  // [ string ]: [ string ], sysfs device id such as "1-2"
+            "usb path": ""                                  // [ string ] or { json }: sysfs id such as "1-2"; "" = USB netdev
+            // optional path object: { "pcie":"eth0" } — host ifname for PCIe RC+PHY (e.g. MT5700M); driver skips USB NCM
             // "...":""  How many paths show how many properties
         }
         // "...":{ ... }  How many objects show how many properties

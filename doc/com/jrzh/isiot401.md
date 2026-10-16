@@ -4,7 +4,8 @@
 
 Read gas concentration data from ISIOT-401 device via Modbus RTU and report to cloud platform via TCP socket with AES encryption.
 - Default gas types: O2, CO, H2S, CH4 (configurable via `modbus_reg0` ~ `modbus_reg3`)
-- Step 1 register via `BALL_POINT_INFO`, Step 2 report via `BALL_MONITOR_REAL_DATA` every `report_interval`
+- `setup` starts two services: `gas_service` reads Modbus every `read_interval` into the uart register; `cloud_service` sends `BALL_POINT_INFO` / `BALL_MONITOR_REAL_DATA` every `report_interval` from that register
+- `status` reads the uart register, so a stuck report does not block gas query
 - Manual read and report via Control APIs
     > Data is encrypted with AES-128-CBC and base64 encoded before transmission
 
@@ -15,7 +16,8 @@ Read gas concentration data from ISIOT-401 device via Modbus RTU and report to c
 // Attributes introduction
 {
     "modbus_addr": "1",                                        // [ number ], Modbus device address, default 1, range 1-253
-    "report_interval": "10000",                                // [ number ], report interval in milliseconds, default 10000, minimum 100
+    "read_interval": "1000",                                   // [ number ], gas read interval in milliseconds, default 1000, minimum 100
+    "report_interval": "5000",                                 // [ number ], cloud report interval in milliseconds, default 5000, minimum 100
     "modbus_timeout": "1",                                     // [ number ], Modbus response timeout in seconds, default 1, minimum 1
     "tcp_timeout": "10",                                       // [ number ], TCP connect+send+recv total timeout in seconds, default 10, minimum 1
     "ent_code": "enterprise code from cloud platform",         // [ string ], default "LZ7300300243"
@@ -50,7 +52,8 @@ Example, show all the isiot401 configure
 isiot401
 {
     "modbus_addr":"1",                                         # Modbus device address
-    "report_interval":"10000",                                 # report every 10000 milliseconds
+    "read_interval":"1000",                                    # read gas every 1000 milliseconds
+    "report_interval":"5000",                                  # report every 5000 milliseconds
     "modbus_timeout":"1",                                      # Modbus response timeout in seconds
     "tcp_timeout":"10",                                        # TCP timeout in seconds
     "ent_code":"LZ7300300243",                                 # enterprise code
@@ -75,6 +78,12 @@ isiot401
 ```
 
 #### Configuration settings example
+
+Example, change the gas read interval to 1000 milliseconds
+```shell
+isiot401:read_interval=1000
+ttrue
+```
 
 Example, change the report interval to 500 milliseconds
 ```shell
@@ -112,24 +121,43 @@ ttrue
 
 #### Management APIs
 
-+ `service` **start the isiot401 gas detector service**
++ `setup[ object, ttydev ]` **start the gas reader and the cloud reporter**
     - failed return tfalse
-    - succeed return tfalse
-    - This is a lifecycle method called automatically by the uart framework during startup
-    - Opens Modbus RTU connection, registers device info, and enters event loop
+    - succeed return ttrue
+    - Called by `uart@frame` during instance setup
+    - Starts `<object>-gas` via `gas_service` and `<object>-report` via `cloud_service`
+
++ `shut[ object ]` **stop both services**
+    - failed return tfalse
+    - succeed return ttrue
+    - Called by `uart@frame` during instance shut
+
++ `gas_service[ object, ttydev ]` **read Modbus and store values in the uart register**
+    - long-running service started by `setup`
+    - owns the serial port
+    - immediate read is `read`
+
++ `cloud_service[ object, ttydev ]` **report register values to the server**
+    - long-running service started by `setup`
+    - does not open the serial port
+    - immediate report is `report`, immediate device register is `register`
 
 
 #### Query APIs
 
-+ `status` **query the running status of the isiot401 service**
-    - failed return NULL
++ `status` **query the uart object register**
+    - failed return NULL when the gas service is not running
     - succeed return [ json ], current status and gas concentrations
+    - Does not enter the gas or report service
     ```json
     {
         "modbus_addr": "1",              // [ number ], Modbus device address
-        "report_interval": "10000",      // [ number ], report interval in milliseconds
+        "read_interval": "1000",         // [ number ], gas read interval in milliseconds
+        "report_interval": "10000",      // [ number ], cloud report interval in milliseconds
         "last_read": "12345",            // [ number ], uptime_int() of last successful read
+        "point_report": "disable",       // [ string ], "enable" or "disable"
         "registered": "yes",             // [ string ], device info registered: "yes" or "no"
+        "reported": "yes",               // [ string ], last cloud report: "yes" or "no"
         "modbus_reg0": "O2",             // [ string ], register 0 gas type
         "modbus_reg1": "CO",             // [ string ], register 1 gas type
         "modbus_reg2": "H2S",            // [ string ], register 2 gas type
@@ -146,9 +174,12 @@ ttrue
     isiot401.status
     {
         "modbus_addr":"1",
+        "read_interval":"1000",
         "report_interval":"10000",
         "last_read":"12345",
+        "point_report":"disable",
         "registered":"yes",
+        "reported":"yes",
         "modbus_reg0":"O2",
         "modbus_reg1":"CO",
         "modbus_reg2":"C6H6",
@@ -186,7 +217,7 @@ ttrue
 
 #### Control APIs
 
-+ `report` **read and report gas data immediately**
++ `report` **report the latest gas data from the uart register immediately**
     - failed return tfalse
     - succeed return ttrue
 
@@ -261,7 +292,7 @@ Response failure:
 
 **Step 2: Report real-time data (`BALL_MONITOR_REAL_DATA`)**
 
-Read 4 gas values via Modbus, then send:
+Take the latest gas values from the uart register, then send:
 ```json
 {
     "companyCode": "LZ7300300243",

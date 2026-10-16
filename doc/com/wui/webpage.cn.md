@@ -841,6 +841,7 @@ he.cmd({
 | `"NULL"` | `null` |
 | JSON 对象 | 解析后的对象 |
 | `"Auth Error"` | 跳转到 `login.html` |
+| `"Auth Expired"` | 提示会话过期后跳转到 `login.html` |
 
 ### 重启相关
 

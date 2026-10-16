@@ -248,8 +248,8 @@ The network subsystem uses a layered architecture that separates configuration, 
                                                                    // hot: leave sticky when current>divide and (current - good-tier-smallest)>this; 0 => weaker anti-flap
                                                                    // lazy: 0=ignore diff (online switch by delay_divide only); >0 with divide>0 needs both
                                                                    // lazy target: best mean
-    "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default 1 when empty
-    "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff when empty
+    "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default delay_divide/2 when empty
+    "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff*3 when empty
 
     "interval":"Connect scheduler poll interval",                  // [ number ], seconds; empty or 0 defaults to 10
 

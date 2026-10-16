@@ -201,6 +201,34 @@ arch@net
     ttrue
     ```
 
++ `addif[ ifdev ]` **add an interface netdev into this bridge instance**
+    - ifdev ------------ [ string ], the device component name to add
+    - failed return tfalse
+    - succeed return ttrue
+    - instance only (`bridge@lan`); the root object returns tfalse
+    - reads `ifdev`'s `netdev` and runs `brctl addif` on this bridge
+    - does not require `ifdev` to be listed in `arch@net` bridge members, and does not call `ifdev` up or connect
+
+    Example, add ovpn@client into bridge@lan
+    ```shell
+    bridge@lan.addif[ ovpn@client ]
+    ttrue
+    ```
+
++ `delif[ ifdev ]` **remove an interface netdev from this bridge instance**
+    - ifdev ------------ [ string ], the device component name to remove
+    - failed return tfalse
+    - succeed return ttrue
+    - instance only (`bridge@lan`); the root object returns tfalse
+    - reads `ifdev`'s `netdev` and runs `brctl delif` on this bridge
+    - does not call `ifdev` down
+
+    Example, remove ovpn@client from bridge@lan
+    ```shell
+    bridge@lan.delif[ ovpn@client ]
+    ttrue
+    ```
+
 + `setmac[ mac ]` **set MAC address on the bridge netdev**
     - mac -------------- [ string ], MAC address
     - failed return tfalse

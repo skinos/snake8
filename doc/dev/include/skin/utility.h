@@ -558,8 +558,10 @@ boole lsmod( const char *module );
 #define MAIN_TABLE_NAME       "main"
 #define MAIN_TABLE_ID         254
 #define MAIN_TABLE_PREF       32766
-// ifname mark rule
+// ifname mark rule. oif rule stays after dest policy and before fwmark,
+// so SO_BINDTODEVICE (ping -I) wins when the packet is also marked.
 #define IFNAME_TABLE_PREF     35000
+#define IFNAME_OIF_PREF       34950
 // local / forward dest policy rules
 #define LOCAL_RULE_PREF       34800
 #define FORWARD_RULE_PREF     34900

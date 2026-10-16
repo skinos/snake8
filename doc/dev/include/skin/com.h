@@ -67,9 +67,10 @@ typedef struct eapi_table_st
  * @param table Array of eapi_table_t (method name → comapi_t). Must be an array identifier.
  * @param getfn comget_t (obj, attr) → talk_t; used when API is "get" (from cget/sget).
  * @param setfn comset_t (obj, talk, attr) → boole; used when API is "set" (from cset/sset).
- * @note "get"/"set" are not looked up in table; methods stay in table. setfn's boole is
- *       mapped to ttrue/tfalse before talk2fd. Prefer MAIN2API(table) when config_* is enough.
- * @note API presence for ? / com_have / com_exist uses api_exist()/api_list(), not a peer exist[].
+ * @note "list"/"get"/"set" are not looked up in table. "list" returns the table names.
+ *       setfn's boole is mapped to ttrue/tfalse before talk2fd.
+ *       Prefer MAIN2API(table) when config_* is enough.
+ * @note EXE com_have / com_exist / api_list call "list" first. Symbol scan is the fallback.
  */
 #define MAIN2COM( table, getfn, setfn ) \
 int main( int argc, const char **argv ) \
@@ -110,7 +111,25 @@ int main( int argc, const char **argv ) \
 	ret = tpanic; \
 	if ( api != NULL && *api != '\0' ) \
 	{ \
-		if ( 0 == strcmp( api, "get" ) ) \
+		if ( 0 == strcmp( api, "list" ) ) \
+		{ \
+			ret = json_create( NULL ); \
+			if ( ret == NULL ) \
+			{ \
+				ret = tpanic; \
+			} \
+			else \
+			{ \
+				for ( i = 0; i < sizeof( table ) / sizeof( (table)[0] ); i++ ) \
+				{ \
+					if ( (table)[i].name != NULL && (table)[i].name[0] != '\0' ) \
+					{ \
+						json_set_string( ret, (table)[i].name, "" ); \
+					} \
+				} \
+			} \
+		} \
+		else if ( 0 == strcmp( api, "get" ) ) \
 		{ \
 			if ( this == NULL ) \
 			{ \
@@ -360,6 +379,7 @@ typedef struct com_st
 #define COM_FILE_EXECUTE 2
 /* obj alias → one real component name (not another alias); unresolved = not listed / not usable */
 #define COM_FILE_ALIAS   3
+#define COM_FILE_SHELL   4
 /** Fixed fd for JSON/talk reply pipe in shell-spawned COM_FILE_EXECUTE children (dup2 from pipe write end) */
 #define SHELL_COM_PIPE   7
 	signed char type;
@@ -404,7 +424,7 @@ const char *com_com2name( const char *com );
  * @brief register a component (maps object name to origin component or path)
  * @param[in] object object to register (e.g., "myproject@alias")
  * @param[in] origin component or path being aliased (e.g., "myproject@realcom", "/usr/share/skinos/myproject/mycom")
- * @param[in] type file type of path, must be 0 when origin be other compoent
+ * @param[in] type COM_FILE_LIB, COM_FILE_EXECUTE or COM_FILE_SHELL; 0 when origin is another component. EXECUTE and SHELL are stored from the file: ELF is exe, anything else is shell
  * @return operation result
  * 	@retval true for succeed
  *  @retval false for failed, errno will be set
@@ -426,6 +446,7 @@ boole  com_unregister( const char *object );
  * @return component file type
  * 	@retval COM_FILE_LIB (1) for shared library
  * 	@retval COM_FILE_EXECUTE (2) for executable
+ * 	@retval COM_FILE_SHELL (4) for shell script
  * 	@retval negative for not found or error, errno will be set
  * 	        (EINVAL when path probe finds no file / bad args / corrupt nested
  * 	         alias; ENOENT when alias target is missing; ENAMETOOLONG on overflow)
@@ -492,9 +513,8 @@ void   com_close( com_t com );
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
- * @note LIB/EXE/shell: api_exist() scans the file for _api / api() (get/set included).
+ * @note lib: dlsym `_api`. ELF exe: call "list" (table, plus get/set/list). Shell script: scan api().
  *       api_list / leading "." still omit get/set (and ELF init/fini/start).
- *       com_exist passes com->path into api_exist (filepath preferred over object).
  * @see com_have to check by object string without keeping a handle open
  * @see api_exist, api_list
  * @see ccall, scall to invoke an API on an object

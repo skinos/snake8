@@ -50,7 +50,7 @@ Own `/dev/log` in place of busybox syslogd. Each datagram is one line and is wri
                                                       // "/path": use an absolute directory path
                                                       // empty or unset: use default var directory
     "file_size":"log file size limit in KB",       // [ number ], maximum log file size in kilobytes, default be 5 for internal or 100 for storage
-    "file_max":"rotated local file count",         // [ number ], max MMDDHHMM-uptime.log files in the log dir, default be 1
+    "file_max":"rotated local file count",         // [ number ], max sys-MMDDHHMM-uptime.log files in the log dir, default be 1
 
     "remote_server":"remote syslog server address", // [ string ], IP address or hostname of remote syslog server, empty means disabled
     "remote_port":"remote syslog server port",     // [ string ], port number for remote syslog, default be "514"
@@ -84,7 +84,7 @@ agent@logc
 
     "file_location":"storage",                 # log stored on storage device
     "file_size":"100",                         # log file size limit 100KB
-    "file_max":"3",                            # keep at most three .log files
+    "file_max":"3",                            # keep at most three sys-*.log files
 
     "center":"enable",                         # upload to center@log
     "center_port":"20004",                     # center TCP port
@@ -178,7 +178,7 @@ ttrue
     - succeed return [ json ], log file path and size information
     ```json
     {
-        "path": "log file path",           // [ string ], absolute path to the current log file (MMDDHHMM-uptime.log)
+        "path": "log file path",           // [ string ], absolute path to the current log file (sys-MMDDHHMM-uptime.log)
         "size": "size limit in KB"         // [ number ], log file size limit in kilobytes
     }
     ```
@@ -187,7 +187,7 @@ ttrue
     ```shell
     agent@logc.path[]
     {
-        "path":"/var/log/09211959-3600.log",   # current active log file
+        "path":"/var/log/sys-09211959-3600.log",   # current active log file
         "size":5                              # size limit in KB
     }
     ```
@@ -195,7 +195,7 @@ ttrue
 + `list[]` **list all log files in the log directory**
     - failed return NULL
     - succeed return [ json ], a map of log filename to full file path, including critical log files if enabled
-    - local logs are recognized by the `.log` suffix
+    - every `.log` basename in the directory is listed, for download; order is critical files, then `sys-MMDDHHMM-uptime.log`, then any other `.log`. `file_max` only counts and deletes the `sys-` name
     ```json
     {
         "log filename": "full file path",  // [ string ]: [ string ], log filename and its absolute path
@@ -207,10 +207,12 @@ ttrue
     ```shell
     agent@logc.list
     {
-        "09211959-3600.log":"/var/log/09211959-3600.log",
-        "09212010-4200.log":"/var/log/09212010-4200.log",
-        "critical.txt":"/var/internal/critical.txt",        # critical log file
-        "critical.0.txt":"/var/internal/critical.0.txt"    # rotated critical log file
+        "critical.txt":"/var/internal/critical.txt",
+        "critical.0.txt":"/var/internal/critical.0.txt",
+        "sys-09211959-3600.log":"/var/log/sys-09211959-3600.log",
+        "sys-09212010-4200.log":"/var/log/sys-09212010-4200.log",
+        "bootup.log":"/var/log/bootup.log",
+        "module.log":"/var/log/module.log"
     }
     ```
 
@@ -405,7 +407,7 @@ ttrue
 
     Example, delete a specific log file
     ```shell
-    agent@logc.delete[ 09212010-4200.log ]
+    agent@logc.delete[ sys-09212010-4200.log ]
     ttrue
     ```
 

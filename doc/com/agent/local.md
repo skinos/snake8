@@ -18,9 +18,8 @@ Provide LAN management services: a JSON TCP command interface and a UDP broadcas
     "json_port":"JSON TCP listen port",                         // [ number ], default 22220
     "json_command":"JSON TCP command permission",               // [ "query", "all" ]
                                                                    // omitted or empty: same as "query"
-                                                                   // "query": GET and CALL whose method contains "stat", "list", or "info"
-                                                                   //         (also applies to DBS get/call); SET/OR/DBS write blocked
-                                                                   // "all": allow set/or/call (and DBS equivalents)
+                                                                   // "query": GET, and CALL whose method starts with "list", "stat", or "info"
+                                                                   // "all": other commands allowed, ".service" and methods ending in "_service" rejected
     "json_manager":"JSON TCP access control",                   // [ string or json ]
                                                                    // string: IP or MAC list separated by ";"
                                                                    //   e.g. "192.168.8.100;00:11:22:33:44:55"
@@ -98,6 +97,7 @@ ttrue
 * Supports device discovery, command execution (subject to **`broadcast_command`**), and MAC-targeted address assignment.
 * Address assign always runs when a valid MAC-targeted assign packet is received; it may also start the JSON service if not already running.
 * **`json_start`** / **`broadcast_start`** only start the process; they do **not** install manager iptables rules (rules are applied by **`setup`** when manager is set).
+* **`broadcast_search`** sends the discovery group name out the LAN netdev and collects replies for 2 seconds. The first argument is the interface component used to resolve that netdev; omit it to use `ifname@lan`. Each reply is `{mac}|{ip}|{web port}`. The result omits this device. A set **`broadcast_manager`** allow-list still filters those UDP replies.
 
 **Manager ACL**
 * When **`json_manager`** / **`broadcast_manager`** is set, **`setup`** installs an iptables allow-list for the corresponding port; unset means no ACL.
@@ -164,4 +164,35 @@ ttrue
     ```shell
     agent@local.broadcast_stop
     ttrue
+    ```
+
+#### Query API
+
++ `broadcast_search[ [ifname@lan] ]` **scan LAN devices with the discovery broadcast**
+    - ifname@lan ------ [ string ], optional, interface component whose `netdev` is the broadcast interface; omit or empty uses `ifname@lan`
+    - send `broadcast_group` (default `default`) to `255.255.255.255:broadcast_port` on that netdev, then wait 2 seconds
+    - failed return NULL (no LAN netdev, or the UDP socket cannot be opened)
+    - succeed return [ json ], keyed by device mac; empty object when nobody else answers
+    ```json
+    {
+        "device mac": {                    // [ string ], mac without colons, as in the discovery reply
+            "ip": "lan address",           // [ string ]
+            "port": "web port"             // [ number ]
+        }
+    }
+    ```
+
+    Example, two other devices answered
+    ```shell
+    agent@local.broadcast_search
+    {
+        "002233113322": {
+            "ip": "192.168.8.3",
+            "port": 80
+        },
+        "002233113333": {
+            "ip": "192.168.8.4",
+            "port": 443
+        }
+    }
     ```
