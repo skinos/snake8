@@ -673,27 +673,28 @@
             $(id + "_delay").text("");
         }
 
-        // 判断4G和5G是否有内容
+        // Show 4G/5G by payload only; do not gate on link status
         var has4G = info.signal || info.nettype || info.csq;
         var has5G = info.signal2 || info.nettype2;
 
-        if(info.status == "up" || info.status == "online" || info.status == "connect"){
-            if (has5G) {
-                // 只要有5G（无论有没有4G），只显示5G
-                $(id + "_5g_head").show();
-                $(id + "_operator5").text(operatorText || "");
-            } 
-            else if (has4G) {
-                // 没有5G，但有4G，显示4G
-                $(id + "_4g_head").show();
-                $(id + "_operator").text(operatorText || "");
-            } 
-            else if (operatorText) {
-                // 没信号但有运营商信息（兜底显示在4G位置）
-                $(id + "_4g_head").show();
-                $(id + "_operator").text(operatorText);
-                $(id + "_nettype, " + id + "_csq").text(""); 
-            }
+        if (has5G) {
+            // Prefer 5G when present; hide 4G row
+            $(id + "_5g_head").show();
+            $(id + "_4g_head").hide();
+            $(id + "_operator5").text(operatorText || "");
+        }
+        else if (has4G) {
+            // No 5G: show 4G
+            $(id + "_4g_head").show();
+            $(id + "_5g_head").hide();
+            $(id + "_operator").text(operatorText || "");
+        }
+        else if (operatorText) {
+            // No radio fields: still show operator on 4G row
+            $(id + "_4g_head").show();
+            $(id + "_5g_head").hide();
+            $(id + "_operator").text(operatorText);
+            $(id + "_nettype, " + id + "_csq").text("");
         }
         else {
             $(id + "_4g_head").hide();
@@ -731,13 +732,11 @@
             $(id + "_rssiimg").hide();
         }
 
-        if (info.status == "up" || info.status == "online" || info.status == "connect"){
-            if (info.peer && info.signal && (info.sig || info.rssi)){
-                $(id + "_net_head").show();
-            }else{
-                $(id + "_net_head").hide();
-            }
-        }else{
+        // Show WISP radio row by payload only; do not gate on link status
+        if (info.peer && info.signal && (info.sig || info.rssi)) {
+            $(id + "_net_head").show();
+            $(id + "_rssiimg").show();
+        } else {
             $(id + "_net_head").hide();
         }
 
@@ -775,113 +774,125 @@
         }
 
     }
-    /* load the status */
+    /* load the status
+     * _status  <- network@frame.extern[ifname].status  (link/modem)
+     * _state   <- network@frame.status inuse/balance   (scheduler)
+     * row show <- registered in extern, or still listed in scheduler
+     */
     function status_load()
     {
       he.bkload( [ "network@frame.status", "network@frame.extern" ] ).then( function(v){
         var list = v[0];
         var data = v[1];
+        var ifs = [ "wan", "wan2", "wan3", "wan4", "wisp", "wisp2", "lte", "lte2", "lte3", "lte4" ];
+        var n;
+        var id;
+        var key;
+        var info;
+        var sch;
+        var ftype;
+        var is_dbdc;
+
+        if ( !list && !data )
+        {
+            for ( n = 0; n < ifs.length; n++ )
+            {
+                $( '#' + ifs[n] ).hide();
+            }
+            return;
+        }
         if ( !list )
         {
-            $('#wan').hide();
-            $('#wan2').hide();
-            $('#wan3').hide();
-            $('#wan4').hide();
-            $('#wisp').hide();
-            $('#wisp2').hide();
-            $('#lte').hide();
-            $('#lte2').hide();
-            $('#lte3').hide();
-            $('#lte4').hide();
-            return;
+            list = {};
         }
         if ( !data )
         {
+            data = {};
+        }
+
+        /* need saved scheme before labeling In Use vs In Balance */
+        if ( !frame || !frame.type )
+        {
             return;
         }
 
-        // LTE
-        if (data['ifname@lte']) {
-            lte_show(data['ifname@lte'], "#lte");
-        }
-        
-        if (data['ifname@lte2']) {
-            lte_show(data['ifname@lte2'], "#lte2");
-        }
-        
-        if (data['ifname@lte3']) {
-            lte_show(data['ifname@lte3'], "#lte3");
-        }
-        
-        if (data['ifname@lte4']) {
-            lte_show(data['ifname@lte4'], "#lte4");
-        }
-
-        // WISP
-        if (data['ifname@wisp']) {
-            wisp_show(data['ifname@wisp'], "#wisp");
-        }
-        
-        if (data['ifname@wisp2']) {
-            wisp_show(data['ifname@wisp2'], "#wisp2");
-        }
-
-        // WAN
-        if (data['ifname@wan']) {
-            wan_show(data['ifname@wan'], "#wan");
-        }
-        
-        if (data['ifname@wan2']) {
-            wan_show(data['ifname@wan2'], "#wan2");
-        }
-        
-        if (data['ifname@wan3']) {
-            wan_show(data['ifname@wan3'], "#wan3");
-        }
-        
-        if (data['ifname@wan4']) {
-            wan_show(data['ifname@wan4'], "#wan4");
-        }
-
-        /* dbdc/dbdcX: state column shows balance; otherwise shows inuse */
-        var ftype = (frame && frame.type) ? frame.type : $('#type').val();
-        var is_dbdc = (ftype && ftype.indexOf("dbdc") === 0);
-        var ifs = [ "wan", "wan2", "wan3", "wan4", "wisp", "wisp2", "lte", "lte2", "lte3", "lte4" ];
-        for ( var n = 0; n < ifs.length; n++ )
+        /* dbdc/dbdcX: state column shows balance; otherwise shows inuse
+         * extern(info): _status + signal/delay; sch: _state only
+         */
+        ftype = frame.type;
+        is_dbdc = ( ftype.indexOf( "dbdc" ) === 0 );
+        for ( n = 0; n < ifs.length; n++ )
         {
-            var id = ifs[n];
-            var key = "ifname@" + id;
-            if ( list[key] )
+            id = ifs[n];
+            key = "ifname@" + id;
+            info = data[key];
+            sch = list[key];
+            if ( !info && !sch )
             {
-                if ( list[key].status )
+                $( '#' + id ).hide();
+                continue;
+            }
+
+            if ( info )
+            {
+                if ( id.indexOf( "lte" ) === 0 )
                 {
-                    $('#' + id + '_status').html( $.i18n( list[key].status ) );
+                    lte_show( info, "#" + id );
                 }
-                if ( is_dbdc )
+                else if ( id.indexOf( "wisp" ) === 0 )
                 {
-                    if ( list[key].balance == "enable" )
-                    {
-                        $('#' + id + '_state').html( $.i18n('In Balance') );
-                    }
-                    else
-                    {
-                        $('#' + id + '_state').html( $.i18n('Unused') );
-                    }
-                }
-                else if ( list[key].inuse == "enable" )
-                {
-                    $('#' + id + '_state').html( $.i18n('In Use') );
+                    wisp_show( info, "#" + id );
                 }
                 else
                 {
-                    $('#' + id + '_state').html( $.i18n('Unused') );
+                    wan_show( info, "#" + id );
                 }
-                $('#' + id).show();
+                if ( info.status )
+                {
+                    $( '#' + id + '_status' ).html( $.i18n( info.status ) );
+                }
+                else
+                {
+                    $( '#' + id + '_status' ).html( '' );
+                }
             }
             else
             {
-                $('#' + id).hide();
+                /* no extern this tick: clear extern-owned cells only */
+                $( '#' + id + '_status' ).html( '' );
+                if ( id.indexOf( "lte" ) === 0 )
+                {
+                    $( '#' + id + '_4g_head' ).hide();
+                    $( '#' + id + '_5g_head' ).hide();
+                }
+                else if ( id.indexOf( "wisp" ) === 0 )
+                {
+                    $( '#' + id + '_net_head' ).hide();
+                }
+                $( '#' + id + '_delay_head' ).hide();
+                $( '#' + id + '_delay' ).text( '' );
             }
+
+            if ( is_dbdc )
+            {
+                if ( sch && sch.balance == "enable" )
+                {
+                    $( '#' + id + '_state' ).html( $.i18n( 'In Balance' ) );
+                }
+                else
+                {
+                    $( '#' + id + '_state' ).html( $.i18n( 'Unused' ) );
+                }
+            }
+            else if ( sch && sch.inuse == "enable" )
+            {
+                $( '#' + id + '_state' ).html( $.i18n( 'In Use' ) );
+            }
+            else
+            {
+                $( '#' + id + '_state' ).html( $.i18n( 'Unused' ) );
+            }
+            $( '#' + id ).show();
         }
       });
     }
@@ -985,6 +996,7 @@
                 $('#customdns_config').hide();
               }
             }).trigger('change');
+            status_load();
         });
     }
     function frame_save()
@@ -1033,7 +1045,6 @@
                 he.exec( [ "network@frame="+JSON.stringify(frame) ] ).then( function(){
                     page.hint2succeed( $.i18n('Modified successfully') );
                     frame_load();
-                    status_load();
                 });
             }
             else
@@ -1048,7 +1059,6 @@
       /* init the language */
       $.i18n().locale = lang; $('body').i18n();
 
-      status_load();
       frame_load();
   
       $('#main').unbind('change').change(function (e) {
@@ -1075,11 +1085,21 @@
         reserve3_html();
 
       });
+      $('#reserve').unbind('change').change(function (e) {
+        reserve2_html();
+        reserve3_html();
+      });
+      $('#reserve2').unbind('change').change(function (e) {
+        reserve3_html();
+      });
       // 设置定时器
       page.timing({
         refresh: function ()
         {
-            status_load();
+            if ( frame )
+            {
+                status_load();
+            }
         },
         interval: 1000
       });

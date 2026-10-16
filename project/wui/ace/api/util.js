@@ -848,7 +848,7 @@ var jqtable =
             rowNum:10000, rowList:[],
             hideRowList: true, pgbuttons:false, pginput:false,
             pager: pager_selector,
-            multiselect: true, multiboxonly: true, shrinkToFit:false, // 禁止列自适应
+            multiselect: true, multiboxonly: false, shrinkToFit:false, // 禁止列自适应
             loadComplete: function()
             {
                 var t = this;

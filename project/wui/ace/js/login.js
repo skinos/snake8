@@ -79,6 +79,11 @@ jQuery(function($) {
 					login_system();
 				}
 			});
+			/* Came from Auth Expired redirect — toast only, no blocking modal */
+			if ( /(?:\?|&)expired=1(?:&|$)/.test( window.location.search || "" ) )
+			{
+				page.hint2error( $.i18n( 'Session expired, please sign in again' ) );
+			}
 		})
 		
 	});
@@ -121,7 +126,33 @@ jQuery(function($) {
 					}
 					else
 					{
-						page.alert( { message:$.i18n('Incorrect password') } ).then( function()
+						var msg;
+						switch ( value["reason"] )
+						{
+							case "locked":
+								if ( value["wait"] > 0 )
+								{
+									msg = $.i18n('Too many failed attempts, please try again in %1 seconds').replace('%1', String(value["wait"]));
+								}
+								else
+								{
+									msg = $.i18n('Too many failed attempts, please try again later');
+								}
+								break;
+							case "user":
+								msg = $.i18n('Incorrect username');
+								break;
+							case "denied":
+								msg = $.i18n('Access denied');
+								break;
+							case "password":
+								msg = $.i18n('Incorrect password');
+								break;
+							default:
+								msg = $.i18n('Login failed');
+								break;
+						}
+						page.alert( { message:msg } ).then( function()
 						{ window.location.href = 'login.html'; } );
 						// 弹窗出来后，监听回车键
 						setTimeout(function() {

@@ -1087,8 +1087,13 @@ function createPortItem(index, name, value, phyStatus) {
     imgContainer.append(portImg);
 
     var portText = $.i18n(name) || name;
-    if (isOnline  && value.speed) {
-        portText += '(' + value.speed + ')';
+    if (isOnline && value.speed) {
+        var speedText = String(value.speed).trim();
+        /* Pure number → append Mbps; already has a unit → keep as-is */
+        if (/^\d+(\.\d+)?$/.test(speedText)) {
+            speedText = speedText + 'Mbps';
+        }
+        portText += '(' + speedText + ')';
     }
 
     var portLabel = $('<span>', {  

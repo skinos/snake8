@@ -30,6 +30,7 @@ Examples below use **`curl`** and **`jq`** (`sudo apt install jq` / `brew instal
 
 - **`Data Error`** — empty body, invalid JSON, or other parse issues.
 - **`Auth Error`** — missing/invalid session key on `/he`, disallowed command on `/public` or `/he`, or nested JSON where a command string is required.
+- **`Auth Expired`** — session key past `key_lifetime` on `/he` (uptime past token expiry). Ace WUI prompts then goes to `login.html`.
 
 ---
 
@@ -115,6 +116,16 @@ Example when **`rand`** is **`54309407`** and the account is **`admin` / `admin`
 
 If login returns **`{"return":"false"}`**, fetch **`rand`** again from `/public` and recompute — **`rand`** can change.
 
+Failed responses may include **`reason`** (optional for old clients):
+
+| `reason` | Meaning (from `land@auth` `errno`) |
+|----------|--------------------------------------|
+| `locked` | Too many failures (`EBUSY`), see `key_failed_time` / `key_failed_wait`; may include **`wait`** (remaining seconds, computed by httpd from auth register/config) |
+| `user` | Unknown username (`ENOENT`) |
+| `password` | Wrong password (`EINVAL`) |
+| `denied` | Domain / permission denied (`EACCES`) |
+| `fail` | Other failure |
+
 ### Try it with `curl` (step by step)
 
 **Step 1 — get `rand` from `/public`:**
@@ -197,10 +208,10 @@ Content-Type: text/plain; charset=UTF-8
 {"key":"BApNBS19XeiRH_syJSi8_CNqjNK6c9539jPLIj5GA9A!","username":"admin","return":"true"}
 ```
 
-**Response on failure:**
+**Response on failure** (may include **`reason`**):
 
 ```json
-{"return":"false"}
+{"return":"false","reason":"password"}
 ```
 
 **Postman:** run **`POST /public`** first → copy **`rand`** → compute **`password`** (script or external tool) → **`POST /auth`** with `username` + `password`.

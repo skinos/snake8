@@ -11,6 +11,32 @@ function shouldIgnoreAuthError()
 {
     return sessionStorage.getItem("ill_direct_entry") === "true";
 }
+
+/* Session dead: drop key, kill loading, go login once (do not wait for modal OK). */
+function gotoLoginOnAuthFail( reason )
+{
+	if ( window._he_auth_redirecting )
+	{
+		return;
+	}
+	window._he_auth_redirecting = true;
+	if ( typeof page !== "undefined" && page.overlay2hide )
+	{
+		page.overlay2hide();
+	}
+	window.talkkey = "";
+	window.username = "";
+	sessionStorage.setItem( "talkkey", "" );
+	sessionStorage.setItem( "username", "" );
+	if ( reason == "Auth Expired" )
+	{
+		window.location.replace( "login.html?expired=1" );
+	}
+	else
+	{
+		window.location.replace( "login.html" );
+	}
+}
 var he =
 {
     /* JS string must be encodable as well-formed UTF-8 (reject lone surrogates) */
@@ -210,16 +236,16 @@ var he =
                     if ( x.responseText.indexOf("{" ) < 0 )
                     {
                         console.log( "Server Async Response String: "+x.responseText );
-						if ( x.responseText == "Auth Error" )
+						if ( x.responseText == "Auth Error" || x.responseText == "Auth Expired" )
                         {
-                            console.log("Auth Error");
+                            console.log(x.responseText);
                             if (shouldIgnoreAuthError())
                             {
-                                console.warn("Auth Error ignored in ill factory mode");
+                                console.warn(x.responseText + " ignored in ill factory mode");
                                 func(x.responseText);
                                 return;
                             }
-                            window.location.href = 'login.html';
+							gotoLoginOnAuthFail( x.responseText );
                             return;
                         }
 						else if ( x.responseText == "Data Error"  )
@@ -296,16 +322,16 @@ var he =
             if ( htmlobj.responseText.indexOf("{" ) < 0 )
             {
                 console.log( "Server Response String: "+htmlobj.responseText );
-				if ( htmlobj.responseText == "Auth Error" )
+				if ( htmlobj.responseText == "Auth Error" || htmlobj.responseText == "Auth Expired" )
                 {
-                    console.log("Auth Error");
+                    console.log(htmlobj.responseText);
                     if (shouldIgnoreAuthError())
                     {
-                        console.warn("Auth Error ignored in ill factory mode");
+                        console.warn(htmlobj.responseText + " ignored in ill factory mode");
                         ret = htmlobj.responseText;
                         return ret;
                     }
-                    window.location.href = 'login.html';
+					gotoLoginOnAuthFail( htmlobj.responseText );
                     return;
                 }
 				else if ( htmlobj.responseText == "Data Error"  )

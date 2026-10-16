@@ -990,13 +990,13 @@ jQuery(function($) {
 
 			menu.add( false, menus, $.i18n( 'Application' ), '', 'menu-icon fa fa-building' );
 
-			menu.add( false, menus, $.i18n( 'Service' ), '', 'menu-icon fa fa-building' );
-
 			menu.add( false, menus, $.i18n( 'Sensor' ), '', 'menu-icon fa fa-exchange' );
 
 			menu.add( false, menus, $.i18n( 'Indicator' ), '', 'menu-icon fa fa-eye' );
 
 			menu.add( false, menus, $.i18n( 'Cloud' ), '', 'menu-icon fa fa-eye' );
+
+			menu.add( false, menus, $.i18n( 'Service' ), '', 'menu-icon fa fa-building' );
 
 			menu.add( false, menus, $.i18n( 'System' ), 'device', 'menu-icon fa fa-cogs' );
 			menu.addlink( menus, $.i18n( 'System' ), $.i18n( 'Device' ), 'device' );

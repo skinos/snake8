@@ -30,6 +30,7 @@ export BASE='http://192.168.8.1'
 
 - **`Data Error`** -- 空响应体、无效 JSON 或其他解析问题。
 - **`Auth Error`** -- `/he` 上缺少/无效会话密钥、`/public` 或 `/he` 上不允许的命令，或在需要命令字符串的地方使用了嵌套 JSON。
+- **`Auth Expired`** -- `/he` 上会话密钥超过 `key_lifetime`（uptime 已过 token 过期时间）。Ace WUI 会提示后跳转 `login.html`。
 
 ---
 
@@ -114,6 +115,16 @@ JSON 字段 **`password`** **不是**明文密码。
 - **`password`** 的值：**`N2M3M2U5YjkyZTllZGNlZmY5NjY0NzE2ZjgwMmEzMjQ=`**
 
 如果登录返回 **`{"return":"false"}`**，请重新从 `/public` 获取 **`rand`** 并重新计算 -- **`rand`** 可能会变化。
+
+失败响应可能带 **`reason`**（旧客户端可忽略）：
+
+| `reason` | 含义（来自 `land@auth` 的 `errno`） |
+|----------|--------------------------------------|
+| `locked` | 失败次数过多（`EBUSY`），见 `key_failed_time` / `key_failed_wait`；可能带 **`wait`**（剩余秒，由 httpd 根据 auth 的 register/配置计算） |
+| `user` | 用户名不存在（`ENOENT`） |
+| `password` | 密码错误（`EINVAL`） |
+| `denied` | 无域名权限（`EACCES`） |
+| `fail` | 其他失败 |
 
 ### 使用 `curl` 尝试（逐步操作）
 
@@ -200,7 +211,7 @@ Content-Type: text/plain; charset=UTF-8
 **失败响应：**
 
 ```json
-{"return":"false"}
+{"return":"false","reason":"password"}
 ```
 
 **Postman：** 先运行 **`POST /public`** -> 复制 **`rand`** -> 计算 **`password`**（脚本或外部工具）-> 使用 `username` + `password` 发送 **`POST /auth`**。
