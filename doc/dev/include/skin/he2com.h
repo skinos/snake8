@@ -50,7 +50,7 @@ typedef he_struct* he_t;
  * @return json map: api name (no "_" prefix) → ""
  * 	@retval talk_t for succeed - caller must free with talk_free()
  *  @retval NULL for error, errno will be set
- * @note lib scans `.dynsym`. ELF exe calls built-in "list". Shell scans api().
+ * @note lib scans `.dynsym`. ELF exe calls built-in ".". Shell scans api().
  *       filepath takes priority over object. Does not list get/set. ELF scan omits init/fini/start.
  */
 talk_t api_list( const char *object, const char *filepath );
@@ -62,7 +62,7 @@ talk_t api_list( const char *object, const char *filepath );
  * @return true if the matching function/symbol exists in the file
  * 	@retval true for present (lib: `_api` in `.dynsym`; exe: symbol scan; shell: api())
  *  @retval false for missing, errno set (ENOSYS typical)
- * @note ELF exe presence for a live component is com_have/com_exist, which call "list".
+ * @note ELF exe presence for a live component is com_have/com_exist, which call ".".
  *       Unlike api_list, get/set are detectable (_get/_set or get()/set()).
  * @see api_list, com_have, com_exist
  */

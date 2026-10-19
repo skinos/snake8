@@ -2,7 +2,7 @@
 
 ### Overview
 
-The **network frame** component (`network@frame`) is the hub for LAN/WAN/VPN registration, routing policy, and firewall hooks. When several **uplinks** exist, it works with the **multi-link scheduler service** to pick the active default route using numbered **priority slots** (`"1"`..`"10"`). Supported policies include **cold backup**, **hot backup**, and **lazy hot backup** (no automatic fail-back until the current uplink fails).
+The **network frame** component (`network@frame`) is the hub for LAN/WAN/VPN registration, routing policy, and firewall hooks. When several **uplinks** exist, it works with the **multi-link scheduler service** to pick the active default route using numbered **priority slots** (`"1"`..`"10"`, slot 1 first). A link is available when it is up, has an IPv4 address, and is past the first probe. A link still waiting for that probe (shown as not yet communicating) is left out, the same as a link still coming up. Receive Count mode counts as available. Supported policies are **cold backup**, **hot backup**, **lazy hot backup**, and **load balancing**.
 
 - manages network infrastructure lifecycle: iptables NAT/masq, flow offload, IP rules
 - registers local/extern/VPN interfaces and coordinates VLAN and bridge sub-modules
@@ -68,7 +68,7 @@ The network subsystem uses a layered architecture that separates configuration, 
 │                                                                                             │
 │  ┌──────────────────────────────┐                                                           │
 │  │  network@connect             │  multi-link scheduler service                             │
-│  │  cold/hot/lazy backup        │  selects active default route                             │
+│  │  cold / hot / lazy / balance │  selects the default, or shares new sessions              │
 │  └──────────────────────────────┘                                                           │
 │                                                                                             │
 └─────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -188,24 +188,24 @@ The network subsystem uses a layered architecture that separates configuration, 
               ├─ releases IP
               └─ calls ifdev "down" → ifconfig eth0 down
 
-4. Multi-link Failover:  network@connect (scheduler)
+4. Multi-link scheduling:  network@connect (scheduler)
               │
-              ├─ monitors extern interfaces via network@frame.status
-              ├─ selects best uplink based on type (cold/hot/lazy/dbdc)
-              └─ switches default route and DNS (dbdc also balances LAN NEW via shunts)
+              ├─ each round, sees which extern links are up and have an address
+              ├─ chooses the uplink from the scheduling type, and from recent delay when delay statistics are on
+              └─ installs that default route and DNS; load balancing also shares new LAN sessions across the chosen uplinks
 ```
 
 **Multi-link Scheduling Types:**
 
 | Type | Behavior | Slots |
 |------|----------|-------|
-| `cold` | Only one uplink active; others shut down | 1-10 |
-| `hot` | Multiple uplinks up; default route follows best slot | 1-10 |
-| `hot2..hot5` | Like hot, but only first N slots participate | 2-5 |
-| `lazy` | Like hot, but won't fail back until current fails | 1-10 |
-| `lazy2..lazy5` | Like lazy, but only first N slots participate | 2-5 |
-| `dbdc` | Load-balance among online slots (ECMP + shunts) | 1-10 |
-| `dbdc2..dbdc6` | Like dbdc, but only first N slots participate; balance caps at 6 nexthops | 2-6 |
+| `cold` | One uplink stays connected. The smallest slot that is up and has an address carries traffic; higher slots are shut down. When that link loses its address, the next available slot is brought up. | 1-10 |
+| `hot` | Participating uplinks stay connected. Delay statistics off: the default is the smallest slot that is up, and a smaller slot takes over when it comes up. Delay statistics on: the default prefers the smallest slot whose recent average delay is within the boundary. | 1-10 |
+| `hot2..hot5` | Same as hot, using only slots 1..N | 2-5 |
+| `lazy` | Participating uplinks stay connected. Delay statistics off: the default stays on the current link while that link is up, and moves when it goes down. Delay statistics on: it also moves when the current link's delay is past the boundary and the difference; while the current link is still acceptable it stays, even if another link is faster. | 1-10 |
+| `lazy2..lazy5` | Same as lazy, using only slots 1..N | 2-5 |
+| `dbdc` | Among uplinks that are up, the earliest slot numbers share new sessions, at most 6. A higher slot stays out while six earlier uplinks are already in. Delay statistics can leave a slow link up and out of the share. | 1-10 |
+| `dbdc2..dbdc6` | Same as dbdc, using only slots 1..N. The share is still at most 6 uplinks. | 2-6 |
 
 
 
@@ -215,13 +215,13 @@ The network subsystem uses a layered architecture that separates configuration, 
 // Attributes introduction 
 {
     "type":"Multiple link connect type",                           // [ "cold", "hot", "hot2", "hot3", "hot4", "hot5", "lazy", "lazy2", "lazy3", "lazy4", "lazy5", "dbdc", "dbdc2", "dbdc3", "dbdc4", "dbdc5", "dbdc6" ]
-                                                                   // "cold" for cold backup, only one uplink active at a time
-                                                                   // "hot" for hot backup, multiple uplinks may stay up, default route prefers smallest-numbered online slot
-                                                                   // "hotN" (N=2..5): only slots "1".."N" participate in scheduler decisions
-                                                                   // "lazy" for lazy hot backup, does not move back to higher-priority uplink until current one fails
-                                                                   // "lazyN" (N=2..5): only slots "1".."N" participate in scheduler decisions
-                                                                   // "dbdc": load-balance among online slots (device ECMP + LAN NEW nth marks)
-                                                                   // "dbdcN" (N=2..6): only slots "1".."N" participate; when 2+ online, share egress evenly (max 6 nexthops)
+                                                                   // "cold": one uplink connected. Smallest slot that is up and has an address; higher slots shut down
+                                                                   // "hot": uplinks stay connected. Delay off: smallest slot that is up, and a smaller slot takes over when it comes up. Delay on: smallest slot whose average is within the boundary
+                                                                   // "hotN" (N=2..5): same as hot, only slots "1".."N"
+                                                                   // "lazy": uplinks stay connected. Delay off: stay on the current link while it is up. Delay on: also move when its delay is past the boundary and the difference; stay while it is still acceptable
+                                                                   // "lazyN" (N=2..5): same as lazy, only slots "1".."N"
+                                                                   // "dbdc": among uplinks that are up, the earliest slot numbers share new sessions, at most 6. A higher slot stays out while six earlier uplinks are already in
+                                                                   // "dbdcN" (N=2..6): same as dbdc, only slots "1".."N"; the share is still at most 6 uplinks
     "concom":"Multiple link connection management components",     // [ string ], optional, custom scheduling component
 
     "1":"ifname object of extern",                                 // [ string ], priority slot 1, e.g. "ifname@wan", "ifname@lte", "ifname@wisp"
@@ -235,23 +235,42 @@ The network subsystem uses a layered architecture that separates configuration, 
     "9":"ifname object of extern",                                 // [ string ], priority slot 9
     "10":"ifname object of extern",                                // [ string ], priority slot 10
 
-    "delay_count":"Sample count for delay mean",                   // [ number ], 0=disabled; >0 average last N keeplive delays per uplink
-                                                                   // dbdc: filter slow uplinks out of ECMP; hot/lazy: may switch default by delay
-    "delay_divide":"delay divide line",                            // [ number ], ms
-                                                                   // dbdc: 0=ignore absolute boundary (filter by delay_diff vs best only);
-                                                                   //       >0 arms when means straddle this line (with delay_diff rules)
-                                                                   // hot: good-tier line (delay<=this); 0 => no good tier, always smallest online number
-                                                                   // lazy: 0=ignore divide (online switch by delay_diff only); >0 used with delay_diff rules
-    "delay_diff":"delay differential",                             // [ number ], ms
-                                                                   // dbdc: 0=hard cut at delay_divide when straddling; >0 allow above-divide if (mean-best)<=this
-                                                                   //       when delay_divide==0: drop from balancing if (mean-best)>this
-                                                                   // hot: leave sticky when current>divide and (current - good-tier-smallest)>this; 0 => weaker anti-flap
-                                                                   // lazy: 0=ignore diff (online switch by delay_divide only); >0 with divide>0 needs both
-                                                                   // lazy target: best mean
-    "delay_nodelay":"Substitute when no delay",                    // [ number ], ms; default delay_divide/2 when empty
-    "delay_failed":"Substitute when delay failed",                 // [ number ], ms; default delay_divide+delay_diff*3 when empty
+    "delay_count":"How many recent delay samples to average",      // [ number ], 0 turns the delay rules off
+                                                                   // Compared links are up, have an address, and are past the first probe. Still waiting (not yet communicating) stays out. Receive Count stays in. A failed probe still counts as up
+                                                                   // hot / lazy: the averages decide whether the default route moves. lazy also looks at the current link's latest sample before averaging the others; see delay_divide
+                                                                   // dbdc: the averages decide which of the chosen links stay in the share
+    "delay_divide":"Delay boundary, milliseconds",                 // [ number ]
+                                                                   // hot: links whose average is at or under this value are preferred; the smallest such slot becomes the default
+                                                                   //      current default is also in that group but has a larger slot: move to the smaller slot this round
+                                                                   //      current default is over the boundary: move when it is slower than that smaller slot by more than delay_diff
+                                                                   //      every measured link is over the boundary: use the smallest slot that is up
+                                                                   //      boundary 0: measured delays sit over the line, so the smallest slot that is up is used. Receive Count is scored as this boundary when that score is left empty, so it still sits on the line. A link still waiting for its first probe is not in this round
+                                                                   // lazy, current link still up: look at its latest sample before comparing averages
+                                                                   //      boundary above 0 and the latest sample is still at or under the boundary: keep this link this round
+                                                                   //      boundary 0 and the latest sample is still at or under delay_diff: keep this link this round
+                                                                   //      latest sample past that line, no sample yet, or a failed probe: compare averages using the delay_diff cases
+                                                                   //      current link down: move this round to the link with the lowest average. With delay statistics off, the target is the smallest slot that is up
+                                                                   // dbdc: boundary 0 trims the share only by how far a link sits behind the fastest chosen link
+                                                                   //      boundary above 0: trim when some chosen links are at or under the boundary and some are over it. Otherwise every chosen link stays in the share
+    "delay_diff":"How much slower is still acceptable, milliseconds", // [ number ]
+                                                                   // The same comparison in hot, lazy, and dbdc: at or under the boundary counts as within it, and over the boundary is the other side. A gap equal to this value does not move; the link must be slower by more than this. 0 means any excess is enough
+                                                                   // hot: used when the current default is over the boundary. Move when its average exceeds the preferred link by more than this
+                                                                   // lazy, once averages are compared. The target is the link with the lowest average
+                                                                   //      boundary 0: move when the current average exceeds the fastest link by more than this
+                                                                   //      this value 0 and boundary above 0: move when some link is at or under the boundary and the current average is over it
+                                                                   //      both above 0: move when some link is at or under the boundary, the current average is over it, and the current average exceeds the fastest link by more than this
+                                                                   // dbdc, among the links already chosen (earliest uplinks by slot number, at most 6). A link on the boundary is on the within side. Together with a link over the boundary, that starts the trim, and the link on the boundary stays
+                                                                   //      boundary 0: drop a link when its average exceeds the fastest by more than this
+                                                                   //      this value 0 and boundary above 0: when the set has both sides, drop links that are over the boundary
+                                                                   //      both above 0: when the set has both sides, drop links that are over the boundary and exceed the fastest by more than this. A link over the boundary that exceeds the fastest by no more than this stays
+    "delay_nodelay":"Score when availability check is off",         // [ number ], milliseconds. Empty uses the boundary. Used when that link has no probe samples
+    "delay_failed":"Score for one failed probe",                   // [ number ], milliseconds. Empty uses (boundary + difference) × 2. That probe is replaced by this score before the average
+    "delay_recv":"Score when probing has fallen back to Receive Count", // [ number ], milliseconds. Empty uses the boundary. The link is scored as this value; earlier samples are left out
 
-    "interval":"Connect scheduler poll interval",                  // [ number ], seconds; empty or 0 defaults to 10
+    "sticky":"Keep open LAN sessions on the uplink they started on", // [ "disable", "enable" ], empty means disable. Applies to hot and lazy
+                                                                   // "enable": when the default moves between links that are still up, sessions already open stay on the uplink they started on; new sessions follow the new default. A link that goes down releases the sessions that were on it
+
+    "interval":"Connect scheduler poll interval",                  // [ number ], seconds; empty or 0 defaults to 3
 
     // IPv6
     "type6":"IPv6 default-route and PD-sticky policy",             // [ "type", "sticky", "disable" ], default "sticky"
@@ -311,7 +330,7 @@ network@frame
 }
 ```
 
-Example, IPv4 lazy hot backup (no fail-back until current fails)
+Example, IPv4 lazy hot backup (stay on the current uplink while it remains acceptable)
 ```shell
 network@frame
 {

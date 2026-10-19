@@ -62,15 +62,18 @@ typedef struct eapi_table_st
 	comapi_t    fn;
 } eapi_table_t;
 
+/** Reserved EXE method: return the eapi table names. Not a business API. */
+#define COM_EXE_APIS "."
 /**
  * @brief Define main() for a standalone executable with custom get/set handlers.
  * @param table Array of eapi_table_t (method name → comapi_t). Must be an array identifier.
  * @param getfn comget_t (obj, attr) → talk_t; used when API is "get" (from cget/sget).
  * @param setfn comset_t (obj, talk, attr) → boole; used when API is "set" (from cset/sset).
- * @note "list"/"get"/"set" are not looked up in table. "list" returns the table names.
+ * @note "get"/"set" and COM_EXE_APIS (".") are not looked up in the table.
+ *       "." returns the table names. "list" is a normal table method.
  *       setfn's boole is mapped to ttrue/tfalse before talk2fd.
  *       Prefer MAIN2API(table) when config_* is enough.
- * @note EXE com_have / com_exist / api_list call "list" first. Symbol scan is the fallback.
+ * @note EXE com_have / com_exist / api_list call "." first. Symbol scan is the fallback.
  */
 #define MAIN2COM( table, getfn, setfn ) \
 int main( int argc, const char **argv ) \
@@ -111,7 +114,7 @@ int main( int argc, const char **argv ) \
 	ret = tpanic; \
 	if ( api != NULL && *api != '\0' ) \
 	{ \
-		if ( 0 == strcmp( api, "list" ) ) \
+		if ( 0 == strcmp( api, COM_EXE_APIS ) ) \
 		{ \
 			ret = json_create( NULL ); \
 			if ( ret == NULL ) \
@@ -513,7 +516,7 @@ void   com_close( com_t com );
  * @return existence result
  * 	@retval true for component (and API if specified) exists
  *  @retval false for not found, errno will be set
- * @note lib: dlsym `_api`. ELF exe: call "list" (table, plus get/set/list). Shell script: scan api().
+ * @note lib: dlsym `_api`. ELF exe: call "." (table, plus get/set). Shell script: scan api().
  *       api_list / leading "." still omit get/set (and ELF init/fini/start).
  * @see com_have to check by object string without keeping a handle open
  * @see api_exist, api_list
