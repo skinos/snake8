@@ -829,6 +829,33 @@ boole        route_forward_switch( const char *dest, const char *mask, talk_t v,
  *		@retval false for failed
  */
 boole        routes_ifname( int tid, talk_t ifnamest );
+/**
+ * @brief set the transmit queue length of a netdev
+ * @param[in] object ifname object
+ * @param[in] netdev network device name
+ * @param[in] len queue length string
+ * @return succeed or failed
+ *		@retval true for succeed
+ */
+boole        txqueue_set_ifname( const char *object, const char *netdev, const char *len );
+/**
+ * @brief clamp TCP MSS on a netdev. mtu below 1400 uses that value, otherwise 1400
+ * @param[in] object ifname object
+ * @param[in] netdev network device name
+ * @param[in] mtu interface mtu
+ * @return succeed or failed
+ *		@retval true for succeed
+ */
+boole        pmtu_adjust_ifname( const char *object, const char *netdev, int mtu );
+/**
+ * @brief remove the TCP MSS clamp for a netdev
+ * @param[in] object ifname object
+ * @param[in] netdev network device name
+ * @param[in] mtu interface mtu
+ * @return succeed or failed
+ *		@retval true for succeed
+ */
+boole        pmtu_clear_ifname( const char *object, const char *netdev, int mtu );
 
 /**
  * @brief resolv the domain to ip

@@ -289,50 +289,6 @@ boole resolv_switch( const char *ifname );
 
 
 /**
- * @defgroup InterfaceConfig Interface Configuration
- * @brief Network interface parameter configuration
- * @{
- */
-
-/**
- * @brief Set interface transmit queue length
- * @param[in] object Object name
- * @param[in] netdev Network interface name
- * @param[in] len Queue length string
- * @return Success or failure
- * @retval true Success
- * @retval false Failure
- */
-boole txqueue_set_ifname( const char *object, const char *netdev, const char *len );
-
-/**
- * @brief Adjust interface path MTU (add iptables rule)
- * @param[in] object Object name
- * @param[in] netdev Network interface name
- * @param[in] mtu MTU value
- * @return Success or failure
- * @retval true Success
- * @retval false Failure
- * @note When MTU is less than 1400, add TCP MSS clamping rule
- */
-boole pmtu_adjust_ifname( const char *object, const char *netdev, int mtu );
-
-/**
- * @brief Clear interface path MTU setting (delete iptables rule)
- * @param[in] object Object name
- * @param[in] netdev Network interface name
- * @param[in] mtu MTU value
- * @return Success or failure
- * @retval true Success
- * @retval false Failure
- */
-boole pmtu_clear_ifname( const char *object, const char *netdev, int mtu );
-
-/** @} */ /* InterfaceConfig */
-
-
-
-/**
  * @defgroup ShuntsConfig Shunts Configuration
  * @brief Multi-WAN load balancing and policy routing configuration
  * @{
