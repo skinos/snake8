@@ -1,8 +1,8 @@
 
-**/.*
 **/DS_Store
 **/*.DS_Store
 **/.vscode/
+**/.cursor/
 
 /project/agent
 /project/client

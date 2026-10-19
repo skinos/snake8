@@ -1,0 +1,14 @@
+
+/boot/
+/dl/
+
+/repo.config
+
+**/*.fpk
+**/*.store
+
+**/DS_Store
+**/*.DS_Store
+**/.vscode/
+**/.claude/
+
