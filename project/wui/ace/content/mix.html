@@ -360,7 +360,7 @@
         <div class="form-group">
           <label class="col-sm-3 control-label no-padding-right" data-i18n="Interval(s)"></label>
           <div class="col-sm-9">
-            <input type="text" id="interval" class="col-xs-10 col-sm-5" maxlength="32" />
+            <input type="text" id="interval" class="col-xs-10 col-sm-5" maxlength="32" placeholder="3" />
           </div>
         </div>
     </div>
@@ -387,6 +387,30 @@
             <div class="col-sm-9">
               <div class="clearfix">
                 <input type="text" id="delay_diff" class="col-xs-10 col-sm-5" maxlength="32" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="No Availability Check Delay (ms)"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="delay_nodelay" class="col-xs-10 col-sm-5" maxlength="32" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Failed Delay (ms)"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="delay_failed" class="col-xs-10 col-sm-5" maxlength="32" />
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 control-label no-padding-right" data-i18n="Receive Count Delay (ms)"></label>
+            <div class="col-sm-9">
+              <div class="clearfix">
+                <input type="text" id="delay_recv" class="col-xs-10 col-sm-5" maxlength="32" />
               </div>
             </div>
           </div>
@@ -594,7 +618,24 @@
         }
         $( "#delay_count" ).html( options );
     }
-    /* show boundary/diff/tip only when delay statistics is enabled */
+    /* empty score boxes follow the boundary and the difference; show that number as a hint */
+    function delay_score_placeholder()
+    {
+        var divide = parseInt( $( "#delay_divide" ).val(), 10 );
+        var diff = parseInt( $( "#delay_diff" ).val(), 10 );
+        if ( isNaN( divide ) )
+        {
+            divide = 200;
+        }
+        if ( isNaN( diff ) )
+        {
+            diff = 150;
+        }
+        $( "#delay_nodelay" ).attr( "placeholder", String( divide ) );
+        $( "#delay_recv" ).attr( "placeholder", String( divide ) );
+        $( "#delay_failed" ).attr( "placeholder", String( ( divide + diff ) * 2 ) );
+    }
+    /* show boundary/diff/scores/tip only when delay statistics is enabled */
     function delay_detail_update()
     {
         var n = parseInt( $( "#delay_count" ).val(), 10 );
@@ -604,6 +645,7 @@
         }
         else
         {
+            delay_score_placeholder();
             $( "#delay-detail" ).show();
         }
     }
@@ -945,9 +987,13 @@
                 }
                 $( '#delay_count' ).val( String( n ) );
             })();
-            $('#delay_divide').val( frame.delay_divide );
-            $('#delay_diff').val( frame.delay_diff );
-            $('#interval').val( frame.interval || "10" );
+            $('#delay_divide').val( frame.delay_divide != null ? frame.delay_divide : "" );
+            $('#delay_diff').val( frame.delay_diff != null ? frame.delay_diff : "" );
+            $('#delay_nodelay').val( frame.delay_nodelay != null ? frame.delay_nodelay : "" );
+            $('#delay_failed').val( frame.delay_failed != null ? frame.delay_failed : "" );
+            $('#delay_recv').val( frame.delay_recv != null ? frame.delay_recv : "" );
+            delay_score_placeholder();
+            $('#interval').val( frame.interval != null ? frame.interval : "" );
             /* load the configure */
             $('#type').unbind('change').change(function (e) {
               var type = e.target.value;
@@ -984,6 +1030,9 @@
             }).trigger('change');
             $('#delay_count').unbind('change').change(function () {
               delay_detail_update();
+            });
+            $('#delay_divide, #delay_diff').unbind('input').on('input', function () {
+              delay_score_placeholder();
             });
             $('#custom_dns').unbind('change').change(function (e) {
               var type = e.target.value;
@@ -1025,6 +1074,30 @@
             frame.delay_count = $('#delay_count').val();
             frame.delay_divide = $('#delay_divide').val();
             frame.delay_diff = $('#delay_diff').val();
+            if ( $('#delay_nodelay').val() === "" )
+            {
+                delete frame.delay_nodelay;
+            }
+            else
+            {
+                frame.delay_nodelay = $('#delay_nodelay').val();
+            }
+            if ( $('#delay_failed').val() === "" )
+            {
+                delete frame.delay_failed;
+            }
+            else
+            {
+                frame.delay_failed = $('#delay_failed').val();
+            }
+            if ( $('#delay_recv').val() === "" )
+            {
+                delete frame.delay_recv;
+            }
+            else
+            {
+                frame.delay_recv = $('#delay_recv').val();
+            }
         }
         if ( frame.type.indexOf("hot") === 0 || frame.type.indexOf("lazy") === 0 )
         {
